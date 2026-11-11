@@ -22,7 +22,7 @@ interface DbSchema {
   format: 'db-schema'
   version: 1
   /** null when the input does not say (ORM code without a configured engine) */
-  dialect: 'postgresql' | 'mysql' | 'mariadb' | 'sqlite' | null
+  dialect: 'postgresql' | 'mysql' | 'mariadb' | 'sqlite' | 'sqlserver' | 'oracle' | null
   source: { kind: 'model2db' | 'orm' | 'ddl'; format: string } // format: 'sqlalchemy', 'postgresql-ddl'…
   tables: DbTable[]
   enums: DbEnum[]

@@ -9,7 +9,8 @@ import type { Literal } from '../model/schema.ts'
 export const DB_SCHEMA_FORMAT = 'db-schema'
 export const DB_SCHEMA_VERSION = 1
 
-export type Dialect = 'postgresql' | 'mysql' | 'mariadb' | 'sqlite'
+/** Every engine a schema can describe; the generators say which ones they support. */
+export type Dialect = 'postgresql' | 'mysql' | 'mariadb' | 'sqlite' | 'sqlserver' | 'oracle'
 
 /** Where a fact was read in the input text, for explanations; lines and columns start at 1. */
 export interface Origin {
