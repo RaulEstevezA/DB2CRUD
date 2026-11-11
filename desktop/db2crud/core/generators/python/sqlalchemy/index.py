@@ -115,6 +115,7 @@ SQLALCHEMY_ORM = {
     "label": "SQLAlchemy 2",
     "databaseFiles": lambda context: [db_file(context), *entity_files(context)],
     "repository": {"doc": _doc, "init": _init, "body": sql_body},
+    "unset": lambda target, _imports: f"{target} is None",
     "unitOfWork": unit_of_work,
     "conftest": conftest_file,
     "databaseTest": database_test,

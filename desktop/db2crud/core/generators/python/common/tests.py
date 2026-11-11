@@ -256,7 +256,11 @@ def _service_tests(context: dict, info: dict, imports: Imports, uow: str) -> lis
             overrides.append(f"{_column(info, column)['attr']}=parent_{index}.{target['attr']}")
 
     def built(args: str) -> str:
-        return f"{create_dto(info)}(**_values(new_{module}({args})))" if dtos else f"new_{module}({args})"
+        return (
+            f"{create_dto(info)}(**_values(new_{module}({args}), {create_dto(info)}))"
+            if dtos
+            else f"new_{module}({args})"
+        )
 
     base_args = ", ".join(["1", *overrides])
     if create:
@@ -287,11 +291,9 @@ def _service_tests(context: dict, info: dict, imports: Imports, uow: str) -> lis
             imports.from_("app.errors", "ValidationFailedError")
             attr = required["attr"]
             if dtos and context["settings"]["dtoKind"] == "dataclass":
-                missing = f'{create_dto(info)}(**(_values(new_{module}({base_args})) | {{"{attr}": None}}))'
+                missing = f'{create_dto(info)}(**(_values(new_{module}({base_args}), {create_dto(info)}) | {{"{attr}": None}}))'
             elif dtos:
-                missing = (
-                    f'{create_dto(info)}.model_construct(**(_values(new_{module}({base_args})) | {{"{attr}": None}}))'
-                )
+                missing = f'{create_dto(info)}.model_construct(**(_values(new_{module}({base_args}), {create_dto(info)}) | {{"{attr}": None}}))'
             else:
                 missing = f"new_{module}({', '.join(['1', *overrides, f'{attr}=None'])})"
             blocks += test(
@@ -389,9 +391,10 @@ def _service_tests(context: dict, info: dict, imports: Imports, uow: str) -> lis
 VALUES_HELPER = [
     "",
     "",
-    "def _values(entity: object) -> dict[str, object]:",
-    '    """The column values of an entity that is not stored, for building a DTO from a factory row."""',
-    '    return {name: value for name, value in vars(entity).items() if not name.startswith("_")}',
+    "def _values(entity: object, dto: type) -> dict[str, object]:",
+    '    """The values a DTO takes, from an entity that is not stored, for building the DTO from a factory row."""',
+    '    names = dto.model_fields if hasattr(dto, "model_fields") else {field.name for field in fields(dto)}',
+    "    return {name: value for name, value in vars(entity).items() if name in names}",
 ]
 
 
@@ -405,6 +408,7 @@ def test_files(context: dict) -> list[dict]:
         _factories_file(context, makeable),
         {"path": "tests/__init__.py", "content": ""},
         context["orm"]["databaseTest"](context),
+        *(context["orm"].get("extraTestFiles", lambda _context: [])(context)),
     ]
     for info in makeable:
         imports = Imports().module("pytest").from_("app.unit_of_work", "SqlUnitOfWork")
@@ -418,6 +422,7 @@ def test_files(context: dict) -> list[dict]:
             uow = "memory_uow: MemoryUnitOfWork" if memory else context["orm"]["databaseFixture"]
             blocks += _service_tests(context, info, imports, uow)
             if context["settings"]["serviceTypes"] == "dtos":
+                imports.from_("dataclasses", "fields")
                 blocks += VALUES_HELPER
         if not blocks:
             continue

@@ -90,6 +90,7 @@ export const sqlalchemyOrm: PythonOrm = {
     },
     body: sqlBody,
   },
+  unset: (target) => `${target} is None`,
   unitOfWork,
   conftest: conftestFile,
   databaseTest,

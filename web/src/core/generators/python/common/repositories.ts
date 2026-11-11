@@ -122,19 +122,20 @@ export const signature = (context: Context, method: Method) =>
 // In memory
 
 /** The value a new row gets for a column the database would fill. */
-function memoryFill(column: ColumnInfo, imports: Imports): Line {
+function memoryFill(context: Context, column: ColumnInfo, imports: Imports): Line {
   const db = column.column
   const attr = `entity.${column.attr}`
-  if (db.generated === 'identity') return `if ${attr} is None:\n    ${attr} = self._next_id\n    self._next_id += 1`
+  const unset = context.orm.unset(attr, imports)
+  if (db.generated === 'identity') return `if ${unset}:\n    ${attr} = self._next_id\n    self._next_id += 1`
   if (db.generated === 'uuid') {
     imports.from('uuid', 'uuid4')
-    return `if ${attr} is None:\n    ${attr} = uuid4()`
+    return `if ${unset}:\n    ${attr} = uuid4()`
   }
   if (db.generated === 'now' || db.generated === 'onUpdateNow') {
     imports.from('datetime', 'UTC', 'datetime')
-    return `if ${attr} is None:\n    ${attr} = datetime.now(UTC)`
+    return `if ${unset}:\n    ${attr} = datetime.now(UTC)`
   }
-  if (db.default?.kind === 'literal') return `if ${attr} is None:\n    ${attr} = ${pyLiteral(db.default.value)}`
+  if (db.default?.kind === 'literal') return `if ${unset}:\n    ${attr} = ${pyLiteral(db.default.value)}`
   return null
 }
 
@@ -170,7 +171,9 @@ function memoryBody(context: Context, info: TableInfo, method: Method, imports: 
         ]
       return [`return ${rows}`]
     case 'insert': {
-      const fills = info.columns.map((column) => memoryFill(column, imports)).filter((line): line is string => typeof line === 'string')
+      const fills = info.columns
+        .map((column) => memoryFill(context, column, imports))
+        .filter((line): line is string => typeof line === 'string')
       return [...fills, `self._rows[${keyOf('entity')}] = entity`, 'return entity']
     }
     case 'update':

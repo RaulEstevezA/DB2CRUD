@@ -31,11 +31,16 @@ export interface PythonOrm {
     init(context: Context, imports: Imports): Line[]
     body(context: Context, info: TableInfo, method: RepositoryMethod, imports: Imports): Line[]
   }
+  /** A condition that is true while an attribute of a new entity has no value of its own (the in-memory
+   * repositories then fill it as the database would): `entity.x is None`, plus what the ORM puts there instead */
+  unset(target: string, imports: Imports): string
   /** The class SqlUnitOfWork: the database repositories and the transaction of each operation */
   unitOfWork(context: Context, imports: Imports): Line[]
   /** tests/conftest.py, and the test that proves which database the tests ran on */
   conftest(context: Context): GeneratedFile
   databaseTest(context: Context): GeneratedFile
+  /** Other files the tests need, such as their own settings */
+  extraTestFiles?(context: Context): GeneratedFile[]
   /** The fixture the repository tests take, as `name: Type` */
   databaseFixture: string
   dependencies(context: Context): string[]

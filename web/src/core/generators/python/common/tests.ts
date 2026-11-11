@@ -234,7 +234,7 @@ function serviceTests(context: Context, info: TableInfo, imports: Imports, uow: 
     imports.from('tests.factories', `new_${info.module}`)
     const fresh = (n: number, extra: string[] = []) => {
       const args = [`${n}`, ...overrides, ...extra].join(', ')
-      return dtos ? `${createDto(info)}(**_values(new_${info.module}(${args})))` : `new_${info.module}(${args})`
+      return dtos ? `${createDto(info)}(**_values(new_${info.module}(${args}), ${createDto(info)}))` : `new_${info.module}(${args})`
     }
     if (dtos) imports.from(moduleOf(context, info, 'dtos'), createDto(info))
     const name = operationName(context, create)
@@ -253,11 +253,11 @@ function serviceTests(context: Context, info: TableInfo, imports: Imports, uow: 
     if (required) {
       imports.from('app.errors', 'ValidationFailedError')
       const missing = dtos
-        ? `${createDto(info)}.model_construct(**(_values(new_${info.module}(${['1', ...overrides].join(', ')})) | {"${required.attr}": None}))`
+        ? `${createDto(info)}.model_construct(**(_values(new_${info.module}(${['1', ...overrides].join(', ')}), ${createDto(info)}) | {"${required.attr}": None}))`
         : `new_${info.module}(${['1', ...overrides, `${required.attr}=None`].join(', ')})`
       const pydanticOrEntity =
         dtos && context.settings.dtoKind === 'dataclass'
-          ? `${createDto(info)}(**(_values(new_${info.module}(${['1', ...overrides].join(', ')})) | {"${required.attr}": None}))`
+          ? `${createDto(info)}(**(_values(new_${info.module}(${['1', ...overrides].join(', ')}), ${createDto(info)}) | {"${required.attr}": None}))`
           : missing
       blocks.push(
         ...test('refuses_a_missing_value', [
@@ -301,7 +301,7 @@ function serviceTests(context: Context, info: TableInfo, imports: Imports, uow: 
           'n = 1',
           ...parentsFirst,
           'with pytest.raises(ValidationFailedError) as raised:',
-          `    ${a}service.${name}(${dtos ? `${createDto(info)}(**_values(new_${info.module}(${args})))` : `new_${info.module}(${args})`})`,
+          `    ${a}service.${name}(${dtos ? `${createDto(info)}(**_values(new_${info.module}(${args}), ${createDto(info)}))` : `new_${info.module}(${args})`})`,
           `assert "${parentKey.columns[0]}" in [error.field for error in raised.value.errors]`,
         ]),
       )
@@ -326,7 +326,7 @@ function serviceTests(context: Context, info: TableInfo, imports: Imports, uow: 
       ...test('changes_a_row', [
         'n = 1',
         ...parentsFirst,
-        `created = ${a}service.${operationName(context, create)}(${dtos ? `${createDto(info)}(**_values(new_${info.module}(${['1', ...overrides].join(', ')})))` : `new_${info.module}(${['1', ...overrides].join(', ')})`})`,
+        `created = ${a}service.${operationName(context, create)}(${dtos ? `${createDto(info)}(**_values(new_${info.module}(${['1', ...overrides].join(', ')}), ${createDto(info)}))` : `new_${info.module}(${['1', ...overrides].join(', ')})`})`,
         `updated = ${a}service.${operationName(context, update)}(${keyOf('created')}, ${change}${version})`,
         `assert updated.${text.attr} == "changed"`,
       ]),
@@ -340,7 +340,7 @@ function serviceTests(context: Context, info: TableInfo, imports: Imports, uow: 
       ...test('deletes_a_row', [
         'n = 1',
         ...parentsFirst,
-        `created = ${a}service.${operationName(context, create)}(${dtos ? `${createDto(info)}(**_values(new_${info.module}(${['1', ...overrides].join(', ')})))` : `new_${info.module}(${['1', ...overrides].join(', ')})`})`,
+        `created = ${a}service.${operationName(context, create)}(${dtos ? `${createDto(info)}(**_values(new_${info.module}(${['1', ...overrides].join(', ')}), ${createDto(info)}))` : `new_${info.module}(${['1', ...overrides].join(', ')})`})`,
         `${a}service.${operationName(context, remove)}(${keyOf('created')}${version})`,
         'with pytest.raises(NotFoundError):',
         `    ${a}service.${operationName(context, get)}(${keyOf('created')})`,
@@ -355,9 +355,10 @@ function valuesHelper(): Line[] {
   return [
     '',
     '',
-    'def _values(entity: object) -> dict[str, object]:',
-    '    """The column values of an entity that is not stored, for building a DTO from a factory row."""',
-    '    return {name: value for name, value in vars(entity).items() if not name.startswith("_")}',
+    'def _values(entity: object, dto: type) -> dict[str, object]:',
+    '    """The values a DTO takes, from an entity that is not stored, for building the DTO from a factory row."""',
+    '    names = dto.model_fields if hasattr(dto, "model_fields") else {field.name for field in fields(dto)}',
+    '    return {name: value for name, value in vars(entity).items() if name in names}',
   ]
 }
 
@@ -370,6 +371,7 @@ export function testFiles(context: Context): GeneratedFile[] {
     factoriesFile(context, makeable),
     { path: 'tests/__init__.py', content: '' },
     context.orm.databaseTest(context),
+    ...(context.orm.extraTestFiles?.(context) ?? []),
   ]
   for (const info of makeable) {
     const imports = new Imports().module('pytest').from('app.unit_of_work', 'SqlUnitOfWork')
@@ -379,7 +381,10 @@ export function testFiles(context: Context): GeneratedFile[] {
       const memory = context.settings.memoryRepositories
       if (memory) imports.from('app.unit_of_work', 'MemoryUnitOfWork')
       blocks.push(...serviceTests(context, info, imports, memory ? 'memory_uow: MemoryUnitOfWork' : context.orm.databaseFixture))
-      if (context.settings.serviceTypes === 'dtos') blocks.push(...valuesHelper())
+      if (context.settings.serviceTypes === 'dtos') {
+        imports.from('dataclasses', 'fields')
+        blocks.push(...valuesHelper())
+      }
     }
     if (blocks.length === 0) continue
     const content = lines(

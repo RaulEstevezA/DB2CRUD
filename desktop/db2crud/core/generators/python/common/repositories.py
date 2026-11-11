@@ -85,22 +85,23 @@ def signature(context: dict, method: dict) -> str:
 # In memory
 
 
-def _memory_fill(column: dict, imports: Imports) -> str | None:
+def _memory_fill(context: dict, column: dict, imports: Imports) -> str | None:
     """The value a new row gets for a column the database would fill."""
     db = column["column"]
     attr = f"entity.{column['attr']}"
+    unset = context["orm"]["unset"](attr, imports)
     generated = db.get("generated")
     if generated == "identity":
-        return f"if {attr} is None:\n    {attr} = self._next_id\n    self._next_id += 1"
+        return f"if {unset}:\n    {attr} = self._next_id\n    self._next_id += 1"
     if generated == "uuid":
         imports.from_("uuid", "uuid4")
-        return f"if {attr} is None:\n    {attr} = uuid4()"
+        return f"if {unset}:\n    {attr} = uuid4()"
     if generated in ("now", "onUpdateNow"):
         imports.from_("datetime", "UTC", "datetime")
-        return f"if {attr} is None:\n    {attr} = datetime.now(UTC)"
+        return f"if {unset}:\n    {attr} = datetime.now(UTC)"
     default = db.get("default")
     if default and default["kind"] == "literal":
-        return f"if {attr} is None:\n    {attr} = {py_literal(default['value'])}"
+        return f"if {unset}:\n    {attr} = {py_literal(default['value'])}"
     return None
 
 
@@ -138,7 +139,7 @@ def _memory_body(context: dict, info: dict, method: dict, imports: Imports) -> l
             ]
         return [f"return {rows}"]
     if kind == "insert":
-        fills = [line for line in (_memory_fill(column, imports) for column in info["columns"]) if line]
+        fills = [line for line in (_memory_fill(context, column, imports) for column in info["columns"]) if line]
         return [*fills, f"self._rows[{key_of('entity')}] = entity", "return entity"]
     if kind == "update":
         return [f"self._rows[{key_of('entity')}] = entity", "return entity"]
