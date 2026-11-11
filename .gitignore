@@ -1,7 +1,7 @@
-# Ignore rules for Model2API.
+# Ignore rules for DB2Controller.
 # Based on the shared rules of the personal_web_style tools (Model2DB, Mapper),
-# extended with Java because generated Spring Boot projects are built locally
-# during verification.
+# extended with the build outputs of the generated projects (Java / JVM) and with
+# exceptions for the whole generated projects kept in shared/test-cases/.
 
 # ==============================
 # Local working files (notes, plans, sample models): never versioned
@@ -121,7 +121,7 @@ htmlcov/
 *.db
 
 # ==============================
-# Java / JVM (generated Spring Boot projects)
+# Java / JVM (generated Spring Boot and Ktor projects)
 # ==============================
 target/
 .gradle/
