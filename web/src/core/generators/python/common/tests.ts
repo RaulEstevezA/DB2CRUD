@@ -285,6 +285,24 @@ function serviceTests(context: Context, info: TableInfo, imports: Imports, uow: 
           `    ${a}service.${name}(${fresh(2, same)})`,
         ]),
       )
+      // A row keeps its own unique value when it changes: the check must not take it for another row
+      const update = op('update')
+      const ownColumns = unique.columns.map((column) => info.columns.find((item) => item.column.name === column)!)
+      if (update && ownColumns.every((column) => !info.key.includes(column) && !column.generated)) {
+        const version = info.version ? ', version=created.' + info.version.attr : ''
+        const change = dtos
+          ? `${updateDto(info)}(${ownColumns.map((column) => `${column.attr}=created.${column.attr}`).join(', ')})`
+          : `{${ownColumns.map((column) => `"${column.attr}": created.${column.attr}`).join(', ')}}`
+        if (dtos) imports.from(moduleOf(context, info, 'dtos'), updateDto(info))
+        blocks.push(
+          ...test('keeps_its_own_unique_value', [
+            'n = 1',
+            ...parentsFirst,
+            `created = ${a}service.${name}(${fresh(1)})`,
+            `${a}service.${operationName(context, update)}(${keyOf('created')}, ${change}${version})`,
+          ]),
+        )
+      }
     }
     const parentKey = info.table.foreignKeys.find((key) => {
       const parent = findInfo(context, key.references.table)

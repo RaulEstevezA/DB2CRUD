@@ -320,6 +320,28 @@ def _service_tests(context: dict, info: dict, imports: Imports, uow: str) -> lis
                     f"    {a}service.{name}({built(', '.join(['2', *overrides, *same]))})",
                 ],
             )
+            # A row keeps its own unique value when it changes: the check must not take it for another row
+            update = op("update")
+            own = [_column(info, name) for name in unique["columns"]]
+            if update and all(
+                not any(column is key for key in info["key"]) and not column["generated"] for column in own
+            ):
+                version = f", version=created.{info['version']['attr']}" if info["version"] else ""
+                if dtos:
+                    arguments = ", ".join(f"{column['attr']}=created.{column['attr']}" for column in own)
+                    change = f"{update_dto(info)}({arguments})"
+                    imports.from_(module_of(context, info, "dtos"), update_dto(info))
+                else:
+                    change = "{" + ", ".join(f'"{column["attr"]}": created.{column["attr"]}' for column in own) + "}"
+                blocks += test(
+                    "keeps_its_own_unique_value",
+                    [
+                        "n = 1",
+                        *parents_first,
+                        f"created = {a}service.{name}({built(base_args)})",
+                        f"{a}service.{operation_name(context, update)}({key_of('created')}, {change}{version})",
+                    ],
+                )
         parent_key = next(
             (
                 key

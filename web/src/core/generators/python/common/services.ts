@@ -173,7 +173,8 @@ function uniqueMethod(writer: Writer): Block {
     checks.push(
       `if ${attrs.map((attr) => `${attr} is not None`).join(' and ')}:`,
       `    other = ${call(writer, `${repo(info)}.${queryName(context, read)}(${attrs.join(', ')})`)}`,
-      '    if other is not None and other is not current:',
+      // Another row, by its key: ORMs without an identity map (Django) return a new object for the same row
+      `    if other is not None and (current is None or ${sameKey(info)}):`,
       `        raise ConflictError("${info.entity}", "${unique.columns.join(', ')} is already taken", (${attrs.map((attr) => `"${attr}"`).join(', ')},))`,
     )
   }
@@ -184,6 +185,12 @@ function uniqueMethod(writer: Writer): Block {
     ...checks.map((line) => (typeof line === 'string' ? indent(line) : line)),
   ]
 }
+
+/** True when `other` is another row than `current`, compared by key. */
+const sameKey = (info: TableInfo) =>
+  info.key.length === 1
+    ? `other.${info.key[0].attr} != current.${info.key[0].attr}`
+    : `(${info.key.map((column) => `other.${column.attr}`).join(', ')}) != (${info.key.map((column) => `current.${column.attr}`).join(', ')})`
 
 const hasUniqueCheck = (writer: Writer) => writer.info.table.uniques.length > 0
 

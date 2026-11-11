@@ -210,7 +210,8 @@ def _unique_method(writer: _Writer) -> list:
         checks += [
             f"if {present}:",
             f"    other = {lookup}",
-            "    if other is not None and other is not current:",
+            # Another row, by its key: ORMs without an identity map (Django) return a new object for the same row
+            f"    if other is not None and (current is None or {_same_key(info)}):",
             f'        raise ConflictError("{info["entity"]}", "{joined} is already taken", ({quoted},))',
         ]
     if not checks:
@@ -220,6 +221,15 @@ def _unique_method(writer: _Writer) -> list:
         '    """Values that must be unique are not taken by another row."""',
         *[indent(line) if isinstance(line, str) else line for line in checks],
     ]
+
+
+def _same_key(info: dict) -> str:
+    """True when `other` is another row than `current`, compared by key."""
+    if len(info["key"]) == 1:
+        return f"other.{info['key'][0]['attr']} != current.{info['key'][0]['attr']}"
+    others = ", ".join(f"other.{column['attr']}" for column in info["key"])
+    currents = ", ".join(f"current.{column['attr']}" for column in info["key"])
+    return f"({others}) != ({currents})"
 
 
 def _check_method(writer: _Writer) -> list:
