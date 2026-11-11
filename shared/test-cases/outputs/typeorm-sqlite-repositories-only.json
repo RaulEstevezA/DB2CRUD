@@ -1,0 +1,514 @@
+{
+ "schema": {
+  "format": "db-schema",
+  "version": 1,
+  "dialect": "postgresql",
+  "source": {
+   "kind": "ddl",
+   "format": "postgresql"
+  },
+  "tables": [
+   {
+    "name": "customers",
+    "columns": [
+     {
+      "name": "id",
+      "type": {
+       "sql": "bigint",
+       "kind": "integer",
+       "bits": 64
+      },
+      "nullable": false,
+      "generated": "identity"
+     },
+     {
+      "name": "email",
+      "type": {
+       "sql": "varchar(120)",
+       "kind": "text",
+       "length": 120
+      },
+      "nullable": false
+     },
+     {
+      "name": "password_hash",
+      "type": {
+       "sql": "text",
+       "kind": "text"
+      },
+      "nullable": false
+     },
+     {
+      "name": "created_at",
+      "type": {
+       "sql": "timestamptz",
+       "kind": "datetime",
+       "timezone": true
+      },
+      "nullable": false,
+      "generated": "now"
+     }
+    ],
+    "primaryKey": [
+     "id"
+    ],
+    "foreignKeys": [],
+    "uniques": [
+     {
+      "name": "uq_customers_email",
+      "columns": [
+       "email"
+      ]
+     }
+    ],
+    "indexes": [],
+    "checks": []
+   },
+   {
+    "name": "categories",
+    "columns": [
+     {
+      "name": "id",
+      "type": {
+       "sql": "bigint",
+       "kind": "integer",
+       "bits": 64
+      },
+      "nullable": false,
+      "generated": "identity"
+     },
+     {
+      "name": "name",
+      "type": {
+       "sql": "varchar(60)",
+       "kind": "text",
+       "length": 60
+      },
+      "nullable": false
+     }
+    ],
+    "primaryKey": [
+     "id"
+    ],
+    "foreignKeys": [],
+    "uniques": [
+     {
+      "columns": [
+       "name"
+      ]
+     }
+    ],
+    "indexes": [],
+    "checks": []
+   },
+   {
+    "name": "products",
+    "columns": [
+     {
+      "name": "id",
+      "type": {
+       "sql": "bigint",
+       "kind": "integer",
+       "bits": 64
+      },
+      "nullable": false,
+      "generated": "identity"
+     },
+     {
+      "name": "category_id",
+      "type": {
+       "sql": "bigint",
+       "kind": "integer",
+       "bits": 64
+      },
+      "nullable": false
+     },
+     {
+      "name": "name",
+      "type": {
+       "sql": "varchar(100)",
+       "kind": "text",
+       "length": 100
+      },
+      "nullable": false
+     },
+     {
+      "name": "price",
+      "type": {
+       "sql": "numeric(10,2)",
+       "kind": "decimal",
+       "precision": 10,
+       "scale": 2
+      },
+      "nullable": false
+     },
+     {
+      "name": "status",
+      "type": {
+       "sql": "varchar(10)",
+       "kind": "text",
+       "length": 10
+      },
+      "nullable": false
+     },
+     {
+      "name": "version",
+      "type": {
+       "sql": "integer",
+       "kind": "integer",
+       "bits": 32
+      },
+      "nullable": false,
+      "default": {
+       "kind": "literal",
+       "value": 1
+      }
+     },
+     {
+      "name": "deleted_at",
+      "type": {
+       "sql": "timestamptz",
+       "kind": "datetime",
+       "timezone": true
+      },
+      "nullable": true
+     }
+    ],
+    "primaryKey": [
+     "id"
+    ],
+    "foreignKeys": [
+     {
+      "name": "fk_products_category",
+      "columns": [
+       "category_id"
+      ],
+      "references": {
+       "table": "categories",
+       "columns": [
+        "id"
+       ]
+      }
+     }
+    ],
+    "uniques": [],
+    "indexes": [
+     {
+      "name": "ix_products_status",
+      "columns": [
+       "status"
+      ]
+     },
+     {
+      "columns": [
+       "category_id"
+      ]
+     }
+    ],
+    "checks": [
+     {
+      "sql": "price >= 0",
+      "parsed": {
+       "kind": "compare",
+       "column": "price",
+       "op": ">=",
+       "value": 0
+      }
+     }
+    ]
+   },
+   {
+    "name": "orders",
+    "columns": [
+     {
+      "name": "id",
+      "type": {
+       "sql": "bigint",
+       "kind": "integer",
+       "bits": 64
+      },
+      "nullable": false,
+      "generated": "identity"
+     },
+     {
+      "name": "customer_id",
+      "type": {
+       "sql": "bigint",
+       "kind": "integer",
+       "bits": 64
+      },
+      "nullable": false
+     },
+     {
+      "name": "placed_at",
+      "type": {
+       "sql": "timestamptz",
+       "kind": "datetime",
+       "timezone": true
+      },
+      "nullable": false,
+      "generated": "now"
+     }
+    ],
+    "primaryKey": [
+     "id"
+    ],
+    "foreignKeys": [
+     {
+      "columns": [
+       "customer_id"
+      ],
+      "references": {
+       "table": "customers",
+       "columns": [
+        "id"
+       ]
+      }
+     }
+    ],
+    "uniques": [],
+    "indexes": [],
+    "checks": []
+   },
+   {
+    "name": "order_lines",
+    "columns": [
+     {
+      "name": "order_id",
+      "type": {
+       "sql": "bigint",
+       "kind": "integer",
+       "bits": 64
+      },
+      "nullable": false
+     },
+     {
+      "name": "line",
+      "type": {
+       "sql": "integer",
+       "kind": "integer",
+       "bits": 32
+      },
+      "nullable": false
+     },
+     {
+      "name": "product_id",
+      "type": {
+       "sql": "bigint",
+       "kind": "integer",
+       "bits": 64
+      },
+      "nullable": false
+     },
+     {
+      "name": "quantity",
+      "type": {
+       "sql": "integer",
+       "kind": "integer",
+       "bits": 32
+      },
+      "nullable": false
+     }
+    ],
+    "primaryKey": [
+     "order_id",
+     "line"
+    ],
+    "foreignKeys": [
+     {
+      "columns": [
+       "order_id"
+      ],
+      "references": {
+       "table": "orders",
+       "columns": [
+        "id"
+       ]
+      },
+      "onDelete": "cascade"
+     },
+     {
+      "columns": [
+       "product_id"
+      ],
+      "references": {
+       "table": "products",
+       "columns": [
+        "id"
+       ]
+      },
+      "onDelete": "restrict"
+     }
+    ],
+    "uniques": [],
+    "indexes": [],
+    "checks": []
+   },
+   {
+    "name": "tags",
+    "columns": [
+     {
+      "name": "id",
+      "type": {
+       "sql": "bigint",
+       "kind": "integer",
+       "bits": 64
+      },
+      "nullable": false,
+      "generated": "identity"
+     },
+     {
+      "name": "label",
+      "type": {
+       "sql": "varchar(30)",
+       "kind": "text",
+       "length": 30
+      },
+      "nullable": false
+     }
+    ],
+    "primaryKey": [
+     "id"
+    ],
+    "foreignKeys": [],
+    "uniques": [],
+    "indexes": [],
+    "checks": []
+   },
+   {
+    "name": "product_tags",
+    "columns": [
+     {
+      "name": "product_id",
+      "type": {
+       "sql": "bigint",
+       "kind": "integer",
+       "bits": 64
+      },
+      "nullable": false
+     },
+     {
+      "name": "tag_id",
+      "type": {
+       "sql": "bigint",
+       "kind": "integer",
+       "bits": 64
+      },
+      "nullable": false
+     }
+    ],
+    "primaryKey": [
+     "product_id",
+     "tag_id"
+    ],
+    "foreignKeys": [
+     {
+      "columns": [
+       "product_id"
+      ],
+      "references": {
+       "table": "products",
+       "columns": [
+        "id"
+       ]
+      },
+      "onDelete": "cascade"
+     },
+     {
+      "columns": [
+       "tag_id"
+      ],
+      "references": {
+       "table": "tags",
+       "columns": [
+        "id"
+       ]
+      },
+      "onDelete": "cascade"
+     }
+    ],
+    "uniques": [],
+    "indexes": [],
+    "checks": []
+   },
+   {
+    "name": "audit_log",
+    "columns": [
+     {
+      "name": "at",
+      "type": {
+       "sql": "timestamptz",
+       "kind": "datetime",
+       "timezone": true
+      },
+      "nullable": false
+     },
+     {
+      "name": "message",
+      "type": {
+       "sql": "text",
+       "kind": "text"
+      },
+      "nullable": false
+     }
+    ],
+    "primaryKey": null,
+    "foreignKeys": [],
+    "uniques": [],
+    "indexes": [],
+    "checks": []
+   }
+  ],
+  "enums": [],
+  "notes": []
+ },
+ "decisions": [],
+ "settings": {
+  "name": "typeorm-sqlite-repositories-only",
+  "language": "typescript",
+  "orm": "typeorm",
+  "database": "sqlite",
+  "services": false
+ },
+ "files": {
+  ".env.example": "# Where the database is\nDATABASE_URL=sqlite:./app.db\n# The tests use SQLite in memory unless this names another database (it is emptied by the tests)\n# TEST_DATABASE_URL=\n",
+  ".gitignore": "node_modules/\ndist/\n.env\n*.db\n",
+  "README.md": "# typeorm-sqlite-repositories-only\n\nData access layer generated by [DB2CRUD](https://github.com/RaulEstevezA/DB2CRUD) for a database that already exists: entities, repositories and services with TypeORM 0.3. It does not create or migrate the database.\n\n## Settings\n\n- Database: sqlite; code: asynchronous (every method returns a Promise).\n- Entities: written for the tables the input had no class for.\n- Services: not written.\n- Transactions: one transaction per service operation, committed when it ends.\n- Lists: lists return pages by offset and limit.\n\n## Layout\n\n```text\nsrc/data-source.ts     the TypeORM data source: DATABASE_URL and every entity\nsrc/errors.ts          NotFoundError, ConflictError, ValidationFailedError: no HTTP codes\nsrc/unit-of-work.ts    the repositories of every table, and the transaction of each operation\nsrc/entities/          one entity per table\nsrc/repositories/      one repository per table\ntest/                  repositories against a database, services on the in-memory repositories\ncrud-contract.json     what was written, for CRUD2Controller\n```\n\n## Running the tests\n\n```bash\nnpm install\nnpm run typecheck && npm run build\nnpm test                                  # SQLite in memory\nTEST_DATABASE_URL=sqlite:./app.db npm test   # a real, disposable database: it is emptied\n```\n\nLook for `TODO` in the code: each one marks a decision the input did not settle.\n",
+  "crud-contract.json": "{\n  \"format\": \"crud-contract\",\n  \"version\": 1,\n  \"stack\": {\n    \"language\": \"typescript\",\n    \"orm\": \"typeorm\",\n    \"database\": \"sqlite\",\n    \"execution\": \"async\"\n  },\n  \"transactions\": \"operation\",\n  \"paging\": \"offset\",\n  \"types\": [\n    {\n      \"name\": \"Customer\",\n      \"module\": \"src/entities/customer\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"email\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"length\": 120\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"passwordHash\",\n          \"type\": {\n            \"kind\": \"text\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"createdAt\",\n          \"type\": {\n            \"kind\": \"datetime\"\n          },\n          \"nullable\": false\n        }\n      ]\n    },\n    {\n      \"name\": \"Category\",\n      \"module\": \"src/entities/category\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"name\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"length\": 60\n          },\n          \"nullable\": false\n        }\n      ]\n    },\n    {\n      \"name\": \"Product\",\n      \"module\": \"src/entities/product\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"categoryId\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"name\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"length\": 100\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"price\",\n          \"type\": {\n            \"kind\": \"decimal\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"status\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"length\": 10\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"version\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"deletedAt\",\n          \"type\": {\n            \"kind\": \"datetime\"\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"Order\",\n      \"module\": \"src/entities/order\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"customerId\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"placedAt\",\n          \"type\": {\n            \"kind\": \"datetime\"\n          },\n          \"nullable\": false\n        }\n      ]\n    },\n    {\n      \"name\": \"OrderLine\",\n      \"module\": \"src/entities/order-line\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"orderId\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"line\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"productId\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"quantity\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": false\n        }\n      ]\n    },\n    {\n      \"name\": \"Tag\",\n      \"module\": \"src/entities/tag\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"label\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"length\": 30\n          },\n          \"nullable\": false\n        }\n      ]\n    },\n    {\n      \"name\": \"ProductTag\",\n      \"module\": \"src/entities/product-tag\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"productId\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"tagId\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": false\n        }\n      ]\n    },\n    {\n      \"name\": \"AuditLog\",\n      \"module\": \"src/entities/audit-log\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"at\",\n          \"type\": {\n            \"kind\": \"datetime\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"message\",\n          \"type\": {\n            \"kind\": \"text\"\n          },\n          \"nullable\": false\n        }\n      ]\n    }\n  ],\n  \"errors\": [\n    {\n      \"kind\": \"notFound\",\n      \"name\": \"NotFoundError\",\n      \"module\": \"src/errors\"\n    },\n    {\n      \"kind\": \"conflict\",\n      \"name\": \"ConflictError\",\n      \"module\": \"src/errors\"\n    },\n    {\n      \"kind\": \"validation\",\n      \"name\": \"ValidationFailedError\",\n      \"module\": \"src/errors\"\n    }\n  ],\n  \"services\": []\n}\n",
+  "package.json": "{\n  \"name\": \"typeorm-sqlite-repositories-only\",\n  \"version\": \"0.1.0\",\n  \"description\": \"Data access layer (entities, repositories and services) generated by DB2CRUD.\",\n  \"private\": true,\n  \"type\": \"module\",\n  \"engines\": {\n    \"node\": \">=20\"\n  },\n  \"scripts\": {\n    \"typecheck\": \"tsc --noEmit\",\n    \"build\": \"tsc -p tsconfig.build.json\",\n    \"test\": \"vitest run\"\n  },\n  \"dependencies\": {\n    \"better-sqlite3\": \"^12.4.1\",\n    \"reflect-metadata\": \"^0.2.2\",\n    \"typeorm\": \"^0.3.27\"\n  },\n  \"devDependencies\": {\n    \"@types/node\": \"^24.10.0\",\n    \"typescript\": \"^5.9.3\",\n    \"vitest\": \"^3.2.4\"\n  }\n}\n",
+  "src/column-types.ts": "/** How some values are read from the database. */\nimport type { ValueTransformer } from 'typeorm'\n\n/** Exact decimals stay text: drivers return them as text (or as numbers, SQLite), and nothing is rounded. */\nexport const decimalText: ValueTransformer = {\n  to: (value: unknown) => value,\n  from: (value: unknown) => (value === null || value === undefined ? value : String(value)),\n}\n",
+  "src/data-source.ts": "/** The TypeORM data source: the database DATABASE_URL names (see .env.example), and every entity. */\nimport 'reflect-metadata'\nimport { DataSource } from 'typeorm'\nimport { AuditLog } from './entities/audit-log.js'\nimport { Category } from './entities/category.js'\nimport { Customer } from './entities/customer.js'\nimport { Order } from './entities/order.js'\nimport { OrderLine } from './entities/order-line.js'\nimport { Product } from './entities/product.js'\nimport { ProductTag } from './entities/product-tag.js'\nimport { Tag } from './entities/tag.js'\n\nexport const DATABASE_URL = process.env.DATABASE_URL ?? 'sqlite:./app.db'\n\n/** Every entity, so the data source knows every table */\nexport const ENTITIES = [Customer, Category, Product, Order, OrderLine, Tag, ProductTag, AuditLog]\n\n/**\n * A data source for the database at `url`: postgresql://, mysql:// (also MariaDB) or sqlite:<file> (sqlite::memory:\n * for one in memory). Call initialize() before using it. Whole numbers come back as numbers, and dates in UTC.\n */\nexport function createDataSource(url: string = DATABASE_URL): DataSource {\n  const scheme = url.slice(0, url.indexOf(':'))\n  if (scheme === 'sqlite') {\n    const file = url.slice('sqlite:'.length).replace(/^\\/\\//, '')\n    return new DataSource({ type: 'better-sqlite3', database: file || ':memory:', entities: ENTITIES })\n  }\n  if (scheme === 'postgresql' || scheme === 'postgres') return new DataSource({ type: 'postgres', url, entities: ENTITIES, parseInt8: true })\n  if (scheme === 'mysql' || scheme === 'mariadb')\n    return new DataSource({\n      type: 'mysql',\n      url: url.replace(/^mariadb:/, 'mysql:'),\n      entities: ENTITIES,\n      supportBigNumbers: true,\n      bigNumberStrings: false,\n      timezone: 'Z',\n    })\n  throw new Error(`DATABASE_URL names a database this project does not know: ${scheme}`)\n}\n",
+  "src/entities/audit-log.ts": "/** Entity of the \"audit_log\" table. */\nimport { Entity, PrimaryColumn } from 'typeorm'\n\n// The table has no primary key: rows are told apart by all their columns, for reading only, and the\n// tests' data source does not create it (synchronize: false)\n/** A row of the \"audit_log\" table. */\n@Entity({ name: 'audit_log', synchronize: false })\nexport class AuditLog {\n  @PrimaryColumn({ type: 'datetime' })\n  at!: Date\n\n  @PrimaryColumn({ type: 'text' })\n  message!: string\n}\n",
+  "src/entities/category.ts": "/** Entity of the \"categories\" table. */\nimport { Column, Entity, PrimaryGeneratedColumn, Unique } from 'typeorm'\n\n/** A row of the \"categories\" table. */\n@Entity({ name: 'categories' })\n@Unique(['name'])\nexport class Category {\n  @PrimaryGeneratedColumn({ type: 'integer' })\n  id!: number\n\n  @Column({ type: 'varchar', length: 60 })\n  name!: string\n}\n",
+  "src/entities/customer.ts": "/** Entity of the \"customers\" table. */\nimport { Column, Entity, PrimaryGeneratedColumn, Unique } from 'typeorm'\n\n/** A row of the \"customers\" table. */\n@Entity({ name: 'customers' })\n@Unique('uq_customers_email', ['email'])\nexport class Customer {\n  @PrimaryGeneratedColumn({ type: 'integer' })\n  id!: number\n\n  @Column({ type: 'varchar', length: 120 })\n  email!: string\n\n  @Column({ name: 'password_hash', type: 'text' })\n  passwordHash!: string\n\n  @Column({ name: 'created_at', type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })\n  createdAt!: Date\n}\n",
+  "src/entities/order-line.ts": "/** Entity of the \"order_lines\" table. */\nimport { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn, type Relation } from 'typeorm'\nimport { Order } from './order.js'\nimport { Product } from './product.js'\n\n/** A row of the \"order_lines\" table. */\n@Entity({ name: 'order_lines' })\nexport class OrderLine {\n  @PrimaryColumn({ name: 'order_id', type: 'integer' })\n  orderId!: number\n\n  @PrimaryColumn({ type: 'integer' })\n  line!: number\n\n  @Column({ name: 'product_id', type: 'integer' })\n  productId!: number\n\n  @Column({ type: 'integer' })\n  quantity!: number\n\n  /** The Order this row points to (order_id); loaded only when asked for */\n  @ManyToOne(() => Order, { nullable: false, onDelete: 'CASCADE' })\n  @JoinColumn({ name: 'order_id', referencedColumnName: 'id' })\n  order?: Relation<Order>\n\n  /** The Product this row points to (product_id); loaded only when asked for */\n  @ManyToOne(() => Product, { nullable: false, onDelete: 'RESTRICT' })\n  @JoinColumn({ name: 'product_id', referencedColumnName: 'id' })\n  product?: Relation<Product>\n}\n",
+  "src/entities/order.ts": "/** Entity of the \"orders\" table. */\nimport { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, type Relation } from 'typeorm'\nimport { Customer } from './customer.js'\n\n/** A row of the \"orders\" table. */\n@Entity({ name: 'orders' })\nexport class Order {\n  @PrimaryGeneratedColumn({ type: 'integer' })\n  id!: number\n\n  @Column({ name: 'customer_id', type: 'integer' })\n  customerId!: number\n\n  @Column({ name: 'placed_at', type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })\n  placedAt!: Date\n\n  /** The Customer this row points to (customer_id); loaded only when asked for */\n  @ManyToOne(() => Customer, { nullable: false })\n  @JoinColumn({ name: 'customer_id', referencedColumnName: 'id' })\n  customer?: Relation<Customer>\n}\n",
+  "src/entities/product-tag.ts": "/** Entity of the \"product_tags\" table. */\nimport { Entity, JoinColumn, ManyToOne, PrimaryColumn, type Relation } from 'typeorm'\nimport { Product } from './product.js'\nimport { Tag } from './tag.js'\n\n/** A row of the \"product_tags\" table. */\n@Entity({ name: 'product_tags' })\nexport class ProductTag {\n  @PrimaryColumn({ name: 'product_id', type: 'integer' })\n  productId!: number\n\n  @PrimaryColumn({ name: 'tag_id', type: 'integer' })\n  tagId!: number\n\n  /** The Product this row points to (product_id); loaded only when asked for */\n  @ManyToOne(() => Product, { nullable: false, onDelete: 'CASCADE' })\n  @JoinColumn({ name: 'product_id', referencedColumnName: 'id' })\n  product?: Relation<Product>\n\n  /** The Tag this row points to (tag_id); loaded only when asked for */\n  @ManyToOne(() => Tag, { nullable: false, onDelete: 'CASCADE' })\n  @JoinColumn({ name: 'tag_id', referencedColumnName: 'id' })\n  tag?: Relation<Tag>\n}\n",
+  "src/entities/product.ts": "/** Entity of the \"products\" table. */\nimport { Check, Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn, type Relation } from 'typeorm'\nimport { decimalText } from '../column-types.js'\nimport { Category } from './category.js'\n\n/** A row of the \"products\" table. */\n@Entity({ name: 'products' })\n@Index('ix_products_status', ['status'])\n@Index(['categoryId'])\n@Check('price >= 0')\nexport class Product {\n  @PrimaryGeneratedColumn({ type: 'integer' })\n  id!: number\n\n  @Column({ name: 'category_id', type: 'integer' })\n  categoryId!: number\n\n  @Column({ type: 'varchar', length: 100 })\n  name!: string\n\n  @Column({ type: 'decimal', precision: 10, scale: 2, transformer: decimalText })\n  price!: string\n\n  @Column({ type: 'varchar', length: 10 })\n  status!: string\n\n  @Column({ type: 'integer', default: 1 })\n  version!: number\n\n  @Column({ name: 'deleted_at', type: 'datetime', nullable: true })\n  deletedAt!: Date | null\n\n  /** The Category this row points to (category_id); loaded only when asked for */\n  @ManyToOne(() => Category, { nullable: false })\n  @JoinColumn({ name: 'category_id', referencedColumnName: 'id', foreignKeyConstraintName: 'fk_products_category' })\n  category?: Relation<Category>\n}\n",
+  "src/entities/tag.ts": "/** Entity of the \"tags\" table. */\nimport { Column, Entity, PrimaryGeneratedColumn } from 'typeorm'\n\n/** A row of the \"tags\" table. */\n@Entity({ name: 'tags' })\nexport class Tag {\n  @PrimaryGeneratedColumn({ type: 'integer' })\n  id!: number\n\n  @Column({ type: 'varchar', length: 30 })\n  label!: string\n}\n",
+  "src/errors.ts": "/** Errors of the data access layer. They carry no HTTP codes: whoever calls the services translates them. */\n\n/** Base of every error a service throws on purpose. */\nexport class DomainError extends Error {}\n\n/** No row has this key. */\nexport class NotFoundError extends DomainError {\n  constructor(\n    readonly entity: string,\n    readonly key: unknown,\n  ) {\n    super(`No ${entity} has the key ${JSON.stringify(key)}`)\n    this.name = 'NotFoundError'\n  }\n}\n\n/** The change clashes with what is stored: a unique value, a newer version, rows that depend on it. */\nexport class ConflictError extends DomainError {\n  constructor(\n    readonly entity: string,\n    readonly reason: string,\n    readonly fields: readonly string[] = [],\n  ) {\n    super(`${entity}: ${reason}`)\n    this.name = 'ConflictError'\n  }\n}\n\n/** What is wrong with one field. */\nexport interface FieldError {\n  field: string\n  message: string\n}\n\n/** The values break the rules of the table: missing, too long, out of range, pointing nowhere. */\nexport class ValidationFailedError extends DomainError {\n  constructor(\n    readonly entity: string,\n    readonly errors: readonly FieldError[],\n  ) {\n    super(`${entity}: ${errors.map((error) => `${error.field}: ${error.message}`).join('; ')}`)\n    this.name = 'ValidationFailedError'\n  }\n}\n",
+  "src/paging.ts": "/** A page of a list: the rows from an offset, and how many there are in all. */\nexport interface Page<T> {\n  items: T[]\n  total: number\n  offset: number\n  limit: number\n}\n",
+  "src/repositories/audit-log.ts": "/** Repository of the \"audit_log\" table: reads and writes rows, and decides nothing. */\nimport type { EntityManager } from 'typeorm'\nimport { AuditLog } from '../entities/audit-log.js'\nimport type { Page } from '../paging.js'\n\n/** Where audit_log rows are kept. Services depend only on this interface. */\nexport interface AuditLogRepository {\n  list(offset?: number, limit?: number): Promise<Page<AuditLog>>\n}\n\n/** The key of a row, as a list of its key values. */\nfunction keyOf(row: AuditLog): unknown[] {\n  return [row.at, row.message]\n}\n\n/** Orders two keys value by value. */\nfunction compareKeys(a: unknown[], b: unknown[]): number {\n  for (let index = 0; index < a.length; index++) {\n    const x = a[index] as number | string\n    const y = b[index] as number | string\n    if (x < y) return -1\n    if (x > y) return 1\n  }\n  return 0\n}\n\n/** Keeps audit_log rows in the database, through an EntityManager. It never commits: the transaction belongs to the manager it was given. */\nexport class SqlAuditLogRepository implements AuditLogRepository {\n  constructor(private readonly manager: EntityManager) {}\n\n  /** At most `limit` rows from `offset`, by primary key, and how many there are. */\n  async list(offset: number = 0, limit: number = 50): Promise<Page<AuditLog>> {\n    const [items, total] = await this.manager.findAndCount(AuditLog, { order: { at: 'ASC', message: 'ASC' }, skip: offset, take: limit })\n    return { items, total, offset, limit }\n  }\n}\n\n/** Keeps audit_log rows in memory, for tests and for trying the services without a database. */\nexport class MemoryAuditLogRepository implements AuditLogRepository {\n  private readonly rows = new Map<string, AuditLog>()\n\n  private visible(): AuditLog[] {\n    return [...this.rows.values()].filter((row) => true).sort((a, b) => compareKeys(keyOf(a), keyOf(b)))\n  }\n\n  /** At most `limit` rows from `offset`, by primary key, and how many there are. */\n  async list(offset: number = 0, limit: number = 50): Promise<Page<AuditLog>> {\n    const rows = this.visible()\n    return { items: rows.slice(offset, offset + limit), total: rows.length, offset, limit }\n  }\n}\n",
+  "src/repositories/category.ts": "/** Repository of the \"categories\" table: reads and writes rows, and decides nothing. */\nimport { QueryFailedError, type EntityManager } from 'typeorm'\nimport { Category } from '../entities/category.js'\nimport { ConflictError } from '../errors.js'\nimport type { Page } from '../paging.js'\n\n/** Where categories rows are kept. Services depend only on this interface. */\nexport interface CategoryRepository {\n  findById(id: number): Promise<Category | null>\n  list(offset?: number, limit?: number): Promise<Page<Category>>\n  findByName(name: string): Promise<Category | null>\n  insert(entity: Category): Promise<Category>\n  update(entity: Category): Promise<Category>\n  delete(entity: Category): Promise<void>\n}\n\n/** The key of a row, as a list of its key values. */\nfunction keyOf(row: Category): unknown[] {\n  return [row.id]\n}\n\n/** Orders two keys value by value. */\nfunction compareKeys(a: unknown[], b: unknown[]): number {\n  for (let index = 0; index < a.length; index++) {\n    const x = a[index] as number | string\n    const y = b[index] as number | string\n    if (x < y) return -1\n    if (x > y) return 1\n  }\n  return 0\n}\n\n/** Keeps categories rows in the database, through an EntityManager. It never commits: the transaction belongs to the manager it was given. */\nexport class SqlCategoryRepository implements CategoryRepository {\n  constructor(private readonly manager: EntityManager) {}\n\n  /** The row with this primary key, or null. */\n  async findById(id: number): Promise<Category | null> {\n    return this.manager.findOne(Category, { where: { id } })\n  }\n\n  /** At most `limit` rows from `offset`, by primary key, and how many there are. */\n  async list(offset: number = 0, limit: number = 50): Promise<Page<Category>> {\n    const [items, total] = await this.manager.findAndCount(Category, { order: { id: 'ASC' }, skip: offset, take: limit })\n    return { items, total, offset, limit }\n  }\n\n  /** The row with this name, or null. */\n  async findByName(name: string): Promise<Category | null> {\n    return this.manager.findOne(Category, { where: { name } })\n  }\n\n  /** Stores a new row; the values the database fills are read back. */\n  async insert(entity: Category): Promise<Category> {\n    try {\n      await this.manager.insert(Category, entity)\n    } catch (error) {\n      if (error instanceof QueryFailedError) throw new ConflictError('Category', `the database refused the change: ${error.message}`)\n      throw error\n    }\n    // The driver returns a new 64-bit key as text\n    entity.id = Number(entity.id)\n    return entity\n  }\n\n  /** Stores the changes made to a row read from this repository. */\n  async update(entity: Category): Promise<Category> {\n    try {\n      await this.manager.save(Category, entity)\n    } catch (error) {\n      if (error instanceof QueryFailedError) throw new ConflictError('Category', `the database refused the change: ${error.message}`)\n      throw error\n    }\n    return entity\n  }\n\n  /** Removes a row read from this repository. */\n  async delete(entity: Category): Promise<void> {\n    try {\n      await this.manager.delete(Category, { id: entity.id })\n    } catch (error) {\n      if (error instanceof QueryFailedError) throw new ConflictError('Category', `the database refused the change: ${error.message}`)\n      throw error\n    }\n  }\n}\n\n/** Keeps categories rows in memory, for tests and for trying the services without a database. */\nexport class MemoryCategoryRepository implements CategoryRepository {\n  private readonly rows = new Map<string, Category>()\n  private nextId = 1\n\n  private visible(): Category[] {\n    return [...this.rows.values()].filter((row) => true).sort((a, b) => compareKeys(keyOf(a), keyOf(b)))\n  }\n\n  /** The row with this primary key, or null. */\n  async findById(id: number): Promise<Category | null> {\n    return this.visible().find((row) => row.id === id) ?? null\n  }\n\n  /** At most `limit` rows from `offset`, by primary key, and how many there are. */\n  async list(offset: number = 0, limit: number = 50): Promise<Page<Category>> {\n    const rows = this.visible()\n    return { items: rows.slice(offset, offset + limit), total: rows.length, offset, limit }\n  }\n\n  /** The row with this name, or null. */\n  async findByName(name: string): Promise<Category | null> {\n    return this.visible().find((row) => row.name === name) ?? null\n  }\n\n  /** Stores a new row; the values the database fills are read back. */\n  async insert(entity: Category): Promise<Category> {\n    if (entity.id === undefined) entity.id = this.nextId++\n    this.rows.set(JSON.stringify(keyOf(entity)), entity)\n    return entity\n  }\n\n  /** Stores the changes made to a row read from this repository. */\n  async update(entity: Category): Promise<Category> {\n    this.rows.set(JSON.stringify(keyOf(entity)), entity)\n    return entity\n  }\n\n  /** Removes a row read from this repository. */\n  async delete(entity: Category): Promise<void> {\n    this.rows.delete(JSON.stringify(keyOf(entity)))\n  }\n}\n",
+  "src/repositories/customer.ts": "/** Repository of the \"customers\" table: reads and writes rows, and decides nothing. */\nimport { QueryFailedError, type EntityManager } from 'typeorm'\nimport { Customer } from '../entities/customer.js'\nimport { ConflictError } from '../errors.js'\nimport type { Page } from '../paging.js'\n\n/** Where customers rows are kept. Services depend only on this interface. */\nexport interface CustomerRepository {\n  findById(id: number): Promise<Customer | null>\n  list(offset?: number, limit?: number): Promise<Page<Customer>>\n  findByEmail(email: string): Promise<Customer | null>\n  insert(entity: Customer): Promise<Customer>\n  update(entity: Customer): Promise<Customer>\n  delete(entity: Customer): Promise<void>\n}\n\n/** The key of a row, as a list of its key values. */\nfunction keyOf(row: Customer): unknown[] {\n  return [row.id]\n}\n\n/** Orders two keys value by value. */\nfunction compareKeys(a: unknown[], b: unknown[]): number {\n  for (let index = 0; index < a.length; index++) {\n    const x = a[index] as number | string\n    const y = b[index] as number | string\n    if (x < y) return -1\n    if (x > y) return 1\n  }\n  return 0\n}\n\n/** Keeps customers rows in the database, through an EntityManager. It never commits: the transaction belongs to the manager it was given. */\nexport class SqlCustomerRepository implements CustomerRepository {\n  constructor(private readonly manager: EntityManager) {}\n\n  /** The row with this primary key, or null. */\n  async findById(id: number): Promise<Customer | null> {\n    return this.manager.findOne(Customer, { where: { id } })\n  }\n\n  /** At most `limit` rows from `offset`, by primary key, and how many there are. */\n  async list(offset: number = 0, limit: number = 50): Promise<Page<Customer>> {\n    const [items, total] = await this.manager.findAndCount(Customer, { order: { id: 'ASC' }, skip: offset, take: limit })\n    return { items, total, offset, limit }\n  }\n\n  /** The row with this email, or null. */\n  async findByEmail(email: string): Promise<Customer | null> {\n    return this.manager.findOne(Customer, { where: { email } })\n  }\n\n  /** Stores a new row; the values the database fills are read back. */\n  async insert(entity: Customer): Promise<Customer> {\n    try {\n      await this.manager.insert(Customer, entity)\n    } catch (error) {\n      if (error instanceof QueryFailedError) throw new ConflictError('Customer', `the database refused the change: ${error.message}`)\n      throw error\n    }\n    // The driver returns a new 64-bit key as text\n    entity.id = Number(entity.id)\n    return entity\n  }\n\n  /** Stores the changes made to a row read from this repository. */\n  async update(entity: Customer): Promise<Customer> {\n    try {\n      await this.manager.save(Customer, entity)\n    } catch (error) {\n      if (error instanceof QueryFailedError) throw new ConflictError('Customer', `the database refused the change: ${error.message}`)\n      throw error\n    }\n    return entity\n  }\n\n  /** Removes a row read from this repository. */\n  async delete(entity: Customer): Promise<void> {\n    try {\n      await this.manager.delete(Customer, { id: entity.id })\n    } catch (error) {\n      if (error instanceof QueryFailedError) throw new ConflictError('Customer', `the database refused the change: ${error.message}`)\n      throw error\n    }\n  }\n}\n\n/** Keeps customers rows in memory, for tests and for trying the services without a database. */\nexport class MemoryCustomerRepository implements CustomerRepository {\n  private readonly rows = new Map<string, Customer>()\n  private nextId = 1\n\n  private visible(): Customer[] {\n    return [...this.rows.values()].filter((row) => true).sort((a, b) => compareKeys(keyOf(a), keyOf(b)))\n  }\n\n  /** The row with this primary key, or null. */\n  async findById(id: number): Promise<Customer | null> {\n    return this.visible().find((row) => row.id === id) ?? null\n  }\n\n  /** At most `limit` rows from `offset`, by primary key, and how many there are. */\n  async list(offset: number = 0, limit: number = 50): Promise<Page<Customer>> {\n    const rows = this.visible()\n    return { items: rows.slice(offset, offset + limit), total: rows.length, offset, limit }\n  }\n\n  /** The row with this email, or null. */\n  async findByEmail(email: string): Promise<Customer | null> {\n    return this.visible().find((row) => row.email === email) ?? null\n  }\n\n  /** Stores a new row; the values the database fills are read back. */\n  async insert(entity: Customer): Promise<Customer> {\n    if (entity.id === undefined) entity.id = this.nextId++\n    if (entity.createdAt === undefined) entity.createdAt = new Date()\n    this.rows.set(JSON.stringify(keyOf(entity)), entity)\n    return entity\n  }\n\n  /** Stores the changes made to a row read from this repository. */\n  async update(entity: Customer): Promise<Customer> {\n    this.rows.set(JSON.stringify(keyOf(entity)), entity)\n    return entity\n  }\n\n  /** Removes a row read from this repository. */\n  async delete(entity: Customer): Promise<void> {\n    this.rows.delete(JSON.stringify(keyOf(entity)))\n  }\n}\n",
+  "src/repositories/order-line.ts": "/** Repository of the \"order_lines\" table: reads and writes rows, and decides nothing. */\nimport { QueryFailedError, type EntityManager } from 'typeorm'\nimport { OrderLine } from '../entities/order-line.js'\nimport { ConflictError } from '../errors.js'\nimport type { Page } from '../paging.js'\n\n/** Where order_lines rows are kept. Services depend only on this interface. */\nexport interface OrderLineRepository {\n  findByOrderIdAndLine(orderId: number, line: number): Promise<OrderLine | null>\n  list(offset?: number, limit?: number): Promise<Page<OrderLine>>\n  listByOrderId(orderId: number): Promise<OrderLine[]>\n  listByProductId(productId: number): Promise<OrderLine[]>\n  insert(entity: OrderLine): Promise<OrderLine>\n  update(entity: OrderLine): Promise<OrderLine>\n  delete(entity: OrderLine): Promise<void>\n}\n\n/** The key of a row, as a list of its key values. */\nfunction keyOf(row: OrderLine): unknown[] {\n  return [row.orderId, row.line]\n}\n\n/** Orders two keys value by value. */\nfunction compareKeys(a: unknown[], b: unknown[]): number {\n  for (let index = 0; index < a.length; index++) {\n    const x = a[index] as number | string\n    const y = b[index] as number | string\n    if (x < y) return -1\n    if (x > y) return 1\n  }\n  return 0\n}\n\n/** Keeps order_lines rows in the database, through an EntityManager. It never commits: the transaction belongs to the manager it was given. */\nexport class SqlOrderLineRepository implements OrderLineRepository {\n  constructor(private readonly manager: EntityManager) {}\n\n  /** The row with this primary key, or null. */\n  async findByOrderIdAndLine(orderId: number, line: number): Promise<OrderLine | null> {\n    return this.manager.findOne(OrderLine, { where: { orderId, line } })\n  }\n\n  /** At most `limit` rows from `offset`, by primary key, and how many there are. */\n  async list(offset: number = 0, limit: number = 50): Promise<Page<OrderLine>> {\n    const [items, total] = await this.manager.findAndCount(OrderLine, { order: { orderId: 'ASC', line: 'ASC' }, skip: offset, take: limit })\n    return { items, total, offset, limit }\n  }\n\n  /** Rows with this order_id, by primary key. */\n  async listByOrderId(orderId: number): Promise<OrderLine[]> {\n    return this.manager.find(OrderLine, { where: { orderId }, order: { orderId: 'ASC', line: 'ASC' } })\n  }\n\n  /** Rows with this product_id, by primary key. */\n  async listByProductId(productId: number): Promise<OrderLine[]> {\n    return this.manager.find(OrderLine, { where: { productId }, order: { orderId: 'ASC', line: 'ASC' } })\n  }\n\n  /** Stores a new row; the values the database fills are read back. */\n  async insert(entity: OrderLine): Promise<OrderLine> {\n    try {\n      await this.manager.insert(OrderLine, entity)\n    } catch (error) {\n      if (error instanceof QueryFailedError) throw new ConflictError('OrderLine', `the database refused the change: ${error.message}`)\n      throw error\n    }\n    return entity\n  }\n\n  /** Stores the changes made to a row read from this repository. */\n  async update(entity: OrderLine): Promise<OrderLine> {\n    try {\n      await this.manager.save(OrderLine, entity)\n    } catch (error) {\n      if (error instanceof QueryFailedError) throw new ConflictError('OrderLine', `the database refused the change: ${error.message}`)\n      throw error\n    }\n    return entity\n  }\n\n  /** Removes a row read from this repository. */\n  async delete(entity: OrderLine): Promise<void> {\n    try {\n      await this.manager.delete(OrderLine, { orderId: entity.orderId, line: entity.line })\n    } catch (error) {\n      if (error instanceof QueryFailedError) throw new ConflictError('OrderLine', `the database refused the change: ${error.message}`)\n      throw error\n    }\n  }\n}\n\n/** Keeps order_lines rows in memory, for tests and for trying the services without a database. */\nexport class MemoryOrderLineRepository implements OrderLineRepository {\n  private readonly rows = new Map<string, OrderLine>()\n\n  private visible(): OrderLine[] {\n    return [...this.rows.values()].filter((row) => true).sort((a, b) => compareKeys(keyOf(a), keyOf(b)))\n  }\n\n  /** The row with this primary key, or null. */\n  async findByOrderIdAndLine(orderId: number, line: number): Promise<OrderLine | null> {\n    return this.visible().find((row) => row.orderId === orderId && row.line === line) ?? null\n  }\n\n  /** At most `limit` rows from `offset`, by primary key, and how many there are. */\n  async list(offset: number = 0, limit: number = 50): Promise<Page<OrderLine>> {\n    const rows = this.visible()\n    return { items: rows.slice(offset, offset + limit), total: rows.length, offset, limit }\n  }\n\n  /** Rows with this order_id, by primary key. */\n  async listByOrderId(orderId: number): Promise<OrderLine[]> {\n    return this.visible().filter((row) => row.orderId === orderId)\n  }\n\n  /** Rows with this product_id, by primary key. */\n  async listByProductId(productId: number): Promise<OrderLine[]> {\n    return this.visible().filter((row) => row.productId === productId)\n  }\n\n  /** Stores a new row; the values the database fills are read back. */\n  async insert(entity: OrderLine): Promise<OrderLine> {\n    this.rows.set(JSON.stringify(keyOf(entity)), entity)\n    return entity\n  }\n\n  /** Stores the changes made to a row read from this repository. */\n  async update(entity: OrderLine): Promise<OrderLine> {\n    this.rows.set(JSON.stringify(keyOf(entity)), entity)\n    return entity\n  }\n\n  /** Removes a row read from this repository. */\n  async delete(entity: OrderLine): Promise<void> {\n    this.rows.delete(JSON.stringify(keyOf(entity)))\n  }\n}\n",
+  "src/repositories/order.ts": "/** Repository of the \"orders\" table: reads and writes rows, and decides nothing. */\nimport { QueryFailedError, type EntityManager } from 'typeorm'\nimport { Order } from '../entities/order.js'\nimport { ConflictError } from '../errors.js'\nimport type { Page } from '../paging.js'\n\n/** Where orders rows are kept. Services depend only on this interface. */\nexport interface OrderRepository {\n  findById(id: number): Promise<Order | null>\n  list(offset?: number, limit?: number): Promise<Page<Order>>\n  listByCustomerId(customerId: number): Promise<Order[]>\n  insert(entity: Order): Promise<Order>\n  update(entity: Order): Promise<Order>\n  delete(entity: Order): Promise<void>\n}\n\n/** The key of a row, as a list of its key values. */\nfunction keyOf(row: Order): unknown[] {\n  return [row.id]\n}\n\n/** Orders two keys value by value. */\nfunction compareKeys(a: unknown[], b: unknown[]): number {\n  for (let index = 0; index < a.length; index++) {\n    const x = a[index] as number | string\n    const y = b[index] as number | string\n    if (x < y) return -1\n    if (x > y) return 1\n  }\n  return 0\n}\n\n/** Keeps orders rows in the database, through an EntityManager. It never commits: the transaction belongs to the manager it was given. */\nexport class SqlOrderRepository implements OrderRepository {\n  constructor(private readonly manager: EntityManager) {}\n\n  /** The row with this primary key, or null. */\n  async findById(id: number): Promise<Order | null> {\n    return this.manager.findOne(Order, { where: { id } })\n  }\n\n  /** At most `limit` rows from `offset`, by primary key, and how many there are. */\n  async list(offset: number = 0, limit: number = 50): Promise<Page<Order>> {\n    const [items, total] = await this.manager.findAndCount(Order, { order: { id: 'ASC' }, skip: offset, take: limit })\n    return { items, total, offset, limit }\n  }\n\n  /** Rows with this customer_id, by primary key. */\n  async listByCustomerId(customerId: number): Promise<Order[]> {\n    return this.manager.find(Order, { where: { customerId }, order: { id: 'ASC' } })\n  }\n\n  /** Stores a new row; the values the database fills are read back. */\n  async insert(entity: Order): Promise<Order> {\n    try {\n      await this.manager.insert(Order, entity)\n    } catch (error) {\n      if (error instanceof QueryFailedError) throw new ConflictError('Order', `the database refused the change: ${error.message}`)\n      throw error\n    }\n    // The driver returns a new 64-bit key as text\n    entity.id = Number(entity.id)\n    return entity\n  }\n\n  /** Stores the changes made to a row read from this repository. */\n  async update(entity: Order): Promise<Order> {\n    try {\n      await this.manager.save(Order, entity)\n    } catch (error) {\n      if (error instanceof QueryFailedError) throw new ConflictError('Order', `the database refused the change: ${error.message}`)\n      throw error\n    }\n    return entity\n  }\n\n  /** Removes a row read from this repository. */\n  async delete(entity: Order): Promise<void> {\n    try {\n      await this.manager.delete(Order, { id: entity.id })\n    } catch (error) {\n      if (error instanceof QueryFailedError) throw new ConflictError('Order', `the database refused the change: ${error.message}`)\n      throw error\n    }\n  }\n}\n\n/** Keeps orders rows in memory, for tests and for trying the services without a database. */\nexport class MemoryOrderRepository implements OrderRepository {\n  private readonly rows = new Map<string, Order>()\n  private nextId = 1\n\n  private visible(): Order[] {\n    return [...this.rows.values()].filter((row) => true).sort((a, b) => compareKeys(keyOf(a), keyOf(b)))\n  }\n\n  /** The row with this primary key, or null. */\n  async findById(id: number): Promise<Order | null> {\n    return this.visible().find((row) => row.id === id) ?? null\n  }\n\n  /** At most `limit` rows from `offset`, by primary key, and how many there are. */\n  async list(offset: number = 0, limit: number = 50): Promise<Page<Order>> {\n    const rows = this.visible()\n    return { items: rows.slice(offset, offset + limit), total: rows.length, offset, limit }\n  }\n\n  /** Rows with this customer_id, by primary key. */\n  async listByCustomerId(customerId: number): Promise<Order[]> {\n    return this.visible().filter((row) => row.customerId === customerId)\n  }\n\n  /** Stores a new row; the values the database fills are read back. */\n  async insert(entity: Order): Promise<Order> {\n    if (entity.id === undefined) entity.id = this.nextId++\n    if (entity.placedAt === undefined) entity.placedAt = new Date()\n    this.rows.set(JSON.stringify(keyOf(entity)), entity)\n    return entity\n  }\n\n  /** Stores the changes made to a row read from this repository. */\n  async update(entity: Order): Promise<Order> {\n    this.rows.set(JSON.stringify(keyOf(entity)), entity)\n    return entity\n  }\n\n  /** Removes a row read from this repository. */\n  async delete(entity: Order): Promise<void> {\n    this.rows.delete(JSON.stringify(keyOf(entity)))\n  }\n}\n",
+  "src/repositories/product-tag.ts": "/** Repository of the \"product_tags\" table: reads and writes rows, and decides nothing. */\nimport { QueryFailedError, type EntityManager } from 'typeorm'\nimport { ProductTag } from '../entities/product-tag.js'\nimport { ConflictError } from '../errors.js'\nimport type { Page } from '../paging.js'\n\n/** Where product_tags rows are kept. Services depend only on this interface. */\nexport interface ProductTagRepository {\n  findByProductIdAndTagId(productId: number, tagId: number): Promise<ProductTag | null>\n  list(offset?: number, limit?: number): Promise<Page<ProductTag>>\n  listByProductId(productId: number): Promise<ProductTag[]>\n  listByTagId(tagId: number): Promise<ProductTag[]>\n  insert(entity: ProductTag): Promise<ProductTag>\n  delete(entity: ProductTag): Promise<void>\n}\n\n/** The key of a row, as a list of its key values. */\nfunction keyOf(row: ProductTag): unknown[] {\n  return [row.productId, row.tagId]\n}\n\n/** Orders two keys value by value. */\nfunction compareKeys(a: unknown[], b: unknown[]): number {\n  for (let index = 0; index < a.length; index++) {\n    const x = a[index] as number | string\n    const y = b[index] as number | string\n    if (x < y) return -1\n    if (x > y) return 1\n  }\n  return 0\n}\n\n/** Keeps product_tags rows in the database, through an EntityManager. It never commits: the transaction belongs to the manager it was given. */\nexport class SqlProductTagRepository implements ProductTagRepository {\n  constructor(private readonly manager: EntityManager) {}\n\n  /** The row with this primary key, or null. */\n  async findByProductIdAndTagId(productId: number, tagId: number): Promise<ProductTag | null> {\n    return this.manager.findOne(ProductTag, { where: { productId, tagId } })\n  }\n\n  /** At most `limit` rows from `offset`, by primary key, and how many there are. */\n  async list(offset: number = 0, limit: number = 50): Promise<Page<ProductTag>> {\n    const [items, total] = await this.manager.findAndCount(ProductTag, { order: { productId: 'ASC', tagId: 'ASC' }, skip: offset, take: limit })\n    return { items, total, offset, limit }\n  }\n\n  /** Rows with this product_id, by primary key. */\n  async listByProductId(productId: number): Promise<ProductTag[]> {\n    return this.manager.find(ProductTag, { where: { productId }, order: { productId: 'ASC', tagId: 'ASC' } })\n  }\n\n  /** Rows with this tag_id, by primary key. */\n  async listByTagId(tagId: number): Promise<ProductTag[]> {\n    return this.manager.find(ProductTag, { where: { tagId }, order: { productId: 'ASC', tagId: 'ASC' } })\n  }\n\n  /** Stores a new row; the values the database fills are read back. */\n  async insert(entity: ProductTag): Promise<ProductTag> {\n    try {\n      await this.manager.insert(ProductTag, entity)\n    } catch (error) {\n      if (error instanceof QueryFailedError) throw new ConflictError('ProductTag', `the database refused the change: ${error.message}`)\n      throw error\n    }\n    return entity\n  }\n\n  /** Removes a row read from this repository. */\n  async delete(entity: ProductTag): Promise<void> {\n    try {\n      await this.manager.delete(ProductTag, { productId: entity.productId, tagId: entity.tagId })\n    } catch (error) {\n      if (error instanceof QueryFailedError) throw new ConflictError('ProductTag', `the database refused the change: ${error.message}`)\n      throw error\n    }\n  }\n}\n\n/** Keeps product_tags rows in memory, for tests and for trying the services without a database. */\nexport class MemoryProductTagRepository implements ProductTagRepository {\n  private readonly rows = new Map<string, ProductTag>()\n\n  private visible(): ProductTag[] {\n    return [...this.rows.values()].filter((row) => true).sort((a, b) => compareKeys(keyOf(a), keyOf(b)))\n  }\n\n  /** The row with this primary key, or null. */\n  async findByProductIdAndTagId(productId: number, tagId: number): Promise<ProductTag | null> {\n    return this.visible().find((row) => row.productId === productId && row.tagId === tagId) ?? null\n  }\n\n  /** At most `limit` rows from `offset`, by primary key, and how many there are. */\n  async list(offset: number = 0, limit: number = 50): Promise<Page<ProductTag>> {\n    const rows = this.visible()\n    return { items: rows.slice(offset, offset + limit), total: rows.length, offset, limit }\n  }\n\n  /** Rows with this product_id, by primary key. */\n  async listByProductId(productId: number): Promise<ProductTag[]> {\n    return this.visible().filter((row) => row.productId === productId)\n  }\n\n  /** Rows with this tag_id, by primary key. */\n  async listByTagId(tagId: number): Promise<ProductTag[]> {\n    return this.visible().filter((row) => row.tagId === tagId)\n  }\n\n  /** Stores a new row; the values the database fills are read back. */\n  async insert(entity: ProductTag): Promise<ProductTag> {\n    this.rows.set(JSON.stringify(keyOf(entity)), entity)\n    return entity\n  }\n\n  /** Removes a row read from this repository. */\n  async delete(entity: ProductTag): Promise<void> {\n    this.rows.delete(JSON.stringify(keyOf(entity)))\n  }\n}\n",
+  "src/repositories/product.ts": "/** Repository of the \"products\" table: reads and writes rows, and decides nothing. */\nimport { IsNull, QueryFailedError, type EntityManager } from 'typeorm'\nimport { Product } from '../entities/product.js'\nimport { ConflictError } from '../errors.js'\nimport type { Page } from '../paging.js'\n\n/** Where products rows are kept. Services depend only on this interface. */\nexport interface ProductRepository {\n  findById(id: number): Promise<Product | null>\n  list(offset?: number, limit?: number): Promise<Page<Product>>\n  listByCategoryId(categoryId: number): Promise<Product[]>\n  findAllByStatus(status: string): Promise<Product[]>\n  insert(entity: Product): Promise<Product>\n  update(entity: Product): Promise<Product>\n  delete(entity: Product): Promise<void>\n}\n\n/** The key of a row, as a list of its key values. */\nfunction keyOf(row: Product): unknown[] {\n  return [row.id]\n}\n\n/** Orders two keys value by value. */\nfunction compareKeys(a: unknown[], b: unknown[]): number {\n  for (let index = 0; index < a.length; index++) {\n    const x = a[index] as number | string\n    const y = b[index] as number | string\n    if (x < y) return -1\n    if (x > y) return 1\n  }\n  return 0\n}\n\n/** Keeps products rows in the database, through an EntityManager. It never commits: the transaction belongs to the manager it was given. */\nexport class SqlProductRepository implements ProductRepository {\n  constructor(private readonly manager: EntityManager) {}\n\n  /** The row with this primary key, or null. */\n  async findById(id: number): Promise<Product | null> {\n    return this.manager.findOne(Product, { where: { id, deletedAt: IsNull() } })\n  }\n\n  /** At most `limit` rows from `offset`, by primary key, and how many there are. */\n  async list(offset: number = 0, limit: number = 50): Promise<Page<Product>> {\n    const [items, total] = await this.manager.findAndCount(Product, { where: { deletedAt: IsNull() }, order: { id: 'ASC' }, skip: offset, take: limit })\n    return { items, total, offset, limit }\n  }\n\n  /** Rows with this category_id, by primary key. */\n  async listByCategoryId(categoryId: number): Promise<Product[]> {\n    return this.manager.find(Product, { where: { categoryId, deletedAt: IsNull() }, order: { id: 'ASC' } })\n  }\n\n  /** Rows with this status, by primary key. */\n  async findAllByStatus(status: string): Promise<Product[]> {\n    return this.manager.find(Product, { where: { status, deletedAt: IsNull() }, order: { id: 'ASC' } })\n  }\n\n  /** Stores a new row; the values the database fills are read back. */\n  async insert(entity: Product): Promise<Product> {\n    try {\n      await this.manager.insert(Product, entity)\n    } catch (error) {\n      if (error instanceof QueryFailedError) throw new ConflictError('Product', `the database refused the change: ${error.message}`)\n      throw error\n    }\n    // The driver returns a new 64-bit key as text\n    entity.id = Number(entity.id)\n    return entity\n  }\n\n  /** Stores the changes made to a row read from this repository. */\n  async update(entity: Product): Promise<Product> {\n    try {\n      await this.manager.save(Product, entity)\n    } catch (error) {\n      if (error instanceof QueryFailedError) throw new ConflictError('Product', `the database refused the change: ${error.message}`)\n      throw error\n    }\n    return entity\n  }\n\n  /** Removes a row read from this repository. */\n  async delete(entity: Product): Promise<void> {\n    try {\n      await this.manager.delete(Product, { id: entity.id })\n    } catch (error) {\n      if (error instanceof QueryFailedError) throw new ConflictError('Product', `the database refused the change: ${error.message}`)\n      throw error\n    }\n  }\n}\n\n/** Keeps products rows in memory, for tests and for trying the services without a database. */\nexport class MemoryProductRepository implements ProductRepository {\n  private readonly rows = new Map<string, Product>()\n  private nextId = 1\n\n  private visible(): Product[] {\n    return [...this.rows.values()].filter((row) => row.deletedAt == null).sort((a, b) => compareKeys(keyOf(a), keyOf(b)))\n  }\n\n  /** The row with this primary key, or null. */\n  async findById(id: number): Promise<Product | null> {\n    return this.visible().find((row) => row.id === id) ?? null\n  }\n\n  /** At most `limit` rows from `offset`, by primary key, and how many there are. */\n  async list(offset: number = 0, limit: number = 50): Promise<Page<Product>> {\n    const rows = this.visible()\n    return { items: rows.slice(offset, offset + limit), total: rows.length, offset, limit }\n  }\n\n  /** Rows with this category_id, by primary key. */\n  async listByCategoryId(categoryId: number): Promise<Product[]> {\n    return this.visible().filter((row) => row.categoryId === categoryId)\n  }\n\n  /** Rows with this status, by primary key. */\n  async findAllByStatus(status: string): Promise<Product[]> {\n    return this.visible().filter((row) => row.status === status)\n  }\n\n  /** Stores a new row; the values the database fills are read back. */\n  async insert(entity: Product): Promise<Product> {\n    if (entity.id === undefined) entity.id = this.nextId++\n    if (entity.version === undefined) entity.version = 1\n    this.rows.set(JSON.stringify(keyOf(entity)), entity)\n    return entity\n  }\n\n  /** Stores the changes made to a row read from this repository. */\n  async update(entity: Product): Promise<Product> {\n    this.rows.set(JSON.stringify(keyOf(entity)), entity)\n    return entity\n  }\n\n  /** Removes a row read from this repository. */\n  async delete(entity: Product): Promise<void> {\n    this.rows.delete(JSON.stringify(keyOf(entity)))\n  }\n}\n",
+  "src/repositories/tag.ts": "/** Repository of the \"tags\" table: reads and writes rows, and decides nothing. */\nimport { QueryFailedError, type EntityManager } from 'typeorm'\nimport { Tag } from '../entities/tag.js'\nimport { ConflictError } from '../errors.js'\nimport type { Page } from '../paging.js'\n\n/** Where tags rows are kept. Services depend only on this interface. */\nexport interface TagRepository {\n  findById(id: number): Promise<Tag | null>\n  list(offset?: number, limit?: number): Promise<Page<Tag>>\n  insert(entity: Tag): Promise<Tag>\n  update(entity: Tag): Promise<Tag>\n  delete(entity: Tag): Promise<void>\n}\n\n/** The key of a row, as a list of its key values. */\nfunction keyOf(row: Tag): unknown[] {\n  return [row.id]\n}\n\n/** Orders two keys value by value. */\nfunction compareKeys(a: unknown[], b: unknown[]): number {\n  for (let index = 0; index < a.length; index++) {\n    const x = a[index] as number | string\n    const y = b[index] as number | string\n    if (x < y) return -1\n    if (x > y) return 1\n  }\n  return 0\n}\n\n/** Keeps tags rows in the database, through an EntityManager. It never commits: the transaction belongs to the manager it was given. */\nexport class SqlTagRepository implements TagRepository {\n  constructor(private readonly manager: EntityManager) {}\n\n  /** The row with this primary key, or null. */\n  async findById(id: number): Promise<Tag | null> {\n    return this.manager.findOne(Tag, { where: { id } })\n  }\n\n  /** At most `limit` rows from `offset`, by primary key, and how many there are. */\n  async list(offset: number = 0, limit: number = 50): Promise<Page<Tag>> {\n    const [items, total] = await this.manager.findAndCount(Tag, { order: { id: 'ASC' }, skip: offset, take: limit })\n    return { items, total, offset, limit }\n  }\n\n  /** Stores a new row; the values the database fills are read back. */\n  async insert(entity: Tag): Promise<Tag> {\n    try {\n      await this.manager.insert(Tag, entity)\n    } catch (error) {\n      if (error instanceof QueryFailedError) throw new ConflictError('Tag', `the database refused the change: ${error.message}`)\n      throw error\n    }\n    // The driver returns a new 64-bit key as text\n    entity.id = Number(entity.id)\n    return entity\n  }\n\n  /** Stores the changes made to a row read from this repository. */\n  async update(entity: Tag): Promise<Tag> {\n    try {\n      await this.manager.save(Tag, entity)\n    } catch (error) {\n      if (error instanceof QueryFailedError) throw new ConflictError('Tag', `the database refused the change: ${error.message}`)\n      throw error\n    }\n    return entity\n  }\n\n  /** Removes a row read from this repository. */\n  async delete(entity: Tag): Promise<void> {\n    try {\n      await this.manager.delete(Tag, { id: entity.id })\n    } catch (error) {\n      if (error instanceof QueryFailedError) throw new ConflictError('Tag', `the database refused the change: ${error.message}`)\n      throw error\n    }\n  }\n}\n\n/** Keeps tags rows in memory, for tests and for trying the services without a database. */\nexport class MemoryTagRepository implements TagRepository {\n  private readonly rows = new Map<string, Tag>()\n  private nextId = 1\n\n  private visible(): Tag[] {\n    return [...this.rows.values()].filter((row) => true).sort((a, b) => compareKeys(keyOf(a), keyOf(b)))\n  }\n\n  /** The row with this primary key, or null. */\n  async findById(id: number): Promise<Tag | null> {\n    return this.visible().find((row) => row.id === id) ?? null\n  }\n\n  /** At most `limit` rows from `offset`, by primary key, and how many there are. */\n  async list(offset: number = 0, limit: number = 50): Promise<Page<Tag>> {\n    const rows = this.visible()\n    return { items: rows.slice(offset, offset + limit), total: rows.length, offset, limit }\n  }\n\n  /** Stores a new row; the values the database fills are read back. */\n  async insert(entity: Tag): Promise<Tag> {\n    if (entity.id === undefined) entity.id = this.nextId++\n    this.rows.set(JSON.stringify(keyOf(entity)), entity)\n    return entity\n  }\n\n  /** Stores the changes made to a row read from this repository. */\n  async update(entity: Tag): Promise<Tag> {\n    this.rows.set(JSON.stringify(keyOf(entity)), entity)\n    return entity\n  }\n\n  /** Removes a row read from this repository. */\n  async delete(entity: Tag): Promise<void> {\n    this.rows.delete(JSON.stringify(keyOf(entity)))\n  }\n}\n",
+  "src/unit-of-work.ts": "/** The repositories of every table, and the transaction of each service operation. Each service operation runs in `transaction()`: committed when it ends, rolled back when it fails. */\nimport type { EntityManager } from 'typeorm'\nimport { MemoryAuditLogRepository, SqlAuditLogRepository, type AuditLogRepository } from './repositories/audit-log.js'\nimport { MemoryCategoryRepository, SqlCategoryRepository, type CategoryRepository } from './repositories/category.js'\nimport { MemoryCustomerRepository, SqlCustomerRepository, type CustomerRepository } from './repositories/customer.js'\nimport { MemoryOrderRepository, SqlOrderRepository, type OrderRepository } from './repositories/order.js'\nimport { MemoryOrderLineRepository, SqlOrderLineRepository, type OrderLineRepository } from './repositories/order-line.js'\nimport { MemoryProductRepository, SqlProductRepository, type ProductRepository } from './repositories/product.js'\nimport { MemoryProductTagRepository, SqlProductTagRepository, type ProductTagRepository } from './repositories/product-tag.js'\nimport { MemoryTagRepository, SqlTagRepository, type TagRepository } from './repositories/tag.js'\n\n/** What services depend on: a repository per table and a transaction. */\nexport interface UnitOfWork {\n  readonly customers: CustomerRepository\n  readonly categories: CategoryRepository\n  readonly products: ProductRepository\n  readonly orders: OrderRepository\n  readonly orderLines: OrderLineRepository\n  readonly tags: TagRepository\n  readonly productTags: ProductTagRepository\n  readonly auditLog: AuditLogRepository\n  /** Runs `work` with the repositories of the transaction; commits when it ends, rolls back when it throws. */\n  transaction<T>(work: (uow: UnitOfWork) => Promise<T>): Promise<T>\n}\n\n/** The repositories over one EntityManager: the data source's, or the one of a transaction. */\nexport class SqlUnitOfWork implements UnitOfWork {\n  readonly customers: CustomerRepository\n  readonly categories: CategoryRepository\n  readonly products: ProductRepository\n  readonly orders: OrderRepository\n  readonly orderLines: OrderLineRepository\n  readonly tags: TagRepository\n  readonly productTags: ProductTagRepository\n  readonly auditLog: AuditLogRepository\n\n  constructor(readonly manager: EntityManager) {\n    this.customers = new SqlCustomerRepository(manager)\n    this.categories = new SqlCategoryRepository(manager)\n    this.products = new SqlProductRepository(manager)\n    this.orders = new SqlOrderRepository(manager)\n    this.orderLines = new SqlOrderLineRepository(manager)\n    this.tags = new SqlTagRepository(manager)\n    this.productTags = new SqlProductTagRepository(manager)\n    this.auditLog = new SqlAuditLogRepository(manager)\n  }\n\n  /** Runs `work` in a transaction of its own, or in the one already open. */\n  transaction<T>(work: (uow: UnitOfWork) => Promise<T>): Promise<T> {\n    if (this.manager.queryRunner?.isTransactionActive) return work(this)\n    return this.manager.transaction((manager) => work(new SqlUnitOfWork(manager)))\n  }\n}\n\n/** The in-memory repositories, for tests and for trying the services without a database. */\nexport class MemoryUnitOfWork implements UnitOfWork {\n  readonly customers = new MemoryCustomerRepository()\n  readonly categories = new MemoryCategoryRepository()\n  readonly products = new MemoryProductRepository()\n  readonly orders = new MemoryOrderRepository()\n  readonly orderLines = new MemoryOrderLineRepository()\n  readonly tags = new MemoryTagRepository()\n  readonly productTags = new MemoryProductTagRepository()\n  readonly auditLog = new MemoryAuditLogRepository()\n\n  /** Memory has no transactions: changes are kept as they are made. */\n  transaction<T>(work: (uow: UnitOfWork) => Promise<T>): Promise<T> {\n    return work(this)\n  }\n}\n",
+  "test/category.test.ts": "/** Tests of the \"categories\" table. */\nimport { describe, expect, it } from 'vitest'\nimport { useTestDatabase } from './database.js'\nimport { addCategory } from './factories.js'\n\n/** The repositories over the test database, opened empty for every test */\nconst sqlUow = useTestDatabase()\n\ndescribe('categories repository', () => {\n  it('is stored and read back', async () => {\n    const uow = sqlUow()\n    const stored = await addCategory(uow, 1)\n    const found = await uow.categories.findById(stored.id)\n    expect(found).not.toBeNull()\n    expect(found!.id).toEqual(stored.id)\n    expect(await uow.categories.findByName(stored.name)).not.toBeNull()\n  })\n\n  it('lists rows by key', async () => {\n    const uow = sqlUow()\n    await addCategory(uow, 1)\n    await addCategory(uow, 2)\n    const page = await uow.categories.list(0, 1)\n    expect(page.total).toBe(2)\n    expect(page.items).toHaveLength(1)\n  })\n\n  it('is deleted', async () => {\n    const uow = sqlUow()\n    const stored = await addCategory(uow, 1)\n    await uow.categories.delete(stored)\n    expect(await uow.categories.findById(stored.id)).toBeNull()\n  })\n})\n",
+  "test/customer.test.ts": "/** Tests of the \"customers\" table. */\nimport { describe, expect, it } from 'vitest'\nimport { useTestDatabase } from './database.js'\nimport { addCustomer } from './factories.js'\n\n/** The repositories over the test database, opened empty for every test */\nconst sqlUow = useTestDatabase()\n\ndescribe('customers repository', () => {\n  it('is stored and read back', async () => {\n    const uow = sqlUow()\n    const stored = await addCustomer(uow, 1)\n    const found = await uow.customers.findById(stored.id)\n    expect(found).not.toBeNull()\n    expect(found!.id).toEqual(stored.id)\n    expect(await uow.customers.findByEmail(stored.email)).not.toBeNull()\n  })\n\n  it('lists rows by key', async () => {\n    const uow = sqlUow()\n    await addCustomer(uow, 1)\n    await addCustomer(uow, 2)\n    const page = await uow.customers.list(0, 1)\n    expect(page.total).toBe(2)\n    expect(page.items).toHaveLength(1)\n  })\n\n  it('is deleted', async () => {\n    const uow = sqlUow()\n    const stored = await addCustomer(uow, 1)\n    await uow.customers.delete(stored)\n    expect(await uow.customers.findById(stored.id)).toBeNull()\n  })\n})\n",
+  "test/database.test.ts": "/** The tests run on the database they were asked to. */\nimport { describe, expect, it } from 'vitest'\nimport { TEST_DATABASE_URL, useTestDatabase } from './database.js'\n\nconst sqlUow = useTestDatabase()\n\n/** The TypeORM driver of each scheme TEST_DATABASE_URL may have */\nconst DRIVERS: Record<string, string> = { postgresql: 'postgres', postgres: 'postgres', mysql: 'mysql', mariadb: 'mysql', sqlite: 'better-sqlite3' }\n\ndescribe('the test database', () => {\n  it('is the one TEST_DATABASE_URL names', () => {\n    expect(sqlUow().manager.connection.options.type).toBe(DRIVERS[TEST_DATABASE_URL.split(':')[0]])\n  })\n})\n",
+  "test/database.ts": "/** The test database: TEST_DATABASE_URL, or SQLite in memory, created empty from the entities for every test. */\nimport type { DataSource } from 'typeorm'\nimport { afterEach, beforeEach } from 'vitest'\nimport { createDataSource } from '../src/data-source.js'\nimport { SqlUnitOfWork } from '../src/unit-of-work.js'\n\nexport const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL || 'sqlite::memory:'\n\n/** Opens the test database, empty, before every test of the file that calls it, and closes it after each; returns the unit of work of the running test. */\nexport function useTestDatabase(): () => SqlUnitOfWork {\n  let dataSource: DataSource | undefined\n  beforeEach(async () => {\n    dataSource = createDataSource(TEST_DATABASE_URL)\n    await dataSource.initialize()\n    // Drops every table and creates them again from the entities\n    await dataSource.synchronize(true)\n  })\n  afterEach(async () => {\n    await dataSource?.destroy()\n  })\n  return () => new SqlUnitOfWork(dataSource!.manager)\n}\n",
+  "test/factories.ts": "/** Rows for the tests: valid values for every column, and the rows they point to. */\nimport { Category } from '../src/entities/category.js'\nimport { Customer } from '../src/entities/customer.js'\nimport { Order } from '../src/entities/order.js'\nimport { OrderLine } from '../src/entities/order-line.js'\nimport { Product } from '../src/entities/product.js'\nimport { ProductTag } from '../src/entities/product-tag.js'\nimport { Tag } from '../src/entities/tag.js'\nimport type { UnitOfWork } from '../src/unit-of-work.js'\n\n/** A valid Customer that is not stored yet; `n` makes its unique values differ, `values` replace any of them. */\nexport function newCustomer(n = 1, values: Partial<Customer> = {}): Customer {\n  return Object.assign(new Customer(), { email: `email-${n}`, passwordHash: `passwordhash-${n}` }, values)\n}\n\n/** A stored Customer. */\nexport async function addCustomer(uow: UnitOfWork, n = 1): Promise<Customer> {\n  return uow.customers.insert(newCustomer(n))\n}\n\n/** A valid Category that is not stored yet; `n` makes its unique values differ, `values` replace any of them. */\nexport function newCategory(n = 1, values: Partial<Category> = {}): Category {\n  return Object.assign(new Category(), { name: `name-${n}` }, values)\n}\n\n/** A stored Category. */\nexport async function addCategory(uow: UnitOfWork, n = 1): Promise<Category> {\n  return uow.categories.insert(newCategory(n))\n}\n\n/** A valid Product that is not stored yet; `n` makes its unique values differ, `values` replace any of them. */\nexport function newProduct(n = 1, values: Partial<Product> = {}): Product {\n  return Object.assign(new Product(), { name: `name-${n}`, price: `${n % 10000}.50`, status: `status-${n}`, version: n, deletedAt: null }, values)\n}\n\n/** A stored Product, with the rows it points to. */\nexport async function addProduct(uow: UnitOfWork, n = 1): Promise<Product> {\n  const parent0 = await addCategory(uow, n)\n  return uow.products.insert(newProduct(n, { categoryId: parent0.id }))\n}\n\n/** A valid Order that is not stored yet; `n` makes its unique values differ, `values` replace any of them. */\nexport function newOrder(n = 1, values: Partial<Order> = {}): Order {\n  return Object.assign(new Order(), {  }, values)\n}\n\n/** A stored Order, with the rows it points to. */\nexport async function addOrder(uow: UnitOfWork, n = 1): Promise<Order> {\n  const parent0 = await addCustomer(uow, n)\n  return uow.orders.insert(newOrder(n, { customerId: parent0.id }))\n}\n\n/** A valid OrderLine that is not stored yet; `n` makes its unique values differ, `values` replace any of them. */\nexport function newOrderLine(n = 1, values: Partial<OrderLine> = {}): OrderLine {\n  return Object.assign(new OrderLine(), { line: n, quantity: n }, values)\n}\n\n/** A stored OrderLine, with the rows it points to. */\nexport async function addOrderLine(uow: UnitOfWork, n = 1): Promise<OrderLine> {\n  const parent0 = await addOrder(uow, n)\n  const parent1 = await addProduct(uow, n)\n  return uow.orderLines.insert(newOrderLine(n, { orderId: parent0.id, productId: parent1.id }))\n}\n\n/** A valid Tag that is not stored yet; `n` makes its unique values differ, `values` replace any of them. */\nexport function newTag(n = 1, values: Partial<Tag> = {}): Tag {\n  return Object.assign(new Tag(), { label: `label-${n}` }, values)\n}\n\n/** A stored Tag. */\nexport async function addTag(uow: UnitOfWork, n = 1): Promise<Tag> {\n  return uow.tags.insert(newTag(n))\n}\n\n/** A valid ProductTag that is not stored yet; `n` makes its unique values differ, `values` replace any of them. */\nexport function newProductTag(n = 1, values: Partial<ProductTag> = {}): ProductTag {\n  return Object.assign(new ProductTag(), {  }, values)\n}\n\n/** A stored ProductTag, with the rows it points to. */\nexport async function addProductTag(uow: UnitOfWork, n = 1): Promise<ProductTag> {\n  const parent0 = await addProduct(uow, n)\n  const parent1 = await addTag(uow, n)\n  return uow.productTags.insert(newProductTag(n, { productId: parent0.id, tagId: parent1.id }))\n}\n",
+  "test/order-line.test.ts": "/** Tests of the \"order_lines\" table. */\nimport { describe, expect, it } from 'vitest'\nimport { useTestDatabase } from './database.js'\nimport { addOrderLine } from './factories.js'\n\n/** The repositories over the test database, opened empty for every test */\nconst sqlUow = useTestDatabase()\n\ndescribe('order_lines repository', () => {\n  it('is stored and read back', async () => {\n    const uow = sqlUow()\n    const stored = await addOrderLine(uow, 1)\n    const found = await uow.orderLines.findByOrderIdAndLine(stored.orderId, stored.line)\n    expect(found).not.toBeNull()\n    expect(found!.orderId).toEqual(stored.orderId)\n    expect(found!.line).toEqual(stored.line)\n    if (stored.orderId != null) expect(await uow.orderLines.listByOrderId(stored.orderId)).toHaveLength(1)\n    if (stored.productId != null) expect(await uow.orderLines.listByProductId(stored.productId)).toHaveLength(1)\n  })\n\n  it('lists rows by key', async () => {\n    const uow = sqlUow()\n    await addOrderLine(uow, 1)\n    await addOrderLine(uow, 2)\n    const page = await uow.orderLines.list(0, 1)\n    expect(page.total).toBe(2)\n    expect(page.items).toHaveLength(1)\n  })\n\n  it('is deleted', async () => {\n    const uow = sqlUow()\n    const stored = await addOrderLine(uow, 1)\n    await uow.orderLines.delete(stored)\n    expect(await uow.orderLines.findByOrderIdAndLine(stored.orderId, stored.line)).toBeNull()\n  })\n})\n",
+  "test/order.test.ts": "/** Tests of the \"orders\" table. */\nimport { describe, expect, it } from 'vitest'\nimport { useTestDatabase } from './database.js'\nimport { addOrder } from './factories.js'\n\n/** The repositories over the test database, opened empty for every test */\nconst sqlUow = useTestDatabase()\n\ndescribe('orders repository', () => {\n  it('is stored and read back', async () => {\n    const uow = sqlUow()\n    const stored = await addOrder(uow, 1)\n    const found = await uow.orders.findById(stored.id)\n    expect(found).not.toBeNull()\n    expect(found!.id).toEqual(stored.id)\n    if (stored.customerId != null) expect(await uow.orders.listByCustomerId(stored.customerId)).toHaveLength(1)\n  })\n\n  it('lists rows by key', async () => {\n    const uow = sqlUow()\n    await addOrder(uow, 1)\n    await addOrder(uow, 2)\n    const page = await uow.orders.list(0, 1)\n    expect(page.total).toBe(2)\n    expect(page.items).toHaveLength(1)\n  })\n\n  it('is deleted', async () => {\n    const uow = sqlUow()\n    const stored = await addOrder(uow, 1)\n    await uow.orders.delete(stored)\n    expect(await uow.orders.findById(stored.id)).toBeNull()\n  })\n})\n",
+  "test/product-tag.test.ts": "/** Tests of the \"product_tags\" table. */\nimport { describe, expect, it } from 'vitest'\nimport { useTestDatabase } from './database.js'\nimport { addProductTag } from './factories.js'\n\n/** The repositories over the test database, opened empty for every test */\nconst sqlUow = useTestDatabase()\n\ndescribe('product_tags repository', () => {\n  it('is stored and read back', async () => {\n    const uow = sqlUow()\n    const stored = await addProductTag(uow, 1)\n    const found = await uow.productTags.findByProductIdAndTagId(stored.productId, stored.tagId)\n    expect(found).not.toBeNull()\n    expect(found!.productId).toEqual(stored.productId)\n    expect(found!.tagId).toEqual(stored.tagId)\n    if (stored.productId != null) expect(await uow.productTags.listByProductId(stored.productId)).toHaveLength(1)\n    if (stored.tagId != null) expect(await uow.productTags.listByTagId(stored.tagId)).toHaveLength(1)\n  })\n\n  it('lists rows by key', async () => {\n    const uow = sqlUow()\n    await addProductTag(uow, 1)\n    await addProductTag(uow, 2)\n    const page = await uow.productTags.list(0, 1)\n    expect(page.total).toBe(2)\n    expect(page.items).toHaveLength(1)\n  })\n\n  it('is deleted', async () => {\n    const uow = sqlUow()\n    const stored = await addProductTag(uow, 1)\n    await uow.productTags.delete(stored)\n    expect(await uow.productTags.findByProductIdAndTagId(stored.productId, stored.tagId)).toBeNull()\n  })\n})\n",
+  "test/product.test.ts": "/** Tests of the \"products\" table. */\nimport { describe, expect, it } from 'vitest'\nimport { useTestDatabase } from './database.js'\nimport { addProduct } from './factories.js'\n\n/** The repositories over the test database, opened empty for every test */\nconst sqlUow = useTestDatabase()\n\ndescribe('products repository', () => {\n  it('is stored and read back', async () => {\n    const uow = sqlUow()\n    const stored = await addProduct(uow, 1)\n    const found = await uow.products.findById(stored.id)\n    expect(found).not.toBeNull()\n    expect(found!.id).toEqual(stored.id)\n    if (stored.categoryId != null) expect(await uow.products.listByCategoryId(stored.categoryId)).toHaveLength(1)\n  })\n\n  it('lists rows by key', async () => {\n    const uow = sqlUow()\n    await addProduct(uow, 1)\n    await addProduct(uow, 2)\n    const page = await uow.products.list(0, 1)\n    expect(page.total).toBe(2)\n    expect(page.items).toHaveLength(1)\n  })\n\n  it('stores the changes', async () => {\n    const uow = sqlUow()\n    const stored = await addProduct(uow, 1)\n    stored.name = 'changed'\n    await uow.products.update(stored)\n    const found = await uow.products.findById(stored.id)\n    expect(found?.name).toBe('changed')\n  })\n})\n",
+  "test/tag.test.ts": "/** Tests of the \"tags\" table. */\nimport { describe, expect, it } from 'vitest'\nimport { useTestDatabase } from './database.js'\nimport { addTag } from './factories.js'\n\n/** The repositories over the test database, opened empty for every test */\nconst sqlUow = useTestDatabase()\n\ndescribe('tags repository', () => {\n  it('is stored and read back', async () => {\n    const uow = sqlUow()\n    const stored = await addTag(uow, 1)\n    const found = await uow.tags.findById(stored.id)\n    expect(found).not.toBeNull()\n    expect(found!.id).toEqual(stored.id)\n  })\n\n  it('lists rows by key', async () => {\n    const uow = sqlUow()\n    await addTag(uow, 1)\n    await addTag(uow, 2)\n    const page = await uow.tags.list(0, 1)\n    expect(page.total).toBe(2)\n    expect(page.items).toHaveLength(1)\n  })\n\n  it('stores the changes', async () => {\n    const uow = sqlUow()\n    const stored = await addTag(uow, 1)\n    stored.label = 'changed'\n    await uow.tags.update(stored)\n    const found = await uow.tags.findById(stored.id)\n    expect(found?.label).toBe('changed')\n  })\n\n  it('is deleted', async () => {\n    const uow = sqlUow()\n    const stored = await addTag(uow, 1)\n    await uow.tags.delete(stored)\n    expect(await uow.tags.findById(stored.id)).toBeNull()\n  })\n})\n",
+  "tsconfig.build.json": "{\n  \"extends\": \"./tsconfig.json\",\n  \"compilerOptions\": {\n    \"noEmit\": false,\n    \"rootDir\": \"src\",\n    \"outDir\": \"dist\",\n    \"declaration\": true\n  },\n  \"include\": [\n    \"src\"\n  ]\n}\n",
+  "tsconfig.json": "{\n  \"compilerOptions\": {\n    \"target\": \"ES2022\",\n    \"module\": \"NodeNext\",\n    \"moduleResolution\": \"NodeNext\",\n    \"lib\": [\n      \"ES2022\"\n    ],\n    \"types\": [\n      \"node\"\n    ],\n    \"strict\": true,\n    \"experimentalDecorators\": true,\n    \"useDefineForClassFields\": false,\n    \"isolatedModules\": true,\n    \"skipLibCheck\": true,\n    \"noEmit\": true\n  },\n  \"include\": [\n    \"src\",\n    \"test\"\n  ]\n}\n",
+  "vitest.config.ts": "import { defineConfig } from 'vitest/config'\n\nexport default defineConfig({\n  test: {\n    include: ['test/**/*.test.ts'],\n    // Every test file empties the same test database: they run one after another\n    fileParallelism: false,\n  },\n})\n"
+ }
+}

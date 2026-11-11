@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Runs the generated TypeScript projects (Express, NestJS) in a clean container: installs their
+# Runs the generated TypeScript projects in a clean container: installs their
 # dependencies, checks their types, builds them and runs their own tests. npm downloads are cached in a
 # Docker volume between runs.
 #
@@ -25,7 +25,7 @@ for folder in "$@"; do
       npm install --no-audit --no-fund --loglevel=error
       npm run --silent typecheck
       npm run --silent build
-      # Each project runs its own test command (Vitest for Express, Jest for NestJS)
+      # Each project runs its own test command
       npm test --silent
     '; then
     echo "PASS $name"

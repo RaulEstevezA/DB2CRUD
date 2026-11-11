@@ -69,4 +69,36 @@ export const SCENARIOS = [
     settings: { language: 'python', orm: 'django', database: 'postgresql', transactions: 'repository', repositoryInterfaces: false, memoryRepositories: false, verbs: 'get' },
     service: 'postgresql',
   },
+  { id: 'typeorm-sqlite-defaults', schema: 'shop', settings: { language: 'typescript', orm: 'typeorm', database: 'sqlite' } },
+  {
+    id: 'typeorm-postgresql-class-dtos',
+    schema: 'shop',
+    settings: { language: 'typescript', orm: 'typeorm', database: 'postgresql', serviceTypes: 'dtos', dtoKind: 'class' },
+    service: 'postgresql',
+  },
+  {
+    id: 'typeorm-mysql-decided-cursor-by-table',
+    schema: 'shop',
+    settings: { language: 'typescript', orm: 'typeorm', database: 'mysql', paging: 'cursor', architecture: 'table' },
+    decisions: OTHER_WAY,
+    service: 'mysql',
+  },
+  {
+    id: 'typeorm-mariadb-caller-interface-dtos',
+    schema: 'shop',
+    settings: { language: 'typescript', orm: 'typeorm', database: 'mariadb', transactions: 'caller', serviceTypes: 'dtos', dtoKind: 'interface', paging: 'none' },
+    service: 'mariadb',
+  },
+  {
+    id: 'typeorm-postgresql-repository-commits',
+    schema: 'shop',
+    settings: { language: 'typescript', orm: 'typeorm', database: 'postgresql', transactions: 'repository', repositoryInterfaces: false, memoryRepositories: false, verbs: 'get' },
+    service: 'postgresql',
+  },
+  {
+    id: 'typeorm-sqlite-no-interfaces-services-tests',
+    schema: 'shop',
+    settings: { language: 'typescript', orm: 'typeorm', database: 'sqlite', repositoryInterfaces: false, verbs: 'find', tests: 'services', entities: 'all' },
+  },
+  { id: 'typeorm-sqlite-repositories-only', schema: 'shop', settings: { language: 'typescript', orm: 'typeorm', database: 'sqlite', services: false } },
 ]

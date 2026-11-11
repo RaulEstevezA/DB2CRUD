@@ -107,6 +107,38 @@ export const VERIFIED: readonly VerifiedStack[] = [
     scenarios: ['django-mariadb-caller-dataclass'],
     date: '2026-11-11',
   },
+  {
+    language: 'typescript',
+    orm: 'typeorm',
+    database: 'postgresql',
+    execution: 'async',
+    scenarios: ['typeorm-postgresql-class-dtos', 'typeorm-postgresql-repository-commits'],
+    date: '2026-11-11',
+  },
+  {
+    language: 'typescript',
+    orm: 'typeorm',
+    database: 'mysql',
+    execution: 'async',
+    scenarios: ['typeorm-mysql-decided-cursor-by-table'],
+    date: '2026-11-11',
+  },
+  {
+    language: 'typescript',
+    orm: 'typeorm',
+    database: 'mariadb',
+    execution: 'async',
+    scenarios: ['typeorm-mariadb-caller-interface-dtos'],
+    date: '2026-11-11',
+  },
+  {
+    language: 'typescript',
+    orm: 'typeorm',
+    database: 'sqlite',
+    execution: 'async',
+    scenarios: ['typeorm-sqlite-defaults', 'typeorm-sqlite-no-interfaces-services-tests', 'typeorm-sqlite-repositories-only'],
+    date: '2026-11-11',
+  },
 ]
 
 /** Whether this stack has passed the verification. */
