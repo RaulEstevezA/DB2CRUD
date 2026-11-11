@@ -88,7 +88,7 @@ export const VERIFIED: readonly VerifiedStack[] = [
     orm: 'django',
     database: 'postgresql',
     execution: 'sync',
-    scenarios: ['django-postgresql-pydantic'],
+    scenarios: ['django-postgresql-pydantic', 'django-postgresql-repository-commits'],
     date: '2026-11-11',
   },
   {
