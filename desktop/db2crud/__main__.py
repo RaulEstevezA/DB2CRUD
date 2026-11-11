@@ -1,4 +1,4 @@
-"""Entry point: `python -m model2api` or the `model2api` command."""
+"""Entry point: `python -m db2crud` or the `db2crud` command."""
 
 
 def main() -> None:

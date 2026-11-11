@@ -27,7 +27,7 @@ def window(tmp_path):
 
     QSettings.setDefaultFormat(QSettings.Format.IniFormat)
     QSettings.setPath(QSettings.Format.IniFormat, QSettings.Scope.UserScope, str(tmp_path))
-    from model2api.ui.app import create_app
+    from db2crud.ui.app import create_app
 
     app, main_window = create_app([])
     main_window.show()

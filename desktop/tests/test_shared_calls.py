@@ -8,7 +8,7 @@ import pytest
 
 from .conftest import SHARED_CASES, as_json
 
-# Web function → Python module and function, relative to model2api.core
+# Web function → Python module and function, relative to db2crud.core
 FUNCTIONS = {
     "naming.splitWords": "model.naming.split_words",
     "naming.toPascalCase": "model.naming.to_pascal_case",
@@ -28,7 +28,7 @@ FILES = sorted((SHARED_CASES / "calls").glob("*.json"))
 def resolve(name: str):
     module, _, function = FUNCTIONS[name].rpartition(".")
     try:
-        return getattr(importlib.import_module(f"model2api.core.{module}"), function)
+        return getattr(importlib.import_module(f"db2crud.core.{module}"), function)
     except (ImportError, AttributeError):
         return None
 

@@ -3,7 +3,7 @@
 import io
 import zipfile
 
-from model2api.core.export.zip import create_zip
+from db2crud.core.export.zip import create_zip
 
 
 def test_zip_holds_the_files():

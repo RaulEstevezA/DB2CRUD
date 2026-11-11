@@ -66,7 +66,7 @@ export function validateModelSchema(value: unknown): { ok: true; schema: ModelSc
   }
 }
 
-/** A ModelSchema document, the interchange format of Api2Class, Mapper, Model2DB and Model2API. */
+/** A ModelSchema document, the interchange format of Api2Class, Mapper, Model2DB and DB2CRUD. */
 export const modelSchemaParser: InputParser = {
   id: 'modelschema',
   kind: 'schema',

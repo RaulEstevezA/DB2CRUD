@@ -46,16 +46,16 @@ describe('detectArchitecture', () => {
 })
 
 describe('downloadUrl', () => {
-  const latest = 'https://github.com/RaulEstevezA/Model2API/releases/latest/download/'
+  const latest = 'https://github.com/RaulEstevezA/DB2CRUD/releases/latest/download/'
 
   it('points to the asset of the latest release', () => {
-    expect(downloadUrl('Windows')).toBe(`${latest}Model2API-Windows.zip`)
-    expect(downloadUrl('Windows', 'arm64')).toBe(`${latest}Model2API-Windows-ARM64.zip`)
-    expect(downloadUrl('Linux', 'arm64')).toBe(`${latest}Model2API-Linux-ARM64.tar.gz`)
+    expect(downloadUrl('Windows')).toBe(`${latest}DB2CRUD-Windows.zip`)
+    expect(downloadUrl('Windows', 'arm64')).toBe(`${latest}DB2CRUD-Windows-ARM64.zip`)
+    expect(downloadUrl('Linux', 'arm64')).toBe(`${latest}DB2CRUD-Linux-ARM64.tar.gz`)
   })
 
   it('uses the only macOS build for any architecture', () => {
-    expect(downloadUrl('macOS')).toBe(`${latest}Model2API-macOS.dmg`)
+    expect(downloadUrl('macOS')).toBe(`${latest}DB2CRUD-macOS.dmg`)
     expect(hasArchitectureChoice('macOS')).toBe(false)
     expect(hasArchitectureChoice('Windows')).toBe(true)
   })

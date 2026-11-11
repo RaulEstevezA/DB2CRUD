@@ -135,7 +135,7 @@ _SAME_PLURAL = {
 
 def pluralize(word: str) -> str:
     """English plural of one word, keeping its case: Category → Categories, address → addresses. Used to name
-    the resources of an API (/categories)."""
+    collections (categories)."""
     lower = word.lower()
     if lower in _SAME_PLURAL:
         return word

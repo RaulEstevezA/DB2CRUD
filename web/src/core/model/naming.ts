@@ -100,7 +100,7 @@ export function singularize(word: string): string {
 const SAME_PLURAL = new Set(['data', 'metadata', 'news', 'series', 'species', 'info', 'information', 'media', 'equipment', 'feedback'])
 
 /** English plural of one word, keeping its case: `Category` → `Categories`, `address` → `addresses`.
- * Used to name the resources of an API (`/categories`). */
+ * Used to name collections (`categories`). */
 export function pluralize(word: string): string {
   const lower = word.toLowerCase()
   if (SAME_PLURAL.has(lower)) return word

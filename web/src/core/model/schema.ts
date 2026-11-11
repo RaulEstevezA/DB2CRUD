@@ -1,5 +1,5 @@
 /** The language-neutral description of data models that every parser produces and every other part of
- * Model2API reads. It comes from Mapper and is the interchange format of the suite (Api2Class, Mapper,
+ * DB2CRUD reads. It comes from Mapper and is the interchange format of the suite (Api2Class, Mapper,
  * Model2DB), so it only holds facts about the models, never decisions about the API. */
 
 export const MODEL_SCHEMA_FORMAT = 'model-schema'

@@ -17,7 +17,7 @@ for folder in "$@"; do
     ${DOCKER_NETWORK:+--network "$DOCKER_NETWORK"} \
     ${TEST_DATABASE_NODE_URL:+-e TEST_DATABASE_URL="$TEST_DATABASE_NODE_URL"} \
     -v "$(cd "$folder" && pwd)":/project:ro \
-    -v model2api-npm-cache:/root/.npm \
+    -v db2crud-npm-cache:/root/.npm \
     -e NPM_CONFIG_UPDATE_NOTIFIER=false -e NO_COLOR=1 \
     "$IMAGE" sh -c '
       set -e

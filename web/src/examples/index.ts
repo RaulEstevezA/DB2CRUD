@@ -1,6 +1,6 @@
 /**
- * Built-in examples: invented models that show what Model2API reads and proposes. They are also the
- * fixtures of the tests of the specification, the OpenAPI contract and every generator.
+ * Built-in examples: invented models that show what DB2CRUD reads. They are also fixtures of the
+ * interface tests.
  */
 import type { InputFormatId } from '../core/importers/types.ts'
 

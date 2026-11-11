@@ -1,5 +1,5 @@
 /**
- * Registry of the importers (Registry pattern): every input format Model2API reads, format detection and
+ * Registry of the importers (Registry pattern): every input format DB2CRUD reads, format detection and
  * the safe entry point that parses a text. To support a new format, write its importer and add it to `parsers`.
  */
 import { csvParser } from './data/csv.ts'

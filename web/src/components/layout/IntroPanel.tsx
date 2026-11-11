@@ -17,7 +17,7 @@ export function IntroPanel({ onExample }: { onExample: (id: ExampleId) => void }
           <h1 id="intro-title" className="intro__name">
             {/* Decorative: the accessible name of the title is the tool's name */}
             <img className="intro__icon" src={`${import.meta.env.BASE_URL}favicon.svg`} width="32" height="32" alt="" />
-            Model2API
+            DB2CRUD
           </h1>
           <span className="intro__badge">{t.processedLocally}</span>
         </div>

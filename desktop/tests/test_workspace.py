@@ -1,6 +1,6 @@
 """The workspace logic of the window. Mirrors web/src/app/workspace.test.ts."""
 
-from model2api.workspace import field_count, read_input
+from db2crud.workspace import field_count, read_input
 
 
 def test_detects_the_format_when_none_is_chosen():

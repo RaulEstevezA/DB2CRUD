@@ -19,7 +19,7 @@ for folder in "$@"; do
     -e DOTNET_NOLOGO=1 \
     -e NUGET_PACKAGES=/nuget \
     -v "$(cd "$folder" && pwd)":/project:ro \
-    -v model2api-nuget-cache:/nuget \
+    -v db2crud-nuget-cache:/nuget \
     "$IMAGE" sh -c '
       set -e
       cp -r /project /work && cd /work

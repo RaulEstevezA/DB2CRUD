@@ -118,10 +118,10 @@ def _reason_es(reason: dict) -> str:
 
 EN = SimpleNamespace(
     processed_locally="Processed locally",
-    tagline="Turn data models into the code of a REST API you can run",
-    intro_description="Paste or open your models. Model2API proposes the endpoints of the API, explains each proposal "
-    "and lets you change them. Choose the framework and save a project ready to run, with its tests and OpenAPI "
-    "contract.",
+    tagline="Generate the repositories and services of a database you already have",
+    intro_description="Paste or open your database schema (a Model2DB project, ORM code or SQL DDL) and, if you have them, your "
+    "application models. DB2CRUD proposes the repositories, the services and any missing ORM entities, explains "
+    "each proposal and lets you change it. Save the code with its tests.",
     developed_by="Developed by",
     workspace_parts={"models": "Models"},
     examples_label="Try an example",
@@ -170,10 +170,10 @@ EN = SimpleNamespace(
 
 ES = SimpleNamespace(
     processed_locally="Procesado en local",
-    tagline="Convierte modelos de datos en el código de una API REST que puedes ejecutar",
-    intro_description="Pega o abre tus modelos. Model2API propone los endpoints de la API, explica cada propuesta y te "
-    "deja cambiarlos. Elige el framework y guarda un proyecto listo para ejecutar, con sus pruebas y su contrato "
-    "OpenAPI.",
+    tagline="Genera los repositorios y servicios de una base de datos que ya tienes",
+    intro_description="Pega o abre el esquema de tu base de datos (un proyecto de Model2DB, código ORM o DDL de SQL) y, si los "
+    "tienes, tus modelos de aplicación. DB2CRUD propone los repositorios, los servicios y las entidades ORM que "
+    "falten, explica cada propuesta y te deja cambiarla. Guarda el código con sus pruebas.",
     developed_by="Desarrollado por",
     workspace_parts={"models": "Modelos"},
     examples_label="Prueba un ejemplo",

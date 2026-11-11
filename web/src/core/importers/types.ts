@@ -4,7 +4,7 @@
  */
 import type { ModelSchema } from '../model/schema.ts'
 
-/** Every input Model2API can read. Data formats (JSON, YAML, XML, CSV) describe models through an example
+/** Every input DB2CRUD can read. Data formats (JSON, YAML, XML, CSV) describe models through an example
  * document; schema formats and code declare them. */
 export type InputFormatId =
   | 'json'

@@ -1,4 +1,4 @@
-"""Creates the Qt application with the Model2API theme."""
+"""Creates the Qt application with the DB2CRUD theme."""
 
 import sys
 from pathlib import Path
@@ -15,7 +15,7 @@ from .theme import STYLESHEET
 
 def create_app(argv: list[str] | None = None) -> tuple[QApplication, MainWindow]:
     app = QApplication.instance() or QApplication(argv if argv is not None else sys.argv)
-    app.setApplicationName("Model2API")
+    app.setApplicationName("DB2CRUD")
     app.setOrganizationName("RaulEstevez")
     # The operating system's interface font, like the web version (system-ui)
     app.setFont(QFontDatabase.systemFont(QFontDatabase.SystemFont.GeneralFont))

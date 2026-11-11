@@ -18,7 +18,7 @@ for folder in "$@"; do
     ${TEST_DATABASE_USER:+-e TEST_DATABASE_USER="$TEST_DATABASE_USER"} \
     ${TEST_DATABASE_PASSWORD:+-e TEST_DATABASE_PASSWORD="$TEST_DATABASE_PASSWORD"} \
     -v "$(cd "$folder" && pwd)":/project:ro \
-    -v model2api-maven-cache:/root/.m2 \
+    -v db2crud-maven-cache:/root/.m2 \
     "$IMAGE" sh -c '
       set -e
       cp -r /project /work && cd /work

@@ -28,7 +28,7 @@ Then review the diff and port the change to `desktop/` until its tests pass.
 Shared logic lives in a `core/` folder in each version, with no interface code:
 
 - Web: `web/src/core/` (TypeScript)
-- Desktop: `desktop/model2api/core/` (Python)
+- Desktop: `desktop/db2crud/core/` (Python)
 
 A file in one `core/` has its counterpart in the other (`analysis/constraints.ts` / `analysis/constraints.py`). In Python, models and decisions are dictionaries with the same keys as the JSON.
 

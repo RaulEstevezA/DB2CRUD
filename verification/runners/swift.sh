@@ -17,7 +17,7 @@ for folder in "$@"; do
     ${DOCKER_NETWORK:+--network "$DOCKER_NETWORK"} \
     ${TEST_DATABASE_NODE_URL:+-e TEST_DATABASE_URL="$TEST_DATABASE_NODE_URL"} \
     -v "$(cd "$folder" && pwd)":/project:ro \
-    -v model2api-swift-cache:/cache \
+    -v db2crud-swift-cache:/cache \
     "$IMAGE" bash -c '
       set -eo pipefail
       cp -r /project /work && cd /work

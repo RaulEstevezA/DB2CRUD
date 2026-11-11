@@ -7,7 +7,7 @@
 #   every file. The tag must match the version in desktop/pyproject.toml.
 #
 # File names carry no version, so
-# https://github.com/RaulEstevezA/Model2API/releases/latest/download/<file>
+# https://github.com/RaulEstevezA/DB2CRUD/releases/latest/download/<file>
 # always points to the latest release (the web version's download button uses those URLs).
 #
 # The apps are not signed: macOS and Windows warn the first time they are opened.
@@ -29,19 +29,19 @@ jobs:
       matrix:
         include:
           - os: windows-latest
-            asset: Model2API-Windows.zip
+            asset: DB2CRUD-Windows.zip
           - os: windows-11-arm
-            asset: Model2API-Windows-ARM64.zip
+            asset: DB2CRUD-Windows-ARM64.zip
           # Apple Silicon. Intel Macs would need another build on an Intel runner.
           - os: macos-latest
-            asset: Model2API-macOS.dmg
+            asset: DB2CRUD-macOS.dmg
           # The oldest one available: the executable runs on systems with the same glibc as
           # the build system or a newer one.
           - os: ubuntu-22.04
-            asset: Model2API-Linux.tar.gz
+            asset: DB2CRUD-Linux.tar.gz
           # PySide6 for ARM64 is only published for glibc 2.39 or newer (Ubuntu 24.04)
           - os: ubuntu-24.04-arm
-            asset: Model2API-Linux-ARM64.tar.gz
+            asset: DB2CRUD-Linux-ARM64.tar.gz
     runs-on: ${{ matrix.os }}
     permissions:
       contents: read
@@ -88,7 +88,7 @@ jobs:
         run: python -m pytest -q
 
       - name: Build
-        run: pyinstaller --noconfirm packaging/model2api.spec
+        run: pyinstaller --noconfirm packaging/db2crud.spec
 
       - name: Smoke test
         timeout-minutes: 2
@@ -96,26 +96,26 @@ jobs:
           QT_QPA_PLATFORM: offscreen
         run: |
           case "$RUNNER_OS" in
-            Windows) dist/Model2API/Model2API.exe --smoke-test ;;
-            macOS) dist/Model2API.app/Contents/MacOS/Model2API --smoke-test ;;
-            Linux) dist/Model2API/Model2API --smoke-test ;;
+            Windows) dist/DB2CRUD/DB2CRUD.exe --smoke-test ;;
+            macOS) dist/DB2CRUD.app/Contents/MacOS/DB2CRUD --smoke-test ;;
+            Linux) dist/DB2CRUD/DB2CRUD --smoke-test ;;
           esac
 
       - name: Package
         run: |
           case "$RUNNER_OS" in
             Windows)
-              pwsh -Command "Compress-Archive -Path dist/Model2API -DestinationPath '${{ matrix.asset }}'"
+              pwsh -Command "Compress-Archive -Path dist/DB2CRUD -DestinationPath '${{ matrix.asset }}'"
               ;;
             macOS)
               # Disk image with the app and a shortcut to Applications to drag it into
               mkdir dmg
-              cp -R dist/Model2API.app dmg/
+              cp -R dist/DB2CRUD.app dmg/
               ln -s /Applications dmg/Applications
-              hdiutil create -volname Model2API -srcfolder dmg -format UDZO -ov "${{ matrix.asset }}"
+              hdiutil create -volname DB2CRUD -srcfolder dmg -format UDZO -ov "${{ matrix.asset }}"
               ;;
             Linux)
-              tar -czf "${{ matrix.asset }}" -C dist Model2API
+              tar -czf "${{ matrix.asset }}" -C dist DB2CRUD
               ;;
           esac
 
@@ -146,5 +146,5 @@ jobs:
         run: |
           gh release create "$GITHUB_REF_NAME" assets/* \
             --repo "$GITHUB_REPOSITORY" \
-            --title "Model2API $GITHUB_REF_NAME" \
+            --title "DB2CRUD $GITHUB_REF_NAME" \
             --generate-notes

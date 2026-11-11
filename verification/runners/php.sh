@@ -8,7 +8,7 @@
 # Exit status: 0 when every project passes, 1 otherwise.
 set -u
 
-IMAGE="model2api-php:8.5"
+IMAGE="db2crud-php:8.5"
 if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
   docker build --quiet -t "$IMAGE" - >/dev/null <<'DOCKERFILE' || exit 1
 FROM php:8.5-cli
@@ -27,7 +27,7 @@ for folder in "$@"; do
     ${TEST_DATABASE_NODE_URL:+-e TEST_DATABASE_URL="$TEST_DATABASE_NODE_URL"} \
     -e COMPOSER_CACHE_DIR=/composer-cache \
     -v "$(cd "$folder" && pwd)":/project:ro \
-    -v model2api-composer-cache:/composer-cache \
+    -v db2crud-composer-cache:/composer-cache \
     "$IMAGE" sh -c '
       set -e
       cp -r /project /work && cd /work

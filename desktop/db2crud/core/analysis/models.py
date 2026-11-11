@@ -1,7 +1,6 @@
-"""Facts about each model that the API proposal is built on: whether the input declares it as a stored entity,
-which field identifies it, and which other models refer to it. Only what the input says or what follows from
-its names is reported; the proposal (design/propose.py) decides what to do with it. Mirrors
-web/src/core/analysis/models.ts.
+"""Facts about each model: whether the input declares it as a stored entity, which field identifies it, and which
+other models refer to it. Only what the input says or what follows from its names is reported; the rules that build
+on them decide what to do with it. Mirrors web/src/core/analysis/models.ts.
 
 The facts of a model are a dictionary: {"model", "declaredEntity", "declaredKey", "declaredKeyGenerated",
 "namedKey", "keyCandidates", "referencedBy": [{"model", "field", "many"}]}.

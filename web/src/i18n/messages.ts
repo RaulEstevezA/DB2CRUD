@@ -53,9 +53,9 @@ export type Language = (typeof languages)[number]
 const en = {
   languageLabel: 'Language',
   processedLocally: 'Processed locally',
-  tagline: 'Turn data models into the code of a REST API you can run',
+  tagline: 'Generate the repositories and services of a database you already have',
   introDescription:
-    'Paste or open your models. Model2API proposes the endpoints of the API, explains each proposal and lets you change them. Choose the framework and download a project ready to run, with its tests and OpenAPI contract.',
+    'Paste or open your database schema (a Model2DB project, ORM code or SQL DDL) and, if you have them, your application models. DB2CRUD proposes the repositories, the services and any missing ORM entities, explains each proposal and lets you change it. Download the code with its tests.',
   linksLabel: 'Downloads and links',
   downloadDesktop: 'Download for desktop',
   downloadFor: (platform: string) => `Download for ${platform}`,
@@ -63,7 +63,7 @@ const en = {
   otherArchitecture: (architecture: string) => `${architecture} version`,
   downloadNote: 'Desktop version for Windows, macOS and Linux. It is not signed, so the first time your system will show a warning.',
   howToOpen: 'How to open it',
-  howToOpenUrl: 'https://github.com/RaulEstevezA/Model2API/blob/main/desktop/README_en.md#opening-it-the-first-time',
+  howToOpenUrl: 'https://github.com/RaulEstevezA/DB2CRUD/blob/main/desktop/README_en.md#opening-it-the-first-time',
   sourceCode: 'Source code',
   allTools: 'All tools',
   license: 'MIT License',
@@ -157,9 +157,9 @@ export type Messages = typeof en
 const es: Messages = {
   languageLabel: 'Idioma',
   processedLocally: 'Procesado en local',
-  tagline: 'Convierte modelos de datos en el código de una API REST que puedes ejecutar',
+  tagline: 'Genera los repositorios y servicios de una base de datos que ya tienes',
   introDescription:
-    'Pega o abre tus modelos. Model2API propone los endpoints de la API, explica cada propuesta y te deja cambiarlos. Elige el framework y descarga un proyecto listo para ejecutar, con sus pruebas y su contrato OpenAPI.',
+    'Pega o abre el esquema de tu base de datos (un proyecto de Model2DB, código ORM o DDL de SQL) y, si los tienes, tus modelos de aplicación. DB2CRUD propone los repositorios, los servicios y las entidades ORM que falten, explica cada propuesta y te deja cambiarla. Descarga el código con sus pruebas.',
   linksLabel: 'Descargas y enlaces',
   downloadDesktop: 'Descargar para escritorio',
   downloadFor: (platform) => `Descargar para ${platform}`,
@@ -167,7 +167,7 @@ const es: Messages = {
   otherArchitecture: (architecture) => `Versión ${architecture}`,
   downloadNote: 'Versión de escritorio para Windows, macOS y Linux. No está firmada, así que la primera vez el sistema mostrará un aviso.',
   howToOpen: 'Cómo abrirla',
-  howToOpenUrl: 'https://github.com/RaulEstevezA/Model2API/blob/main/desktop/README_es.md#abrirla-la-primera-vez',
+  howToOpenUrl: 'https://github.com/RaulEstevezA/DB2CRUD/blob/main/desktop/README_es.md#abrirla-la-primera-vez',
   sourceCode: 'Código fuente',
   allTools: 'Todas las herramientas',
   license: 'Licencia MIT',

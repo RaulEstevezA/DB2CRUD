@@ -21,8 +21,8 @@ for folder in "$@"; do
     -e RUSTFLAGS="-D warnings" \
     -e CARGO_TERM_COLOR=never \
     -v "$(cd "$folder" && pwd)":/project:ro \
-    -v model2api-cargo-home:/cargo-home \
-    -v model2api-cargo-target:/cargo-target \
+    -v db2crud-cargo-home:/cargo-home \
+    -v db2crud-cargo-target:/cargo-target \
     "$IMAGE" bash -c '
       set -eo pipefail
       cp -r /project /work && cd /work

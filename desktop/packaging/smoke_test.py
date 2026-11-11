@@ -1,4 +1,4 @@
-"""Checks that the packaged app works: run as `Model2API --smoke-test`.
+"""Checks that the packaged app works: run as `DB2CRUD --smoke-test`.
 
 PyInstaller only bundles what it sees imported, so a module loaded in an unusual way can be missing from the
 executable even though every test passes. This opens the window, loads every example and reads a YAML document,
@@ -11,7 +11,7 @@ from PySide6.QtCore import QEvent, QTimer
 
 
 def check(window) -> None:
-    from model2api.examples import EXAMPLES
+    from db2crud.examples import EXAMPLES
 
     session = window.session
     for example in EXAMPLES:
@@ -23,7 +23,7 @@ def check(window) -> None:
 
 
 def main() -> None:
-    from model2api.ui.app import create_app
+    from db2crud.ui.app import create_app
 
     app, window = create_app([])
     window.show()

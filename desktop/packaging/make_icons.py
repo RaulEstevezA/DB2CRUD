@@ -1,4 +1,4 @@
-"""Generates icon.icns (macOS) and icon.ico (Windows) from model2api/assets/icon.svg.
+"""Generates icon.icns (macOS) and icon.ico (Windows) from db2crud/assets/icon.svg.
 
 The results are committed, so this only needs to run again if the icon changes:
 
@@ -15,7 +15,7 @@ from PySide6.QtGui import QGuiApplication, QImage, QPainter
 from PySide6.QtSvg import QSvgRenderer
 
 HERE = Path(__file__).resolve().parent
-SVG = HERE.parent / "model2api" / "assets" / "icon.svg"
+SVG = HERE.parent / "db2crud" / "assets" / "icon.svg"
 SIZE = 1024
 # macOS icons leave a transparent margin around the shape (Apple's grid: 824 of 1024 px)
 MAC_CONTENT = 824

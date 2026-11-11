@@ -19,7 +19,7 @@ for folder in "$@"; do
     ${TEST_DATABASE_PASSWORD:+-e TEST_DATABASE_PASSWORD="$TEST_DATABASE_PASSWORD"} \
     -e GRADLE_USER_HOME=/gradle-cache \
     -v "$(cd "$folder" && pwd)":/project:ro \
-    -v model2api-gradle-cache:/gradle-cache \
+    -v db2crud-gradle-cache:/gradle-cache \
     "$IMAGE" sh -c '
       set -e
       cp -r /project /work && cd /work

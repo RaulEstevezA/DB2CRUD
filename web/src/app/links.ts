@@ -2,8 +2,8 @@
  * Addresses the interface links to: the repository, the list of tools and the desktop releases.
  */
 
-/** Source code of Model2API. */
-export const SOURCE_URL = 'https://github.com/RaulEstevezA/Model2API'
+/** Source code of DB2CRUD. */
+export const SOURCE_URL = 'https://github.com/RaulEstevezA/DB2CRUD'
 
 /** List of every tool on the website. */
 export const TOOLS_URL = 'https://raulesteveza.github.io/tools/'

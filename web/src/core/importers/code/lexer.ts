@@ -1,4 +1,4 @@
-/** A small configurable tokenizer for the declaration languages Model2API reads (code, GraphQL, Protocol
+/** A small configurable tokenizer for the declaration languages DB2CRUD reads (code, GraphQL, Protocol
  * Buffers, Prisma). It never runs anything: it only splits the text into identifiers, numbers, strings
  * and punctuation, skipping comments, so the parsers can look for declarations. */
 

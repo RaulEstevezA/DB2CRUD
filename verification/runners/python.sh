@@ -19,7 +19,7 @@ for folder in "$@"; do
     ${TEST_DATABASE_URL:+-e TEST_DATABASE_URL="$TEST_DATABASE_URL"} \
     ${TEST_DATABASE_NODE_URL:+-e TEST_DATABASE_PLAIN_URL="$TEST_DATABASE_NODE_URL"} \
     -v "$(cd "$folder" && pwd)":/project:ro \
-    -v model2api-pip-cache:/root/.cache/pip \
+    -v db2crud-pip-cache:/root/.cache/pip \
     "$IMAGE" sh -c '
       set -e
       cp -r /project /work && cd /work

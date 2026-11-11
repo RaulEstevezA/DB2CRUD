@@ -1,7 +1,7 @@
 """The window, without opening it (QT_QPA_PLATFORM=offscreen): the examples, reading the input and the language."""
 
-from model2api.examples import EXAMPLES
-from model2api.ui.i18n import EN, ES
+from db2crud.examples import EXAMPLES
+from db2crud.ui.i18n import EN, ES
 
 
 def test_both_languages_have_the_same_texts():

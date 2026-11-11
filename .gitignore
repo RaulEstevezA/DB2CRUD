@@ -1,4 +1,4 @@
-# Ignore rules for DB2Controller.
+# Ignore rules for DB2CRUD.
 # Based on the shared rules of the personal_web_style tools (Model2DB, Mapper),
 # extended with the build outputs of the generated projects (Java / JVM) and with
 # exceptions for the whole generated projects kept in shared/test-cases/.

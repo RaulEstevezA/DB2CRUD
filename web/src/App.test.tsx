@@ -28,7 +28,7 @@ function renderApp() {
 describe('App', () => {
   it('presents the tool with its name as the main heading', () => {
     renderApp()
-    expect(screen.getByRole('heading', { level: 1, name: 'Model2API' })).toBeTruthy()
+    expect(screen.getByRole('heading', { level: 1, name: 'DB2CRUD' })).toBeTruthy()
   })
 
   it('links the name in the header to the website', () => {
@@ -41,7 +41,7 @@ describe('App', () => {
   it('links to the source code and to the other tools', () => {
     renderApp()
     const links = screen.getByRole('region', { name: 'Downloads and links' })
-    expect(within(links).getByRole('link', { name: 'Source code' }).getAttribute('href')).toBe('https://github.com/RaulEstevezA/Model2API')
+    expect(within(links).getByRole('link', { name: 'Source code' }).getAttribute('href')).toBe('https://github.com/RaulEstevezA/DB2CRUD')
     expect(within(links).getByRole('link', { name: 'All tools' }).getAttribute('href')).toBe('https://raulesteveza.github.io/tools/')
   })
 

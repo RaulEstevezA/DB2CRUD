@@ -1,7 +1,7 @@
 /**
- * Facts about each model that the API proposal is built on: whether the input declares it as a stored
- * entity, which field identifies it, and which other models refer to it. Only what the input says or
- * what follows from its names is reported; the proposal (design/propose.ts) decides what to do with it.
+ * Facts about each model: whether the input declares it as a stored entity, which field identifies it,
+ * and which other models refer to it. Only what the input says or what follows from its names is
+ * reported; the rules that build on them decide what to do with it.
  */
 import { nameWords } from '../model/naming.ts'
 import { allFields, findModel, type Annotation, type FieldDef, type ModelDef, type ModelSchema, type TypeRef } from '../model/schema.ts'

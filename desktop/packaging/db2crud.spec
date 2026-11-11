@@ -1,9 +1,9 @@
 # PyInstaller build of the desktop app. From desktop/:
 #
-#     pyinstaller packaging/model2api.spec
+#     pyinstaller packaging/db2crud.spec
 #
-# Result in dist/: Model2API.app on macOS, a Model2API folder with Model2API.exe on Windows
-# and with the Model2API binary on Linux.
+# Result in dist/: DB2CRUD.app on macOS, a DB2CRUD folder with DB2CRUD.exe on Windows
+# and with the DB2CRUD binary on Linux.
 
 import re
 import sys
@@ -44,7 +44,7 @@ UNUSED_QT = re.compile(r"Qt6?(Qml|Quick|VirtualKeyboard|Pdf)|virtualkeyboard|qpd
 analysis = Analysis(
     [str(HERE / "launcher.py")],
     pathex=[str(ROOT)],
-    datas=[(str(ROOT / "model2api" / "assets"), "model2api/assets")],
+    datas=[(str(ROOT / "db2crud" / "assets"), "db2crud/assets")],
     # The window icon is an SVG: Qt loads it through the QtSvg image plugin
     hiddenimports=["PySide6.QtSvg"],
     excludes=EXCLUDED,
@@ -59,18 +59,18 @@ exe = EXE(
     analysis.scripts,
     [],
     exclude_binaries=True,
-    name="Model2API",
+    name="DB2CRUD",
     console=False,
     icon=icon,
 )
-collected = COLLECT(exe, analysis.binaries, analysis.datas, name="Model2API")
+collected = COLLECT(exe, analysis.binaries, analysis.datas, name="DB2CRUD")
 
 if sys.platform == "darwin":
     app = BUNDLE(
         collected,
-        name="Model2API.app",
+        name="DB2CRUD.app",
         icon=icon,
-        bundle_identifier="io.github.raulesteveza.model2api",
+        bundle_identifier="io.github.raulesteveza.db2crud",
         info_plist={
             "CFBundleShortVersionString": VERSION,
             "NSHighResolutionCapable": True,

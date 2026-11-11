@@ -53,7 +53,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self._i18n = i18n
         self.session = session
-        self.setWindowTitle("Model2API")
+        self.setWindowTitle("DB2CRUD")
         self.resize(1440, 920)
 
         central = QWidget()
@@ -67,7 +67,7 @@ class MainWindow(QMainWindow):
         intro_layout.setContentsMargins(28, 16, 28, 16)
         text = QVBoxLayout()
         title_row = QHBoxLayout()
-        title = QLabel("Model2API")
+        title = QLabel("DB2CRUD")
         title.setProperty("role", "title")
         self.privacy_tag = QLabel()
         self.privacy_tag.setProperty("role", "privacyTag")
@@ -121,7 +121,7 @@ class MainWindow(QMainWindow):
 
     def load_example(self, example_id: str) -> None:
         if self.session.has_work():
-            answer = QMessageBox.question(self, "Model2API", self._i18n.t.confirm_replace)
+            answer = QMessageBox.question(self, "DB2CRUD", self._i18n.t.confirm_replace)
             if answer != QMessageBox.StandardButton.Yes:
                 return
         self.session.load_example(example_id)

@@ -1,5 +1,5 @@
 /**
- * Tests of the validation facts the importers keep for Model2API: JSON Schema keywords in metadata and
+ * Tests of the validation facts the importers keep for DB2CRUD: JSON Schema keywords in metadata and
  * Zod checks as annotations.
  */
 import { describe, expect, it } from 'vitest'
