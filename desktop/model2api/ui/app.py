@@ -26,9 +26,6 @@ def create_app(argv: list[str] | None = None) -> tuple[QApplication, MainWindow]
     i18n = I18n(settings)
     session = Session(settings)
     window = MainWindow(i18n, session)
-    # The work kept on this computer, when the user asked for it
-    if session.restore_saved():
-        session.set_message(i18n.t.restored)
     return app, window
 
 

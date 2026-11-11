@@ -1,5 +1,4 @@
-"""Built-in examples: invented models that show what Model2API reads and proposes. The same as
-web/src/examples/index.ts: shared/test-cases/outputs/ checks that both versions write the same projects for them."""
+"""Built-in examples: invented models that show what the tool reads. The same as web/src/examples/index.ts."""
 
 STORE = """\
 // Online shop: customers, products and orders

@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ..core.api.types import same_value
+from ..core.decisions.decision import same_value
 
 _TONES = {
     "exact": "success",

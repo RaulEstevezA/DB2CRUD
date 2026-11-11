@@ -1,7 +1,7 @@
 /**
  * The files of the generated project as a tree of folders, to choose the one the viewer shows.
  */
-import type { GeneratedFile } from '../../core/generators/common/types.ts'
+import type { GeneratedFile } from '../../core/export/files.ts'
 import { useI18n } from '../../i18n/useI18n.ts'
 
 interface Folder {

@@ -45,7 +45,7 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run format:check
-      # Includes the outputs and variants shared with the desktop version (shared/test-cases/)
+      # Includes the cases shared with the desktop version (shared/test-cases/)
       - run: npm test
       - run: npm run build
 

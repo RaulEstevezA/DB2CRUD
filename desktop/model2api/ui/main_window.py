@@ -1,9 +1,8 @@
-"""Main window: the presentation card (language switcher and examples), the project bar, the models and endpoints
-panes side by side, the project pane under them at full width, and the credit. Unlike the web version, it has no
-links: the app works on its own, without going online. Mirrors web/src/App.tsx and components/layout/."""
+"""Main window: the presentation card (language switcher and examples), the models pane and the credit. The CRUD
+design and the generated project come back with the new core (ROADMAP). Unlike the web version, it has no links: the
+app works on its own, without going online. Mirrors web/src/App.tsx and components/layout/."""
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QButtonGroup,
     QFrame,
@@ -12,17 +11,13 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QMessageBox,
     QPushButton,
-    QSplitter,
     QVBoxLayout,
     QWidget,
 )
 
 from ..examples import EXAMPLES
-from .endpoints_pane import EndpointsPane
 from .i18n import MESSAGES, I18n
 from .models_pane import ModelsPane
-from .project_bar import ProjectBar
-from .project_pane import ProjectPane
 from .session import Session
 from .theme import ACCENT
 
@@ -109,24 +104,8 @@ class MainWindow(QMainWindow):
         intro_layout.addLayout(side, 1)
         page.addWidget(intro)
 
-        self.project_bar = ProjectBar(i18n, session)
-        page.addWidget(self.project_bar)
-
         self.models_pane = ModelsPane(i18n, session)
-        self.endpoints_pane = EndpointsPane(i18n, session)
-        self.project_pane = ProjectPane(i18n, session)
-        top = QSplitter(Qt.Orientation.Horizontal)
-        top.addWidget(self.models_pane)
-        top.addWidget(self.endpoints_pane)
-        top.setChildrenCollapsible(False)
-        top.setSizes([520, 880])
-        # Models and endpoints side by side; the project at full width under them, as in the web version
-        splitter = QSplitter(Qt.Orientation.Vertical)
-        splitter.addWidget(top)
-        splitter.addWidget(self.project_pane)
-        splitter.setChildrenCollapsible(False)
-        splitter.setSizes([520, 440])
-        page.addWidget(splitter, 1)
+        page.addWidget(self.models_pane, 1)
 
         # Credit at the bottom; the name opens the portfolio in the browser
         self.credit = QLabel()
@@ -136,10 +115,6 @@ class MainWindow(QMainWindow):
         self.credit.setTextFormat(Qt.TextFormat.RichText)
         page.addWidget(self.credit)
         self.setCentralWidget(central)
-
-        # Undo and redo the design with the keyboard; text fields keep their own undo
-        QShortcut(QKeySequence.StandardKey.Undo, self, session.undo)
-        QShortcut(QKeySequence.StandardKey.Redo, self, session.redo)
 
         i18n.changed.connect(self._retranslate)
         self._retranslate()

@@ -2,7 +2,7 @@
  * State of a decision as text with a color (personal_web_style patterns/confidence-states.md): never
  * color alone.
  */
-import type { Confidence } from '../../core/api/types.ts'
+import type { Confidence } from '../../core/decisions/decision.ts'
 import { useI18n } from '../../i18n/useI18n.ts'
 
 const VARIANT: Record<Confidence | 'manual', string> = {

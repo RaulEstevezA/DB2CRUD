@@ -50,68 +50,16 @@ describe('App', () => {
     expect(within(screen.getByRole('contentinfo')).getByText('MIT License')).toBeTruthy()
   })
 
-  it('shows the models, the endpoints and the project, also as tabs for narrow screens', () => {
+  it('shows the models, without tabs while they are the only part', () => {
     renderApp()
-    for (const name of ['Models', 'Endpoints', 'Project']) {
-      expect(screen.getByRole('region', { name })).toBeTruthy()
-      expect(screen.getByRole('tab', { name })).toBeTruthy()
-    }
-  })
-
-  it('moves between the tabs with the keyboard', () => {
-    renderApp()
-    const models = screen.getByRole('tab', { name: 'Models' })
-    models.focus()
-    fireEvent.keyDown(models, { key: 'ArrowRight' })
-    const endpoints = screen.getByRole('tab', { name: 'Endpoints' })
-    expect(endpoints.getAttribute('aria-selected')).toBe('true')
-    expect(document.activeElement).toBe(endpoints)
-    fireEvent.keyDown(endpoints, { key: 'End' })
-    expect(screen.getByRole('tab', { name: 'Project' }).getAttribute('aria-selected')).toBe('true')
+    expect(screen.getByRole('region', { name: 'Models' })).toBeTruthy()
+    expect(screen.queryByRole('tab')).toBeNull()
   })
 
   it('reads an example and says what it found', () => {
     renderApp()
     fireEvent.click(screen.getByRole('button', { name: 'Online shop' }))
     expect(screen.getByText('TypeScript · 5 models · 29 fields')).toBeTruthy()
-  })
-
-  it('proposes the resources and endpoints of the models', () => {
-    renderApp()
-    fireEvent.click(screen.getByRole('button', { name: 'Online shop' }))
-    expect(screen.getByRole('region', { name: 'Customer' })).toBeTruthy()
-    expect(screen.getByText('3 resources · 18 endpoints')).toBeTruthy()
-    expect(screen.getAllByText('/customers/{id}').length).toBeGreaterThan(0)
-  })
-
-  it('applies an edit and undoes it', () => {
-    renderApp()
-    fireEvent.click(screen.getByRole('button', { name: 'Online shop' }))
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Generate DELETE /customers/{id}' }))
-    expect(screen.getByText('3 resources · 17 endpoints')).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: 'Undo' }))
-    expect(screen.getByText('3 resources · 18 endpoints')).toBeTruthy()
-  })
-
-  it('writes the project and shows its files', () => {
-    renderApp()
-    fireEvent.click(screen.getByRole('button', { name: 'Online shop' }))
-    expect(screen.getByRole('button', { name: /^Download \.zip \(\d+ files\)$/ })).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: 'main.py' }))
-    expect(screen.getByText('app/main.py')).toBeTruthy()
-  })
-
-  it('keeps the work in this browser only when asked, and restores it', () => {
-    const first = renderApp()
-    fireEvent.click(screen.getByRole('button', { name: 'Library' }))
-    expect(localStorage.getItem('model2api.workspace')).toBeNull()
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Remember in this browser' }))
-    vi.advanceTimersByTime(700)
-    expect(JSON.parse(localStorage.getItem('model2api.workspace')!).format).toBe('model2api-project')
-    first.unmount()
-    renderApp()
-    expect(screen.getByText('Your work kept in this browser has been restored.')).toBeTruthy()
-    expect(screen.getByRole('region', { name: 'Book' })).toBeTruthy()
   })
 
   it('reports where the input cannot be read', () => {

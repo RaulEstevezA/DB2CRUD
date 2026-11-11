@@ -11,24 +11,8 @@ import { join, resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { readConstraints } from './analysis/constraints.ts'
 import { analyzeModels } from './analysis/models.ts'
-import { resolveApi } from './api/spec.ts'
-import { normalizeSettings, slug } from './compatibility/stack.ts'
-import {
-  addCustomEndpoint,
-  decide,
-  pendingDecisions,
-  removeEndpoint,
-  setFieldInclude,
-  setResourcePath,
-  updateEndpoint,
-} from './design/edit.ts'
-import { proposeDesign, reconcile } from './design/propose.ts'
 import { detectFormats, parseInput } from './importers/registry.ts'
 import { pluralize, singularize, splitWords, toCamelCase, toPascalCase, toSnakeCase } from './model/naming.ts'
-import { buildOpenApi } from './openapi/build.ts'
-import { toYaml } from './openapi/yaml.ts'
-import { readProject } from './project/project.ts'
-import { validateDesign } from './validation/design.ts'
 
 // Tests run from web/
 const FOLDER = resolve(process.cwd(), '../shared/test-cases/calls')
@@ -50,22 +34,6 @@ const SHARED_FUNCTIONS: Record<string, AnyFunction> = {
   'constraints.readConstraints': readConstraints,
   // A Map does not survive JSON: the facts are written as an object
   'models.analyzeModels': (schema) => Object.fromEntries(analyzeModels(schema)),
-  'propose.proposeDesign': proposeDesign,
-  'propose.reconcile': reconcile,
-  'edit.decide': decide,
-  'edit.setFieldInclude': setFieldInclude,
-  'edit.setResourcePath': setResourcePath,
-  'edit.updateEndpoint': updateEndpoint,
-  'edit.addCustomEndpoint': addCustomEndpoint,
-  'edit.removeEndpoint': removeEndpoint,
-  'edit.pendingDecisions': pendingDecisions,
-  'design.validateDesign': validateDesign,
-  'stack.normalizeSettings': normalizeSettings,
-  'stack.slug': slug,
-  'spec.resolveApi': resolveApi,
-  'build.buildOpenApi': buildOpenApi,
-  'yaml.toYaml': toYaml,
-  'project.readProject': readProject,
 }
 
 /** What JSON keeps of a value: the files hold JSON, so `undefined` keys disappear as they do there. */

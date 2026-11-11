@@ -20,22 +20,6 @@ FUNCTIONS = {
     "registry.parseInput": "importers.registry.parse_input",
     "constraints.readConstraints": "analysis.constraints.read_constraints",
     "models.analyzeModels": "analysis.models.analyze_models",
-    "propose.proposeDesign": "design.propose.propose_design",
-    "propose.reconcile": "design.propose.reconcile",
-    "edit.decide": "design.edit.decide",
-    "edit.setFieldInclude": "design.edit.set_field_include",
-    "edit.setResourcePath": "design.edit.set_resource_path",
-    "edit.updateEndpoint": "design.edit.update_endpoint",
-    "edit.addCustomEndpoint": "design.edit.add_custom_endpoint",
-    "edit.removeEndpoint": "design.edit.remove_endpoint",
-    "edit.pendingDecisions": "design.edit.pending_decisions",
-    "design.validateDesign": "validation.design.validate_design",
-    "stack.normalizeSettings": "compatibility.stack.normalize_settings",
-    "stack.slug": "compatibility.stack.slug",
-    "spec.resolveApi": "api.spec.resolve_api",
-    "build.buildOpenApi": "openapi.build.build_open_api",
-    "yaml.toYaml": "openapi.yaml.to_yaml",
-    "project.readProject": "project.project.read_project",
 }
 
 FILES = sorted((SHARED_CASES / "calls").glob("*.json"))

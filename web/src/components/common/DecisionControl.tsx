@@ -3,7 +3,7 @@
  * proposed. A pending decision offers to confirm the suggestion as it is, or to choose another option.
  */
 import { useRef } from 'react'
-import { sameValue, type Decision } from '../../core/api/types.ts'
+import { sameValue, type Decision } from '../../core/decisions/decision.ts'
 import { useI18n } from '../../i18n/useI18n.ts'
 import { ConfidenceBadge } from './ConfidenceBadge.tsx'
 import './DecisionControl.css'

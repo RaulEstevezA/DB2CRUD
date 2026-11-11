@@ -1,4 +1,4 @@
-"""One of the three workspace columns: a title bar with actions, a body and a footer."""
+"""One of the workspace columns: a title bar with actions, a body and a footer."""
 
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 

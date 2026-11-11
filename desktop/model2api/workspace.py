@@ -1,6 +1,5 @@
 """Workspace logic the window uses, kept out of the widgets so it can be tested: reading the input with its chosen
-or detected format, counting what was read, and the input of a saved project. Mirrors web/src/app/workspace.ts
-and web/src/app/project.ts.
+or detected format, counting what was read. Mirrors web/src/app/workspace.ts.
 
 An input is {"text", "format", "fileName"?}: a format of None is detected from the text.
 """
@@ -30,12 +29,3 @@ def read_input(state: dict) -> dict:
 def field_count(schema: dict) -> int:
     """Count of fields in every model, inherited ones included."""
     return sum(len(all_fields(schema, model)) for model in schema["models"])
-
-
-def input_of_project(project: dict) -> dict:
-    """The input of a saved project, as the workspace holds it."""
-    saved = project["input"]
-    state = {"text": saved["text"], "format": saved.get("format")}
-    if saved.get("fileName"):
-        state["fileName"] = saved["fileName"]
-    return state
