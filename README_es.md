@@ -3,7 +3,7 @@
 DB2CRUD genera la capa de acceso a datos de una base de datos que ya tienes: entidades ORM cuando faltan, repositorios y servicios, relacionados con los modelos de tu aplicación. No diseña la base de datos ni escribe migraciones (eso es [Model2DB](https://github.com/RaulEstevezA/Model2DB)), ni escribe controladores o endpoints. Todo ocurre en tu lado, en el navegador: lo que pegas o abres no se envía a ningún sitio, no se conecta a ninguna base de datos y el código se analiza, nunca se ejecuta.
 
 > [!IMPORTANT]
-> DB2CRUD está en desarrollo y todavía no se ha publicado en la web. Hoy lee modelos de aplicación; las entradas de base de datos y los generadores se están escribiendo. Lo que ya funciona está en el [registro de cambios](./CHANGELOG.md).
+> DB2CRUD está en desarrollo y todavía no se ha publicado en la web. Hoy lee proyectos de Model2DB y escribe proyectos Python + SQLAlchemy 2, verificados en Docker; el DDL de SQL, el código ORM, los modelos de aplicación y los demás lenguajes se están escribiendo. Lo que ya funciona está en el [registro de cambios](./CHANGELOG.md).
 
 ```text
 Pegar o abrir la base de datos y los modelos  →  Revisar los repositorios y servicios propuestos  →  Elegir lenguaje y ORM  →  Descargar el código
@@ -12,7 +12,7 @@ Pegar o abrir la base de datos y los modelos  →  Revisar los repositorios y se
 ## Qué hará
 
 1. **Lee la base de datos**: un proyecto de Model2DB, código ORM (SQLAlchemy, Django, TypeORM, Prisma, JPA, EF Core, Doctrine, Eloquent…) o DDL de SQL (PostgreSQL, MySQL, MariaDB, SQLite), con los tipos exactos de las columnas, claves, restricciones únicas, índices, claves foráneas y `CHECK`.
-2. **Lee los modelos de aplicación** (ya funciona): clases y DTOs en Python, TypeScript, JavaScript, Java, C#, Kotlin y Dart, JSON, JSON Schema y OpenAPI, o cualquiera de los 23 formatos que lee Mapper, con las validaciones que declara cada campo. También lee las correspondencias de un proyecto de Mapper.
+2. **Lee los modelos de aplicación**: clases y DTOs en Python, TypeScript, JavaScript, Java, C#, Kotlin y Dart, JSON, JSON Schema y OpenAPI, o cualquiera de los 23 formatos que lee Mapper, con las validaciones que declara cada campo. También lee las correspondencias de un proyecto de Mapper.
 3. **Propone los repositorios** con las consultas que permite el esquema: por clave primaria, por campos únicos, por campos con índice y por claves foráneas.
 4. **Propone los servicios**: conversiones entre modelos de aplicación y entidades en los dos sentidos, búsquedas que necesitan la base de datos (`categoryName` → `categoryId`), validación a partir de las restricciones y errores de dominio (`NotFound`, `Conflict`, `ValidationFailed`) sin códigos HTTP. Si un modelo y una columna no coinciden, muestra el conflicto.
 5. **Escribe las entidades ORM solo cuando faltan**, fieles a la base de datos: nombres exactos de tablas y columnas y tipos precisos.

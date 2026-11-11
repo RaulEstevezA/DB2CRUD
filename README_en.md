@@ -3,7 +3,7 @@
 DB2CRUD generates the data access layer of a database you already have: ORM entities when they are missing, repositories and services, linked to the models of your application. It does not design the database or write migrations (that is [Model2DB](https://github.com/RaulEstevezA/Model2DB)), and it does not write controllers or endpoints. Everything happens on your side, in the browser: what you paste or open is never sent anywhere, no database is connected to, and code is analyzed, never run.
 
 > [!IMPORTANT]
-> DB2CRUD is in development and not published on the website yet. Today it reads application models; the database inputs and the generators are being written. What already works is listed in the [changelog](./CHANGELOG.md).
+> DB2CRUD is in development and not published on the website yet. Today it reads Model2DB projects and writes Python + SQLAlchemy 2 projects, verified in Docker; SQL DDL, ORM code, application models and the other languages are being written. What already works is listed in the [changelog](./CHANGELOG.md).
 
 ```text
 Paste or open the database and the models  →  Review the proposed repositories and services  →  Choose the language and ORM  →  Download the code
@@ -12,7 +12,7 @@ Paste or open the database and the models  →  Review the proposed repositories
 ## What it will do
 
 1. **Reads the database**: a Model2DB project, ORM code (SQLAlchemy, Django, TypeORM, Prisma, JPA, EF Core, Doctrine, Eloquent…) or SQL DDL (PostgreSQL, MySQL, MariaDB, SQLite), with exact column types, keys, unique constraints, indexes, foreign keys and checks.
-2. **Reads the application models** (already works): classes and DTOs in Python, TypeScript, JavaScript, Java, C#, Kotlin and Dart, JSON, JSON Schema and OpenAPI, or any of the 23 formats Mapper reads, with the validations each field declares. Correspondences from a Mapper project are read too.
+2. **Reads the application models**: classes and DTOs in Python, TypeScript, JavaScript, Java, C#, Kotlin and Dart, JSON, JSON Schema and OpenAPI, or any of the 23 formats Mapper reads, with the validations each field declares. Correspondences from a Mapper project are read too.
 3. **Proposes the repositories** with the queries the schema allows: by primary key, by unique fields, by indexed fields and by foreign keys.
 4. **Proposes the services**: conversions between application models and entities in both directions, lookups that need the database (`categoryName` → `categoryId`), validation from the constraints, and domain errors (`NotFound`, `Conflict`, `ValidationFailed`) without HTTP codes. Where a model and a column disagree, it shows the conflict.
 5. **Writes ORM entities only when they are missing**, faithful to the database: exact table and column names and precise types.

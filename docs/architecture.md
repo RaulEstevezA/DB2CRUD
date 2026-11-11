@@ -18,11 +18,11 @@ Application models ──► Importer ──► Model ───────┘  
 |---|---|---|---|
 | Model importing | Text in a supported format | `Model` | Works: `core/importers/`, `core/model/` |
 | Constraints and model facts | `Model` | Validations each field declares, entities, keys and references | Works: `core/analysis/` |
-| Database importing | Model2DB project, ORM code or SQL DDL | Physical schema (`db-schema`) | To write |
-| Analysis | Physical schema | Repository queries and pending decisions | To write |
+| Database importing | Model2DB project, ORM code or SQL DDL | Physical schema (`db-schema`) | Model2DB projects work: `core/interop/model2db/`; ORM code and DDL to write |
+| Analysis | Physical schema | Repository queries and pending decisions | Works: `core/schema/`, `core/crud/` |
 | Correspondences | Physical schema + `Model` (+ Mapper project) | Model ↔ entity and field ↔ column, with their confidence | To write |
-| CRUD design | All of the above + user edits | Repositories, services and decisions | To write |
-| Generation | CRUD design + settings | Project files | To write |
+| CRUD design | Physical schema + user edits | Repositories, services and decisions | Works: `core/crud/` |
+| Generation | CRUD design + settings | Project files | Python + SQLAlchemy 2 works: `core/generators/`; other stacks to write |
 | Export | Project files | ZIP, single file | Works: `core/export/` |
 
 Decisions and their confidence (`core/decisions/`) are shared by every stage that proposes something.
@@ -91,18 +91,24 @@ The web version writes the expected results to `shared/test-cases/` and the desk
 
 ## Interface
 
-The page follows the tool layout of personal_web_style (`layouts/tool-page.md`) and the screen of Model2DB, in a single screen. Today the workspace only holds the input; the CRUD design and the generated project are added as the core is written.
+The page follows the tool layout of personal_web_style (`layouts/tool-page.md`) and the screen of Model2DB, in a single screen:
 
 ```text
 Header          Raúl Estévez                                                  EN  ES
 Presentation    icon  DB2CRUD  [Processed locally] · subtitle · description · examples
-Workspace       ┌ Models ────────────────────────────────────────────────────────┐
-                │ input, detected models and issues                               │
+Workspace       ┌ Database ───────────┐ ┌ Design ──────────────────────────────┐
+                │ Model2DB project,   │ │ pending decisions, one card per      │
+                │ what was read       │ │ table: decisions, queries, operations │
+                └─────────────────────┘ └──────────────────────────────────────┘
+                ┌ Project ───────────────────────────────────────────────────────┐
+                │ every setting · verified or not · file tree · code              │
+                │ Copy · Download file · Download .zip                            │
                 └─────────────────────────────────────────────────────────────────┘
 Links           Download for … · Source code · All tools
 Footer          MIT License · Source code · Raúl Estévez
 ```
 
 - Header and workspace share the same width (1440px) and horizontal padding (24px, 16px below 600px). Header text keeps the size and style of the rest of the site.
-- Below 1100px, when the workspace has more than one part, each part becomes a tab with its count of pending decisions or errors.
-- Results are computed as the input changes; there is no "Generate" button.
+- Below 1100px the three panes become tabs (Database · Design · Project); the design tab shows its count of pending decisions, the database tab a mark when the input cannot be read.
+- Results are computed as the input, the design or the settings change; there is no "Generate" button.
+- The desktop version has the same three panes, with draggable dividers.
