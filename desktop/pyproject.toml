@@ -40,5 +40,7 @@ extend-exclude = ["db2crud/core/interop/model2db/vendor"]
 select = ["E", "F", "I", "UP", "B"]
 
 [tool.ruff.lint.per-file-ignores]
+# Generators hold the lines of the files they write, as they are
+"db2crud/core/generators/**" = ["E501"]
 # Interface texts are kept whole, so each one reads as a sentence
 "db2crud/ui/i18n.py" = ["E501"]
