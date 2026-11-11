@@ -20,6 +20,7 @@ FUNCTIONS = {
     "registry.parseInput": "importers.registry.parse_input",
     "constraints.readConstraints": "analysis.constraints.read_constraints",
     "models.analyzeModels": "analysis.models.analyze_models",
+    "validate.validateDbSchema": "schema.validate.validate_db_schema",
 }
 
 FILES = sorted((SHARED_CASES / "calls").glob("*.json"))

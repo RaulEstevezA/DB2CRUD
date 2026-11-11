@@ -12,6 +12,7 @@ import { describe, expect, it } from 'vitest'
 import { readConstraints } from './analysis/constraints.ts'
 import { analyzeModels } from './analysis/models.ts'
 import { detectFormats, parseInput } from './importers/registry.ts'
+import { validateDbSchema } from './schema/validate.ts'
 import { pluralize, singularize, splitWords, toCamelCase, toPascalCase, toSnakeCase } from './model/naming.ts'
 
 // Tests run from web/
@@ -34,6 +35,7 @@ const SHARED_FUNCTIONS: Record<string, AnyFunction> = {
   'constraints.readConstraints': readConstraints,
   // A Map does not survive JSON: the facts are written as an object
   'models.analyzeModels': (schema) => Object.fromEntries(analyzeModels(schema)),
+  'validate.validateDbSchema': validateDbSchema,
 }
 
 /** What JSON keeps of a value: the files hold JSON, so `undefined` keys disappear as they do there. */
