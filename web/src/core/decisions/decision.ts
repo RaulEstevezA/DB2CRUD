@@ -21,8 +21,29 @@ export interface Reason {
 
 /** Reason codes grow with the rules that propose decisions. */
 export type ReasonCode =
+  // Queries and operations
+  | 'primaryKey'
+  | 'uniqueConstraint'
+  | 'indexOnly'
+  | 'foreignKey'
+  | 'readOnlyTable'
+  // Table roles
+  | 'tableWithKey'
+  | 'noPrimaryKey'
+  | 'joinTable'
+  // Deletes
+  | 'softDeleteColumn'
+  | 'noSoftDeleteColumn'
+  // Concurrency
+  | 'versionColumn'
+  | 'noVersionColumn'
+  // Children
+  | 'childrenWithoutAction'
+  // Hidden columns
+  | 'secretNamed'
+  | 'noSecrets'
   // The user chose it
-  'manual'
+  | 'manual'
 
 /** One decision. `value` is the proposal while the decision is pending and the choice once it is active;
  * `options` are the values that make sense for this subject. */

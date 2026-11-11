@@ -143,7 +143,38 @@ const en = {
   accept: 'Confirm',
   acceptTitle: (subject: string) => `Confirm the suggestion for ${subject}`,
   reason: (reason: Reason): string => {
+    const params = reason.params
     switch (reason.code) {
+      case 'primaryKey':
+        return `The primary key (${p(params, 'columns')}) identifies each row.`
+      case 'uniqueConstraint':
+        return `${p(params, 'columns')} is unique: at most one row has each value.`
+      case 'indexOnly':
+        return `There is an index on ${p(params, 'columns')}, but it may exist only for speed: keep the query if the application looks rows up by it.`
+      case 'foreignKey':
+        return `Each row points to a row of ${p(params, 'table')}.`
+      case 'readOnlyTable':
+        return 'The table is read only.'
+      case 'tableWithKey':
+        return 'The table has a primary key: rows can be read, created, changed and deleted.'
+      case 'noPrimaryKey':
+        return 'The table has no primary key: a row cannot be told apart from another, so it is only read.'
+      case 'joinTable':
+        return `It only links ${p(params, 'tables')}: links are added and removed from them.`
+      case 'softDeleteColumn':
+        return `“${p(params, 'column')}” suggests rows are marked as deleted instead of removed.`
+      case 'noSoftDeleteColumn':
+        return 'No column marks rows as deleted: deleting removes the row.'
+      case 'versionColumn':
+        return `“${p(params, 'column')}” counts versions: a change made on an old version is refused.`
+      case 'noVersionColumn':
+        return 'No column counts versions.'
+      case 'childrenWithoutAction':
+        return `Rows of ${p(params, 'tables')} point here and the database does nothing on delete: refuse the delete while they exist, or delete them first.`
+      case 'secretNamed':
+        return `${p(params, 'columns')} looks like a secret: it is never returned.`
+      case 'noSecrets':
+        return 'No column looks like a secret.'
       case 'manual':
         return 'You chose it.'
     }
@@ -247,7 +278,38 @@ const es: Messages = {
   accept: 'Confirmar',
   acceptTitle: (subject) => `Confirmar la sugerencia para ${subject}`,
   reason: (reason) => {
+    const params = reason.params
     switch (reason.code) {
+      case 'primaryKey':
+        return `La clave primaria (${p(params, 'columns')}) identifica cada fila.`
+      case 'uniqueConstraint':
+        return `${p(params, 'columns')} es único: como mucho una fila tiene cada valor.`
+      case 'indexOnly':
+        return `Hay un índice en ${p(params, 'columns')}, pero puede existir solo por rendimiento: mantén la consulta si la aplicación busca filas por él.`
+      case 'foreignKey':
+        return `Cada fila apunta a una fila de ${p(params, 'table')}.`
+      case 'readOnlyTable':
+        return 'La tabla es de solo lectura.'
+      case 'tableWithKey':
+        return 'La tabla tiene clave primaria: sus filas se pueden leer, crear, cambiar y borrar.'
+      case 'noPrimaryKey':
+        return 'La tabla no tiene clave primaria: no se puede distinguir una fila de otra, así que solo se lee.'
+      case 'joinTable':
+        return `Solo relaciona ${p(params, 'tables')}: los vínculos se añaden y se quitan desde ellas.`
+      case 'softDeleteColumn':
+        return `«${p(params, 'column')}» indica que las filas se marcan como borradas en lugar de eliminarse.`
+      case 'noSoftDeleteColumn':
+        return 'Ninguna columna marca filas como borradas: borrar elimina la fila.'
+      case 'versionColumn':
+        return `«${p(params, 'column')}» cuenta versiones: se rechaza un cambio hecho sobre una versión antigua.`
+      case 'noVersionColumn':
+        return 'Ninguna columna cuenta versiones.'
+      case 'childrenWithoutAction':
+        return `Filas de ${p(params, 'tables')} apuntan aquí y la base de datos no hace nada al borrar: rechaza el borrado mientras existan, o bórralas antes.`
+      case 'secretNamed':
+        return `${p(params, 'columns')} parece un secreto: nunca se devuelve.`
+      case 'noSecrets':
+        return 'Ninguna columna parece un secreto.'
       case 'manual':
         return 'Lo has elegido tú.'
     }
