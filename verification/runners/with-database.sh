@@ -39,7 +39,8 @@ case "$database" in
 esac
 
 cleanup() {
-  docker rm -f "$container" >/dev/null 2>&1
+  # -v: the anonymous volume of the database goes with it, or every run would leave one behind
+  docker rm -f -v "$container" >/dev/null 2>&1
   docker network rm "$network" >/dev/null 2>&1
 }
 trap cleanup EXIT
