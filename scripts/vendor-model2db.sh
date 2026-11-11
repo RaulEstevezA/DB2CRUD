@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Copies the part of Model2DB that turns a saved project into its tables: the model, the parsers, the design
-# decisions and the relational build, for the web and the desktop versions. DB2CRUD reads model2db-project files
+# decisions, the relational build and the SQL type of each column, for the web and the desktop versions. DB2CRUD reads model2db-project files
 # with it until Model2DB exports db-schema itself (docs/decisions.md, decision 15). The copies are never edited
 # by hand: run this again to update them.
 #
@@ -23,13 +23,17 @@ web="web/src/core/interop/model2db/vendor"
 copy "$source/web/src/core" "$web" '*.ts'
 mkdir -p "$web/interop" "$web/generate"
 cp "$source/web/src/core/interop/project.ts" "$web/interop/"
-cp "$source/web/src/core/generate/types.ts" "$web/generate/"
+cp "$source/web/src/core/generate/types.ts" "$source/web/src/core/generate/todos.ts" "$web/generate/"
+mkdir -p "$web/generate/sql"
+cp "$source/web/src/core/generate/sql/sql.ts" "$web/generate/sql/"
 
 desktop="desktop/db2crud/core/interop/model2db/vendor"
 copy "$source/desktop/model2db/core" "$desktop" '*.py'
 mkdir -p "$desktop/interop" "$desktop/generate"
 cp "$source/desktop/model2db/core/interop/project.py" "$desktop/interop/"
-cp "$source/desktop/model2db/core/generate/types.py" "$desktop/generate/"
+cp "$source/desktop/model2db/core/generate/types.py" "$source/desktop/model2db/core/generate/todos.py" "$desktop/generate/"
+mkdir -p "$desktop/generate/sql"
+cp "$source/desktop/model2db/core/generate/sql/sql.py" "$desktop/generate/sql/"
 cp "$source/desktop/model2db/core/js.py" "$desktop/"
 for folder in $(cd "$desktop" && find . -type d); do touch "$desktop/$folder/__init__.py"; done
 
