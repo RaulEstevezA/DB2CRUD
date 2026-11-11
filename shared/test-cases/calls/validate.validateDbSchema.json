@@ -1,685 +1,754 @@
 [
-  {
-    "args": [
-      {
-        "format": "db-schema",
-        "version": 1,
-        "dialect": "postgresql",
-        "source": {
-          "kind": "ddl",
-          "format": "postgresql"
+ {
+  "args": [
+   {
+    "format": "db-schema",
+    "version": 1,
+    "dialect": "postgresql",
+    "source": {
+     "kind": "ddl",
+     "format": "postgresql"
+    },
+    "tables": [
+     {
+      "name": "customers",
+      "columns": [
+       {
+        "name": "id",
+        "type": {
+         "sql": "integer",
+         "kind": "integer",
+         "bits": 32
         },
-        "tables": [
-          {
-            "name": "customers",
-            "columns": [
-              {
-                "name": "id",
-                "type": {
-                  "sql": "integer",
-                  "kind": "integer",
-                  "bits": 32
-                },
-                "nullable": false,
-                "generated": "identity"
-              },
-              {
-                "name": "email",
-                "type": {
-                  "sql": "varchar(120)",
-                  "kind": "text",
-                  "length": 120
-                },
-                "nullable": false
-              }
-            ],
-            "primaryKey": ["id"],
-            "foreignKeys": [],
-            "uniques": [
-              {
-                "name": "uq_customers_email",
-                "columns": ["email"]
-              }
-            ],
-            "indexes": [],
-            "checks": []
-          },
-          {
-            "name": "orders",
-            "columns": [
-              {
-                "name": "id",
-                "type": {
-                  "sql": "integer",
-                  "kind": "integer",
-                  "bits": 32
-                },
-                "nullable": false
-              },
-              {
-                "name": "customer_id",
-                "type": {
-                  "sql": "integer",
-                  "kind": "integer",
-                  "bits": 32
-                },
-                "nullable": false
-              },
-              {
-                "name": "status",
-                "type": {
-                  "sql": "order_status",
-                  "kind": "enum",
-                  "name": "order_status"
-                },
-                "nullable": false
-              }
-            ],
-            "primaryKey": ["id"],
-            "foreignKeys": [
-              {
-                "name": "fk_orders_customer",
-                "columns": ["customer_id"],
-                "references": {
-                  "table": "customers",
-                  "columns": ["id"]
-                }
-              }
-            ],
-            "uniques": [],
-            "indexes": [
-              {
-                "columns": ["status"]
-              }
-            ],
-            "checks": [
-              {
-                "sql": "status IN ('new', 'paid')",
-                "parsed": {
-                  "kind": "in",
-                  "column": "status",
-                  "values": ["new", "paid"]
-                }
-              }
-            ]
-          }
-        ],
-        "enums": [
-          {
-            "name": "order_status",
-            "values": ["new", "paid"],
-            "storage": "native"
-          }
-        ],
-        "notes": []
-      }
-    ],
-    "result": []
-  },
-  {
-    "args": [
-      {
-        "format": "db-schema",
-        "version": 1,
-        "dialect": "postgresql",
-        "source": {
-          "kind": "ddl",
-          "format": "postgresql"
+        "nullable": false,
+        "generated": "identity"
+       },
+       {
+        "name": "email",
+        "type": {
+         "sql": "varchar(120)",
+         "kind": "text",
+         "length": 120
         },
-        "tables": [
-          {
-            "name": "items",
-            "columns": [
-              {
-                "name": "id",
-                "type": {
-                  "sql": "integer",
-                  "kind": "integer",
-                  "bits": 32
-                },
-                "nullable": false
-              },
-              {
-                "name": "id",
-                "type": {
-                  "sql": "integer",
-                  "kind": "integer",
-                  "bits": 32
-                },
-                "nullable": false
-              }
-            ],
-            "primaryKey": ["id"],
-            "foreignKeys": [],
-            "uniques": [],
-            "indexes": [],
-            "checks": []
-          },
-          {
-            "name": "items",
-            "columns": [
-              {
-                "name": "id",
-                "type": {
-                  "sql": "integer",
-                  "kind": "integer",
-                  "bits": 32
-                },
-                "nullable": false,
-                "generated": "identity"
-              }
-            ],
-            "primaryKey": ["id"],
-            "foreignKeys": [],
-            "uniques": [],
-            "indexes": [],
-            "checks": []
-          },
-          {
-            "name": "empty",
-            "columns": [],
-            "primaryKey": null,
-            "foreignKeys": [],
-            "uniques": [],
-            "indexes": [],
-            "checks": []
-          }
-        ],
-        "enums": [],
-        "notes": []
-      }
-    ],
-    "result": [
-      {
-        "code": "duplicateColumn",
-        "severity": "error",
-        "table": "items",
-        "params": {
-          "column": "id"
-        }
-      },
-      {
-        "code": "duplicateTable",
-        "severity": "error",
-        "table": "items",
-        "params": {}
-      },
-      {
-        "code": "noColumns",
-        "severity": "error",
-        "table": "empty",
-        "params": {}
-      }
-    ]
-  },
-  {
-    "args": [
-      {
-        "format": "db-schema",
-        "version": 1,
-        "dialect": "postgresql",
-        "source": {
-          "kind": "ddl",
-          "format": "postgresql"
+        "nullable": false
+       }
+      ],
+      "primaryKey": [
+       "id"
+      ],
+      "foreignKeys": [],
+      "uniques": [
+       {
+        "name": "uq_customers_email",
+        "columns": [
+         "email"
+        ]
+       }
+      ],
+      "indexes": [],
+      "checks": []
+     },
+     {
+      "name": "orders",
+      "columns": [
+       {
+        "name": "id",
+        "type": {
+         "sql": "integer",
+         "kind": "integer",
+         "bits": 32
         },
-        "tables": [
-          {
-            "name": "items",
-            "columns": [
-              {
-                "name": "id",
-                "type": {
-                  "sql": "integer",
-                  "kind": "integer",
-                  "bits": 32
-                },
-                "nullable": false,
-                "generated": "identity"
-              }
-            ],
-            "primaryKey": ["code"],
-            "foreignKeys": [],
-            "uniques": [
-              {
-                "name": "uq_sku",
-                "columns": ["sku"]
-              }
-            ],
-            "indexes": [
-              {
-                "columns": ["name"]
-              }
-            ],
-            "checks": [
-              {
-                "sql": "price > 0",
-                "parsed": {
-                  "kind": "compare",
-                  "column": "price",
-                  "op": ">",
-                  "value": 0
-                }
-              }
-            ]
-          }
-        ],
-        "enums": [],
-        "notes": []
-      }
-    ],
-    "result": [
-      {
-        "code": "unknownColumn",
-        "severity": "error",
-        "table": "items",
-        "params": {
-          "column": "code",
-          "place": "primaryKey",
-          "constraint": ""
-        }
-      },
-      {
-        "code": "unknownColumn",
-        "severity": "error",
-        "table": "items",
-        "params": {
-          "column": "sku",
-          "place": "unique",
-          "constraint": "uq_sku"
-        }
-      },
-      {
-        "code": "unknownColumn",
-        "severity": "error",
-        "table": "items",
-        "params": {
-          "column": "name",
-          "place": "index",
-          "constraint": ""
-        }
-      },
-      {
-        "code": "unknownColumn",
-        "severity": "error",
-        "table": "items",
-        "params": {
-          "column": "price",
-          "place": "check",
-          "constraint": ""
-        }
-      }
-    ]
-  },
-  {
-    "args": [
-      {
-        "format": "db-schema",
-        "version": 1,
-        "dialect": "postgresql",
-        "source": {
-          "kind": "ddl",
-          "format": "postgresql"
+        "nullable": false
+       },
+       {
+        "name": "customer_id",
+        "type": {
+         "sql": "integer",
+         "kind": "integer",
+         "bits": 32
         },
-        "tables": [
-          {
-            "name": "customers",
-            "columns": [
-              {
-                "name": "id",
-                "type": {
-                  "sql": "integer",
-                  "kind": "integer",
-                  "bits": 32
-                },
-                "nullable": false,
-                "generated": "identity"
-              },
-              {
-                "name": "email",
-                "type": {
-                  "sql": "varchar(120)",
-                  "kind": "text",
-                  "length": 120
-                },
-                "nullable": false
-              }
-            ],
-            "primaryKey": ["id"],
-            "foreignKeys": [],
-            "uniques": [
-              {
-                "name": "uq_customers_email",
-                "columns": ["email"]
-              }
-            ],
-            "indexes": [],
-            "checks": []
-          },
-          {
-            "name": "orders",
-            "columns": [
-              {
-                "name": "id",
-                "type": {
-                  "sql": "integer",
-                  "kind": "integer",
-                  "bits": 32
-                },
-                "nullable": false,
-                "generated": "identity"
-              }
-            ],
-            "primaryKey": ["id"],
-            "foreignKeys": [
-              {
-                "columns": ["id"],
-                "references": {
-                  "table": "clients",
-                  "columns": ["id"]
-                }
-              },
-              {
-                "columns": ["id"],
-                "references": {
-                  "table": "customers",
-                  "columns": ["id", "email"]
-                }
-              },
-              {
-                "columns": ["id"],
-                "references": {
-                  "table": "customers",
-                  "columns": ["code"]
-                }
-              }
-            ],
-            "uniques": [],
-            "indexes": [],
-            "checks": []
-          }
-        ],
-        "enums": [],
-        "notes": []
-      }
-    ],
-    "result": [
-      {
-        "code": "unknownTable",
-        "severity": "error",
-        "table": "orders",
-        "params": {
-          "target": "clients",
-          "constraint": ""
-        }
-      },
-      {
-        "code": "foreignKeyArity",
-        "severity": "error",
-        "table": "orders",
-        "params": {
-          "target": "customers",
-          "constraint": ""
-        }
-      },
-      {
-        "code": "unknownColumn",
-        "severity": "error",
-        "table": "orders",
-        "params": {
-          "column": "code",
-          "place": "foreignKey",
-          "constraint": "",
-          "target": "customers"
-        }
-      }
-    ]
-  },
-  {
-    "args": [
-      {
-        "format": "db-schema",
-        "version": 1,
-        "dialect": "postgresql",
-        "source": {
-          "kind": "ddl",
-          "format": "postgresql"
+        "nullable": false
+       },
+       {
+        "name": "status",
+        "type": {
+         "sql": "order_status",
+         "kind": "enum",
+         "name": "order_status"
         },
-        "tables": [
-          {
-            "name": "customers",
-            "columns": [
-              {
-                "name": "id",
-                "type": {
-                  "sql": "integer",
-                  "kind": "integer",
-                  "bits": 32
-                },
-                "nullable": false,
-                "generated": "identity"
-              },
-              {
-                "name": "email",
-                "type": {
-                  "sql": "varchar(120)",
-                  "kind": "text",
-                  "length": 120
-                },
-                "nullable": false
-              },
-              {
-                "name": "city",
-                "type": {
-                  "sql": "text",
-                  "kind": "text"
-                },
-                "nullable": true
-              }
-            ],
-            "primaryKey": ["id"],
-            "foreignKeys": [],
-            "uniques": [],
-            "indexes": [],
-            "checks": []
-          },
-          {
-            "name": "stores",
-            "columns": [
-              {
-                "name": "id",
-                "type": {
-                  "sql": "integer",
-                  "kind": "integer",
-                  "bits": 32
-                },
-                "nullable": false
-              },
-              {
-                "name": "city",
-                "type": {
-                  "sql": "text",
-                  "kind": "text"
-                },
-                "nullable": true
-              }
-            ],
-            "primaryKey": ["id"],
-            "foreignKeys": [
-              {
-                "columns": ["city"],
-                "references": {
-                  "table": "customers",
-                  "columns": ["city"]
-                }
-              }
-            ],
-            "uniques": [],
-            "indexes": [],
-            "checks": []
-          }
+        "nullable": false
+       }
+      ],
+      "primaryKey": [
+       "id"
+      ],
+      "foreignKeys": [
+       {
+        "name": "fk_orders_customer",
+        "columns": [
+         "customer_id"
         ],
-        "enums": [],
-        "notes": []
-      }
-    ],
-    "result": [
-      {
-        "code": "foreignKeyNotUnique",
-        "severity": "warning",
-        "table": "stores",
-        "params": {
-          "target": "customers",
-          "columns": "city",
-          "constraint": ""
+        "references": {
+         "table": "customers",
+         "columns": [
+          "id"
+         ]
         }
-      }
-    ]
-  },
-  {
-    "args": [
-      {
-        "format": "db-schema",
-        "version": 1,
-        "dialect": "postgresql",
-        "source": {
-          "kind": "ddl",
-          "format": "postgresql"
+       }
+      ],
+      "uniques": [],
+      "indexes": [
+       {
+        "columns": [
+         "status"
+        ]
+       }
+      ],
+      "checks": [
+       {
+        "sql": "status IN ('new', 'paid')",
+        "parsed": {
+         "kind": "in",
+         "column": "status",
+         "values": [
+          "new",
+          "paid"
+         ]
+        }
+       }
+      ]
+     }
+    ],
+    "enums": [
+     {
+      "name": "order_status",
+      "values": [
+       "new",
+       "paid"
+      ],
+      "storage": "native"
+     }
+    ],
+    "notes": []
+   }
+  ],
+  "result": []
+ },
+ {
+  "args": [
+   {
+    "format": "db-schema",
+    "version": 1,
+    "dialect": "postgresql",
+    "source": {
+     "kind": "ddl",
+     "format": "postgresql"
+    },
+    "tables": [
+     {
+      "name": "items",
+      "columns": [
+       {
+        "name": "id",
+        "type": {
+         "sql": "integer",
+         "kind": "integer",
+         "bits": 32
         },
-        "tables": [
-          {
-            "name": "posts",
-            "columns": [
-              {
-                "name": "id",
-                "type": {
-                  "sql": "integer",
-                  "kind": "integer",
-                  "bits": 32
-                },
-                "nullable": false
-              },
-              {
-                "name": "tags",
-                "type": {
-                  "sql": "tag[]",
-                  "kind": "array",
-                  "items": {
-                    "sql": "tag",
-                    "kind": "enum",
-                    "name": "tag"
-                  }
-                },
-                "nullable": true
-              }
-            ],
-            "primaryKey": ["id"],
-            "foreignKeys": [],
-            "uniques": [],
-            "indexes": [],
-            "checks": []
-          }
-        ],
-        "enums": [],
-        "notes": []
-      }
-    ],
-    "result": [
-      {
-        "code": "unknownEnum",
-        "severity": "error",
-        "table": "posts",
-        "params": {
-          "column": "tags",
-          "enum": "tag"
-        }
-      }
-    ]
-  },
-  {
-    "args": [
-      {
-        "format": "db-schema",
-        "version": 1,
-        "dialect": "postgresql",
-        "source": {
-          "kind": "ddl",
-          "format": "postgresql"
+        "nullable": false
+       },
+       {
+        "name": "id",
+        "type": {
+         "sql": "integer",
+         "kind": "integer",
+         "bits": 32
         },
-        "tables": [
-          {
-            "name": "orders",
-            "columns": [
-              {
-                "name": "id",
-                "type": {
-                  "sql": "integer",
-                  "kind": "integer",
-                  "bits": 32
-                },
-                "nullable": false,
-                "generated": "identity"
-              }
-            ],
-            "primaryKey": ["id"],
-            "foreignKeys": [],
-            "uniques": [],
-            "indexes": [],
-            "checks": [],
-            "schema": "sales"
-          },
-          {
-            "name": "lines",
-            "columns": [
-              {
-                "name": "id",
-                "type": {
-                  "sql": "integer",
-                  "kind": "integer",
-                  "bits": 32
-                },
-                "nullable": false,
-                "generated": "identity"
-              }
-            ],
-            "primaryKey": ["id"],
-            "foreignKeys": [
-              {
-                "name": "fk",
-                "columns": ["id"],
-                "references": {
-                  "table": "orders",
-                  "schema": "sales",
-                  "columns": ["id"]
-                }
-              },
-              {
-                "columns": ["id"],
-                "references": {
-                  "table": "orders",
-                  "schema": "archive",
-                  "columns": ["id"]
-                }
-              }
-            ],
-            "uniques": [],
-            "indexes": [],
-            "checks": []
-          }
-        ],
-        "enums": [],
-        "notes": []
-      }
+        "nullable": false
+       }
+      ],
+      "primaryKey": [
+       "id"
+      ],
+      "foreignKeys": [],
+      "uniques": [],
+      "indexes": [],
+      "checks": []
+     },
+     {
+      "name": "items",
+      "columns": [
+       {
+        "name": "id",
+        "type": {
+         "sql": "integer",
+         "kind": "integer",
+         "bits": 32
+        },
+        "nullable": false,
+        "generated": "identity"
+       }
+      ],
+      "primaryKey": [
+       "id"
+      ],
+      "foreignKeys": [],
+      "uniques": [],
+      "indexes": [],
+      "checks": []
+     },
+     {
+      "name": "empty",
+      "columns": [],
+      "primaryKey": null,
+      "foreignKeys": [],
+      "uniques": [],
+      "indexes": [],
+      "checks": []
+     }
     ],
-    "result": [
-      {
-        "code": "unknownTable",
-        "severity": "error",
-        "table": "lines",
-        "params": {
-          "target": "archive.orders",
-          "constraint": ""
+    "enums": [],
+    "notes": []
+   }
+  ],
+  "result": [
+   {
+    "code": "duplicateColumn",
+    "severity": "error",
+    "table": "items",
+    "params": {
+     "column": "id"
+    }
+   },
+   {
+    "code": "duplicateTable",
+    "severity": "error",
+    "table": "items",
+    "params": {}
+   },
+   {
+    "code": "noColumns",
+    "severity": "error",
+    "table": "empty",
+    "params": {}
+   }
+  ]
+ },
+ {
+  "args": [
+   {
+    "format": "db-schema",
+    "version": 1,
+    "dialect": "postgresql",
+    "source": {
+     "kind": "ddl",
+     "format": "postgresql"
+    },
+    "tables": [
+     {
+      "name": "items",
+      "columns": [
+       {
+        "name": "id",
+        "type": {
+         "sql": "integer",
+         "kind": "integer",
+         "bits": 32
+        },
+        "nullable": false,
+        "generated": "identity"
+       }
+      ],
+      "primaryKey": [
+       "code"
+      ],
+      "foreignKeys": [],
+      "uniques": [
+       {
+        "name": "uq_sku",
+        "columns": [
+         "sku"
+        ]
+       }
+      ],
+      "indexes": [
+       {
+        "columns": [
+         "name"
+        ]
+       }
+      ],
+      "checks": [
+       {
+        "sql": "price > 0",
+        "parsed": {
+         "kind": "compare",
+         "column": "price",
+         "op": ">",
+         "value": 0
         }
-      }
-    ]
-  }
+       }
+      ]
+     }
+    ],
+    "enums": [],
+    "notes": []
+   }
+  ],
+  "result": [
+   {
+    "code": "unknownColumn",
+    "severity": "error",
+    "table": "items",
+    "params": {
+     "column": "code",
+     "place": "primaryKey",
+     "constraint": ""
+    }
+   },
+   {
+    "code": "unknownColumn",
+    "severity": "error",
+    "table": "items",
+    "params": {
+     "column": "sku",
+     "place": "unique",
+     "constraint": "uq_sku"
+    }
+   },
+   {
+    "code": "unknownColumn",
+    "severity": "error",
+    "table": "items",
+    "params": {
+     "column": "name",
+     "place": "index",
+     "constraint": ""
+    }
+   },
+   {
+    "code": "unknownColumn",
+    "severity": "error",
+    "table": "items",
+    "params": {
+     "column": "price",
+     "place": "check",
+     "constraint": ""
+    }
+   }
+  ]
+ },
+ {
+  "args": [
+   {
+    "format": "db-schema",
+    "version": 1,
+    "dialect": "postgresql",
+    "source": {
+     "kind": "ddl",
+     "format": "postgresql"
+    },
+    "tables": [
+     {
+      "name": "customers",
+      "columns": [
+       {
+        "name": "id",
+        "type": {
+         "sql": "integer",
+         "kind": "integer",
+         "bits": 32
+        },
+        "nullable": false,
+        "generated": "identity"
+       },
+       {
+        "name": "email",
+        "type": {
+         "sql": "varchar(120)",
+         "kind": "text",
+         "length": 120
+        },
+        "nullable": false
+       }
+      ],
+      "primaryKey": [
+       "id"
+      ],
+      "foreignKeys": [],
+      "uniques": [
+       {
+        "name": "uq_customers_email",
+        "columns": [
+         "email"
+        ]
+       }
+      ],
+      "indexes": [],
+      "checks": []
+     },
+     {
+      "name": "orders",
+      "columns": [
+       {
+        "name": "id",
+        "type": {
+         "sql": "integer",
+         "kind": "integer",
+         "bits": 32
+        },
+        "nullable": false,
+        "generated": "identity"
+       }
+      ],
+      "primaryKey": [
+       "id"
+      ],
+      "foreignKeys": [
+       {
+        "columns": [
+         "id"
+        ],
+        "references": {
+         "table": "clients",
+         "columns": [
+          "id"
+         ]
+        }
+       },
+       {
+        "columns": [
+         "id"
+        ],
+        "references": {
+         "table": "customers",
+         "columns": [
+          "id",
+          "email"
+         ]
+        }
+       },
+       {
+        "columns": [
+         "id"
+        ],
+        "references": {
+         "table": "customers",
+         "columns": [
+          "code"
+         ]
+        }
+       }
+      ],
+      "uniques": [],
+      "indexes": [],
+      "checks": []
+     }
+    ],
+    "enums": [],
+    "notes": []
+   }
+  ],
+  "result": [
+   {
+    "code": "unknownTable",
+    "severity": "error",
+    "table": "orders",
+    "params": {
+     "target": "clients",
+     "constraint": ""
+    }
+   },
+   {
+    "code": "foreignKeyArity",
+    "severity": "error",
+    "table": "orders",
+    "params": {
+     "target": "customers",
+     "constraint": ""
+    }
+   },
+   {
+    "code": "unknownColumn",
+    "severity": "error",
+    "table": "orders",
+    "params": {
+     "column": "code",
+     "place": "foreignKey",
+     "constraint": "",
+     "target": "customers"
+    }
+   }
+  ]
+ },
+ {
+  "args": [
+   {
+    "format": "db-schema",
+    "version": 1,
+    "dialect": "postgresql",
+    "source": {
+     "kind": "ddl",
+     "format": "postgresql"
+    },
+    "tables": [
+     {
+      "name": "customers",
+      "columns": [
+       {
+        "name": "id",
+        "type": {
+         "sql": "integer",
+         "kind": "integer",
+         "bits": 32
+        },
+        "nullable": false,
+        "generated": "identity"
+       },
+       {
+        "name": "email",
+        "type": {
+         "sql": "varchar(120)",
+         "kind": "text",
+         "length": 120
+        },
+        "nullable": false
+       },
+       {
+        "name": "city",
+        "type": {
+         "sql": "text",
+         "kind": "text"
+        },
+        "nullable": true
+       }
+      ],
+      "primaryKey": [
+       "id"
+      ],
+      "foreignKeys": [],
+      "uniques": [],
+      "indexes": [],
+      "checks": []
+     },
+     {
+      "name": "stores",
+      "columns": [
+       {
+        "name": "id",
+        "type": {
+         "sql": "integer",
+         "kind": "integer",
+         "bits": 32
+        },
+        "nullable": false
+       },
+       {
+        "name": "city",
+        "type": {
+         "sql": "text",
+         "kind": "text"
+        },
+        "nullable": true
+       }
+      ],
+      "primaryKey": [
+       "id"
+      ],
+      "foreignKeys": [
+       {
+        "columns": [
+         "city"
+        ],
+        "references": {
+         "table": "customers",
+         "columns": [
+          "city"
+         ]
+        }
+       }
+      ],
+      "uniques": [],
+      "indexes": [],
+      "checks": []
+     }
+    ],
+    "enums": [],
+    "notes": []
+   }
+  ],
+  "result": [
+   {
+    "code": "foreignKeyNotUnique",
+    "severity": "warning",
+    "table": "stores",
+    "params": {
+     "target": "customers",
+     "columns": "city",
+     "constraint": ""
+    }
+   }
+  ]
+ },
+ {
+  "args": [
+   {
+    "format": "db-schema",
+    "version": 1,
+    "dialect": "postgresql",
+    "source": {
+     "kind": "ddl",
+     "format": "postgresql"
+    },
+    "tables": [
+     {
+      "name": "posts",
+      "columns": [
+       {
+        "name": "id",
+        "type": {
+         "sql": "integer",
+         "kind": "integer",
+         "bits": 32
+        },
+        "nullable": false
+       },
+       {
+        "name": "tags",
+        "type": {
+         "sql": "tag[]",
+         "kind": "array",
+         "items": {
+          "sql": "tag",
+          "kind": "enum",
+          "name": "tag"
+         }
+        },
+        "nullable": true
+       }
+      ],
+      "primaryKey": [
+       "id"
+      ],
+      "foreignKeys": [],
+      "uniques": [],
+      "indexes": [],
+      "checks": []
+     }
+    ],
+    "enums": [],
+    "notes": []
+   }
+  ],
+  "result": [
+   {
+    "code": "unknownEnum",
+    "severity": "error",
+    "table": "posts",
+    "params": {
+     "column": "tags",
+     "enum": "tag"
+    }
+   }
+  ]
+ },
+ {
+  "args": [
+   {
+    "format": "db-schema",
+    "version": 1,
+    "dialect": "postgresql",
+    "source": {
+     "kind": "ddl",
+     "format": "postgresql"
+    },
+    "tables": [
+     {
+      "name": "orders",
+      "columns": [
+       {
+        "name": "id",
+        "type": {
+         "sql": "integer",
+         "kind": "integer",
+         "bits": 32
+        },
+        "nullable": false,
+        "generated": "identity"
+       }
+      ],
+      "primaryKey": [
+       "id"
+      ],
+      "foreignKeys": [],
+      "uniques": [],
+      "indexes": [],
+      "checks": [],
+      "schema": "sales"
+     },
+     {
+      "name": "lines",
+      "columns": [
+       {
+        "name": "id",
+        "type": {
+         "sql": "integer",
+         "kind": "integer",
+         "bits": 32
+        },
+        "nullable": false,
+        "generated": "identity"
+       }
+      ],
+      "primaryKey": [
+       "id"
+      ],
+      "foreignKeys": [
+       {
+        "name": "fk",
+        "columns": [
+         "id"
+        ],
+        "references": {
+         "table": "orders",
+         "schema": "sales",
+         "columns": [
+          "id"
+         ]
+        }
+       },
+       {
+        "columns": [
+         "id"
+        ],
+        "references": {
+         "table": "orders",
+         "schema": "archive",
+         "columns": [
+          "id"
+         ]
+        }
+       }
+      ],
+      "uniques": [],
+      "indexes": [],
+      "checks": []
+     }
+    ],
+    "enums": [],
+    "notes": []
+   }
+  ],
+  "result": [
+   {
+    "code": "unknownTable",
+    "severity": "error",
+    "table": "lines",
+    "params": {
+     "target": "archive.orders",
+     "constraint": ""
+    }
+   }
+  ]
+ }
 ]
