@@ -182,3 +182,11 @@ $RECYCLE.BIN/
 .directory
 .Trash-*
 .nfs*
+
+# ==============================
+# Shared test cases
+# ==============================
+# They hold whole generated projects, files that look like local ones included (Laravel logs, Symfony .env).
+!shared/test-cases/outputs/**/logs/
+!shared/test-cases/outputs/**/.env
+!shared/test-cases/outputs/**/.env.*
