@@ -50,7 +50,7 @@ export function sampleValue(column: DbColumn, checks: DbCheck[], enums: DbEnum[]
       const prefix = column.name
         .replace(/[^a-z]/gi, '')
         .toLowerCase()
-        .slice(0, Math.min(room, 20))
+        .slice(0, Math.max(0, Math.min(room, 20)))
       return prefix.length > 0 ? `f"${prefix}-{n}"` : `f"{n}"[-${length}:]`
     }
     case 'enum':

@@ -296,7 +296,7 @@ export function repositoryFile(context: Context, info: TableInfo): GeneratedFile
       '',
       `class ${repositoryClass(info)}(Protocol):`,
       `    """Where ${info.name} rows are kept. Services depend only on this interface."""`,
-      ...methods.flatMap((method) => ['', indent(lines(signature(context, method), `        """${method.doc}"""`, '        ...'))]),
+      ...methods.flatMap((method) => ['', indent(lines(signature(context, method), `    """${method.doc}"""`, '    ...'))]),
     ],
     '',
     '',
