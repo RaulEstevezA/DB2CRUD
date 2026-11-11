@@ -105,13 +105,51 @@ def _parse_issue_es(issue: dict) -> str:
 
 
 def _reason_en(reason: dict) -> str:
+    params = reason.get("params")
     return {
+        "primaryKey": f"The primary key ({_p(params, 'columns')}) identifies each row.",
+        "uniqueConstraint": f"{_p(params, 'columns')} is unique: at most one row has each value.",
+        "indexOnly": f"There is an index on {_p(params, 'columns')}, but it may exist only for speed: keep the query if "
+        "the application looks rows up by it.",
+        "foreignKey": f"Each row points to a row of {_p(params, 'table')}.",
+        "readOnlyTable": "The table is read only.",
+        "tableWithKey": "The table has a primary key: rows can be read, created, changed and deleted.",
+        "noPrimaryKey": "The table has no primary key: a row cannot be told apart from another, so it is only read.",
+        "joinTable": f"It only links {_p(params, 'tables')}: links are added and removed from them.",
+        "softDeleteColumn": f"“{_p(params, 'column')}” suggests rows are marked as deleted instead of removed.",
+        "noSoftDeleteColumn": "No column marks rows as deleted: deleting removes the row.",
+        "versionColumn": f"“{_p(params, 'column')}” counts versions: a change made on an old version is refused.",
+        "noVersionColumn": "No column counts versions.",
+        "childrenWithoutAction": f"Rows of {_p(params, 'tables')} point here and the database does nothing on delete: "
+        "refuse the delete while they exist, or delete them first.",
+        "secretNamed": f"{_p(params, 'columns')} looks like a secret: it is never returned.",
+        "noSecrets": "No column looks like a secret.",
         "manual": "You chose it.",
     }.get(reason["code"], reason["code"])
 
 
 def _reason_es(reason: dict) -> str:
+    params = reason.get("params")
     return {
+        "primaryKey": f"La clave primaria ({_p(params, 'columns')}) identifica cada fila.",
+        "uniqueConstraint": f"{_p(params, 'columns')} es único: como mucho una fila tiene cada valor.",
+        "indexOnly": f"Hay un índice en {_p(params, 'columns')}, pero puede existir solo por rendimiento: mantén la "
+        "consulta si la aplicación busca filas por él.",
+        "foreignKey": f"Cada fila apunta a una fila de {_p(params, 'table')}.",
+        "readOnlyTable": "La tabla es de solo lectura.",
+        "tableWithKey": "La tabla tiene clave primaria: sus filas se pueden leer, crear, cambiar y borrar.",
+        "noPrimaryKey": "La tabla no tiene clave primaria: no se puede distinguir una fila de otra, así que solo se lee.",
+        "joinTable": f"Solo relaciona {_p(params, 'tables')}: los vínculos se añaden y se quitan desde ellas.",
+        "softDeleteColumn": f"«{_p(params, 'column')}» indica que las filas se marcan como borradas en lugar de "
+        "eliminarse.",
+        "noSoftDeleteColumn": "Ninguna columna marca filas como borradas: borrar elimina la fila.",
+        "versionColumn": f"«{_p(params, 'column')}» cuenta versiones: se rechaza un cambio hecho sobre una versión "
+        "antigua.",
+        "noVersionColumn": "Ninguna columna cuenta versiones.",
+        "childrenWithoutAction": f"Filas de {_p(params, 'tables')} apuntan aquí y la base de datos no hace nada al "
+        "borrar: rechaza el borrado mientras existan, o bórralas antes.",
+        "secretNamed": f"{_p(params, 'columns')} parece un secreto: nunca se devuelve.",
+        "noSecrets": "Ninguna columna parece un secreto.",
         "manual": "Lo has elegido tú.",
     }.get(reason["code"], reason["code"])
 

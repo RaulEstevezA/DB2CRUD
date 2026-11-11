@@ -21,6 +21,7 @@ FUNCTIONS = {
     "constraints.readConstraints": "analysis.constraints.read_constraints",
     "models.analyzeModels": "analysis.models.analyze_models",
     "validate.validateDbSchema": "schema.validate.validate_db_schema",
+    "propose.proposeCrud": "crud.propose.propose_crud",
 }
 
 FILES = sorted((SHARED_CASES / "calls").glob("*.json"))
