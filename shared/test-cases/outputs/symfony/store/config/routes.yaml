@@ -1,3 +1,0 @@
-# Every #[Route] of the controllers in src/
-controllers:
-    resource: routing.controllers

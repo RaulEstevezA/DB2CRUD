@@ -1,6 +1,0 @@
-target/
-.idea/
-.vscode/
-.env
-*.db
-.DS_Store

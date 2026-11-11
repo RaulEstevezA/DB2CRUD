@@ -1,8 +1,0 @@
-.build/
-.swiftpm/
-Package.resolved
-.idea/
-.vscode/
-.env
-*.db
-.DS_Store

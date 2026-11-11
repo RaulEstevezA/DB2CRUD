@@ -1,7 +1,0 @@
-/vendor/
-.env
-.phpunit.cache/
-.phpunit.result.cache
-/storage/*.key
-*.log
-.DS_Store
