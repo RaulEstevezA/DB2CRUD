@@ -146,7 +146,9 @@ function tableInfo(schema: DbSchema, design: CrudDesign, settings: ProjectSettin
   const key = (table.primaryKey ?? table.columns.map((column) => column.name)).map(byName)
   const deleteMode = policy.delete.value
   const concurrency = policy.concurrency.value
-  const writesEntity = settings.entities === 'all' || (settings.entities === 'missing' && repository.entityMissing)
+  // The input's classes only count when they are of this stack's ORM: JPA entities do not help a SQLAlchemy project
+  const ownEntities = !repository.entityMissing && schema.source.format === settings.orm
+  const writesEntity = settings.entities === 'all' || (settings.entities === 'missing' && !ownEntities)
   return {
     table,
     name: table.name,

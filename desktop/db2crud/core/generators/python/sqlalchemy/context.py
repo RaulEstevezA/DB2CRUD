@@ -85,7 +85,9 @@ def _table_info(schema: dict, design: dict, settings: dict, table: dict) -> dict
     )
     delete_mode = policy["delete"]["value"]
     concurrency = policy["concurrency"]["value"]
-    writes_entity = settings["entities"] == "all" or (settings["entities"] == "missing" and repository["entityMissing"])
+    # The input's classes only count when they are of this stack's ORM: JPA entities do not help a SQLAlchemy project
+    own_entities = not repository["entityMissing"] and schema["source"]["format"] == settings["orm"]
+    writes_entity = settings["entities"] == "all" or (settings["entities"] == "missing" and not own_entities)
     children = policy["children"]
     return {
         "table": table,
