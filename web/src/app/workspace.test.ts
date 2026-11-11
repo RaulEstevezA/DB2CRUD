@@ -1,26 +1,21 @@
-/**
- * Tests of the workspace logic of the interface.
- */
 import { describe, expect, it } from 'vitest'
-import { fieldCount, readInput } from './workspace.ts'
+import { EXAMPLES } from '../examples/index.ts'
+import { columnCount, readDatabase } from './workspace.ts'
 
-describe('readInput', () => {
-  it('detects the format when none is chosen', () => {
-    const read = readInput({ text: 'export interface User { id: number; name: string }', format: null })
-    expect(read.format).toBe('typescript')
-    expect(read.outcome?.ok && fieldCount(read.outcome.schema)).toBe(2)
-  })
-
-  it('uses the chosen format and reports where an error is', () => {
-    const read = readInput({ text: '{"id": 1,}', format: 'json' })
-    expect(read.outcome).toMatchObject({ ok: false, error: { code: 'syntax', line: 1 } })
-  })
-
-  it('reports an input without models', () => {
-    expect(readInput({ text: '[]', format: 'json' }).outcome).toMatchObject({ ok: false, error: { code: 'noModels' } })
-  })
-
+describe('readDatabase', () => {
   it('reads nothing while the input is empty', () => {
-    expect(readInput({ text: '  ', format: null })).toEqual({ format: null, outcome: null })
+    expect(readDatabase({ text: '  ' })).toBeNull()
+  })
+
+  it('reads every built-in example into a physical schema', () => {
+    for (const example of EXAMPLES) {
+      const read = readDatabase({ text: example.text })
+      expect(read?.ok, example.id).toBe(true)
+      if (read?.ok) expect(columnCount(read.schema)).toBeGreaterThan(0)
+    }
+  })
+
+  it('says why an input cannot be read', () => {
+    expect(readDatabase({ text: 'export interface User { id: number }' })).toEqual({ ok: false, error: 'notJson' })
   })
 })

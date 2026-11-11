@@ -1,0 +1,116 @@
+/* Design pane: one card per table (components/cards.md, "Grupo") with its decisions, queries and operations. */
+
+.design {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  padding: var(--space-12) var(--space-16) var(--space-16);
+}
+
+.design__status {
+  color: var(--muted);
+}
+
+.design__status--pending {
+  color: var(--warning);
+}
+
+/* ---------- One table ---------- */
+
+.table-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  padding: 12px 14px;
+  border: var(--border-line);
+  border-radius: var(--radius);
+  background: var(--page-bg);
+}
+
+.table-card__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+}
+
+.table-card__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-8);
+  color: var(--syntax-type);
+  font-size: 1rem;
+  font-weight: var(--weight-semibold);
+  overflow-wrap: anywhere;
+}
+
+.table-card__entity {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: var(--font-label);
+  font-weight: var(--weight-regular);
+}
+
+.table-card__decisions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-12) var(--space-16);
+}
+
+.table-card__decision {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.table-card__label {
+  color: var(--muted);
+  font-size: var(--font-label);
+}
+
+.table-card__items summary {
+  color: var(--muted);
+  font-size: var(--font-label);
+  cursor: pointer;
+}
+
+/* ---------- Queries and operations ---------- */
+
+.item-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: var(--space-8) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8);
+  padding: 6px 8px;
+  border: var(--border-line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.item--off .item__name,
+.item--off .item__description {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+
+.item__name {
+  font-size: var(--font-label);
+  overflow-wrap: anywhere;
+}
+
+.item__description {
+  flex: 1 1 10em;
+  color: var(--muted);
+  font-size: var(--font-label);
+}

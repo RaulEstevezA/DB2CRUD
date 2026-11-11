@@ -1,39 +1,27 @@
-/* Models pane: format selector, editor and the drop layer over it (personal_web_style patterns/data-input.md). */
+/* Database pane: editor and the drop layer over it (personal_web_style patterns/data-input.md). */
 
-.models-pane {
+.database-pane {
   display: flex;
   min-width: 0;
   min-height: 0;
 }
 
-.models-pane > .pane {
+.database-pane > .pane {
   flex: 1;
 }
 
-.models-pane .pane__body {
+.database-pane .pane__body {
   display: flex;
   flex-direction: column;
 }
 
-.models-pane__settings {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-12) var(--space-16);
-  padding: var(--space-12) var(--space-16);
-  border-bottom: var(--border-line);
-}
-
-.models-pane__settings .field {
-  min-width: 200px;
-}
-
-.models-pane__editor {
+.database-pane__editor {
   position: relative;
   flex: 1;
   min-height: 0;
 }
 
-.models-pane__drop {
+.database-pane__drop {
   position: absolute;
   inset: var(--space-8);
   display: flex;

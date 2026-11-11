@@ -1,44 +1,24 @@
 /**
- * Workspace logic the interface uses, kept out of the components so it can be tested: reading the input
- * with its chosen or detected format, and counting what was read.
+ * Workspace logic the interface uses, kept out of the components so it can be tested: reading the database
+ * input and counting what was read.
  */
-import { allFields, type ModelSchema } from '../core/model/schema.ts'
-import { detectFormat, parseInput } from '../core/importers/registry.ts'
-import type { InputFormatId, ParseOutcome } from '../core/importers/types.ts'
+import { readModel2DBProject, type Model2DBReadResult } from '../core/interop/model2db/read.ts'
+import type { DbSchema } from '../core/schema/types.ts'
 
 export interface InputState {
   text: string
-  /** null: detected from the text */
-  format: InputFormatId | null
-  /** File name it was opened from, for detection */
+  /** File name it was opened from */
   fileName?: string
-  /** Where it came from when another tool sent it */
-  receivedFrom?: string
 }
 
-export const EMPTY_INPUT: InputState = { text: '', format: null }
+export const EMPTY_INPUT: InputState = { text: '' }
 
-export interface ReadInput {
-  format: InputFormatId | null
-  outcome: ParseOutcome | null
+/** The physical schema of the input, or why it cannot be read; null while the input is empty. */
+export function readDatabase(input: InputState): Model2DBReadResult | null {
+  return input.text.trim() === '' ? null : readModel2DBProject(input.text)
 }
 
-/**
- * Reads the input with its chosen or detected format.
- *
- * @returns The format used and the outcome; no outcome while the input is empty or its format unknown.
- *   A schema without models is reported as `noModels`: there is nothing to make an API of.
- */
-export function readInput(input: InputState): ReadInput {
-  if (input.text.trim() === '') return { format: input.format, outcome: null }
-  const format = input.format ?? detectFormat(input.text, input.fileName)
-  if (!format) return { format: null, outcome: null }
-  const outcome = parseInput(input.text, format, { rootName: 'Root' })
-  if (outcome.ok && outcome.schema.models.length === 0) return { format, outcome: { ok: false, error: { code: 'noModels' } } }
-  return { format, outcome }
-}
-
-/** Count of fields in every model, inherited ones included. */
-export function fieldCount(schema: ModelSchema): number {
-  return schema.models.reduce((total, model) => total + allFields(schema, model).length, 0)
+/** Count of columns in every table. */
+export function columnCount(schema: DbSchema): number {
+  return schema.tables.reduce((total, table) => total + table.columns.length, 0)
 }

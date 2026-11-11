@@ -1,6 +1,6 @@
 /* Workspace layout. Each pane has a fixed height so its own body scrolls, never the page.
-   Desktop: the parts side by side. Below 1100px: one part at a time, chosen with the tabs, which are
-   hidden on wider screens and when there is a single part. */
+   Desktop: database and design side by side (design wider), the project under them at full width.
+   Below 1100px: one part at a time, chosen with the tabs, which are hidden on wider screens. */
 
 .workspace {
   display: flex;
@@ -9,22 +9,24 @@
   margin-top: var(--space-16);
 }
 
-.workspace__part {
-  display: flex;
+.workspace__top > * {
   min-height: 0;
-}
-
-.workspace__part > * {
-  flex: 1;
-  min-width: 0;
 }
 
 .workspace__top {
   display: grid;
-  grid-auto-columns: minmax(0, 1fr);
-  grid-auto-flow: column;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
   gap: var(--gap-cards);
   height: max(520px, calc(100vh - 140px));
+}
+
+.workspace__project {
+  display: flex;
+  height: max(480px, calc(100vh - 160px));
+}
+
+.workspace__project > .pane {
+  flex: 1;
 }
 
 .workspace__tabs {
@@ -87,13 +89,28 @@
     margin-top: var(--space-8);
   }
 
+  /* Only the chosen part is shown */
+  .workspace > * {
+    display: none;
+  }
+
   .workspace__top {
-    grid-auto-flow: row;
+    grid-template-columns: minmax(0, 1fr);
     height: max(440px, calc(100dvh - 140px));
   }
 
-  /* Only the chosen part is shown */
-  .workspace__top > :not([data-part-active]) {
+  .workspace[data-part='database'] > .workspace__top,
+  .workspace[data-part='design'] > .workspace__top {
+    display: grid;
+  }
+
+  .workspace[data-part='database'] > .workspace__top > :nth-child(2),
+  .workspace[data-part='design'] > .workspace__top > :nth-child(1) {
     display: none;
+  }
+
+  .workspace[data-part='project'] > .workspace__project {
+    display: flex;
+    height: max(440px, calc(100dvh - 140px));
   }
 }

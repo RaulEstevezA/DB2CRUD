@@ -1,7 +1,7 @@
 /**
- * Workspace: the parts of the flow side by side. Below 1100px one part at a time, chosen with tabs
- * (personal_web_style RESPONSIVE_GUIDE.md); with a single part there are no tabs. It only arranges the
- * panes; each pane is built by the caller.
+ * Workspace: the database and its CRUD design side by side, and the generated project under them, at full
+ * width. Below 1100px one part at a time, chosen with tabs (personal_web_style RESPONSIVE_GUIDE.md).
+ * It only arranges the panes; each pane is built by the caller.
  */
 import { useState, type ReactNode } from 'react'
 import { WORKSPACE_PARTS, type WorkspacePart } from '../../app/workspaceParts.ts'
@@ -19,8 +19,8 @@ export interface WorkspaceProps {
   part?: WorkspacePart
 }
 
-/** The parts in order, with the tabs that show one part at a time on narrow screens. */
-export function Workspace({ panes, counts = {}, errors = {}, part: requested = 'models' }: WorkspaceProps) {
+/** Database → Design → Project, with the tabs that show one part at a time on narrow screens. */
+export function Workspace({ panes, counts = {}, errors = {}, part: requested = 'database' }: WorkspaceProps) {
   const { t } = useI18n()
   const [state, setState] = useState({ requested, part: requested })
   // A new requested part (an example loaded, a project opened) moves the tabs to it
@@ -30,46 +30,42 @@ export function Workspace({ panes, counts = {}, errors = {}, part: requested = '
 
   return (
     <>
-      {WORKSPACE_PARTS.length > 1 && (
-        <div
-          className="workspace__tabs"
-          role="tablist"
-          aria-label={t.workspaceLabel}
-          onKeyDown={(event) => onTabListKeyDown(event, (index) => select(WORKSPACE_PARTS[index]))}
-        >
-          {WORKSPACE_PARTS.map((id) => (
-            <button
-              key={id}
-              type="button"
-              role="tab"
-              aria-selected={part === id}
-              tabIndex={part === id ? 0 : -1}
-              className="workspace__tab"
-              onClick={() => select(id)}
-            >
-              {t.workspaceParts[id]}
-              {(counts[id] ?? 0) > 0 && (
-                <span className="workspace__tab-badge" aria-label={t.pendingCount(counts[id]!)}>
-                  {counts[id]}
-                </span>
-              )}
-              {errors[id] && (
-                <span className="workspace__tab-badge workspace__tab-badge--error" aria-label={t.hasError}>
-                  !
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-      )}
+      <div
+        className="workspace__tabs"
+        role="tablist"
+        aria-label={t.workspaceLabel}
+        onKeyDown={(event) => onTabListKeyDown(event, (index) => select(WORKSPACE_PARTS[index]))}
+      >
+        {WORKSPACE_PARTS.map((id) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            aria-selected={part === id}
+            tabIndex={part === id ? 0 : -1}
+            className="workspace__tab"
+            onClick={() => select(id)}
+          >
+            {t.workspaceParts[id]}
+            {(counts[id] ?? 0) > 0 && (
+              <span className="workspace__tab-badge" aria-label={t.pendingCount(counts[id]!)}>
+                {counts[id]}
+              </span>
+            )}
+            {errors[id] && (
+              <span className="workspace__tab-badge workspace__tab-badge--error" aria-label={t.hasError}>
+                !
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
       <div className="workspace" data-part={part}>
         <div className="workspace__top">
-          {WORKSPACE_PARTS.map((id) => (
-            <div key={id} className="workspace__part" data-part-active={part === id || undefined}>
-              {panes[id]}
-            </div>
-          ))}
+          {panes.database}
+          {panes.design}
         </div>
+        <div className="workspace__project">{panes.project}</div>
       </div>
     </>
   )

@@ -7,7 +7,22 @@
 
 import type { WorkspacePart } from '../app/workspaceParts.ts'
 import type { Confidence, Reason } from '../core/decisions/decision.ts'
-import type { ParseIssue } from '../core/importers/types.ts'
+import type { ChildrenPolicy, OperationCheck, OperationDesign, PolicyDecisionKind, QueryKind, TableRole } from '../core/crud/types.ts'
+import type { Model2DBReadError } from '../core/interop/model2db/read.ts'
+import type { Dialect } from '../core/schema/types.ts'
+import type {
+  Architecture,
+  DtoKind,
+  EntitiesMode,
+  ErrorStyle,
+  Execution,
+  LanguageId,
+  Paging,
+  ServiceTypes,
+  Tests,
+  Transactions,
+  Verbs,
+} from '../core/settings/settings.ts'
 import type { ExampleId } from '../examples/index.ts'
 
 type Params = Record<string, string | number> | undefined
@@ -19,31 +34,6 @@ const en$ = number('en')
 const es$ = number('es')
 
 const plural = (count: number, one: string, many: string) => (count === 1 ? one : many)
-
-/** Errors of the JSON reader, by detail code. */
-const JSON_DETAIL_EN: Record<string, string> = {
-  'json.unexpectedEnd': 'The JSON ends too early: something is not closed.',
-  'json.unexpectedCharacter': 'Unexpected character.',
-  'json.trailingComma': 'Comma before the end of a list or object: remove it.',
-  'json.invalidNumber': 'Invalid number: JSON does not allow leading zeros or a dot without decimals.',
-  'json.invalidEscape': 'Unknown escape sequence.',
-  'json.controlCharacter': 'Line break or tab inside a text: write it as \\n or \\t.',
-  'json.trailingContent': 'There is more text after the end of the JSON.',
-  'json.tooDeep': 'The JSON is nested too deeply.',
-  modelSchema: 'This model schema is not valid.',
-}
-
-const JSON_DETAIL_ES: Record<string, string> = {
-  'json.unexpectedEnd': 'El JSON termina antes de tiempo: algo no está cerrado.',
-  'json.unexpectedCharacter': 'Carácter inesperado.',
-  'json.trailingComma': 'Coma antes del final de una lista u objeto: quítala.',
-  'json.invalidNumber': 'Número no válido: JSON no admite ceros a la izquierda ni un punto sin decimales.',
-  'json.invalidEscape': 'Secuencia de escape desconocida.',
-  'json.controlCharacter': 'Salto de línea o tabulador dentro de un texto: escríbelo como \\n o \\t.',
-  'json.trailingContent': 'Hay más texto después del final del JSON.',
-  'json.tooDeep': 'El JSON tiene demasiados niveles.',
-  modelSchema: 'Este esquema de modelos no es válido.',
-}
 
 /** Languages of the interface, in the order the language switcher shows them. */
 export const languages = ['en', 'es'] as const
@@ -70,67 +60,152 @@ const en = {
   workspaceLabel: 'Workspace',
   pendingCount: (count: number) => `${en$(count)} ${plural(count, 'item', 'items')} to review`,
   hasError: 'Something cannot be read',
-  workspaceParts: { models: 'Models' } satisfies Record<WorkspacePart, string>,
+  workspaceParts: { database: 'Database', design: 'Design', project: 'Project' } satisfies Record<WorkspacePart, string>,
   examplesLabel: 'Try an example',
-  examples: { store: 'Online shop', library: 'Library', catalog: 'JPA catalogue' } satisfies Record<ExampleId, string>,
+  examples: { store: 'Online shop', library: 'Library', catalog: 'Catalogue' } satisfies Record<ExampleId, string>,
   exampleDescriptions: {
-    store: 'TypeScript interfaces: references, value objects, lists, an enum and a password',
-    library: 'Pydantic models with lengths, ranges, a pattern and UUID keys',
-    catalog: 'JPA entities with Bean Validation and a category tree',
+    store: 'Model2DB project for PostgreSQL: customers, products and orders with a password and an enum',
+    library: 'Model2DB project with SQLAlchemy entities: authors and books with UUID keys',
+    catalog: 'Model2DB project for MySQL: a catalogue of items in a category tree',
   } satisfies Record<ExampleId, string>,
-  confirmReplace: 'Your current models and the decisions made on them will be replaced. Continue?',
+  confirmReplace: 'Your current database and the decisions made on it will be replaced. Continue?',
 
-  inputLabel: 'Models to analyze',
-  inputPlaceholder: 'Paste classes, DTOs, JSON or a schema here, or drop a file…',
+  inputLabel: 'Database to read',
+  inputPlaceholder: 'Paste a Model2DB project (the .model2db.json file Model2DB saves) or drop it here…',
   openFile: 'Open',
   clear: 'Clear',
-  formatLabel: 'Format',
-  formatAuto: (detected: string | null) => (detected ? `Detect (${detected})` : 'Detect automatically'),
   dropFile: 'Drop the file to open it',
   fileTooLarge: (name: string) => `“${name}” is larger than 10 MB.`,
   fileError: (name: string) => `“${name}” could not be read.`,
-  receivedFrom: (tool: string) => `Models received from ${tool}.`,
-  inputEmpty: 'Paste or open your models to start.',
-  undetected: 'The format could not be detected: choose it in the list.',
-  inputSummary: (format: string, models: number, fields: number) =>
-    `${format} · ${en$(models)} ${plural(models, 'model', 'models')} · ${en$(fields)} ${plural(fields, 'field', 'fields')}`,
+  inputEmpty: 'Paste or open a Model2DB project to start. SQL DDL and ORM code are coming.',
   warningsCount: (count: number) => `${en$(count)} ${plural(count, 'note', 'notes')}`,
-  errorPosition: (line: number, column: number) => `Line ${en$(line)}, column ${en$(column)}`,
-  parseIssue: (issue: ParseIssue): string => {
-    const params = issue.params
-    switch (issue.code) {
-      case 'empty':
-        return 'There is nothing to read.'
-      case 'syntax':
-        return params?.detail
-          ? (JSON_DETAIL_EN[String(params.detail)] ?? String(params.detail)) + (params.path ? ` (${p(params, 'path')})` : '')
-          : params?.message
-            ? `It cannot be read as this format: ${p(params, 'message')}`
-            : 'It cannot be read as this format.'
-      case 'unexpectedToken':
-        return `Unexpected “${p(params, 'token')}”.`
-      case 'unterminatedString':
-        return 'A text is not closed.'
-      case 'unterminatedComment':
-        return 'A comment is not closed.'
-      case 'unclosedBlock':
-        return 'A block is not closed: a “}” is missing.'
-      case 'noModels':
-        return 'No model was found. Check the format or paste the declarations.'
-      case 'unknownType':
-        return `“${p(params, 'type')}” is not declared here: you will choose its type.`
-      case 'mixedTypes':
-        return `“${p(params, 'field')}” has values of different types.`
-      case 'duplicateField':
-        return `“${p(params, 'field')}” is declared twice.`
-      case 'duplicateModel':
-        return `“${p(params, 'model')}” is declared twice.`
-      case 'emptyModel':
-        return `“${p(params, 'model')}” has no fields.`
-      case 'truncatedRows':
-        return `Only the first ${p(params, 'count')} rows were read.`
+  readError: (error: Model2DBReadError, path?: string): string =>
+    ({
+      notJson: 'It is not JSON: paste the .model2db.json file Model2DB saves.',
+      notProject: 'It is not a Model2DB project.',
+      newerVersion: 'The project was saved by a newer version of Model2DB.',
+      invalid: `The project is damaged${path ? ` (${path})` : ''}.`,
+      unreadableInput: 'The models inside the project cannot be read.',
+      noModels: 'The project has no models.',
+      notRelational: 'The project is for a database without tables (MongoDB, Redis, Cassandra…): not supported yet.',
+    })[error],
+  databaseSummary: (source: string, dialect: string | null, tables: number, columns: number) =>
+    `Model2DB (${source}) · ${dialect ?? '?'} · ${en$(tables)} ${plural(tables, 'table', 'tables')} · ${en$(columns)} ${plural(columns, 'column', 'columns')}`,
+  // Design pane
+  undo: 'Undo',
+  redo: 'Redo',
+  reset: 'Reset',
+  undoTitle: 'Undo (Ctrl/Cmd+Z)',
+  redoTitle: 'Redo (Ctrl/Cmd+Shift+Z)',
+  resetTitle: 'Back to the proposal: every choice you made is discarded',
+  confirmReset: 'Every choice you made on this design will be discarded. Continue?',
+  designEmpty: 'The repositories and services proposed for each table will appear here once the database is read.',
+  designSummary: (repositories: number, services: number) =>
+    `${en$(repositories)} ${plural(repositories, 'repository', 'repositories')} · ${en$(services)} ${plural(services, 'service', 'services')}`,
+  policyKinds: {
+    role: 'Table',
+    delete: 'Delete',
+    concurrency: 'Concurrent changes',
+    children: 'Rows that point here',
+    hidden: 'Never returned',
+  } satisfies Record<PolicyDecisionKind, string>,
+  policySubject: (table: string, kind: string) => `${table}: ${kind.toLowerCase()}`,
+  itemSubject: (table: string, kind: string, id: string) => `${table}: ${id === kind ? kind : id}`,
+  roles: { entity: 'Read and written', join: 'Links two tables', readOnly: 'Read only' } satisfies Record<TableRole, string>,
+  deleteHard: 'Remove the row',
+  deleteSoft: (column: string) => `Mark it in “${column}”`,
+  concurrencyNone: 'Last change wins',
+  concurrencyVersion: (column: string) => `Check “${column}”`,
+  childrenPolicies: { block: 'Refuse the delete', deleteFirst: 'Delete them first' } satisfies Record<ChildrenPolicy, string>,
+  hiddenNone: 'Nothing hidden',
+  entityMissing: 'entity written',
+  queriesTitle: 'Repository',
+  operationsTitle: (service: string) => service,
+  queryDescription: (kind: QueryKind, columns: string[]): string =>
+    ({
+      getByKey: `one row by its key (${columns.join(', ')})`,
+      findByUnique: `one row by ${columns.join(', ')}`,
+      findAllBy: `rows by ${columns.join(', ')}`,
+      listByParent: `rows that point to a ${columns.join(', ')}`,
+      list: 'every row',
+      insert: 'stores a new row',
+      update: 'stores changes',
+      delete: 'removes a row',
+    })[kind],
+  operationDescription: (operation: OperationDesign): string => {
+    const names: Record<OperationCheck, string> = {
+      validate: 'the values',
+      unique: 'unique values',
+      parentExists: 'the rows it points to',
+      version: 'the version',
+      children: 'rows that point here',
     }
+    const parts = [
+      operation.checks.length > 0 && `checks ${operation.checks.map((check) => names[check]).join(', ')}`,
+      operation.errors.length > 0 && `raises ${operation.errors.join(', ')}`,
+    ]
+    return parts.filter(Boolean).join(' · ')
   },
+  // Project pane
+  projectName: 'Project name',
+  stackLabel: 'Language and ORM',
+  languages: { python: 'Python' } satisfies Record<LanguageId, string>,
+  databaseLabel: 'Database',
+  databases: {
+    postgresql: 'PostgreSQL',
+    mysql: 'MySQL',
+    mariadb: 'MariaDB',
+    sqlite: 'SQLite',
+    sqlserver: 'SQL Server',
+    oracle: 'Oracle',
+  } satisfies Record<Dialect, string>,
+  executionLabel: 'Code',
+  executions: { sync: 'Synchronous', async: 'Asynchronous' } satisfies Record<Execution, string>,
+  entitiesLabel: 'Entities',
+  entitiesModes: { missing: 'Only the missing ones', all: 'All, written again', none: 'None: import them' } satisfies Record<
+    EntitiesMode,
+    string
+  >,
+  entitiesModuleLabel: 'Module of the entities',
+  servicesLabel: 'Services',
+  yes: 'Yes',
+  no: 'No',
+  serviceTypesLabel: 'Services take and return',
+  serviceTypes: { entities: 'The entities', dtos: 'DTOs' } satisfies Record<ServiceTypes, string>,
+  dtoKindLabel: 'DTOs as',
+  dtoKinds: { pydantic: 'Pydantic models', dataclass: 'Dataclasses' } satisfies Record<DtoKind, string>,
+  transactionsLabel: 'Transactions',
+  transactions: {
+    operation: 'One per operation',
+    caller: 'The caller’s',
+    repository: 'One per write',
+  } satisfies Record<Transactions, string>,
+  errorsLabel: 'Errors',
+  errorStyles: { exceptions: 'Exceptions', results: 'Result values' } satisfies Record<ErrorStyle, string>,
+  pagingLabel: 'Lists',
+  pagings: { offset: 'Pages (offset)', cursor: 'Pages (cursor)', none: 'Every row' } satisfies Record<Paging, string>,
+  architectureLabel: 'Folders',
+  architectures: { layer: 'By layer', table: 'By table' } satisfies Record<Architecture, string>,
+  verbsLabel: 'Reads named',
+  verbs: { getFind: 'get / find', get: 'get', find: 'find' } satisfies Record<Verbs, string>,
+  interfacesLabel: 'Repository interfaces',
+  memoryLabel: 'In-memory repositories',
+  testsLabel: 'Tests',
+  testsModes: {
+    all: 'Services and repositories',
+    services: 'Services',
+    repositories: 'Repositories',
+    none: 'None',
+  } satisfies Record<Tests, string>,
+  stackVerified: 'Verified: a project with this language, ORM, database and code has passed its tests in Docker.',
+  stackNotVerified: 'Not verified yet with this database and code: review it before using it.',
+  projectEmpty: 'The files of the generated project will appear here.',
+  fileLabel: (path: string) => `Content of ${path}`,
+  copy: 'Copy',
+  copied: 'Copied',
+  downloadFile: 'Download file',
+  downloadZip: (count: number) => `Download .zip (${en$(count)} ${plural(count, 'file', 'files')})`,
+  todoCount: (count: number) => `${en$(count)} TODO ${plural(count, 'mark', 'marks')} left for you`,
   status: {
     exact: 'Exact',
     high: 'High',
@@ -205,67 +280,131 @@ const es: Messages = {
   workspaceLabel: 'Área de trabajo',
   pendingCount: (count) => `${es$(count)} ${plural(count, 'elemento', 'elementos')} por revisar`,
   hasError: 'Hay algo que no se puede leer',
-  workspaceParts: { models: 'Modelos' },
+  workspaceParts: { database: 'Base de datos', design: 'Diseño', project: 'Proyecto' },
   examplesLabel: 'Prueba un ejemplo',
-  examples: { store: 'Tienda online', library: 'Biblioteca', catalog: 'Catálogo JPA' },
+  examples: { store: 'Tienda online', library: 'Biblioteca', catalog: 'Catálogo' },
   exampleDescriptions: {
-    store: 'Interfaces de TypeScript: referencias, objetos de valor, listas, un enum y una contraseña',
-    library: 'Modelos de Pydantic con longitudes, rangos, un patrón y claves UUID',
-    catalog: 'Entidades JPA con Bean Validation y un árbol de categorías',
+    store: 'Proyecto de Model2DB para PostgreSQL: clientes, productos y pedidos con una contraseña y un enum',
+    library: 'Proyecto de Model2DB con entidades de SQLAlchemy: autores y libros con claves UUID',
+    catalog: 'Proyecto de Model2DB para MySQL: un catálogo de artículos en un árbol de categorías',
   },
-  confirmReplace: 'Se sustituirán tus modelos actuales y las decisiones tomadas sobre ellos. ¿Continuar?',
+  confirmReplace: 'Se sustituirán tu base de datos actual y las decisiones tomadas sobre ella. ¿Continuar?',
 
-  inputLabel: 'Modelos para analizar',
-  inputPlaceholder: 'Pega aquí clases, DTOs, JSON o un esquema, o suelta un archivo…',
+  inputLabel: 'Base de datos que leer',
+  inputPlaceholder: 'Pega un proyecto de Model2DB (el archivo .model2db.json que guarda Model2DB) o suéltalo aquí…',
   openFile: 'Abrir',
   clear: 'Limpiar',
-  formatLabel: 'Formato',
-  formatAuto: (detected) => (detected ? `Detectar (${detected})` : 'Detectar automáticamente'),
   dropFile: 'Suelta el archivo para abrirlo',
-  fileTooLarge: (name) => `«${name}» supera los 10 MB.`,
-  fileError: (name) => `«${name}» no se ha podido leer.`,
-  receivedFrom: (tool) => `Modelos recibidos de ${tool}.`,
-  inputEmpty: 'Pega o abre tus modelos para empezar.',
-  undetected: 'No se ha podido detectar el formato: elígelo en la lista.',
-  inputSummary: (format, models, fields) =>
-    `${format} · ${es$(models)} ${plural(models, 'modelo', 'modelos')} · ${es$(fields)} ${plural(fields, 'campo', 'campos')}`,
+  fileTooLarge: (name) => `«${name}» ocupa más de 10 MB.`,
+  fileError: (name) => `No se ha podido leer «${name}».`,
+  inputEmpty: 'Pega o abre un proyecto de Model2DB para empezar. El DDL de SQL y el código ORM llegarán después.',
   warningsCount: (count) => `${es$(count)} ${plural(count, 'nota', 'notas')}`,
-  errorPosition: (line, column) => `Línea ${es$(line)}, columna ${es$(column)}`,
-  parseIssue: (issue) => {
-    const params = issue.params
-    switch (issue.code) {
-      case 'empty':
-        return 'No hay nada que leer.'
-      case 'syntax':
-        return params?.detail
-          ? (JSON_DETAIL_ES[String(params.detail)] ?? String(params.detail)) + (params.path ? ` (${p(params, 'path')})` : '')
-          : params?.message
-            ? `No se puede leer con este formato: ${p(params, 'message')}`
-            : 'No se puede leer con este formato.'
-      case 'unexpectedToken':
-        return `No se esperaba «${p(params, 'token')}».`
-      case 'unterminatedString':
-        return 'Hay un texto sin cerrar.'
-      case 'unterminatedComment':
-        return 'Hay un comentario sin cerrar.'
-      case 'unclosedBlock':
-        return 'Hay un bloque sin cerrar: falta una «}».'
-      case 'noModels':
-        return 'No se ha encontrado ningún modelo. Revisa el formato o pega las declaraciones.'
-      case 'unknownType':
-        return `«${p(params, 'type')}» no está declarado aquí: elegirás su tipo.`
-      case 'mixedTypes':
-        return `«${p(params, 'field')}» tiene valores de tipos distintos.`
-      case 'duplicateField':
-        return `«${p(params, 'field')}» está declarado dos veces.`
-      case 'duplicateModel':
-        return `«${p(params, 'model')}» está declarado dos veces.`
-      case 'emptyModel':
-        return `«${p(params, 'model')}» no tiene campos.`
-      case 'truncatedRows':
-        return `Solo se han leído las primeras ${p(params, 'count')} filas.`
-    }
+  readError: (error, path) =>
+    ({
+      notJson: 'No es JSON: pega el archivo .model2db.json que guarda Model2DB.',
+      notProject: 'No es un proyecto de Model2DB.',
+      newerVersion: 'El proyecto se guardó con una versión más reciente de Model2DB.',
+      invalid: `El proyecto está dañado${path ? ` (${path})` : ''}.`,
+      unreadableInput: 'No se pueden leer los modelos del proyecto.',
+      noModels: 'El proyecto no tiene modelos.',
+      notRelational: 'El proyecto es para una base de datos sin tablas (MongoDB, Redis, Cassandra…): todavía no se admite.',
+    })[error],
+  databaseSummary: (source, dialect, tables, columns) =>
+    `Model2DB (${source}) · ${dialect ?? '?'} · ${es$(tables)} ${plural(tables, 'tabla', 'tablas')} · ${es$(columns)} ${plural(columns, 'columna', 'columnas')}`,
+  undo: 'Deshacer',
+  redo: 'Rehacer',
+  reset: 'Restablecer',
+  undoTitle: 'Deshacer (Ctrl/Cmd+Z)',
+  redoTitle: 'Rehacer (Ctrl/Cmd+Mayús+Z)',
+  resetTitle: 'Volver a la propuesta: se descartan todas tus elecciones',
+  confirmReset: 'Se descartarán todas las elecciones que has hecho en este diseño. ¿Continuar?',
+  designEmpty: 'Aquí aparecerán los repositorios y servicios propuestos para cada tabla en cuanto se lea la base de datos.',
+  designSummary: (repositories, services) =>
+    `${es$(repositories)} ${plural(repositories, 'repositorio', 'repositorios')} · ${es$(services)} ${plural(services, 'servicio', 'servicios')}`,
+  policyKinds: {
+    role: 'Tabla',
+    delete: 'Borrado',
+    concurrency: 'Cambios a la vez',
+    children: 'Filas que apuntan aquí',
+    hidden: 'Nunca se devuelve',
   },
+  policySubject: (table, kind) => `${table}: ${kind.toLowerCase()}`,
+  itemSubject: (table, kind, id) => `${table}: ${id === kind ? kind : id}`,
+  roles: { entity: 'Se lee y se escribe', join: 'Relaciona dos tablas', readOnly: 'Solo lectura' },
+  deleteHard: 'Eliminar la fila',
+  deleteSoft: (column) => `Marcarla en «${column}»`,
+  concurrencyNone: 'Gana el último cambio',
+  concurrencyVersion: (column) => `Comprobar «${column}»`,
+  childrenPolicies: { block: 'Rechazar el borrado', deleteFirst: 'Borrarlas antes' },
+  hiddenNone: 'Nada oculto',
+  entityMissing: 'entidad generada',
+  queriesTitle: 'Repositorio',
+  operationsTitle: (service) => service,
+  queryDescription: (kind, columns) =>
+    ({
+      getByKey: `una fila por su clave (${columns.join(', ')})`,
+      findByUnique: `una fila por ${columns.join(', ')}`,
+      findAllBy: `filas por ${columns.join(', ')}`,
+      listByParent: `filas que apuntan a un ${columns.join(', ')}`,
+      list: 'todas las filas',
+      insert: 'guarda una fila nueva',
+      update: 'guarda cambios',
+      delete: 'elimina una fila',
+    })[kind],
+  operationDescription: (operation) => {
+    const names: Record<OperationCheck, string> = {
+      validate: 'los valores',
+      unique: 'los valores únicos',
+      parentExists: 'las filas a las que apunta',
+      version: 'la versión',
+      children: 'las filas que apuntan aquí',
+    }
+    const parts = [
+      operation.checks.length > 0 && `comprueba ${operation.checks.map((check) => names[check]).join(', ')}`,
+      operation.errors.length > 0 && `lanza ${operation.errors.join(', ')}`,
+    ]
+    return parts.filter(Boolean).join(' · ')
+  },
+  projectName: 'Nombre del proyecto',
+  stackLabel: 'Lenguaje y ORM',
+  languages: { python: 'Python' },
+  databaseLabel: 'Base de datos',
+  databases: { postgresql: 'PostgreSQL', mysql: 'MySQL', mariadb: 'MariaDB', sqlite: 'SQLite', sqlserver: 'SQL Server', oracle: 'Oracle' },
+  executionLabel: 'Código',
+  executions: { sync: 'Síncrono', async: 'Asíncrono' },
+  entitiesLabel: 'Entidades',
+  entitiesModes: { missing: 'Solo las que faltan', all: 'Todas, escritas de nuevo', none: 'Ninguna: se importan' },
+  entitiesModuleLabel: 'Módulo de las entidades',
+  servicesLabel: 'Servicios',
+  yes: 'Sí',
+  no: 'No',
+  serviceTypesLabel: 'Los servicios reciben y devuelven',
+  serviceTypes: { entities: 'Las entidades', dtos: 'DTOs' },
+  dtoKindLabel: 'DTOs como',
+  dtoKinds: { pydantic: 'Modelos de Pydantic', dataclass: 'Dataclasses' },
+  transactionsLabel: 'Transacciones',
+  transactions: { operation: 'Una por operación', caller: 'Las de quien llama', repository: 'Una por escritura' },
+  errorsLabel: 'Errores',
+  errorStyles: { exceptions: 'Excepciones', results: 'Valores de resultado' },
+  pagingLabel: 'Listas',
+  pagings: { offset: 'Páginas (desplazamiento)', cursor: 'Páginas (cursor)', none: 'Todas las filas' },
+  architectureLabel: 'Carpetas',
+  architectures: { layer: 'Por capa', table: 'Por tabla' },
+  verbsLabel: 'Lecturas con',
+  verbs: { getFind: 'get / find', get: 'get', find: 'find' },
+  interfacesLabel: 'Interfaces de repositorio',
+  memoryLabel: 'Repositorios en memoria',
+  testsLabel: 'Pruebas',
+  testsModes: { all: 'Servicios y repositorios', services: 'Servicios', repositories: 'Repositorios', none: 'Ninguna' },
+  stackVerified: 'Verificado: un proyecto con este lenguaje, ORM, base de datos y código ha pasado sus pruebas en Docker.',
+  stackNotVerified: 'Todavía sin verificar con esta base de datos y este código: revísalo antes de usarlo.',
+  projectEmpty: 'Aquí aparecerán los archivos del proyecto generado.',
+  fileLabel: (path) => `Contenido de ${path}`,
+  copy: 'Copiar',
+  copied: 'Copiado',
+  downloadFile: 'Descargar archivo',
+  downloadZip: (count) => `Descargar .zip (${es$(count)} ${plural(count, 'archivo', 'archivos')})`,
+  todoCount: (count) => `${es$(count)} ${plural(count, 'marca', 'marcas')} TODO para ti`,
   status: {
     exact: 'Exacta',
     high: 'Alta',

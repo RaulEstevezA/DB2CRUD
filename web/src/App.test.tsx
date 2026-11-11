@@ -50,22 +50,42 @@ describe('App', () => {
     expect(within(screen.getByRole('contentinfo')).getByText('MIT License')).toBeTruthy()
   })
 
-  it('shows the models, without tabs while they are the only part', () => {
+  it('shows the database, its design and the project, also as tabs for narrow screens', () => {
     renderApp()
-    expect(screen.getByRole('region', { name: 'Models' })).toBeTruthy()
-    expect(screen.queryByRole('tab')).toBeNull()
+    for (const name of ['Database', 'Design', 'Project']) {
+      expect(screen.getByRole('region', { name })).toBeTruthy()
+      expect(screen.getByRole('tab', { name })).toBeTruthy()
+    }
   })
 
-  it('reads an example and says what it found', () => {
+  it('reads an example, proposes its design and writes its project', () => {
     renderApp()
     fireEvent.click(screen.getByRole('button', { name: 'Online shop' }))
-    expect(screen.getByText('TypeScript · 5 models · 29 fields')).toBeTruthy()
+    expect(screen.getByText(/Model2DB \(postgresql\) · postgresql · 4 tables/)).toBeTruthy()
+    const design = screen.getByRole('region', { name: 'Design' })
+    expect(within(design).getByText('CustomerService')).toBeTruthy()
+    const project = screen.getByRole('region', { name: 'Project' })
+    expect(within(project).getByRole('button', { name: /Download \.zip/ })).toBeTruthy()
+    expect(within(project).getByText(/Verified/)).toBeTruthy()
   })
 
-  it('reports where the input cannot be read', () => {
+  it('changes a decision and undoes it', () => {
     renderApp()
-    fireEvent.change(screen.getByRole('combobox', { name: 'Format' }), { target: { value: 'json' } })
-    expect(screen.getByText('Paste or open your models to start.')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Online shop' }))
+    const design = screen.getByRole('region', { name: 'Design' })
+    const box = within(design).getAllByRole('checkbox')[0] as HTMLInputElement
+    expect(box.checked).toBe(true)
+    fireEvent.click(box)
+    expect((within(design).getAllByRole('checkbox')[0] as HTMLInputElement).checked).toBe(false)
+    fireEvent.click(within(design).getByRole('button', { name: 'Undo' }))
+    expect((within(design).getAllByRole('checkbox')[0] as HTMLInputElement).checked).toBe(true)
+  })
+
+  it('says why the input cannot be read', () => {
+    renderApp()
+    fireEvent.click(screen.getByRole('button', { name: 'Online shop' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Clear' }))
+    expect(screen.getByText(/Paste or open a Model2DB project to start/)).toBeTruthy()
   })
 
   it('changes the language of the page and stores it for the whole site', () => {
