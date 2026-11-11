@@ -1,0 +1,1688 @@
+[
+ {
+  "args": [
+   "{\"format\":\"model2db-project\",\"version\":1,\"savedAt\":\"2026-11-11T12:00:00.000Z\",\"input\":{\"format\":\"typescript\",\"text\":\"export interface Customer {\\n  id: number\\n  /** @maxLength 120 */\\n  email: string\\n  name: string\\n  orders: Order[]\\n}\\n\\nexport interface Order {\\n  id: number\\n  customer: Customer\\n  status: 'new' | 'paid' | 'sent'\\n  total: number\\n  placedAt: Date\\n  lines: OrderLine[]\\n}\\n\\nexport interface OrderLine {\\n  product: string\\n  quantity: number\\n}\\n\"},\"designs\":{\"relational\":null,\"document\":null,\"keyvalue\":null,\"widecolumn\":null},\"output\":{\"output\":\"postgresql\",\"naming\":{\"relational\":{\"tables\":\"plural\",\"columns\":\"snake\"},\"document\":{\"tables\":\"plural\",\"columns\":\"field\"},\"keyvalue\":{\"tables\":\"singular\",\"columns\":\"snake\"},\"widecolumn\":{\"tables\":\"plural\",\"columns\":\"snake\"}},\"strings\":\"auto\",\"engine\":\"postgresql\",\"migrations\":false}}"
+  ],
+  "result": {
+   "ok": true,
+   "schema": {
+    "format": "db-schema",
+    "version": 1,
+    "dialect": "postgresql",
+    "source": {
+     "kind": "model2db",
+     "format": "postgresql"
+    },
+    "tables": [
+     {
+      "name": "customers",
+      "columns": [
+       {
+        "name": "id",
+        "type": {
+         "sql": "BIGINT",
+         "kind": "integer",
+         "bits": 64
+        },
+        "nullable": false
+       },
+       {
+        "name": "email",
+        "type": {
+         "sql": "TEXT",
+         "kind": "text"
+        },
+        "nullable": false
+       },
+       {
+        "name": "name",
+        "type": {
+         "sql": "TEXT",
+         "kind": "text"
+        },
+        "nullable": false
+       }
+      ],
+      "primaryKey": [
+       "id"
+      ],
+      "foreignKeys": [],
+      "uniques": [],
+      "indexes": [],
+      "checks": []
+     },
+     {
+      "name": "orders",
+      "columns": [
+       {
+        "name": "id",
+        "type": {
+         "sql": "BIGINT",
+         "kind": "integer",
+         "bits": 64
+        },
+        "nullable": false
+       },
+       {
+        "name": "status",
+        "type": {
+         "sql": "VARCHAR(20)",
+         "kind": "text"
+        },
+        "nullable": false
+       },
+       {
+        "name": "total",
+        "type": {
+         "sql": "DOUBLE PRECISION",
+         "kind": "float",
+         "bits": 64
+        },
+        "nullable": false
+       },
+       {
+        "name": "placed_at",
+        "type": {
+         "sql": "TIMESTAMPTZ",
+         "kind": "datetime",
+         "timezone": true
+        },
+        "nullable": false
+       },
+       {
+        "name": "customer_id",
+        "type": {
+         "sql": "BIGINT",
+         "kind": "integer",
+         "bits": 64
+        },
+        "nullable": false
+       }
+      ],
+      "primaryKey": [
+       "id"
+      ],
+      "foreignKeys": [
+       {
+        "name": "fk_orders_customer_id",
+        "columns": [
+         "customer_id"
+        ],
+        "references": {
+         "table": "customers",
+         "columns": [
+          "id"
+         ]
+        },
+        "attribute": "customer",
+        "inverse": "orders"
+       }
+      ],
+      "uniques": [],
+      "indexes": [
+       {
+        "name": "ix_orders_customer_id",
+        "columns": [
+         "customer_id"
+        ]
+       }
+      ],
+      "checks": [
+       {
+        "name": "ck_orders_status",
+        "sql": "status IN ('new', 'paid', 'sent')",
+        "parsed": {
+         "kind": "in",
+         "column": "status",
+         "values": [
+          "new",
+          "paid",
+          "sent"
+         ]
+        }
+       }
+      ]
+     },
+     {
+      "name": "order_lines",
+      "columns": [
+       {
+        "name": "id",
+        "type": {
+         "sql": "BIGINT",
+         "kind": "integer",
+         "bits": 64
+        },
+        "nullable": false,
+        "generated": "identity"
+       },
+       {
+        "name": "product",
+        "type": {
+         "sql": "TEXT",
+         "kind": "text"
+        },
+        "nullable": false
+       },
+       {
+        "name": "quantity",
+        "type": {
+         "sql": "INTEGER",
+         "kind": "integer",
+         "bits": 32
+        },
+        "nullable": false
+       },
+       {
+        "name": "order_id",
+        "type": {
+         "sql": "BIGINT",
+         "kind": "integer",
+         "bits": 64
+        },
+        "nullable": false
+       }
+      ],
+      "primaryKey": [
+       "id"
+      ],
+      "foreignKeys": [
+       {
+        "name": "fk_order_lines_order_id",
+        "columns": [
+         "order_id"
+        ],
+        "references": {
+         "table": "orders",
+         "columns": [
+          "id"
+         ]
+        },
+        "onDelete": "cascade",
+        "inverse": "lines"
+       }
+      ],
+      "uniques": [],
+      "indexes": [
+       {
+        "name": "ix_order_lines_order_id",
+        "columns": [
+         "order_id"
+        ]
+       }
+      ],
+      "checks": []
+     }
+    ],
+    "enums": [
+     {
+      "name": "status",
+      "values": [
+       "new",
+       "paid",
+       "sent"
+      ],
+      "storage": "check"
+     }
+    ],
+    "notes": []
+   }
+  }
+ },
+ {
+  "args": [
+   "{\"format\":\"model2db-project\",\"version\":1,\"savedAt\":\"2026-11-11T12:00:00.000Z\",\"input\":{\"format\":\"typescript\",\"text\":\"export interface Customer {\\n  id: number\\n  /** @maxLength 120 */\\n  email: string\\n  name: string\\n  orders: Order[]\\n}\\n\\nexport interface Order {\\n  id: number\\n  customer: Customer\\n  status: 'new' | 'paid' | 'sent'\\n  total: number\\n  placedAt: Date\\n  lines: OrderLine[]\\n}\\n\\nexport interface OrderLine {\\n  product: string\\n  quantity: number\\n}\\n\"},\"designs\":{\"relational\":null,\"document\":null,\"keyvalue\":null,\"widecolumn\":null},\"output\":{\"output\":\"mysql\",\"naming\":{\"relational\":{\"tables\":\"plural\",\"columns\":\"snake\"},\"document\":{\"tables\":\"plural\",\"columns\":\"field\"},\"keyvalue\":{\"tables\":\"singular\",\"columns\":\"snake\"},\"widecolumn\":{\"tables\":\"plural\",\"columns\":\"snake\"}},\"strings\":\"auto\",\"engine\":\"postgresql\",\"migrations\":false}}"
+  ],
+  "result": {
+   "ok": true,
+   "schema": {
+    "format": "db-schema",
+    "version": 1,
+    "dialect": "mysql",
+    "source": {
+     "kind": "model2db",
+     "format": "mysql"
+    },
+    "tables": [
+     {
+      "name": "customers",
+      "columns": [
+       {
+        "name": "id",
+        "type": {
+         "sql": "BIGINT",
+         "kind": "integer",
+         "bits": 64
+        },
+        "nullable": false
+       },
+       {
+        "name": "email",
+        "type": {
+         "sql": "VARCHAR(255)",
+         "kind": "text",
+         "length": 255
+        },
+        "nullable": false
+       },
+       {
+        "name": "name",
+        "type": {
+         "sql": "VARCHAR(255)",
+         "kind": "text",
+         "length": 255
+        },
+        "nullable": false
+       }
+      ],
+      "primaryKey": [
+       "id"
+      ],
+      "foreignKeys": [],
+      "uniques": [],
+      "indexes": [],
+      "checks": []
+     },
+     {
+      "name": "orders",
+      "columns": [
+       {
+        "name": "id",
+        "type": {
+         "sql": "BIGINT",
+         "kind": "integer",
+         "bits": 64
+        },
+        "nullable": false
+       },
+       {
+        "name": "status",
+        "type": {
+         "sql": "VARCHAR(20)",
+         "kind": "text"
+        },
+        "nullable": false
+       },
+       {
+        "name": "total",
+        "type": {
+         "sql": "DOUBLE",
+         "kind": "float",
+         "bits": 64
+        },
+        "nullable": false
+       },
+       {
+        "name": "placed_at",
+        "type": {
+         "sql": "DATETIME(6)",
+         "kind": "datetime",
+         "timezone": false
+        },
+        "nullable": false
+       },
+       {
+        "name": "customer_id",
+        "type": {
+         "sql": "BIGINT",
+         "kind": "integer",
+         "bits": 64
+        },
+        "nullable": false
+       }
+      ],
+      "primaryKey": [
+       "id"
+      ],
+      "foreignKeys": [
+       {
+        "name": "fk_orders_customer_id",
+        "columns": [
+         "customer_id"
+        ],
+        "references": {
+         "table": "customers",
+         "columns": [
+          "id"
+         ]
+        },
+        "attribute": "customer",
+        "inverse": "orders"
+       }
+      ],
+      "uniques": [],
+      "indexes": [
+       {
+        "name": "ix_orders_customer_id",
+        "columns": [
+         "customer_id"
+        ]
+       }
+      ],
+      "checks": [
+       {
+        "name": "ck_orders_status",
+        "sql": "status IN ('new', 'paid', 'sent')",
+        "parsed": {
+         "kind": "in",
+         "column": "status",
+         "values": [
+          "new",
+          "paid",
+          "sent"
+         ]
+        }
+       }
+      ]
+     },
+     {
+      "name": "order_lines",
+      "columns": [
+       {
+        "name": "id",
+        "type": {
+         "sql": "BIGINT",
+         "kind": "integer",
+         "bits": 64
+        },
+        "nullable": false,
+        "generated": "identity"
+       },
+       {
+        "name": "product",
+        "type": {
+         "sql": "VARCHAR(255)",
+         "kind": "text",
+         "length": 255
+        },
+        "nullable": false
+       },
+       {
+        "name": "quantity",
+        "type": {
+         "sql": "INT",
+         "kind": "integer",
+         "bits": 32
+        },
+        "nullable": false
+       },
+       {
+        "name": "order_id",
+        "type": {
+         "sql": "BIGINT",
+         "kind": "integer",
+         "bits": 64
+        },
+        "nullable": false
+       }
+      ],
+      "primaryKey": [
+       "id"
+      ],
+      "foreignKeys": [
+       {
+        "name": "fk_order_lines_order_id",
+        "columns": [
+         "order_id"
+        ],
+        "references": {
+         "table": "orders",
+         "columns": [
+          "id"
+         ]
+        },
+        "onDelete": "cascade",
+        "inverse": "lines"
+       }
+      ],
+      "uniques": [],
+      "indexes": [
+       {
+        "name": "ix_order_lines_order_id",
+        "columns": [
+         "order_id"
+        ]
+       }
+      ],
+      "checks": []
+     }
+    ],
+    "enums": [
+     {
+      "name": "status",
+      "values": [
+       "new",
+       "paid",
+       "sent"
+      ],
+      "storage": "check"
+     }
+    ],
+    "notes": []
+   }
+  }
+ },
+ {
+  "args": [
+   "{\"format\":\"model2db-project\",\"version\":1,\"savedAt\":\"2026-11-11T12:00:00.000Z\",\"input\":{\"format\":\"typescript\",\"text\":\"export interface Customer {\\n  id: number\\n  /** @maxLength 120 */\\n  email: string\\n  name: string\\n  orders: Order[]\\n}\\n\\nexport interface Order {\\n  id: number\\n  customer: Customer\\n  status: 'new' | 'paid' | 'sent'\\n  total: number\\n  placedAt: Date\\n  lines: OrderLine[]\\n}\\n\\nexport interface OrderLine {\\n  product: string\\n  quantity: number\\n}\\n\"},\"designs\":{\"relational\":null,\"document\":null,\"keyvalue\":null,\"widecolumn\":null},\"output\":{\"output\":\"sqlite\",\"naming\":{\"relational\":{\"tables\":\"plural\",\"columns\":\"snake\"},\"document\":{\"tables\":\"plural\",\"columns\":\"field\"},\"keyvalue\":{\"tables\":\"singular\",\"columns\":\"snake\"},\"widecolumn\":{\"tables\":\"plural\",\"columns\":\"snake\"}},\"strings\":\"auto\",\"engine\":\"postgresql\",\"migrations\":false}}"
+  ],
+  "result": {
+   "ok": true,
+   "schema": {
+    "format": "db-schema",
+    "version": 1,
+    "dialect": "sqlite",
+    "source": {
+     "kind": "model2db",
+     "format": "sqlite"
+    },
+    "tables": [
+     {
+      "name": "customers",
+      "columns": [
+       {
+        "name": "id",
+        "type": {
+         "sql": "INTEGER",
+         "kind": "integer",
+         "bits": 64
+        },
+        "nullable": false
+       },
+       {
+        "name": "email",
+        "type": {
+         "sql": "TEXT",
+         "kind": "text"
+        },
+        "nullable": false
+       },
+       {
+        "name": "name",
+        "type": {
+         "sql": "TEXT",
+         "kind": "text"
+        },
+        "nullable": false
+       }
+      ],
+      "primaryKey": [
+       "id"
+      ],
+      "foreignKeys": [],
+      "uniques": [],
+      "indexes": [],
+      "checks": []
+     },
+     {
+      "name": "orders",
+      "columns": [
+       {
+        "name": "id",
+        "type": {
+         "sql": "INTEGER",
+         "kind": "integer",
+         "bits": 64
+        },
+        "nullable": false
+       },
+       {
+        "name": "status",
+        "type": {
+         "sql": "TEXT",
+         "kind": "text"
+        },
+        "nullable": false
+       },
+       {
+        "name": "total",
+        "type": {
+         "sql": "REAL",
+         "kind": "float",
+         "bits": 64
+        },
+        "nullable": false
+       },
+       {
+        "name": "placed_at",
+        "type": {
+         "sql": "TEXT",
+         "kind": "datetime",
+         "timezone": false
+        },
+        "nullable": false
+       },
+       {
+        "name": "customer_id",
+        "type": {
+         "sql": "INTEGER",
+         "kind": "integer",
+         "bits": 64
+        },
+        "nullable": false
+       }
+      ],
+      "primaryKey": [
+       "id"
+      ],
+      "foreignKeys": [
+       {
+        "name": "fk_orders_customer_id",
+        "columns": [
+         "customer_id"
+        ],
+        "references": {
+         "table": "customers",
+         "columns": [
+          "id"
+         ]
+        },
+        "attribute": "customer",
+        "inverse": "orders"
+       }
+      ],
+      "uniques": [],
+      "indexes": [
+       {
+        "name": "ix_orders_customer_id",
+        "columns": [
+         "customer_id"
+        ]
+       }
+      ],
+      "checks": [
+       {
+        "name": "ck_orders_status",
+        "sql": "status IN ('new', 'paid', 'sent')",
+        "parsed": {
+         "kind": "in",
+         "column": "status",
+         "values": [
+          "new",
+          "paid",
+          "sent"
+         ]
+        }
+       }
+      ]
+     },
+     {
+      "name": "order_lines",
+      "columns": [
+       {
+        "name": "id",
+        "type": {
+         "sql": "INTEGER",
+         "kind": "integer",
+         "bits": 64
+        },
+        "nullable": false,
+        "generated": "identity"
+       },
+       {
+        "name": "product",
+        "type": {
+         "sql": "TEXT",
+         "kind": "text"
+        },
+        "nullable": false
+       },
+       {
+        "name": "quantity",
+        "type": {
+         "sql": "INTEGER",
+         "kind": "integer",
+         "bits": 32
+        },
+        "nullable": false
+       },
+       {
+        "name": "order_id",
+        "type": {
+         "sql": "INTEGER",
+         "kind": "integer",
+         "bits": 64
+        },
+        "nullable": false
+       }
+      ],
+      "primaryKey": [
+       "id"
+      ],
+      "foreignKeys": [
+       {
+        "name": "fk_order_lines_order_id",
+        "columns": [
+         "order_id"
+        ],
+        "references": {
+         "table": "orders",
+         "columns": [
+          "id"
+         ]
+        },
+        "onDelete": "cascade",
+        "inverse": "lines"
+       }
+      ],
+      "uniques": [],
+      "indexes": [
+       {
+        "name": "ix_order_lines_order_id",
+        "columns": [
+         "order_id"
+        ]
+       }
+      ],
+      "checks": []
+     }
+    ],
+    "enums": [
+     {
+      "name": "status",
+      "values": [
+       "new",
+       "paid",
+       "sent"
+      ],
+      "storage": "check"
+     }
+    ],
+    "notes": []
+   }
+  }
+ },
+ {
+  "args": [
+   "{\"format\":\"model2db-project\",\"version\":1,\"savedAt\":\"2026-11-11T12:00:00.000Z\",\"input\":{\"format\":\"typescript\",\"text\":\"export interface Customer {\\n  id: number\\n  /** @maxLength 120 */\\n  email: string\\n  name: string\\n  orders: Order[]\\n}\\n\\nexport interface Order {\\n  id: number\\n  customer: Customer\\n  status: 'new' | 'paid' | 'sent'\\n  total: number\\n  placedAt: Date\\n  lines: OrderLine[]\\n}\\n\\nexport interface OrderLine {\\n  product: string\\n  quantity: number\\n}\\n\"},\"designs\":{\"relational\":null,\"document\":null,\"keyvalue\":null,\"widecolumn\":null},\"output\":{\"output\":\"sqlalchemy\",\"naming\":{\"relational\":{\"tables\":\"plural\",\"columns\":\"snake\"},\"document\":{\"tables\":\"plural\",\"columns\":\"field\"},\"keyvalue\":{\"tables\":\"singular\",\"columns\":\"snake\"},\"widecolumn\":{\"tables\":\"plural\",\"columns\":\"snake\"}},\"strings\":\"auto\",\"engine\":\"mariadb\",\"migrations\":false}}"
+  ],
+  "result": {
+   "ok": true,
+   "schema": {
+    "format": "db-schema",
+    "version": 1,
+    "dialect": "mariadb",
+    "source": {
+     "kind": "model2db",
+     "format": "sqlalchemy"
+    },
+    "tables": [
+     {
+      "name": "customers",
+      "columns": [
+       {
+        "name": "id",
+        "type": {
+         "sql": "BIGINT",
+         "kind": "integer",
+         "bits": 64
+        },
+        "nullable": false
+       },
+       {
+        "name": "email",
+        "type": {
+         "sql": "VARCHAR(255)",
+         "kind": "text",
+         "length": 255
+        },
+        "nullable": false
+       },
+       {
+        "name": "name",
+        "type": {
+         "sql": "VARCHAR(255)",
+         "kind": "text",
+         "length": 255
+        },
+        "nullable": false
+       }
+      ],
+      "primaryKey": [
+       "id"
+      ],
+      "foreignKeys": [],
+      "uniques": [],
+      "indexes": [],
+      "checks": [],
+      "entity": "Customer"
+     },
+     {
+      "name": "orders",
+      "columns": [
+       {
+        "name": "id",
+        "type": {
+         "sql": "BIGINT",
+         "kind": "integer",
+         "bits": 64
+        },
+        "nullable": false
+       },
+       {
+        "name": "status",
+        "type": {
+         "sql": "VARCHAR(20)",
+         "kind": "text"
+        },
+        "nullable": false
+       },
+       {
+        "name": "total",
+        "type": {
+         "sql": "DOUBLE",
+         "kind": "float",
+         "bits": 64
+        },
+        "nullable": false
+       },
+       {
+        "name": "placed_at",
+        "type": {
+         "sql": "DATETIME(6)",
+         "kind": "datetime",
+         "timezone": false
+        },
+        "nullable": false
+       },
+       {
+        "name": "customer_id",
+        "type": {
+         "sql": "BIGINT",
+         "kind": "integer",
+         "bits": 64
+        },
+        "nullable": false
+       }
+      ],
+      "primaryKey": [
+       "id"
+      ],
+      "foreignKeys": [
+       {
+        "name": "fk_orders_customer_id",
+        "columns": [
+         "customer_id"
+        ],
+        "references": {
+         "table": "customers",
+         "columns": [
+          "id"
+         ]
+        },
+        "attribute": "customer",
+        "inverse": "orders"
+       }
+      ],
+      "uniques": [],
+      "indexes": [
+       {
+        "name": "ix_orders_customer_id",
+        "columns": [
+         "customer_id"
+        ]
+       }
+      ],
+      "checks": [
+       {
+        "name": "ck_orders_status",
+        "sql": "status IN ('new', 'paid', 'sent')",
+        "parsed": {
+         "kind": "in",
+         "column": "status",
+         "values": [
+          "new",
+          "paid",
+          "sent"
+         ]
+        }
+       }
+      ],
+      "entity": "Order"
+     },
+     {
+      "name": "order_lines",
+      "columns": [
+       {
+        "name": "id",
+        "type": {
+         "sql": "BIGINT",
+         "kind": "integer",
+         "bits": 64
+        },
+        "nullable": false,
+        "generated": "identity"
+       },
+       {
+        "name": "product",
+        "type": {
+         "sql": "VARCHAR(255)",
+         "kind": "text",
+         "length": 255
+        },
+        "nullable": false
+       },
+       {
+        "name": "quantity",
+        "type": {
+         "sql": "INT",
+         "kind": "integer",
+         "bits": 32
+        },
+        "nullable": false
+       },
+       {
+        "name": "order_id",
+        "type": {
+         "sql": "BIGINT",
+         "kind": "integer",
+         "bits": 64
+        },
+        "nullable": false
+       }
+      ],
+      "primaryKey": [
+       "id"
+      ],
+      "foreignKeys": [
+       {
+        "name": "fk_order_lines_order_id",
+        "columns": [
+         "order_id"
+        ],
+        "references": {
+         "table": "orders",
+         "columns": [
+          "id"
+         ]
+        },
+        "onDelete": "cascade",
+        "inverse": "lines"
+       }
+      ],
+      "uniques": [],
+      "indexes": [
+       {
+        "name": "ix_order_lines_order_id",
+        "columns": [
+         "order_id"
+        ]
+       }
+      ],
+      "checks": [],
+      "entity": "OrderLine"
+     }
+    ],
+    "enums": [
+     {
+      "name": "status",
+      "values": [
+       "new",
+       "paid",
+       "sent"
+      ],
+      "storage": "check"
+     }
+    ],
+    "notes": []
+   }
+  }
+ },
+ {
+  "args": [
+   "{\"format\":\"model2db-project\",\"version\":1,\"savedAt\":\"2026-11-11T12:00:00.000Z\",\"input\":{\"format\":\"typescript\",\"text\":\"export interface Customer {\\n  id: number\\n  /** @maxLength 120 */\\n  email: string\\n  name: string\\n  orders: Order[]\\n}\\n\\nexport interface Order {\\n  id: number\\n  customer: Customer\\n  status: 'new' | 'paid' | 'sent'\\n  total: number\\n  placedAt: Date\\n  lines: OrderLine[]\\n}\\n\\nexport interface OrderLine {\\n  product: string\\n  quantity: number\\n}\\n\"},\"designs\":{\"relational\":null,\"document\":null,\"keyvalue\":null,\"widecolumn\":null},\"output\":{\"output\":\"prisma\",\"naming\":{\"relational\":{\"tables\":\"plural\",\"columns\":\"snake\"},\"document\":{\"tables\":\"plural\",\"columns\":\"field\"},\"keyvalue\":{\"tables\":\"singular\",\"columns\":\"snake\"},\"widecolumn\":{\"tables\":\"plural\",\"columns\":\"snake\"}},\"strings\":\"auto\",\"engine\":\"oracle\",\"migrations\":false}}"
+  ],
+  "result": {
+   "ok": true,
+   "schema": {
+    "format": "db-schema",
+    "version": 1,
+    "dialect": "postgresql",
+    "source": {
+     "kind": "model2db",
+     "format": "prisma"
+    },
+    "tables": [
+     {
+      "name": "customers",
+      "columns": [
+       {
+        "name": "id",
+        "type": {
+         "sql": "BIGINT",
+         "kind": "integer",
+         "bits": 64
+        },
+        "nullable": false
+       },
+       {
+        "name": "email",
+        "type": {
+         "sql": "TEXT",
+         "kind": "text"
+        },
+        "nullable": false
+       },
+       {
+        "name": "name",
+        "type": {
+         "sql": "TEXT",
+         "kind": "text"
+        },
+        "nullable": false
+       }
+      ],
+      "primaryKey": [
+       "id"
+      ],
+      "foreignKeys": [],
+      "uniques": [],
+      "indexes": [],
+      "checks": [],
+      "entity": "Customer"
+     },
+     {
+      "name": "orders",
+      "columns": [
+       {
+        "name": "id",
+        "type": {
+         "sql": "BIGINT",
+         "kind": "integer",
+         "bits": 64
+        },
+        "nullable": false
+       },
+       {
+        "name": "status",
+        "type": {
+         "sql": "VARCHAR(20)",
+         "kind": "text"
+        },
+        "nullable": false
+       },
+       {
+        "name": "total",
+        "type": {
+         "sql": "DOUBLE PRECISION",
+         "kind": "float",
+         "bits": 64
+        },
+        "nullable": false
+       },
+       {
+        "name": "placed_at",
+        "type": {
+         "sql": "TIMESTAMPTZ",
+         "kind": "datetime",
+         "timezone": true
+        },
+        "nullable": false
+       },
+       {
+        "name": "customer_id",
+        "type": {
+         "sql": "BIGINT",
+         "kind": "integer",
+         "bits": 64
+        },
+        "nullable": false
+       }
+      ],
+      "primaryKey": [
+       "id"
+      ],
+      "foreignKeys": [
+       {
+        "name": "fk_orders_customer_id",
+        "columns": [
+         "customer_id"
+        ],
+        "references": {
+         "table": "customers",
+         "columns": [
+          "id"
+         ]
+        },
+        "attribute": "customer",
+        "inverse": "orders"
+       }
+      ],
+      "uniques": [],
+      "indexes": [
+       {
+        "name": "ix_orders_customer_id",
+        "columns": [
+         "customer_id"
+        ]
+       }
+      ],
+      "checks": [
+       {
+        "name": "ck_orders_status",
+        "sql": "status IN ('new', 'paid', 'sent')",
+        "parsed": {
+         "kind": "in",
+         "column": "status",
+         "values": [
+          "new",
+          "paid",
+          "sent"
+         ]
+        }
+       }
+      ],
+      "entity": "Order"
+     },
+     {
+      "name": "order_lines",
+      "columns": [
+       {
+        "name": "id",
+        "type": {
+         "sql": "BIGINT",
+         "kind": "integer",
+         "bits": 64
+        },
+        "nullable": false,
+        "generated": "identity"
+       },
+       {
+        "name": "product",
+        "type": {
+         "sql": "TEXT",
+         "kind": "text"
+        },
+        "nullable": false
+       },
+       {
+        "name": "quantity",
+        "type": {
+         "sql": "INTEGER",
+         "kind": "integer",
+         "bits": 32
+        },
+        "nullable": false
+       },
+       {
+        "name": "order_id",
+        "type": {
+         "sql": "BIGINT",
+         "kind": "integer",
+         "bits": 64
+        },
+        "nullable": false
+       }
+      ],
+      "primaryKey": [
+       "id"
+      ],
+      "foreignKeys": [
+       {
+        "name": "fk_order_lines_order_id",
+        "columns": [
+         "order_id"
+        ],
+        "references": {
+         "table": "orders",
+         "columns": [
+          "id"
+         ]
+        },
+        "onDelete": "cascade",
+        "inverse": "lines"
+       }
+      ],
+      "uniques": [],
+      "indexes": [
+       {
+        "name": "ix_order_lines_order_id",
+        "columns": [
+         "order_id"
+        ]
+       }
+      ],
+      "checks": [],
+      "entity": "OrderLine"
+     }
+    ],
+    "enums": [
+     {
+      "name": "status",
+      "values": [
+       "new",
+       "paid",
+       "sent"
+      ],
+      "storage": "check"
+     }
+    ],
+    "notes": []
+   }
+  }
+ },
+ {
+  "args": [
+   "{\"format\":\"model2db-project\",\"version\":1,\"savedAt\":\"2026-11-11T12:00:00.000Z\",\"input\":{\"format\":\"typescript\",\"text\":\"export interface Customer {\\n  id: number\\n  /** @maxLength 120 */\\n  email: string\\n  name: string\\n  orders: Order[]\\n}\\n\\nexport interface Order {\\n  id: number\\n  customer: Customer\\n  status: 'new' | 'paid' | 'sent'\\n  total: number\\n  placedAt: Date\\n  lines: OrderLine[]\\n}\\n\\nexport interface OrderLine {\\n  product: string\\n  quantity: number\\n}\\n\"},\"designs\":{\"relational\":null,\"document\":null,\"keyvalue\":null,\"widecolumn\":null},\"output\":{\"output\":\"efcore\",\"naming\":{\"relational\":{\"tables\":\"plural\",\"columns\":\"snake\"},\"document\":{\"tables\":\"plural\",\"columns\":\"field\"},\"keyvalue\":{\"tables\":\"singular\",\"columns\":\"snake\"},\"widecolumn\":{\"tables\":\"plural\",\"columns\":\"snake\"}},\"strings\":\"auto\",\"engine\":\"sqlserver\",\"migrations\":false}}"
+  ],
+  "result": {
+   "ok": true,
+   "schema": {
+    "format": "db-schema",
+    "version": 1,
+    "dialect": "sqlserver",
+    "source": {
+     "kind": "model2db",
+     "format": "efcore"
+    },
+    "tables": [
+     {
+      "name": "customers",
+      "columns": [
+       {
+        "name": "id",
+        "type": {
+         "sql": "BIGINT",
+         "kind": "integer",
+         "bits": 64
+        },
+        "nullable": false
+       },
+       {
+        "name": "email",
+        "type": {
+         "sql": "NVARCHAR(255)",
+         "kind": "text",
+         "length": 255
+        },
+        "nullable": false
+       },
+       {
+        "name": "name",
+        "type": {
+         "sql": "NVARCHAR(255)",
+         "kind": "text",
+         "length": 255
+        },
+        "nullable": false
+       }
+      ],
+      "primaryKey": [
+       "id"
+      ],
+      "foreignKeys": [],
+      "uniques": [],
+      "indexes": [],
+      "checks": [],
+      "entity": "Customer"
+     },
+     {
+      "name": "orders",
+      "columns": [
+       {
+        "name": "id",
+        "type": {
+         "sql": "BIGINT",
+         "kind": "integer",
+         "bits": 64
+        },
+        "nullable": false
+       },
+       {
+        "name": "status",
+        "type": {
+         "sql": "NVARCHAR(20)",
+         "kind": "text"
+        },
+        "nullable": false
+       },
+       {
+        "name": "total",
+        "type": {
+         "sql": "FLOAT",
+         "kind": "float",
+         "bits": 64
+        },
+        "nullable": false
+       },
+       {
+        "name": "placed_at",
+        "type": {
+         "sql": "DATETIMEOFFSET",
+         "kind": "datetime",
+         "timezone": true
+        },
+        "nullable": false
+       },
+       {
+        "name": "customer_id",
+        "type": {
+         "sql": "BIGINT",
+         "kind": "integer",
+         "bits": 64
+        },
+        "nullable": false
+       }
+      ],
+      "primaryKey": [
+       "id"
+      ],
+      "foreignKeys": [
+       {
+        "name": "fk_orders_customer_id",
+        "columns": [
+         "customer_id"
+        ],
+        "references": {
+         "table": "customers",
+         "columns": [
+          "id"
+         ]
+        },
+        "attribute": "customer",
+        "inverse": "orders"
+       }
+      ],
+      "uniques": [],
+      "indexes": [
+       {
+        "name": "ix_orders_customer_id",
+        "columns": [
+         "customer_id"
+        ]
+       }
+      ],
+      "checks": [
+       {
+        "name": "ck_orders_status",
+        "sql": "status IN ('new', 'paid', 'sent')",
+        "parsed": {
+         "kind": "in",
+         "column": "status",
+         "values": [
+          "new",
+          "paid",
+          "sent"
+         ]
+        }
+       }
+      ],
+      "entity": "Order"
+     },
+     {
+      "name": "order_lines",
+      "columns": [
+       {
+        "name": "id",
+        "type": {
+         "sql": "BIGINT",
+         "kind": "integer",
+         "bits": 64
+        },
+        "nullable": false,
+        "generated": "identity"
+       },
+       {
+        "name": "product",
+        "type": {
+         "sql": "NVARCHAR(255)",
+         "kind": "text",
+         "length": 255
+        },
+        "nullable": false
+       },
+       {
+        "name": "quantity",
+        "type": {
+         "sql": "INT",
+         "kind": "integer",
+         "bits": 32
+        },
+        "nullable": false
+       },
+       {
+        "name": "order_id",
+        "type": {
+         "sql": "BIGINT",
+         "kind": "integer",
+         "bits": 64
+        },
+        "nullable": false
+       }
+      ],
+      "primaryKey": [
+       "id"
+      ],
+      "foreignKeys": [
+       {
+        "name": "fk_order_lines_order_id",
+        "columns": [
+         "order_id"
+        ],
+        "references": {
+         "table": "orders",
+         "columns": [
+          "id"
+         ]
+        },
+        "onDelete": "cascade",
+        "inverse": "lines"
+       }
+      ],
+      "uniques": [],
+      "indexes": [
+       {
+        "name": "ix_order_lines_order_id",
+        "columns": [
+         "order_id"
+        ]
+       }
+      ],
+      "checks": [],
+      "entity": "OrderLine"
+     }
+    ],
+    "enums": [
+     {
+      "name": "status",
+      "values": [
+       "new",
+       "paid",
+       "sent"
+      ],
+      "storage": "check"
+     }
+    ],
+    "notes": []
+   }
+  }
+ },
+ {
+  "args": [
+   "{\"format\":\"model2db-project\",\"version\":1,\"savedAt\":\"2026-11-11T12:00:00.000Z\",\"input\":{\"format\":\"typescript\",\"text\":\"export interface Customer {\\n  id: number\\n  /** @maxLength 120 */\\n  email: string\\n  name: string\\n  orders: Order[]\\n}\\n\\nexport interface Order {\\n  id: number\\n  customer: Customer\\n  status: 'new' | 'paid' | 'sent'\\n  total: number\\n  placedAt: Date\\n  lines: OrderLine[]\\n}\\n\\nexport interface OrderLine {\\n  product: string\\n  quantity: number\\n}\\n\"},\"designs\":{\"relational\":null,\"document\":null,\"keyvalue\":null,\"widecolumn\":null},\"output\":{\"output\":\"flyway\",\"naming\":{\"relational\":{\"tables\":\"plural\",\"columns\":\"snake\"},\"document\":{\"tables\":\"plural\",\"columns\":\"field\"},\"keyvalue\":{\"tables\":\"singular\",\"columns\":\"snake\"},\"widecolumn\":{\"tables\":\"plural\",\"columns\":\"snake\"}},\"strings\":\"auto\",\"engine\":\"oracle\",\"migrations\":false}}"
+  ],
+  "result": {
+   "ok": true,
+   "schema": {
+    "format": "db-schema",
+    "version": 1,
+    "dialect": "oracle",
+    "source": {
+     "kind": "model2db",
+     "format": "flyway"
+    },
+    "tables": [
+     {
+      "name": "customers",
+      "columns": [
+       {
+        "name": "id",
+        "type": {
+         "sql": "NUMBER(19)",
+         "kind": "integer",
+         "bits": 64
+        },
+        "nullable": false
+       },
+       {
+        "name": "email",
+        "type": {
+         "sql": "VARCHAR2(255 CHAR)",
+         "kind": "text",
+         "length": 255
+        },
+        "nullable": false
+       },
+       {
+        "name": "name",
+        "type": {
+         "sql": "VARCHAR2(255 CHAR)",
+         "kind": "text",
+         "length": 255
+        },
+        "nullable": false
+       }
+      ],
+      "primaryKey": [
+       "id"
+      ],
+      "foreignKeys": [],
+      "uniques": [],
+      "indexes": [],
+      "checks": []
+     },
+     {
+      "name": "orders",
+      "columns": [
+       {
+        "name": "id",
+        "type": {
+         "sql": "NUMBER(19)",
+         "kind": "integer",
+         "bits": 64
+        },
+        "nullable": false
+       },
+       {
+        "name": "status",
+        "type": {
+         "sql": "VARCHAR2(20 CHAR)",
+         "kind": "text"
+        },
+        "nullable": false
+       },
+       {
+        "name": "total",
+        "type": {
+         "sql": "BINARY_DOUBLE",
+         "kind": "float",
+         "bits": 64
+        },
+        "nullable": false
+       },
+       {
+        "name": "placed_at",
+        "type": {
+         "sql": "TIMESTAMP WITH TIME ZONE",
+         "kind": "datetime",
+         "timezone": true
+        },
+        "nullable": false
+       },
+       {
+        "name": "customer_id",
+        "type": {
+         "sql": "NUMBER(19)",
+         "kind": "integer",
+         "bits": 64
+        },
+        "nullable": false
+       }
+      ],
+      "primaryKey": [
+       "id"
+      ],
+      "foreignKeys": [
+       {
+        "name": "fk_orders_customer_id",
+        "columns": [
+         "customer_id"
+        ],
+        "references": {
+         "table": "customers",
+         "columns": [
+          "id"
+         ]
+        },
+        "attribute": "customer",
+        "inverse": "orders"
+       }
+      ],
+      "uniques": [],
+      "indexes": [
+       {
+        "name": "ix_orders_customer_id",
+        "columns": [
+         "customer_id"
+        ]
+       }
+      ],
+      "checks": [
+       {
+        "name": "ck_orders_status",
+        "sql": "status IN ('new', 'paid', 'sent')",
+        "parsed": {
+         "kind": "in",
+         "column": "status",
+         "values": [
+          "new",
+          "paid",
+          "sent"
+         ]
+        }
+       }
+      ]
+     },
+     {
+      "name": "order_lines",
+      "columns": [
+       {
+        "name": "id",
+        "type": {
+         "sql": "NUMBER(19)",
+         "kind": "integer",
+         "bits": 64
+        },
+        "nullable": false,
+        "generated": "identity"
+       },
+       {
+        "name": "product",
+        "type": {
+         "sql": "VARCHAR2(255 CHAR)",
+         "kind": "text",
+         "length": 255
+        },
+        "nullable": false
+       },
+       {
+        "name": "quantity",
+        "type": {
+         "sql": "NUMBER(10)",
+         "kind": "integer",
+         "bits": 32
+        },
+        "nullable": false
+       },
+       {
+        "name": "order_id",
+        "type": {
+         "sql": "NUMBER(19)",
+         "kind": "integer",
+         "bits": 64
+        },
+        "nullable": false
+       }
+      ],
+      "primaryKey": [
+       "id"
+      ],
+      "foreignKeys": [
+       {
+        "name": "fk_order_lines_order_id",
+        "columns": [
+         "order_id"
+        ],
+        "references": {
+         "table": "orders",
+         "columns": [
+          "id"
+         ]
+        },
+        "onDelete": "cascade",
+        "inverse": "lines"
+       }
+      ],
+      "uniques": [],
+      "indexes": [
+       {
+        "name": "ix_order_lines_order_id",
+        "columns": [
+         "order_id"
+        ]
+       }
+      ],
+      "checks": []
+     }
+    ],
+    "enums": [
+     {
+      "name": "status",
+      "values": [
+       "new",
+       "paid",
+       "sent"
+      ],
+      "storage": "check"
+     }
+    ],
+    "notes": []
+   }
+  }
+ },
+ {
+  "args": [
+   "{\"format\":\"model2db-project\",\"version\":1,\"savedAt\":\"2026-11-11T12:00:00.000Z\",\"input\":{\"format\":\"typescript\",\"text\":\"export interface Customer {\\n  id: number\\n  /** @maxLength 120 */\\n  email: string\\n  name: string\\n  orders: Order[]\\n}\\n\\nexport interface Order {\\n  id: number\\n  customer: Customer\\n  status: 'new' | 'paid' | 'sent'\\n  total: number\\n  placedAt: Date\\n  lines: OrderLine[]\\n}\\n\\nexport interface OrderLine {\\n  product: string\\n  quantity: number\\n}\\n\"},\"designs\":{\"relational\":null,\"document\":null,\"keyvalue\":null,\"widecolumn\":null},\"output\":{\"output\":\"mongodb\",\"naming\":{\"relational\":{\"tables\":\"plural\",\"columns\":\"snake\"},\"document\":{\"tables\":\"plural\",\"columns\":\"field\"},\"keyvalue\":{\"tables\":\"singular\",\"columns\":\"snake\"},\"widecolumn\":{\"tables\":\"plural\",\"columns\":\"snake\"}},\"strings\":\"auto\",\"engine\":\"postgresql\",\"migrations\":false}}"
+  ],
+  "result": {
+   "ok": false,
+   "error": "notRelational"
+  }
+ },
+ {
+  "args": [
+   "{\"format\":\"model2db-project\",\"version\":1,\"savedAt\":\"2026-11-11T12:00:00.000Z\",\"input\":{\"format\":\"typescript\",\"text\":\"export const x = 1\"},\"designs\":{\"relational\":null,\"document\":null,\"keyvalue\":null,\"widecolumn\":null},\"output\":{\"output\":\"postgresql\",\"naming\":{\"relational\":{\"tables\":\"plural\",\"columns\":\"snake\"},\"document\":{\"tables\":\"plural\",\"columns\":\"field\"},\"keyvalue\":{\"tables\":\"singular\",\"columns\":\"snake\"},\"widecolumn\":{\"tables\":\"plural\",\"columns\":\"snake\"}},\"strings\":\"auto\",\"engine\":\"postgresql\",\"migrations\":false}}"
+  ],
+  "result": {
+   "ok": false,
+   "error": "noModels"
+  }
+ },
+ {
+  "args": [
+   "{\"format\":\"model2db-project\",\"version\":1,\"savedAt\":\"2026-11-11T12:00:00.000Z\",\"input\":{\"format\":\"typescript\",\"text\":\"export interface {\"},\"designs\":{\"relational\":null,\"document\":null,\"keyvalue\":null,\"widecolumn\":null},\"output\":{\"output\":\"postgresql\",\"naming\":{\"relational\":{\"tables\":\"plural\",\"columns\":\"snake\"},\"document\":{\"tables\":\"plural\",\"columns\":\"field\"},\"keyvalue\":{\"tables\":\"singular\",\"columns\":\"snake\"},\"widecolumn\":{\"tables\":\"plural\",\"columns\":\"snake\"}},\"strings\":\"auto\",\"engine\":\"postgresql\",\"migrations\":false}}"
+  ],
+  "result": {
+   "ok": false,
+   "error": "noModels"
+  }
+ },
+ {
+  "args": [
+   "{\"format\":\"model2db-project\",\"version\":1,\"savedAt\":\"2026-11-11T12:00:00.000Z\",\"input\":{\"format\":\"typescript\",\"text\":42},\"designs\":{\"relational\":null,\"document\":null,\"keyvalue\":null,\"widecolumn\":null},\"output\":{\"output\":\"postgresql\",\"naming\":{\"relational\":{\"tables\":\"plural\",\"columns\":\"snake\"},\"document\":{\"tables\":\"plural\",\"columns\":\"field\"},\"keyvalue\":{\"tables\":\"singular\",\"columns\":\"snake\"},\"widecolumn\":{\"tables\":\"plural\",\"columns\":\"snake\"}},\"strings\":\"auto\",\"engine\":\"postgresql\",\"migrations\":false}}"
+  ],
+  "result": {
+   "ok": false,
+   "error": "invalid",
+   "path": "$.input"
+  }
+ },
+ {
+  "args": [
+   "not json"
+  ],
+  "result": {
+   "ok": false,
+   "error": "notJson"
+  }
+ },
+ {
+  "args": [
+   "{\"format\": \"model2db-project\", \"version\": 99}"
+  ],
+  "result": {
+   "ok": false,
+   "error": "newerVersion"
+  }
+ }
+]

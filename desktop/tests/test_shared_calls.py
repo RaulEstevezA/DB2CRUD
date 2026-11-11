@@ -27,6 +27,7 @@ FUNCTIONS = {
     "edit.setOperationInclude": "crud.edit.set_operation_include",
     "edit.accept": "crud.edit.accept",
     "edit.pendingDecisions": "crud.edit.pending_decisions",
+    "read.readModel2DBProject": "interop.model2db.read.read_model2db_project",
 }
 
 FILES = sorted((SHARED_CASES / "calls").glob("*.json"))

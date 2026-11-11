@@ -14,6 +14,7 @@ import { analyzeModels } from './analysis/models.ts'
 import { detectFormats, parseInput } from './importers/registry.ts'
 import { accept, decidePolicy, pendingDecisions, setOperationInclude, setQueryInclude } from './crud/edit.ts'
 import { proposeCrud } from './crud/propose.ts'
+import { readModel2DBProject } from './interop/model2db/read.ts'
 import { validateDbSchema } from './schema/validate.ts'
 import { pluralize, singularize, splitWords, toCamelCase, toPascalCase, toSnakeCase } from './model/naming.ts'
 
@@ -44,6 +45,7 @@ const SHARED_FUNCTIONS: Record<string, AnyFunction> = {
   'edit.setOperationInclude': setOperationInclude,
   'edit.accept': accept,
   'edit.pendingDecisions': pendingDecisions,
+  'read.readModel2DBProject': readModel2DBProject,
 }
 
 /** What JSON keeps of a value: the files hold JSON, so `undefined` keys disappear as they do there. */
