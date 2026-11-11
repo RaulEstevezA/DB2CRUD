@@ -7,7 +7,7 @@ import type { GeneratedFile } from '../../../export/files.ts'
 import type { DbForeignKey, DbType } from '../../../schema/types.ts'
 import { lines, type Line } from '../../types.ts'
 import { Imports, pyLiteral } from '../python.ts'
-import { columnPyType, moduleOf, pathOf, type ColumnInfo, type Context, type TableInfo } from './context.ts'
+import { columnPyType, moduleOf, pathOf, writesEntities, type ColumnInfo, type Context, type TableInfo } from '../common/context.ts'
 
 const SYNC_URLS: Record<string, string> = {
   postgresql: 'postgresql+psycopg://app:app@localhost:5432/app',
@@ -19,9 +19,6 @@ const SYNC_URLS: Record<string, string> = {
 export function defaultUrl(context: Context): string {
   return SYNC_URLS[context.settings.database] ?? SYNC_URLS.postgresql
 }
-
-/** Whether any entity is written by the project, and so whether it has a declarative base of its own. */
-export const writesEntities = (context: Context) => context.tables.some((info) => info.writesEntity)
 
 export function dbFile(context: Context): GeneratedFile {
   const imports = new Imports().module('os')

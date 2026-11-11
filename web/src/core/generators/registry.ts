@@ -6,10 +6,11 @@ import type { CrudDesign } from '../crud/types.ts'
 import type { GeneratedFile } from '../export/files.ts'
 import type { DbSchema } from '../schema/types.ts'
 import { normalizeSettings, type ProjectSettings } from '../settings/settings.ts'
-import { sqlalchemyGenerator } from './python/sqlalchemy/index.ts'
+import { pythonGenerator } from './python/common/generator.ts'
+import { sqlalchemyOrm } from './python/sqlalchemy/index.ts'
 import type { Generator } from './types.ts'
 
-export const GENERATORS: readonly Generator[] = [sqlalchemyGenerator]
+export const GENERATORS: readonly Generator[] = [pythonGenerator(sqlalchemyOrm)]
 
 export function findGenerator(settings: Pick<ProjectSettings, 'language' | 'orm'>): Generator | undefined {
   return GENERATORS.find((generator) => generator.language === settings.language && generator.orm === settings.orm)

@@ -10,8 +10,6 @@ import { memoryRepositoryClass, moduleOf, repositoryClass, sqlRepositoryClass, t
 
 export function unitOfWorkFile(context: Context): GeneratedFile {
   const imports = new Imports().from('typing', 'Protocol')
-  const sessionType = context.async ? 'AsyncSession' : 'Session'
-  imports.from(context.async ? 'sqlalchemy.ext.asyncio' : 'sqlalchemy.orm', sessionType)
   const tables = context.tables
   const contextManager = context.async ? 'asynccontextmanager' : 'contextmanager'
   const iterator = context.async ? 'AsyncIterator' : 'Iterator'
@@ -25,13 +23,14 @@ export function unitOfWorkFile(context: Context): GeneratedFile {
   }
   const typeOf = (info: (typeof tables)[number]) =>
     context.settings.repositoryInterfaces ? repositoryClass(info) : sqlRepositoryClass(info)
-  const a = context.async ? 'await ' : ''
   const def = context.async ? 'async def' : 'def'
   const how = {
     operation: 'Each service operation runs in `transaction()`: committed when it ends, rolled back when it fails.',
     caller: 'Services never commit: whoever holds the session decides when the work is committed.',
     repository: 'Every repository write is committed at once; `transaction()` only groups the code.',
   }[context.settings.transactions]
+  // Written before the imports, which it adds to
+  const database = context.orm.unitOfWork(context, imports)
   const content = lines(
     `"""The repositories of every table, and the transaction of each service operation. ${how}"""`,
     '',
@@ -48,24 +47,7 @@ export function unitOfWorkFile(context: Context): GeneratedFile {
     '        ...',
     '',
     '',
-    'class SqlUnitOfWork:',
-    `    """The repositories over one ${sessionType}."""`,
-    '',
-    `    def __init__(self, session: ${sessionType}) -> None:`,
-    '        self.session = session',
-    ...tables.map((info) => `        self.${info.attr} = ${sqlRepositoryClass(info)}(session)`),
-    '',
-    `    @${contextManager}`,
-    `    ${def} transaction(self) -> ${iterator}[None]:`,
-    '        """Commits what runs inside it, or rolls it back if it fails."""',
-    '        try:',
-    '            yield',
-    '        except BaseException:',
-    `            ${a}self.session.rollback()`,
-    '            raise',
-    context.settings.transactions === 'operation'
-      ? `        ${a}self.session.commit()`
-      : '        # The commit belongs to whoever holds the session',
+    ...database,
     context.settings.memoryRepositories && [
       '',
       '',

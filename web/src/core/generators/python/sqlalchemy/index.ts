@@ -1,65 +1,105 @@
 /**
- * Python + SQLAlchemy 2 generator: entities (when they are missing), repositories, a unit of work, services
- * and tests, synchronous or asynchronous, with every project setting (docs/design.md, section 4). It
- * composes the modules of this folder; each writes one kind of file.
+ * Python + SQLAlchemy 2 (Strategy of common/orm.ts): the engine, sessions and declarative base, entities
+ * faithful to the database, repositories with select(), a unit of work over one session, and tests on a
+ * real database. Synchronous (Session) or asynchronous (AsyncSession).
  */
-import type { GeneratedFile } from '../../../export/files.ts'
-import type { Generator } from '../../types.ts'
-import { createContext, type Context } from './context.ts'
-import { dbFile, entityFiles } from './database.ts'
-import { dtosFile } from './dtos.ts'
-import { contractFile, envExampleFile, gitignoreFile, pyprojectFile, readmeFile, requirementsFiles } from './project.ts'
-import { repositoryFile } from './repositories.ts'
-import { serviceFile } from './services.ts'
-import { errorsFile, pagingFile } from './support.ts'
-import { testFiles } from './tests.ts'
-import { unitOfWorkFile } from './unitOfWork.ts'
+import type { Line } from '../../types.ts'
+import type { Imports } from '../python.ts'
+import { sqlRepositoryClass, writesEntities, type Context } from '../common/context.ts'
+import type { PythonOrm } from '../common/orm.ts'
+import { dbFile, defaultUrl, entityFiles } from './database.ts'
+import { sqlBody } from './repository.ts'
+import { conftestFile, databaseTest } from './tests.ts'
 
-/** Empty `__init__.py` files that make every folder of `app/` a package. */
-function packages(files: GeneratedFile[]): GeneratedFile[] {
-  const folders = new Set<string>()
-  for (const file of files) {
-    if (!file.path.startsWith('app/')) continue
-    const parts = file.path.split('/').slice(0, -1)
-    for (let index = 1; index <= parts.length; index++) folders.add(parts.slice(0, index).join('/'))
-  }
-  return [...folders].sort().map((folder) => ({ path: `${folder}/__init__.py`, content: '' }))
+const VERSIONS = {
+  sqlalchemy: 'sqlalchemy>=2.0.36,<2.1',
+  psycopg: 'psycopg[binary]>=3.2,<4',
+  pymysql: 'pymysql>=1.1,<2',
+  cryptography: 'cryptography>=43',
+  aiosqlite: 'aiosqlite>=0.20,<1',
+  aiomysql: 'aiomysql>=0.2,<1',
+  greenlet: 'greenlet>=3.1',
+  pydantic: 'pydantic>=2.9,<3',
+  pytest: 'pytest>=8.3,<9',
+  pytestAsyncio: 'pytest-asyncio>=0.24,<1',
 }
 
-function code(context: Context): GeneratedFile[] {
-  const files: (GeneratedFile | null)[] = [
-    dbFile(context),
-    errorsFile(),
-    pagingFile(context),
-    unitOfWorkFile(context),
-    ...entityFiles(context),
+function dependencies(context: Context): string[] {
+  const { database, serviceTypes, dtoKind } = context.settings
+  const deps = [VERSIONS.sqlalchemy]
+  if (database === 'postgresql') deps.push(VERSIONS.psycopg)
+  if (database === 'mysql' || database === 'mariadb') deps.push(VERSIONS.pymysql, VERSIONS.cryptography)
+  if (context.async) {
+    deps.push(VERSIONS.greenlet)
+    if (database === 'sqlite') deps.push(VERSIONS.aiosqlite)
+    if (database === 'mysql' || database === 'mariadb') deps.push(VERSIONS.aiomysql)
+  }
+  if (serviceTypes === 'dtos' && dtoKind === 'pydantic') deps.push(VERSIONS.pydantic)
+  return deps
+}
+
+function devDependencies(context: Context): string[] {
+  // The tests run on SQLite unless TEST_DATABASE_URL names another database
+  const deps = [VERSIONS.pytest]
+  if (context.async) deps.push(VERSIONS.pytestAsyncio, VERSIONS.aiosqlite)
+  return deps
+}
+
+/** The class SqlUnitOfWork: the repositories over one session, and the transaction of each operation. */
+function unitOfWork(context: Context, imports: Imports): Line[] {
+  const sessionType = context.async ? 'AsyncSession' : 'Session'
+  imports.from(context.async ? 'sqlalchemy.ext.asyncio' : 'sqlalchemy.orm', sessionType)
+  const tables = context.tables
+  const contextManager = context.async ? 'asynccontextmanager' : 'contextmanager'
+  const iterator = context.async ? 'AsyncIterator' : 'Iterator'
+  const a = context.async ? 'await ' : ''
+  const def = context.async ? 'async def' : 'def'
+  return [
+    'class SqlUnitOfWork:',
+    `    """The repositories over one ${sessionType}."""`,
+    '',
+    `    def __init__(self, session: ${sessionType}) -> None:`,
+    '        self.session = session',
+    ...tables.map((info) => `        self.${info.attr} = ${sqlRepositoryClass(info)}(session)`),
+    '',
+    `    @${contextManager}`,
+    `    ${def} transaction(self) -> ${iterator}[None]:`,
+    '        """Commits what runs inside it, or rolls it back if it fails."""',
+    '        try:',
+    '            yield',
+    '        except BaseException:',
+    `            ${a}self.session.rollback()`,
+    '            raise',
+    context.settings.transactions === 'operation'
+      ? `        ${a}self.session.commit()`
+      : '        # The commit belongs to whoever holds the session',
   ]
-  for (const info of context.tables) {
-    files.push(repositoryFile(context, info))
-    if (context.settings.services && info.service) {
-      if (context.settings.serviceTypes === 'dtos') files.push(dtosFile(context, info))
-      files.push(serviceFile(context, info))
-    }
-  }
-  return files.filter((file): file is GeneratedFile => file !== null)
 }
 
-export const sqlalchemyGenerator: Generator = {
-  language: 'python',
-  orm: 'sqlalchemy',
-  generate({ schema, design, settings }) {
-    const context = createContext(schema, design, settings)
-    const app = code(context)
-    return [
-      readmeFile(context),
-      pyprojectFile(context),
-      ...requirementsFiles(context),
-      envExampleFile(context),
-      gitignoreFile(),
-      contractFile(context),
-      ...app,
-      ...packages(app),
-      ...testFiles(context),
-    ]
+export const sqlalchemyOrm: PythonOrm = {
+  id: 'sqlalchemy',
+  label: 'SQLAlchemy 2',
+  databaseFiles: (context) => [dbFile(context), ...entityFiles(context)],
+  repository: {
+    doc: (context, info) =>
+      `Keeps ${info.name} rows in the database, through a ${context.async ? 'AsyncSession' : 'Session'}.${context.settings.transactions === 'repository' ? ' Every write is committed at once.' : ' It never commits: the transaction belongs to whoever holds the session.'}`,
+    init: (context, imports) => {
+      const sessionType = context.async ? 'AsyncSession' : 'Session'
+      imports.from(context.async ? 'sqlalchemy.ext.asyncio' : 'sqlalchemy.orm', sessionType)
+      return [`def __init__(self, session: ${sessionType}) -> None:`, '    self._session = session']
+    },
+    body: sqlBody,
   },
+  unitOfWork,
+  conftest: conftestFile,
+  databaseTest,
+  databaseFixture: 'sql_uow: SqlUnitOfWork',
+  dependencies,
+  devDependencies,
+  pytestOptions: (context) => [
+    context.async && 'asyncio_mode = "auto"',
+    context.async && 'asyncio_default_fixture_loop_scope = "function"',
+  ],
+  defaultUrl,
+  layout: (context) => ['app/db.py              engine, sessions' + (writesEntities(context) ? ' and the declarative base' : '')],
 }

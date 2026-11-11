@@ -1,6 +1,6 @@
 /**
- * What every file of a SQLAlchemy project needs to know about each table, computed once: the names of its
- * classes and modules, its columns with their Python and SQLAlchemy types, its key, the decisions of the
+ * What every file of a Python project needs to know about each table, computed once: the names of its
+ * classes and modules, its columns with their Python types, its key, the decisions of the
  * review and the queries and operations that are on. Files are written from this, never from the raw
  * design, so they cannot disagree.
  */
@@ -17,6 +17,7 @@ import { findPolicy, findRepository, findService } from '../../../crud/types.ts'
 import type { DbColumn, DbSchema, DbTable, DbType } from '../../../schema/types.ts'
 import type { ProjectSettings } from '../../../settings/settings.ts'
 import { className, Imports, methodName, snakeName } from '../python.ts'
+import type { PythonOrm } from './orm.ts'
 
 export interface ColumnInfo {
   column: DbColumn
@@ -62,6 +63,7 @@ export interface TableInfo {
 }
 
 export interface Context {
+  orm: PythonOrm
   schema: DbSchema
   design: CrudDesign
   settings: ProjectSettings
@@ -142,7 +144,7 @@ function tableInfo(schema: DbSchema, design: CrudDesign, settings: ProjectSettin
   const service = settings.services ? (findService(design, table.name) ?? null) : null
   const columns = table.columns.map(columnInfo)
   const byName = (name: string) => columns.find((info) => info.column.name === name)!
-  // A table without a primary key is mapped on all its columns: SQLAlchemy needs some key to map rows
+  // A table without a primary key is mapped on all its columns: ORMs need some key to tell rows apart
   const key = (table.primaryKey ?? table.columns.map((column) => column.name)).map(byName)
   const deleteMode = policy.delete.value
   const concurrency = policy.concurrency.value
@@ -170,8 +172,9 @@ function tableInfo(schema: DbSchema, design: CrudDesign, settings: ProjectSettin
   }
 }
 
-export function createContext(schema: DbSchema, design: CrudDesign, settings: ProjectSettings): Context {
+export function createContext(orm: PythonOrm, schema: DbSchema, design: CrudDesign, settings: ProjectSettings): Context {
   return {
+    orm,
     schema,
     design,
     settings,
@@ -179,6 +182,9 @@ export function createContext(schema: DbSchema, design: CrudDesign, settings: Pr
     async: settings.execution === 'async',
   }
 }
+
+/** Whether any entity is written by the project, and so whether it has a base of its own and tests can create tables. */
+export const writesEntities = (context: Context) => context.tables.some((info) => info.writesEntity)
 
 export function findInfo(context: Context, table: string): TableInfo | undefined {
   return context.tables.find((info) => info.name === table)
