@@ -12,6 +12,7 @@ import { describe, expect, it } from 'vitest'
 import { readConstraints } from './analysis/constraints.ts'
 import { analyzeModels } from './analysis/models.ts'
 import { detectFormats, parseInput } from './importers/registry.ts'
+import { accept, decidePolicy, pendingDecisions, setOperationInclude, setQueryInclude } from './crud/edit.ts'
 import { proposeCrud } from './crud/propose.ts'
 import { validateDbSchema } from './schema/validate.ts'
 import { pluralize, singularize, splitWords, toCamelCase, toPascalCase, toSnakeCase } from './model/naming.ts'
@@ -38,6 +39,11 @@ const SHARED_FUNCTIONS: Record<string, AnyFunction> = {
   'models.analyzeModels': (schema) => Object.fromEntries(analyzeModels(schema)),
   'validate.validateDbSchema': validateDbSchema,
   'propose.proposeCrud': proposeCrud,
+  'edit.decidePolicy': decidePolicy,
+  'edit.setQueryInclude': setQueryInclude,
+  'edit.setOperationInclude': setOperationInclude,
+  'edit.accept': accept,
+  'edit.pendingDecisions': pendingDecisions,
 }
 
 /** What JSON keeps of a value: the files hold JSON, so `undefined` keys disappear as they do there. */

@@ -22,6 +22,11 @@ FUNCTIONS = {
     "models.analyzeModels": "analysis.models.analyze_models",
     "validate.validateDbSchema": "schema.validate.validate_db_schema",
     "propose.proposeCrud": "crud.propose.propose_crud",
+    "edit.decidePolicy": "crud.edit.decide_policy",
+    "edit.setQueryInclude": "crud.edit.set_query_include",
+    "edit.setOperationInclude": "crud.edit.set_operation_include",
+    "edit.accept": "crud.edit.accept",
+    "edit.pendingDecisions": "crud.edit.pending_decisions",
 }
 
 FILES = sorted((SHARED_CASES / "calls").glob("*.json"))
