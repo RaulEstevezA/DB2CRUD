@@ -10,5 +10,5 @@
       }
     ]
   },
-  "ignorePatterns": ["node_modules/**", "dist/**", "**/__snapshots__/**"]
+  "ignorePatterns": ["node_modules/**", "dist/**", "**/__snapshots__/**", "src/core/interop/model2db/vendor/**"]
 }

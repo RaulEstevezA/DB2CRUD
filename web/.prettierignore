@@ -3,3 +3,4 @@ node_modules
 package-lock.json
 src/styles/tokens
 src/**/__snapshots__
+src/core/interop/model2db/vendor
