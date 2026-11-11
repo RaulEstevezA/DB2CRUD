@@ -1,4 +1,4 @@
-"""What every file of a SQLAlchemy project needs to know about each table, computed once: the names of its classes
+"""What every file of a Python project needs to know about each table, computed once: the names of its classes
 and modules, its columns with their Python types, its key, the decisions of the review and the queries and operations
 that are on. Mirrors web/src/core/generators/python/sqlalchemy/context.ts.
 
@@ -79,7 +79,7 @@ def _table_info(schema: dict, design: dict, settings: dict, table: dict) -> dict
     def by_name(name: str) -> dict:
         return next(info for info in columns if info["column"]["name"] == name)
 
-    # A table without a primary key is mapped on all its columns: SQLAlchemy needs some key to map rows
+    # A table without a primary key is mapped on all its columns: ORMs need some key to tell rows apart
     key_names = (
         table["primaryKey"] if table["primaryKey"] is not None else [column["name"] for column in table["columns"]]
     )
@@ -110,14 +110,20 @@ def _table_info(schema: dict, design: dict, settings: dict, table: dict) -> dict
     }
 
 
-def create_context(schema: dict, design: dict, settings: dict) -> dict:
+def create_context(orm: dict, schema: dict, design: dict, settings: dict) -> dict:
     return {
+        "orm": orm,
         "schema": schema,
         "design": design,
         "settings": settings,
         "tables": [_table_info(schema, design, settings, table) for table in schema["tables"]],
         "async": settings["execution"] == "async",
     }
+
+
+def writes_entities(context: dict) -> bool:
+    """Whether any entity is written by the project, and so whether it has a base of its own and tests can create tables."""
+    return any(info["writesEntity"] for info in context["tables"])
 
 
 def find_info(context: dict, table: str) -> dict | None:

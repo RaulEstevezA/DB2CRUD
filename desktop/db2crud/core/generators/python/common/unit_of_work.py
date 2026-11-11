@@ -16,8 +16,6 @@ def unit_of_work_file(context: dict) -> dict:
     settings = context["settings"]
     is_async = context["async"]
     imports = Imports().from_("typing", "Protocol")
-    session_type = "AsyncSession" if is_async else "Session"
-    imports.from_("sqlalchemy.ext.asyncio" if is_async else "sqlalchemy.orm", session_type)
     tables = context["tables"]
     manager = "asynccontextmanager" if is_async else "contextmanager"
     iterator = "AsyncIterator" if is_async else "Iterator"
@@ -34,8 +32,9 @@ def unit_of_work_file(context: dict) -> dict:
     def type_of(info: dict) -> str:
         return repository_class(info) if settings["repositoryInterfaces"] else sql_repository_class(info)
 
-    a = "await " if is_async else ""
     def_ = "async def" if is_async else "def"
+    # Written before the imports, which it adds to
+    database = context["orm"]["unitOfWork"](context, imports)
     content = lines(
         f'"""The repositories of every table, and the transaction of each service operation. {HOW[settings["transactions"]]}"""',
         "",
@@ -52,24 +51,7 @@ def unit_of_work_file(context: dict) -> dict:
         "        ...",
         "",
         "",
-        "class SqlUnitOfWork:",
-        f'    """The repositories over one {session_type}."""',
-        "",
-        f"    def __init__(self, session: {session_type}) -> None:",
-        "        self.session = session",
-        *[f"        self.{info['attr']} = {sql_repository_class(info)}(session)" for info in tables],
-        "",
-        f"    @{manager}",
-        f"    {def_} transaction(self) -> {iterator}[None]:",
-        '        """Commits what runs inside it, or rolls it back if it fails."""',
-        "        try:",
-        "            yield",
-        "        except BaseException:",
-        f"            {a}self.session.rollback()",
-        "            raise",
-        f"        {a}self.session.commit()"
-        if settings["transactions"] == "operation"
-        else "        # The commit belongs to whoever holds the session",
+        *database,
         settings["memoryRepositories"]
         and [
             "",

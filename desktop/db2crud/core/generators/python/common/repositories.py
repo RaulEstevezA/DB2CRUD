@@ -1,11 +1,10 @@
 """The repository of each table: the interface services depend on (a Protocol, when the settings want one), its
-SQLAlchemy implementation and its in-memory one, with the same methods. Mirrors
+database implementation (written by each ORM, common/orm.py) and its in-memory one, with the same methods. Mirrors
 web/src/core/generators/python/sqlalchemy/repositories.ts."""
 
 from ...types import indent, lines
 from ..python import Imports, py_literal
 from .context import (
-    aw,
     column_py_type,
     def_,
     memory_repository_class,
@@ -78,98 +77,9 @@ def repository_methods(context: dict, info: dict, imports: Imports) -> list[dict
     return methods
 
 
-def _signature(context: dict, method: dict) -> str:
+def signature(context: dict, method: dict) -> str:
     params = ", ".join(["self", *[f"{param['name']}: {param['type']}" for param in method["params"]]])
     return f"{def_(context)} {method['name']}({params}) -> {method['returns']}:"
-
-
-# SQLAlchemy
-
-
-def _soft_filter(info: dict) -> str | None:
-    """The filter that leaves out rows marked as deleted."""
-    soft = info["soft"]
-    if not soft:
-        return None
-    attr = f"{info['entity']}.{soft['attr']}"
-    return f"{attr}.is_(False)" if soft["column"]["type"]["kind"] == "boolean" else f"{attr}.is_(None)"
-
-
-def _where(info: dict, conditions: list[str]) -> str:
-    every = [item for item in [*conditions, _soft_filter(info)] if item is not None]
-    return f".where({', '.join(every)})" if every else ""
-
-
-def _key_columns(info: dict) -> str:
-    return ", ".join(f"{info['entity']}.{column['attr']}" for column in info["key"])
-
-
-def _sql_body(context: dict, info: dict, method: dict, imports: Imports) -> list:
-    a = aw(context)
-    entity = info["entity"]
-    equals = [f"{entity}.{param['name']} == {param['name']}" for param in method["params"]]
-    commit = context["settings"]["transactions"] == "repository"
-
-    def write(action: str) -> list:
-        imports.from_("sqlalchemy.exc", "IntegrityError").from_("app.errors", "ConflictError")
-        return [
-            action,
-            "try:",
-            f"    {a}self._session.flush()",
-            "except IntegrityError as error:",
-            f"    {a}self._session.rollback()",
-            f'    raise ConflictError("{entity}", "the database refused the change: " + str(error.orig)) from error',
-            commit and f"{a}self._session.commit()",
-        ]
-
-    kind = method["query"]["kind"]
-    if kind in ("getByKey", "findByUnique"):
-        imports.from_("sqlalchemy", "select")
-        return [f"return ({a}self._session.scalars(select({entity}){_where(info, equals)})).first()"]
-    if kind in ("listByParent", "findAllBy"):
-        imports.from_("sqlalchemy", "select")
-        order = _key_columns(info)
-        return [
-            f"return list(({a}self._session.scalars(select({entity}){_where(info, equals)}.order_by({order}))).all())"
-        ]
-    if kind == "list":
-        imports.from_("sqlalchemy", "select")
-        base = f"query = select({entity}){_where(info, [])}"
-        paging = context["settings"]["paging"]
-        if paging == "offset":
-            imports.from_("sqlalchemy", "func")
-            return [
-                base,
-                f"total = {a}self._session.scalar(select(func.count()).select_from(query.subquery())) or 0",
-                f"rows = ({a}self._session.scalars(query.order_by({_key_columns(info)}).offset(offset).limit(limit))).all()",
-                "return Page(items=list(rows), total=total, offset=offset, limit=limit)",
-            ]
-        if paging == "cursor":
-            single = len(info["key"]) == 1
-            if not single:
-                imports.from_("sqlalchemy", "tuple_")
-            after = (
-                f"{entity}.{info['key'][0]['attr']} > after[0]"
-                if single
-                else f"tuple_({_key_columns(info)}) > tuple_(*after)"
-            )
-            last = ", ".join(f"rows[-1].{column['attr']}" for column in info["key"])
-            return [
-                base,
-                "if after is not None:",
-                f"    query = query.where({after})",
-                f"rows = list(({a}self._session.scalars(query.order_by({_key_columns(info)}).limit(limit + 1))).all())",
-                "more = len(rows) > limit",
-                "rows = rows[:limit]",
-                f"last = ({last},) if more else None",
-                "return CursorPage(items=rows, next=last)",
-            ]
-        return [base, f"return list(({a}self._session.scalars(query.order_by({_key_columns(info)}))).all())"]
-    if kind in ("insert", "update"):
-        return [*write("self._session.add(entity)"), f"{a}self._session.refresh(entity)", "return entity"]
-    if kind == "delete":
-        return write(f"{a}self._session.delete(entity)")
-    return ["raise NotImplementedError"]
 
 
 # In memory
@@ -238,18 +148,19 @@ def _memory_body(context: dict, info: dict, method: dict, imports: Imports) -> l
 
 
 def _method_block(context: dict, method: dict, body: list) -> str:
-    return lines(_signature(context, method), f'    """{method["doc"]}"""', indent(lines(*body)))
+    return lines(signature(context, method), f'    """{method["doc"]}"""', indent(lines(*body)))
 
 
 def repository_file(context: dict, info: dict) -> dict:
     settings = context["settings"]
     imports = Imports().annotations().from_(module_of(context, info, "entity"), info["entity"])
     methods = repository_methods(context, info, imports)
-    session_type = "AsyncSession" if context["async"] else "Session"
-    imports.from_("sqlalchemy.ext.asyncio" if context["async"] else "sqlalchemy.orm", session_type)
     if settings["repositoryInterfaces"]:
         imports.from_("typing", "Protocol")
-    sql_methods = [_method_block(context, method, _sql_body(context, info, method, imports)) for method in methods]
+    orm = context["orm"]
+    sql_methods = [
+        _method_block(context, method, orm["repository"]["body"](context, info, method, imports)) for method in methods
+    ]
     memory_methods = (
         [_method_block(context, method, _memory_body(context, info, method, imports)) for method in methods]
         if settings["memoryRepositories"]
@@ -258,11 +169,8 @@ def repository_file(context: dict, info: dict) -> dict:
     if settings["memoryRepositories"]:
         imports.from_("typing", "Any")
     identity = any(column["column"].get("generated") == "identity" for column in info["columns"])
-    commits = (
-        " Every write is committed at once."
-        if settings["transactions"] == "repository"
-        else " It never commits: the transaction belongs to whoever holds the session."
-    )
+    # Written before the imports, which they may add to
+    init_lines = orm["repository"]["init"](context, imports)
     key = ", ".join(f"row.{column['attr']}" for column in info["key"])
     content = lines(
         f'"""Repository of the "{info["name"]}" table: reads and writes rows, and decides nothing."""',
@@ -277,16 +185,15 @@ def repository_file(context: dict, info: dict) -> dict:
             *[
                 item
                 for method in methods
-                for item in ["", indent(lines(_signature(context, method), f'    """{method["doc"]}"""', "    ..."))]
+                for item in ["", indent(lines(signature(context, method), f'    """{method["doc"]}"""', "    ..."))]
             ],
         ],
         "",
         "",
         f"class {sql_repository_class(info)}:",
-        f'    """Keeps {info["name"]} rows in the database, through a {session_type}.{commits}"""',
+        f'    """{orm["repository"]["doc"](context, info)}"""',
         "",
-        f"    def __init__(self, session: {session_type}) -> None:",
-        "        self._session = session",
+        *[f"    {line}" if isinstance(line, str) else line for line in init_lines],
         *[item for block in sql_methods for item in ["", indent(block)]],
         settings["memoryRepositories"]
         and [

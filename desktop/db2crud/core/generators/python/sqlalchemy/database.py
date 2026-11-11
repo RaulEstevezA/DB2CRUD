@@ -2,8 +2,8 @@
 precise types and every constraint of the input. Mirrors web/src/core/generators/python/sqlalchemy/database.ts."""
 
 from ...types import lines
+from ..common.context import column_py_type, module_of, path_of, writes_entities
 from ..python import Imports, js_json, py_literal
-from .context import column_py_type, module_of, path_of
 
 SYNC_URLS = {
     "postgresql": "postgresql+psycopg://app:app@localhost:5432/app",
@@ -15,11 +15,6 @@ SYNC_URLS = {
 
 def default_url(context: dict) -> str:
     return SYNC_URLS.get(context["settings"]["database"], SYNC_URLS["postgresql"])
-
-
-def writes_entities(context: dict) -> bool:
-    """Whether any entity is written by the project, and so whether it has a declarative base of its own."""
-    return any(info["writesEntity"] for info in context["tables"])
 
 
 def db_file(context: dict) -> dict:

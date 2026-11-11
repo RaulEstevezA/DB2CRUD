@@ -1,9 +1,10 @@
 """Registry of the generators (Registry pattern). Mirrors web/src/core/generators/registry.ts."""
 
 from ..settings.settings import normalize_settings
-from .python.sqlalchemy.index import SQLALCHEMY_GENERATOR
+from .python.common.generator import python_generator
+from .python.sqlalchemy.index import SQLALCHEMY_ORM
 
-GENERATORS = [SQLALCHEMY_GENERATOR]
+GENERATORS = [python_generator(SQLALCHEMY_ORM)]
 
 
 def find_generator(settings: dict) -> dict | None:
