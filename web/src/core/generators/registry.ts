@@ -10,8 +10,14 @@ import { pythonGenerator } from './python/common/generator.ts'
 import { djangoOrm } from './python/django/index.ts'
 import { sqlalchemyOrm } from './python/sqlalchemy/index.ts'
 import type { Generator } from './types.ts'
+import { typescriptGenerator } from './typescript/common/generator.ts'
+import { typeormOrm } from './typescript/typeorm/index.ts'
 
-export const GENERATORS: readonly Generator[] = [pythonGenerator(sqlalchemyOrm), pythonGenerator(djangoOrm)]
+export const GENERATORS: readonly Generator[] = [
+  pythonGenerator(sqlalchemyOrm),
+  pythonGenerator(djangoOrm),
+  typescriptGenerator(typeormOrm),
+]
 
 export function findGenerator(settings: Pick<ProjectSettings, 'language' | 'orm'>): Generator | undefined {
   return GENERATORS.find((generator) => generator.language === settings.language && generator.orm === settings.orm)

@@ -149,7 +149,7 @@ const en = {
   // Project pane
   projectName: 'Project name',
   stackLabel: 'Language and ORM',
-  languages: { python: 'Python' } satisfies Record<LanguageId, string>,
+  languages: { python: 'Python', typescript: 'TypeScript' } satisfies Record<LanguageId, string>,
   databaseLabel: 'Database',
   databases: {
     postgresql: 'PostgreSQL',
@@ -173,7 +173,10 @@ const en = {
   serviceTypesLabel: 'Services take and return',
   serviceTypes: { entities: 'The entities', dtos: 'DTOs' } satisfies Record<ServiceTypes, string>,
   dtoKindLabel: 'DTOs as',
-  dtoKinds: { pydantic: 'Pydantic models', dataclass: 'Dataclasses' } satisfies Record<DtoKind, string>,
+  dtoKinds: { pydantic: 'Pydantic models', dataclass: 'Dataclasses', interface: 'Interfaces', class: 'Classes' } satisfies Record<
+    DtoKind,
+    string
+  >,
   transactionsLabel: 'Transactions',
   transactions: {
     operation: 'One per operation',
@@ -367,7 +370,7 @@ const es: Messages = {
   },
   projectName: 'Nombre del proyecto',
   stackLabel: 'Lenguaje y ORM',
-  languages: { python: 'Python' },
+  languages: { python: 'Python', typescript: 'TypeScript' },
   databaseLabel: 'Base de datos',
   databases: { postgresql: 'PostgreSQL', mysql: 'MySQL', mariadb: 'MariaDB', sqlite: 'SQLite', sqlserver: 'SQL Server', oracle: 'Oracle' },
   executionLabel: 'Código',
@@ -381,7 +384,7 @@ const es: Messages = {
   serviceTypesLabel: 'Los servicios reciben y devuelven',
   serviceTypes: { entities: 'Las entidades', dtos: 'DTOs' },
   dtoKindLabel: 'DTOs como',
-  dtoKinds: { pydantic: 'Modelos de Pydantic', dataclass: 'Dataclasses' },
+  dtoKinds: { pydantic: 'Modelos de Pydantic', dataclass: 'Dataclasses', interface: 'Interfaces', class: 'Clases' },
   transactionsLabel: 'Transacciones',
   transactions: { operation: 'Una por operación', caller: 'Las de quien llama', repository: 'Una por escritura' },
   errorsLabel: 'Errores',

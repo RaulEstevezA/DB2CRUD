@@ -9,8 +9,8 @@
  */
 import type { Dialect } from '../schema/types.ts'
 
-export type LanguageId = 'python'
-export type OrmId = 'sqlalchemy' | 'django'
+export type LanguageId = 'python' | 'typescript'
+export type OrmId = 'sqlalchemy' | 'django' | 'typeorm'
 
 /** Which ORM entities are written: only those the input lacks, all of them (replacing the input's), or none. */
 export type EntitiesMode = 'missing' | 'all' | 'none'
@@ -28,7 +28,7 @@ export type Architecture = 'layer' | 'table'
 export type Verbs = 'getFind' | 'get' | 'find'
 export type Tests = 'all' | 'services' | 'repositories' | 'none'
 /** The kind of class DTOs are written as, per language. */
-export type DtoKind = 'pydantic' | 'dataclass'
+export type DtoKind = 'pydantic' | 'dataclass' | 'interface' | 'class'
 
 export interface ProjectSettings {
   /** Name of the generated project, in lowercase words: `shop-data` */
@@ -84,6 +84,17 @@ export const STACKS: readonly StackInfo[] = [
     execution: ['sync'],
     errors: ['exceptions'],
     dtoKinds: ['pydantic', 'dataclass'],
+  },
+  {
+    language: 'typescript',
+    orm: 'typeorm',
+    label: 'TypeORM 0.3',
+    databases: ['postgresql', 'mysql', 'mariadb', 'sqlite'],
+    // Every database call in Node returns a promise
+    execution: ['async'],
+    // TypeScript has no common result type: errors are thrown
+    errors: ['exceptions'],
+    dtoKinds: ['interface', 'class'],
   },
 ]
 
