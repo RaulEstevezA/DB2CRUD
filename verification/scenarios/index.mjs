@@ -48,4 +48,25 @@ export const SCENARIOS = [
   { id: 'sqlalchemy-mariadb-sync-decided', schema: 'shop', settings: { database: 'mariadb', paging: 'cursor', architecture: 'table' }, decisions: OTHER_WAY, service: 'mariadb' },
   { id: 'sqlalchemy-sqlite-repositories-only', schema: 'shop', settings: { database: 'sqlite', services: false } },
   { id: 'sqlalchemy-postgresql-services-tests-only', schema: 'shop', settings: { database: 'postgresql', tests: 'services', entities: 'all' }, service: 'postgresql' },
+  { id: 'django-sqlite-defaults', schema: 'shop', settings: { language: 'python', orm: 'django', database: 'sqlite' } },
+  { id: 'django-postgresql-pydantic', schema: 'shop', settings: { language: 'python', orm: 'django', database: 'postgresql', serviceTypes: 'dtos' }, service: 'postgresql' },
+  {
+    id: 'django-mysql-decided-cursor-by-table',
+    schema: 'shop',
+    settings: { language: 'python', orm: 'django', database: 'mysql', paging: 'cursor', architecture: 'table' },
+    decisions: OTHER_WAY,
+    service: 'mysql',
+  },
+  {
+    id: 'django-mariadb-caller-dataclass',
+    schema: 'shop',
+    settings: { language: 'python', orm: 'django', database: 'mariadb', transactions: 'caller', serviceTypes: 'dtos', dtoKind: 'dataclass', paging: 'none' },
+    service: 'mariadb',
+  },
+  {
+    id: 'django-postgresql-repository-commits',
+    schema: 'shop',
+    settings: { language: 'python', orm: 'django', database: 'postgresql', transactions: 'repository', repositoryInterfaces: false, memoryRepositories: false, verbs: 'get' },
+    service: 'postgresql',
+  },
 ]

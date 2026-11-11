@@ -82,6 +82,31 @@ export const VERIFIED: readonly VerifiedStack[] = [
     scenarios: ['sqlalchemy-sqlite-async-repository-commits'],
     date: '2026-11-11',
   },
+  { language: 'python', orm: 'django', database: 'sqlite', execution: 'sync', scenarios: ['django-sqlite-defaults'], date: '2026-11-11' },
+  {
+    language: 'python',
+    orm: 'django',
+    database: 'postgresql',
+    execution: 'sync',
+    scenarios: ['django-postgresql-pydantic'],
+    date: '2026-11-11',
+  },
+  {
+    language: 'python',
+    orm: 'django',
+    database: 'mysql',
+    execution: 'sync',
+    scenarios: ['django-mysql-decided-cursor-by-table'],
+    date: '2026-11-11',
+  },
+  {
+    language: 'python',
+    orm: 'django',
+    database: 'mariadb',
+    execution: 'sync',
+    scenarios: ['django-mariadb-caller-dataclass'],
+    date: '2026-11-11',
+  },
 ]
 
 /** Whether this stack has passed the verification. */

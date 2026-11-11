@@ -10,7 +10,7 @@
 import type { Dialect } from '../schema/types.ts'
 
 export type LanguageId = 'python'
-export type OrmId = 'sqlalchemy'
+export type OrmId = 'sqlalchemy' | 'django'
 
 /** Which ORM entities are written: only those the input lacks, all of them (replacing the input's), or none. */
 export type EntitiesMode = 'missing' | 'all' | 'none'
@@ -72,6 +72,16 @@ export const STACKS: readonly StackInfo[] = [
     databases: ['postgresql', 'mysql', 'mariadb', 'sqlite'],
     execution: ['sync', 'async'],
     // Python has no common result type: exceptions are its way
+    errors: ['exceptions'],
+    dtoKinds: ['pydantic', 'dataclass'],
+  },
+  {
+    language: 'python',
+    orm: 'django',
+    label: 'Django 5.2',
+    databases: ['postgresql', 'mysql', 'mariadb', 'sqlite'],
+    // Django's asynchronous ORM cannot hold a transaction (transaction.atomic is synchronous only)
+    execution: ['sync'],
     errors: ['exceptions'],
     dtoKinds: ['pydantic', 'dataclass'],
   },
