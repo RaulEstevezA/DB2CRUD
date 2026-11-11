@@ -1,0 +1,15 @@
+/* Code editor: it fills the pane and scrolls inside (personal_web_style components/code-blocks.md). */
+
+.code-editor {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.code-editor .cm-editor {
+  height: 100%;
+}
+
+.code-editor .cm-editor.cm-focused {
+  outline: none;
+}

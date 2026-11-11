@@ -1,0 +1,32 @@
+/* Header (personal_web_style components/navigation.md). It has the width and the side padding of the
+   workspace below, so the name lines up with the first column and the languages with the last one. */
+
+.app-header {
+  width: 100%;
+  max-width: var(--content-width-wide);
+  margin: 0 auto;
+  padding: var(--space-24) var(--page-padding) var(--space-8);
+}
+
+.app-header__nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.app-header__logo {
+  color: var(--text);
+  font-weight: var(--weight-semibold);
+  transition: opacity var(--transition-fast);
+}
+
+.app-header__logo:hover {
+  opacity: 0.75;
+  text-decoration: none;
+}
+
+@media (max-width: 600px) {
+  .app-header {
+    padding: var(--space-16) var(--page-padding-mobile) var(--space-4);
+  }
+}

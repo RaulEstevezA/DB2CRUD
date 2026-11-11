@@ -1,0 +1,48 @@
+/* Pane (personal_web_style components/cards.md, "Pane"): min-width and min-height 0 so the content
+   scrolls inside instead of stretching the column. */
+
+.pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  border: var(--border-line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.pane__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+  min-height: 60px;
+  padding: var(--pane-header-padding);
+  border-bottom: var(--border-line);
+}
+
+.pane__title {
+  font-size: var(--font-title-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.pane__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.pane__body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.pane__footer {
+  padding: var(--space-8) var(--space-16);
+  border-top: var(--border-line);
+  font-size: var(--font-label);
+}

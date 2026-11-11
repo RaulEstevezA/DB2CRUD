@@ -1,0 +1,23 @@
+using CatalogApi.Common;
+using CatalogApi.Models;
+
+namespace CatalogApi.Repositories;
+
+/// <summary>Where categories are kept. The service depends only on this interface.</summary>
+public interface ICategoryRepository
+{
+    /// <summary>Items equal to every filter, in order, within the window; and how many match.</summary>
+    Task<ListResult<Category>> ListAsync(ListQuery query);
+
+    /// <summary>The item with this key, or null when there is none.</summary>
+    Task<Category?> GetAsync(long key);
+
+    /// <summary>Stores a new item and assigns its key; returns it as stored.</summary>
+    Task<Category> AddAsync(Category item);
+
+    /// <summary>Stores the new state of an existing item and returns it.</summary>
+    Task<Category> UpdateAsync(Category item);
+
+    /// <summary>Removes an existing item.</summary>
+    Task DeleteAsync(long key);
+}

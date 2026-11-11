@@ -1,0 +1,364 @@
+/* Global styles of the web version: design tokens, base elements and the building blocks shared by every
+   component (window, panel, buttons, badges, empty state). Components keep their own styles in their CSS file.
+
+   The tokens are copied from personal_web_style (tokens/): the palette and scales shared with the portfolio
+   and the other tools. Change them there first, then copy them here. */
+@import url('./styles/tokens/colors.css');
+@import url('./styles/tokens/typography.css');
+@import url('./styles/tokens/spacing.css');
+@import url('./styles/tokens/borders.css');
+@import url('./styles/tokens/shadows.css');
+
+/* ---------- Base (personal_web_style css/base.css) ---------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  font: var(--font-body) / var(--leading-base) var(--sans);
+  color: var(--text);
+  background: var(--page-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--page-bg);
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+button {
+  font: inherit;
+}
+
+::selection {
+  background: var(--text-selection);
+  color: var(--text);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Text for screen readers only */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- Window and panel (components/cards.md) ---------- */
+
+.window {
+  border: var(--border-line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--window-shadow);
+}
+
+.panel {
+  padding: var(--panel-padding);
+  border: var(--border-line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+/* ---------- Buttons (components/buttons.md) ---------- */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.5rem 1.15rem;
+  border: var(--border-line);
+  border-radius: var(--radius);
+  background: var(--surface-raised);
+  color: var(--btn-text);
+  font-size: var(--font-control);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-base);
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.button:hover {
+  text-decoration: none;
+}
+
+.button:hover:not(:disabled) {
+  border-color: var(--muted);
+  background: var(--border);
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* One per group of actions: the action that completes the flow of that area */
+.button--primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.button--primary:hover:not(:disabled) {
+  border-color: var(--accent-text);
+  background: var(--accent-text);
+}
+
+/* Option of a group, selected with aria-pressed; a button whose form is open */
+.button[aria-pressed='true'],
+.button[aria-expanded='true'] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-controls);
+}
+
+/* Small button inside a row (confirm, edit), radius 4px */
+.button--small {
+  padding: 2px 8px;
+  border-radius: var(--radius-xs);
+  font-size: var(--font-label);
+}
+
+/* ---------- Badges (components/badges.md) ---------- */
+
+/* Status badge in a list: neutral by default */
+.badge {
+  display: inline-block;
+  padding: 0 6px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  background: var(--surface-raised);
+  color: var(--muted);
+  font-family: var(--sans);
+  font-size: 0.6875rem;
+  font-weight: var(--weight-semibold);
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.badge--success {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.badge--accent {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+.badge--danger {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.badge--warning {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+/* ---------- Empty states (patterns/empty-and-loading-states.md) ---------- */
+
+/* A pane that depends on another input: says what is missing */
+.pane-empty {
+  padding: var(--space-16);
+  color: var(--muted);
+  font-size: var(--font-small);
+}
+
+/* ---------- Forms (components/forms.md) ---------- */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  color: var(--muted);
+  font-size: var(--font-label);
+}
+
+.input,
+.select {
+  min-width: 0;
+  padding: var(--control-padding);
+  border: var(--border-line);
+  border-radius: var(--radius-sm);
+  background: var(--page-bg);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--font-small);
+}
+
+.input--mono {
+  font-family: var(--mono);
+}
+
+.select {
+  cursor: pointer;
+}
+
+.input:focus-visible,
+.select:focus-visible {
+  border-color: var(--accent);
+}
+
+.input:disabled,
+.select:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+/* Checkboxes drawn by the page, as in Api2Class: they look the same in every browser */
+input[type='checkbox'] {
+  display: inline-grid;
+  place-content: center;
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  border: 1px solid var(--muted);
+  border-radius: var(--radius-xs);
+  background: var(--page-bg);
+  cursor: pointer;
+  appearance: none;
+}
+
+input[type='checkbox']::before {
+  content: '';
+  width: 9px;
+  height: 9px;
+  background: var(--on-accent);
+  clip-path: polygon(14% 44%, 0 59%, 39% 100%, 100% 21%, 85% 7%, 38% 70%);
+  transform: scale(0);
+}
+
+input[type='checkbox']:checked {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+input[type='checkbox']:checked::before {
+  transform: scale(1);
+}
+
+input[type='checkbox']:hover:not(:checked) {
+  border-color: var(--text);
+}
+
+/* Checkbox with its text */
+.check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  color: var(--text);
+  font-size: var(--font-small);
+  cursor: pointer;
+}
+
+.mono {
+  font-family: var(--mono);
+}
+
+/* ---------- Alerts (components/alerts.md) ---------- */
+
+/* Review box: a decision or a risk before acting */
+.review-box {
+  padding: 8px 12px;
+  border: 1px solid var(--warning);
+  border-radius: var(--radius);
+  background: var(--warning-soft);
+  color: var(--warning);
+  font-size: var(--font-label);
+}
+
+.review-box--danger {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+  color: var(--text);
+}
+
+.review-box summary {
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+}
+
+.review-box--danger summary {
+  color: var(--danger);
+}
+
+.review-box ul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  margin: var(--space-8) 0 0;
+  padding-left: 18px;
+}
+
+/* A link-like button inside a review box: moves the focus to what the item is about */
+.review-box__link {
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font-family: var(--mono);
+  font-size: inherit;
+  font-weight: var(--weight-semibold);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Message after an action */
+.notice {
+  padding: 10px 16px;
+  border: 1px solid var(--success);
+  border-radius: var(--radius);
+  background: var(--success-soft);
+  color: var(--success);
+  font-size: var(--font-small);
+}
+
+.notice--error {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+  color: var(--danger);
+}

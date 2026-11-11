@@ -1,0 +1,39 @@
+/* A decision: select, state badge and reason. Pending ones are framed in --warning so they are found. */
+
+.decision {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.decision:focus-visible {
+  border-radius: var(--radius-xs);
+}
+
+.decision__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.decision__select {
+  max-width: 100%;
+  padding: 4px 8px;
+  font-size: var(--font-label);
+}
+
+.decision--pending .decision__select {
+  border-color: var(--warning);
+}
+
+.decision__value {
+  font-size: var(--font-label);
+}
+
+.decision__why {
+  color: var(--muted);
+  font-size: var(--font-label);
+  line-height: var(--leading-code);
+}

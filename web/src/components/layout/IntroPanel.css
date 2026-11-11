@@ -1,0 +1,103 @@
+/* Presentation window (personal_web_style layouts/tool-page.md). */
+
+.intro {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: var(--space-24) var(--space-40);
+  margin-top: var(--space-16);
+  padding: var(--window-padding);
+}
+
+.intro__text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+.intro__side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+.intro__examples {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.intro__examples-label {
+  color: var(--muted);
+  font-size: var(--font-label);
+}
+
+.intro__example-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+
+.intro__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8) 14px;
+}
+
+.intro__name {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: var(--font-h1);
+  line-height: var(--leading-tight);
+}
+
+/* The icon is as tall as the title line. Its tile has the window's color, so the border draws its edge,
+   with the icon's own radius (7 of 32) */
+.intro__icon {
+  flex: none;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: var(--border-line);
+  border-radius: 22%;
+}
+
+.intro__badge {
+  padding: 2px 10px;
+  border: 1px solid var(--success);
+  border-radius: var(--radius-pill);
+  color: var(--success);
+  font-size: var(--font-label);
+}
+
+.intro__subtitle {
+  color: var(--muted);
+  font-size: var(--font-subtitle);
+}
+
+.intro__description {
+  max-width: 72ch;
+  color: var(--muted);
+  line-height: var(--leading-prose);
+}
+
+@media (max-width: 1100px) {
+  .intro {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .intro {
+    padding: var(--window-padding-mobile);
+  }
+
+  .intro__name {
+    font-size: var(--font-h1-md);
+  }
+
+  .intro__icon {
+    width: 2rem;
+    height: 2rem;
+  }
+}

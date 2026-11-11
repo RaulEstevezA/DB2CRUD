@@ -1,0 +1,29 @@
+/* Language switcher: same size on the website, the tools, the demos and the games
+   (personal_web_style components/navigation.md, "Selector de idioma"). */
+
+.language-switcher {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.language-switcher__option {
+  padding: 2px 6px;
+  border: none;
+  border-radius: var(--radius-xs);
+  background: none;
+  color: var(--muted);
+  font-size: var(--font-control);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.language-switcher__option:hover {
+  color: var(--text);
+}
+
+.language-switcher__option[aria-pressed='true'] {
+  background: var(--surface-raised);
+  color: var(--text);
+  font-weight: var(--weight-bold);
+}

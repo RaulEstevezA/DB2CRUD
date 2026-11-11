@@ -1,0 +1,4802 @@
+[
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "express",
+    "architecture": "layered",
+    "persistence": "none",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "express",
+   "architecture": "layered",
+   "persistence": "none",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "springBoot",
+    "architecture": "modular",
+    "persistence": "memory",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "springBoot",
+   "architecture": "modular",
+   "persistence": "memory",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "fastapi",
+    "architecture": "layered",
+    "persistence": "memory",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "public",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "fastapi",
+   "architecture": "layered",
+   "persistence": "memory",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "public",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "nestjs",
+    "architecture": "modular",
+    "persistence": "typeorm",
+    "database": "postgresql",
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "nestjs",
+   "architecture": "modular",
+   "persistence": "typeorm",
+   "database": "postgresql",
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "djangoRest",
+    "architecture": "layered",
+    "persistence": "djangoOrm",
+    "database": "postgresql",
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "djangoRest",
+   "architecture": "layered",
+   "persistence": "djangoOrm",
+   "database": "postgresql",
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "fastapi",
+    "architecture": "layered",
+    "persistence": "memory",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "fastapi",
+   "architecture": "layered",
+   "persistence": "memory",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "api",
+    "framework": "springBoot",
+    "architecture": "layered",
+    "persistence": "jpa",
+    "database": "sqlite",
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "api",
+   "framework": "springBoot",
+   "architecture": "layered",
+   "persistence": "jpa",
+   "database": "postgresql",
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "springBoot",
+    "architecture": "layered",
+    "persistence": "memory",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "springBoot",
+   "architecture": "layered",
+   "persistence": "memory",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "springBoot",
+    "architecture": "modular",
+    "persistence": "none",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "springBoot",
+   "architecture": "modular",
+   "persistence": "none",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "fastapi",
+    "architecture": "layered",
+    "persistence": "memory",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "fastapi",
+   "architecture": "layered",
+   "persistence": "memory",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "express",
+    "architecture": "modular",
+    "persistence": "memory",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "express",
+   "architecture": "modular",
+   "persistence": "memory",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "springBoot",
+    "architecture": "layered",
+    "persistence": "none",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "springBoot",
+   "architecture": "layered",
+   "persistence": "none",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "fastapi",
+    "architecture": "layered",
+    "persistence": "memory",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "fastapi",
+   "architecture": "layered",
+   "persistence": "memory",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "springBoot",
+    "architecture": "layered",
+    "persistence": "jpa",
+    "database": "postgresql",
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "springBoot",
+   "architecture": "layered",
+   "persistence": "jpa",
+   "database": "postgresql",
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "springBoot",
+    "architecture": "modular",
+    "persistence": "jpa",
+    "database": "postgresql",
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "springBoot",
+   "architecture": "modular",
+   "persistence": "jpa",
+   "database": "postgresql",
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "express",
+    "architecture": "layered",
+    "persistence": "memory",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "express",
+   "architecture": "layered",
+   "persistence": "memory",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "springBoot",
+    "architecture": "modular",
+    "persistence": "none",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "springBoot",
+   "architecture": "modular",
+   "persistence": "none",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "springBoot",
+    "architecture": "modular",
+    "persistence": "none",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "springBoot",
+   "architecture": "modular",
+   "persistence": "none",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "nestjs",
+    "architecture": "modular",
+    "persistence": "none",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "nestjs",
+   "architecture": "modular",
+   "persistence": "none",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "express",
+    "architecture": "layered",
+    "persistence": "memory",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "express",
+   "architecture": "layered",
+   "persistence": "memory",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "fastapi",
+    "architecture": "modular",
+    "persistence": "memory",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "fastapi",
+   "architecture": "modular",
+   "persistence": "memory",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "express",
+    "architecture": "modular",
+    "persistence": "memory",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "express",
+   "architecture": "modular",
+   "persistence": "memory",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "springBoot",
+    "architecture": "layered",
+    "persistence": "jpa",
+    "database": "postgresql",
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "springBoot",
+   "architecture": "layered",
+   "persistence": "jpa",
+   "database": "postgresql",
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "djangoRest",
+    "architecture": "layered",
+    "persistence": "djangoOrm",
+    "database": "postgresql",
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "djangoRest",
+   "architecture": "layered",
+   "persistence": "djangoOrm",
+   "database": "postgresql",
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "fastapi",
+    "architecture": "modular",
+    "persistence": "sqlalchemy",
+    "database": "postgresql",
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "fastapi",
+   "architecture": "modular",
+   "persistence": "sqlalchemy",
+   "database": "postgresql",
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "nestjs",
+    "architecture": "modular",
+    "persistence": "none",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "nestjs",
+   "architecture": "modular",
+   "persistence": "none",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "fastapi",
+    "architecture": "modular",
+    "persistence": "sqlalchemy",
+    "database": "postgresql",
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "fastapi",
+   "architecture": "modular",
+   "persistence": "sqlalchemy",
+   "database": "postgresql",
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "fastapi",
+    "architecture": "layered",
+    "persistence": "memory",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "fastapi",
+   "architecture": "layered",
+   "persistence": "memory",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "express",
+    "architecture": "modular",
+    "persistence": "memory",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "express",
+   "architecture": "modular",
+   "persistence": "memory",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "fastapi",
+    "architecture": "layered",
+    "persistence": "sqlalchemy",
+    "database": "postgresql",
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "fastapi",
+   "architecture": "layered",
+   "persistence": "sqlalchemy",
+   "database": "postgresql",
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "nestjs",
+    "architecture": "modular",
+    "persistence": "memory",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "nestjs",
+   "architecture": "modular",
+   "persistence": "memory",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "fastapi",
+    "architecture": "layered",
+    "persistence": "sqlalchemy",
+    "database": "postgresql",
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "fastapi",
+   "architecture": "layered",
+   "persistence": "sqlalchemy",
+   "database": "postgresql",
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "fastapi",
+    "architecture": "modular",
+    "persistence": "memory",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "fastapi",
+   "architecture": "modular",
+   "persistence": "memory",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "springBoot",
+    "architecture": "modular",
+    "persistence": "jpa",
+    "database": "postgresql",
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "springBoot",
+   "architecture": "modular",
+   "persistence": "jpa",
+   "database": "postgresql",
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "djangoRest",
+    "architecture": "layered",
+    "persistence": "djangoOrm",
+    "database": "postgresql",
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "djangoRest",
+   "architecture": "layered",
+   "persistence": "djangoOrm",
+   "database": "postgresql",
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "nestjs",
+    "architecture": "modular",
+    "persistence": "none",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "nestjs",
+   "architecture": "modular",
+   "persistence": "none",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "express",
+    "architecture": "modular",
+    "persistence": "none",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "express",
+   "architecture": "modular",
+   "persistence": "none",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "springBoot",
+    "architecture": "layered",
+    "persistence": "jpa",
+    "database": "postgresql",
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "springBoot",
+   "architecture": "layered",
+   "persistence": "jpa",
+   "database": "postgresql",
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "springBoot",
+    "architecture": "modular",
+    "persistence": "memory",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "springBoot",
+   "architecture": "modular",
+   "persistence": "memory",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "express",
+    "architecture": "layered",
+    "persistence": "none",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "express",
+   "architecture": "layered",
+   "persistence": "none",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "djangoRest",
+    "architecture": "modular",
+    "persistence": "djangoOrm",
+    "database": "postgresql",
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "djangoRest",
+   "architecture": "modular",
+   "persistence": "djangoOrm",
+   "database": "postgresql",
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "nestjs",
+    "architecture": "modular",
+    "persistence": "typeorm",
+    "database": "postgresql",
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "nestjs",
+   "architecture": "modular",
+   "persistence": "typeorm",
+   "database": "postgresql",
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "springBoot",
+    "architecture": "modular",
+    "persistence": "jpa",
+    "database": "postgresql",
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "springBoot",
+   "architecture": "modular",
+   "persistence": "jpa",
+   "database": "postgresql",
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "fastapi",
+    "architecture": "modular",
+    "persistence": "none",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "fastapi",
+   "architecture": "modular",
+   "persistence": "none",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "express",
+    "architecture": "layered",
+    "persistence": "memory",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "express",
+   "architecture": "layered",
+   "persistence": "memory",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "fastapi",
+    "architecture": "layered",
+    "persistence": "none",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "fastapi",
+   "architecture": "layered",
+   "persistence": "none",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "springBoot",
+    "architecture": "modular",
+    "persistence": "memory",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "springBoot",
+   "architecture": "modular",
+   "persistence": "memory",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "fastapi",
+    "architecture": "modular",
+    "persistence": "none",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "fastapi",
+   "architecture": "modular",
+   "persistence": "none",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "fastapi",
+    "architecture": "modular",
+    "persistence": "none",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "fastapi",
+   "architecture": "modular",
+   "persistence": "none",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "djangoRest",
+    "architecture": "layered",
+    "persistence": "djangoOrm",
+    "database": "postgresql",
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "djangoRest",
+   "architecture": "layered",
+   "persistence": "djangoOrm",
+   "database": "postgresql",
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "fastapi",
+    "architecture": "layered",
+    "persistence": "memory",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "fastapi",
+   "architecture": "layered",
+   "persistence": "memory",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "fastapi",
+    "architecture": "layered",
+    "persistence": "memory",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "fastapi",
+   "architecture": "layered",
+   "persistence": "memory",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "djangoRest",
+    "architecture": "layered",
+    "persistence": "djangoOrm",
+    "database": "postgresql",
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "djangoRest",
+   "architecture": "layered",
+   "persistence": "djangoOrm",
+   "database": "postgresql",
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "fastapi",
+    "architecture": "modular",
+    "persistence": "memory",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "fastapi",
+   "architecture": "modular",
+   "persistence": "memory",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "springBoot",
+    "architecture": "modular",
+    "persistence": "none",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "springBoot",
+   "architecture": "modular",
+   "persistence": "none",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "springBoot",
+    "architecture": "layered",
+    "persistence": "none",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "springBoot",
+   "architecture": "layered",
+   "persistence": "none",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "springBoot",
+    "architecture": "modular",
+    "persistence": "none",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "springBoot",
+   "architecture": "modular",
+   "persistence": "none",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "nestjs",
+    "architecture": "modular",
+    "persistence": "none",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "nestjs",
+   "architecture": "modular",
+   "persistence": "none",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "springBoot",
+    "architecture": "layered",
+    "persistence": "none",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "springBoot",
+   "architecture": "layered",
+   "persistence": "none",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "express",
+    "architecture": "layered",
+    "persistence": "none",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "express",
+   "architecture": "layered",
+   "persistence": "none",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "springBoot",
+    "architecture": "modular",
+    "persistence": "memory",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "springBoot",
+   "architecture": "modular",
+   "persistence": "memory",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "express",
+    "architecture": "layered",
+    "persistence": "memory",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "express",
+   "architecture": "layered",
+   "persistence": "memory",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "express",
+    "architecture": "modular",
+    "persistence": "none",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "express",
+   "architecture": "modular",
+   "persistence": "none",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "fastapi",
+    "architecture": "modular",
+    "persistence": "sqlalchemy",
+    "database": "postgresql",
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "fastapi",
+   "architecture": "modular",
+   "persistence": "sqlalchemy",
+   "database": "postgresql",
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "nestjs",
+    "architecture": "modular",
+    "persistence": "memory",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "nestjs",
+   "architecture": "modular",
+   "persistence": "memory",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "express",
+    "architecture": "modular",
+    "persistence": "none",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "express",
+   "architecture": "modular",
+   "persistence": "none",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "springBoot",
+    "architecture": "layered",
+    "persistence": "none",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "springBoot",
+   "architecture": "layered",
+   "persistence": "none",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "api",
+    "framework": "fastapi",
+    "architecture": "layered",
+    "persistence": "memory",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "api",
+   "framework": "fastapi",
+   "architecture": "layered",
+   "persistence": "memory",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "express",
+    "architecture": "layered",
+    "persistence": "memory",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "express",
+   "architecture": "layered",
+   "persistence": "memory",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "springBoot",
+    "architecture": "modular",
+    "persistence": "jpa",
+    "database": "postgresql",
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "springBoot",
+   "architecture": "modular",
+   "persistence": "jpa",
+   "database": "postgresql",
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "***",
+    "framework": "fastapi",
+    "architecture": "layered",
+    "persistence": "memory",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "api",
+   "framework": "fastapi",
+   "architecture": "layered",
+   "persistence": "memory",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "fastapi",
+    "architecture": "layered",
+    "persistence": "memory",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "fastapi",
+   "architecture": "layered",
+   "persistence": "memory",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "fastapi",
+    "architecture": "layered",
+    "persistence": "none",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "fastapi",
+   "architecture": "layered",
+   "persistence": "none",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "djangoRest",
+    "architecture": "modular",
+    "persistence": "djangoOrm",
+    "database": "postgresql",
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "djangoRest",
+   "architecture": "modular",
+   "persistence": "djangoOrm",
+   "database": "postgresql",
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "springBoot",
+    "architecture": "modular",
+    "persistence": "memory",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "springBoot",
+   "architecture": "modular",
+   "persistence": "memory",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "fastapi",
+    "architecture": "modular",
+    "persistence": "sqlalchemy",
+    "database": "postgresql",
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "fastapi",
+   "architecture": "modular",
+   "persistence": "sqlalchemy",
+   "database": "postgresql",
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "springBoot",
+    "architecture": "layered",
+    "persistence": "none",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "springBoot",
+   "architecture": "layered",
+   "persistence": "none",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "fastapi",
+    "architecture": "modular",
+    "persistence": "memory",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "fastapi",
+   "architecture": "modular",
+   "persistence": "memory",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "djangoRest",
+    "architecture": "modular",
+    "persistence": "djangoOrm",
+    "database": "postgresql",
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "djangoRest",
+   "architecture": "modular",
+   "persistence": "djangoOrm",
+   "database": "postgresql",
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "nestjs",
+    "architecture": "modular",
+    "persistence": "typeorm",
+    "database": "postgresql",
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "nestjs",
+   "architecture": "modular",
+   "persistence": "typeorm",
+   "database": "postgresql",
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "fastapi",
+    "architecture": "layered",
+    "persistence": "none",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "fastapi",
+   "architecture": "layered",
+   "persistence": "none",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "djangoRest",
+    "architecture": "layered",
+    "persistence": "djangoOrm",
+    "database": "postgresql",
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "djangoRest",
+   "architecture": "layered",
+   "persistence": "djangoOrm",
+   "database": "postgresql",
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "fastapi",
+    "architecture": "modular",
+    "persistence": "none",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "fastapi",
+   "architecture": "modular",
+   "persistence": "none",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "djangoRest",
+    "architecture": "layered",
+    "persistence": "djangoOrm",
+    "database": "postgresql",
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "djangoRest",
+   "architecture": "layered",
+   "persistence": "djangoOrm",
+   "database": "postgresql",
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "nestjs",
+    "architecture": "modular",
+    "persistence": "typeorm",
+    "database": "postgresql",
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "nestjs",
+   "architecture": "modular",
+   "persistence": "typeorm",
+   "database": "postgresql",
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "springBoot",
+    "architecture": "layered",
+    "persistence": "none",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "springBoot",
+   "architecture": "layered",
+   "persistence": "none",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "springBoot",
+    "architecture": "modular",
+    "persistence": "jpa",
+    "database": "postgresql",
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "springBoot",
+   "architecture": "modular",
+   "persistence": "jpa",
+   "database": "postgresql",
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "fastapi",
+    "architecture": "modular",
+    "persistence": "sqlalchemy",
+    "database": "postgresql",
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "fastapi",
+   "architecture": "modular",
+   "persistence": "sqlalchemy",
+   "database": "postgresql",
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "nestjs",
+    "architecture": "modular",
+    "persistence": "memory",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "nestjs",
+   "architecture": "modular",
+   "persistence": "memory",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "fastapi",
+    "architecture": "layered",
+    "persistence": "none",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "fastapi",
+   "architecture": "layered",
+   "persistence": "none",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "fastapi",
+    "architecture": "layered",
+    "persistence": "sqlalchemy",
+    "database": "postgresql",
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "fastapi",
+   "architecture": "layered",
+   "persistence": "sqlalchemy",
+   "database": "postgresql",
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "express",
+    "architecture": "modular",
+    "persistence": "none",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "express",
+   "architecture": "modular",
+   "persistence": "none",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "express",
+    "architecture": "modular",
+    "persistence": "memory",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "express",
+   "architecture": "modular",
+   "persistence": "memory",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "djangoRest",
+    "architecture": "modular",
+    "persistence": "djangoOrm",
+    "database": "postgresql",
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "djangoRest",
+   "architecture": "modular",
+   "persistence": "djangoOrm",
+   "database": "postgresql",
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "springBoot",
+    "architecture": "layered",
+    "persistence": "jpa",
+    "database": "postgresql",
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "springBoot",
+   "architecture": "layered",
+   "persistence": "jpa",
+   "database": "postgresql",
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "springBoot",
+    "architecture": "layered",
+    "persistence": "jpa",
+    "database": "postgresql",
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "springBoot",
+   "architecture": "layered",
+   "persistence": "jpa",
+   "database": "postgresql",
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "djangoRest",
+    "architecture": "modular",
+    "persistence": "djangoOrm",
+    "database": "postgresql",
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "djangoRest",
+   "architecture": "modular",
+   "persistence": "djangoOrm",
+   "database": "postgresql",
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "express",
+    "architecture": "layered",
+    "persistence": "memory",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "express",
+   "architecture": "layered",
+   "persistence": "memory",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "fastapi",
+    "architecture": "modular",
+    "persistence": "sqlalchemy",
+    "database": "postgresql",
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "fastapi",
+   "architecture": "modular",
+   "persistence": "sqlalchemy",
+   "database": "postgresql",
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "springBoot",
+    "architecture": "modular",
+    "persistence": "none",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "springBoot",
+   "architecture": "modular",
+   "persistence": "none",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "express",
+    "architecture": "layered",
+    "persistence": "none",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "express",
+   "architecture": "layered",
+   "persistence": "none",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "nestjs",
+    "architecture": "modular",
+    "persistence": "none",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "nestjs",
+   "architecture": "modular",
+   "persistence": "none",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "springBoot",
+    "architecture": "layered",
+    "persistence": "jpa",
+    "database": "postgresql",
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "springBoot",
+   "architecture": "layered",
+   "persistence": "jpa",
+   "database": "postgresql",
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "djangoRest",
+    "architecture": "modular",
+    "persistence": "djangoOrm",
+    "database": "postgresql",
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "djangoRest",
+   "architecture": "modular",
+   "persistence": "djangoOrm",
+   "database": "postgresql",
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "express",
+    "architecture": "modular",
+    "persistence": "memory",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "express",
+   "architecture": "modular",
+   "persistence": "memory",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "express",
+    "architecture": "layered",
+    "persistence": "memory",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "express",
+   "architecture": "layered",
+   "persistence": "memory",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "nestjs",
+    "architecture": "modular",
+    "persistence": "memory",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "nestjs",
+   "architecture": "modular",
+   "persistence": "memory",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "djangoRest",
+    "architecture": "layered",
+    "persistence": "djangoOrm",
+    "database": "postgresql",
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "djangoRest",
+   "architecture": "layered",
+   "persistence": "djangoOrm",
+   "database": "postgresql",
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "nestjs",
+    "architecture": "modular",
+    "persistence": "none",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "nestjs",
+   "architecture": "modular",
+   "persistence": "none",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "express",
+    "architecture": "modular",
+    "persistence": "none",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "express",
+   "architecture": "modular",
+   "persistence": "none",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "api",
+    "framework": "fastapi",
+    "architecture": "layered",
+    "persistence": "memory",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "Com.Example"
+   }
+  ],
+  "result": {
+   "name": "api",
+   "framework": "fastapi",
+   "architecture": "layered",
+   "persistence": "memory",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "nestjs",
+    "architecture": "modular",
+    "persistence": "memory",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "nestjs",
+   "architecture": "modular",
+   "persistence": "memory",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "express",
+    "architecture": "layered",
+    "persistence": "none",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "express",
+   "architecture": "layered",
+   "persistence": "none",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "springBoot",
+    "architecture": "modular",
+    "persistence": "jpa",
+    "database": "postgresql",
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "springBoot",
+   "architecture": "modular",
+   "persistence": "jpa",
+   "database": "postgresql",
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "fastapi",
+    "architecture": "modular",
+    "persistence": "memory",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "fastapi",
+   "architecture": "modular",
+   "persistence": "memory",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "springBoot",
+    "architecture": "layered",
+    "persistence": "memory",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "springBoot",
+   "architecture": "layered",
+   "persistence": "memory",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "fastapi",
+    "architecture": "modular",
+    "persistence": "none",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "fastapi",
+   "architecture": "modular",
+   "persistence": "none",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "nestjs",
+    "architecture": "modular",
+    "persistence": "typeorm",
+    "database": "postgresql",
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "nestjs",
+   "architecture": "modular",
+   "persistence": "typeorm",
+   "database": "postgresql",
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "springBoot",
+    "architecture": "modular",
+    "persistence": "memory",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "springBoot",
+   "architecture": "modular",
+   "persistence": "memory",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "nestjs",
+    "architecture": "modular",
+    "persistence": "none",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "nestjs",
+   "architecture": "modular",
+   "persistence": "none",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "express",
+    "architecture": "modular",
+    "persistence": "memory",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "express",
+   "architecture": "modular",
+   "persistence": "memory",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "fastapi",
+    "architecture": "modular",
+    "persistence": "none",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "fastapi",
+   "architecture": "modular",
+   "persistence": "none",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "fastapi",
+    "architecture": "modular",
+    "persistence": "none",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "fastapi",
+   "architecture": "modular",
+   "persistence": "none",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "fastapi",
+    "architecture": "modular",
+    "persistence": "memory",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "fastapi",
+   "architecture": "modular",
+   "persistence": "memory",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "express",
+    "architecture": "modular",
+    "persistence": "memory",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "express",
+   "architecture": "modular",
+   "persistence": "memory",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "express",
+    "architecture": "layered",
+    "persistence": "none",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "express",
+   "architecture": "layered",
+   "persistence": "none",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "fastapi",
+    "architecture": "layered",
+    "persistence": "sqlalchemy",
+    "database": "postgresql",
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "fastapi",
+   "architecture": "layered",
+   "persistence": "sqlalchemy",
+   "database": "postgresql",
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "springBoot",
+    "architecture": "modular",
+    "persistence": "jpa",
+    "database": "postgresql",
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "springBoot",
+   "architecture": "modular",
+   "persistence": "jpa",
+   "database": "postgresql",
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "springBoot",
+    "architecture": "layered",
+    "persistence": "memory",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "springBoot",
+   "architecture": "layered",
+   "persistence": "memory",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "fastapi",
+    "architecture": "layered",
+    "persistence": "sqlalchemy",
+    "database": "postgresql",
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "fastapi",
+   "architecture": "layered",
+   "persistence": "sqlalchemy",
+   "database": "postgresql",
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "express",
+    "architecture": "layered",
+    "persistence": "none",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "express",
+   "architecture": "layered",
+   "persistence": "none",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "djangoRest",
+    "architecture": "modular",
+    "persistence": "djangoOrm",
+    "database": "postgresql",
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "djangoRest",
+   "architecture": "modular",
+   "persistence": "djangoOrm",
+   "database": "postgresql",
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "fastapi",
+    "architecture": "modular",
+    "persistence": "sqlalchemy",
+    "database": "postgresql",
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "fastapi",
+   "architecture": "modular",
+   "persistence": "sqlalchemy",
+   "database": "postgresql",
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "springBoot",
+    "architecture": "modular",
+    "persistence": "none",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "springBoot",
+   "architecture": "modular",
+   "persistence": "none",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "My API",
+    "framework": "nope",
+    "architecture": "layered",
+    "persistence": "jpa",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "my-api",
+   "framework": "fastapi",
+   "architecture": "layered",
+   "persistence": "memory",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "express",
+    "architecture": "modular",
+    "persistence": "none",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "express",
+   "architecture": "modular",
+   "persistence": "none",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "express",
+    "architecture": "modular",
+    "persistence": "none",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "express",
+   "architecture": "modular",
+   "persistence": "none",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "springBoot",
+    "architecture": "layered",
+    "persistence": "memory",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "springBoot",
+   "architecture": "layered",
+   "persistence": "memory",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "fastapi",
+    "architecture": "layered",
+    "persistence": "sqlalchemy",
+    "database": "postgresql",
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "fastapi",
+   "architecture": "layered",
+   "persistence": "sqlalchemy",
+   "database": "postgresql",
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "springBoot",
+    "architecture": "modular",
+    "persistence": "none",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "springBoot",
+   "architecture": "modular",
+   "persistence": "none",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "fastapi",
+    "architecture": "layered",
+    "persistence": "memory",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "fastapi",
+   "architecture": "layered",
+   "persistence": "memory",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "fastapi",
+    "architecture": "modular",
+    "persistence": "sqlalchemy",
+    "database": "postgresql",
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "fastapi",
+   "architecture": "modular",
+   "persistence": "sqlalchemy",
+   "database": "postgresql",
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "springBoot",
+    "architecture": "layered",
+    "persistence": "none",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "springBoot",
+   "architecture": "layered",
+   "persistence": "none",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "fastapi",
+    "architecture": "layered",
+    "persistence": "none",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "fastapi",
+   "architecture": "layered",
+   "persistence": "none",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "api",
+    "framework": "fastapi",
+    "architecture": "layered",
+    "persistence": "memory",
+    "database": "mysql",
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "api",
+   "framework": "fastapi",
+   "architecture": "layered",
+   "persistence": "memory",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "fastapi",
+    "architecture": "modular",
+    "persistence": "none",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "fastapi",
+   "architecture": "modular",
+   "persistence": "none",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "springBoot",
+    "architecture": "modular",
+    "persistence": "memory",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "springBoot",
+   "architecture": "modular",
+   "persistence": "memory",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "fastapi",
+    "architecture": "layered",
+    "persistence": "none",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "fastapi",
+   "architecture": "layered",
+   "persistence": "none",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "springBoot",
+    "architecture": "layered",
+    "persistence": "memory",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "springBoot",
+   "architecture": "layered",
+   "persistence": "memory",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "springBoot",
+    "architecture": "layered",
+    "persistence": "memory",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "springBoot",
+   "architecture": "layered",
+   "persistence": "memory",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "express",
+    "architecture": "modular",
+    "persistence": "memory",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "express",
+   "architecture": "modular",
+   "persistence": "memory",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "nestjs",
+    "architecture": "modular",
+    "persistence": "typeorm",
+    "database": "postgresql",
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "nestjs",
+   "architecture": "modular",
+   "persistence": "typeorm",
+   "database": "postgresql",
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "springBoot",
+    "architecture": "layered",
+    "persistence": "none",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "springBoot",
+   "architecture": "layered",
+   "persistence": "none",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "fastapi",
+    "architecture": "modular",
+    "persistence": "memory",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "fastapi",
+   "architecture": "modular",
+   "persistence": "memory",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "fastapi",
+    "architecture": "modular",
+    "persistence": "memory",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "fastapi",
+   "architecture": "modular",
+   "persistence": "memory",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "springBoot",
+    "architecture": "modular",
+    "persistence": "none",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "springBoot",
+   "architecture": "modular",
+   "persistence": "none",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "springBoot",
+    "architecture": "layered",
+    "persistence": "jpa",
+    "database": "postgresql",
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "springBoot",
+   "architecture": "layered",
+   "persistence": "jpa",
+   "database": "postgresql",
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "springBoot",
+    "architecture": "layered",
+    "persistence": "jpa",
+    "database": "postgresql",
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "springBoot",
+   "architecture": "layered",
+   "persistence": "jpa",
+   "database": "postgresql",
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "api",
+    "framework": "djangoRest",
+    "architecture": "layered",
+    "persistence": "memory",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "api",
+   "framework": "djangoRest",
+   "architecture": "layered",
+   "persistence": "djangoOrm",
+   "database": "postgresql",
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "fastapi",
+    "architecture": "layered",
+    "persistence": "none",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "fastapi",
+   "architecture": "layered",
+   "persistence": "none",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "nestjs",
+    "architecture": "modular",
+    "persistence": "memory",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "nestjs",
+   "architecture": "modular",
+   "persistence": "memory",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "nestjs",
+    "architecture": "modular",
+    "persistence": "typeorm",
+    "database": "postgresql",
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "nestjs",
+   "architecture": "modular",
+   "persistence": "typeorm",
+   "database": "postgresql",
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "nestjs",
+    "architecture": "modular",
+    "persistence": "memory",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "nestjs",
+   "architecture": "modular",
+   "persistence": "memory",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "fastapi",
+    "architecture": "modular",
+    "persistence": "memory",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "fastapi",
+   "architecture": "modular",
+   "persistence": "memory",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "djangoRest",
+    "architecture": "modular",
+    "persistence": "djangoOrm",
+    "database": "postgresql",
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "djangoRest",
+   "architecture": "modular",
+   "persistence": "djangoOrm",
+   "database": "postgresql",
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "djangoRest",
+    "architecture": "modular",
+    "persistence": "djangoOrm",
+    "database": "postgresql",
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "djangoRest",
+   "architecture": "modular",
+   "persistence": "djangoOrm",
+   "database": "postgresql",
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "api",
+    "framework": "nestjs",
+    "architecture": "layered",
+    "persistence": "memory",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "api",
+   "framework": "nestjs",
+   "architecture": "modular",
+   "persistence": "memory",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "springBoot",
+    "architecture": "layered",
+    "persistence": "memory",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "springBoot",
+   "architecture": "layered",
+   "persistence": "memory",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "fastapi",
+    "architecture": "layered",
+    "persistence": "none",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "fastapi",
+   "architecture": "layered",
+   "persistence": "none",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "springBoot",
+    "architecture": "layered",
+    "persistence": "jpa",
+    "database": "postgresql",
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "springBoot",
+   "architecture": "layered",
+   "persistence": "jpa",
+   "database": "postgresql",
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "springBoot",
+    "architecture": "modular",
+    "persistence": "jpa",
+    "database": "postgresql",
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "springBoot",
+   "architecture": "modular",
+   "persistence": "jpa",
+   "database": "postgresql",
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "djangoRest",
+    "architecture": "layered",
+    "persistence": "djangoOrm",
+    "database": "postgresql",
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "djangoRest",
+   "architecture": "layered",
+   "persistence": "djangoOrm",
+   "database": "postgresql",
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "api",
+    "framework": "fastapi",
+    "architecture": "layered",
+    "persistence": "sqlalchemy",
+    "database": "mysql",
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "api",
+   "framework": "fastapi",
+   "architecture": "layered",
+   "persistence": "sqlalchemy",
+   "database": "mysql",
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "fastapi",
+    "architecture": "layered",
+    "persistence": "none",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "fastapi",
+   "architecture": "layered",
+   "persistence": "none",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "fastapi",
+    "architecture": "modular",
+    "persistence": "sqlalchemy",
+    "database": "postgresql",
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "fastapi",
+   "architecture": "modular",
+   "persistence": "sqlalchemy",
+   "database": "postgresql",
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": " My Shop API!",
+    "framework": "fastapi",
+    "architecture": "layered",
+    "persistence": "memory",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "my-shop-api",
+   "framework": "fastapi",
+   "architecture": "layered",
+   "persistence": "memory",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "express",
+    "architecture": "modular",
+    "persistence": "none",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "express",
+   "architecture": "modular",
+   "persistence": "none",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "springBoot",
+    "architecture": "modular",
+    "persistence": "memory",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "springBoot",
+   "architecture": "modular",
+   "persistence": "memory",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "express",
+    "architecture": "modular",
+    "persistence": "none",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "express",
+   "architecture": "modular",
+   "persistence": "none",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "nestjs",
+    "architecture": "modular",
+    "persistence": "none",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "nestjs",
+   "architecture": "modular",
+   "persistence": "none",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "nestjs",
+    "architecture": "modular",
+    "persistence": "typeorm",
+    "database": "postgresql",
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "nestjs",
+   "architecture": "modular",
+   "persistence": "typeorm",
+   "database": "postgresql",
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "springBoot",
+    "architecture": "layered",
+    "persistence": "memory",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "springBoot",
+   "architecture": "layered",
+   "persistence": "memory",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "springBoot",
+    "architecture": "modular",
+    "persistence": "jpa",
+    "database": "postgresql",
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "springBoot",
+   "architecture": "modular",
+   "persistence": "jpa",
+   "database": "postgresql",
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "fastapi",
+    "architecture": "modular",
+    "persistence": "none",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "fastapi",
+   "architecture": "modular",
+   "persistence": "none",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "nestjs",
+    "architecture": "modular",
+    "persistence": "none",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "nestjs",
+   "architecture": "modular",
+   "persistence": "none",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "nestjs",
+    "architecture": "modular",
+    "persistence": "memory",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "nestjs",
+   "architecture": "modular",
+   "persistence": "memory",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "fastapi",
+    "architecture": "layered",
+    "persistence": "sqlalchemy",
+    "database": "postgresql",
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "fastapi",
+   "architecture": "layered",
+   "persistence": "sqlalchemy",
+   "database": "postgresql",
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "express",
+    "architecture": "layered",
+    "persistence": "none",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "express",
+   "architecture": "layered",
+   "persistence": "none",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "express",
+    "architecture": "layered",
+    "persistence": "memory",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "express",
+   "architecture": "layered",
+   "persistence": "memory",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "nestjs",
+    "architecture": "modular",
+    "persistence": "typeorm",
+    "database": "postgresql",
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "nestjs",
+   "architecture": "modular",
+   "persistence": "typeorm",
+   "database": "postgresql",
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "fastapi",
+    "architecture": "layered",
+    "persistence": "sqlalchemy",
+    "database": "postgresql",
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "fastapi",
+   "architecture": "layered",
+   "persistence": "sqlalchemy",
+   "database": "postgresql",
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "springBoot",
+    "architecture": "modular",
+    "persistence": "memory",
+    "database": null,
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "springBoot",
+   "architecture": "modular",
+   "persistence": "memory",
+   "database": null,
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "springBoot",
+    "architecture": "layered",
+    "persistence": "memory",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "springBoot",
+   "architecture": "layered",
+   "persistence": "memory",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "express",
+    "architecture": "modular",
+    "persistence": "memory",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "express",
+   "architecture": "modular",
+   "persistence": "memory",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "fastapi",
+    "architecture": "layered",
+    "persistence": "sqlalchemy",
+    "database": "postgresql",
+    "auth": "jwt",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "fastapi",
+   "architecture": "layered",
+   "persistence": "sqlalchemy",
+   "database": "postgresql",
+   "auth": "jwt",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "springBoot",
+    "architecture": "layered",
+    "persistence": "none",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "springBoot",
+   "architecture": "layered",
+   "persistence": "none",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "shop-api",
+    "framework": "express",
+    "architecture": "layered",
+    "persistence": "none",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "shop-api",
+   "framework": "express",
+   "architecture": "layered",
+   "persistence": "none",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "express",
+    "architecture": "layered",
+    "persistence": "memory",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "express",
+   "architecture": "layered",
+   "persistence": "memory",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "library-api",
+    "framework": "nestjs",
+    "architecture": "modular",
+    "persistence": "memory",
+    "database": null,
+    "auth": "none",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "library-api",
+   "framework": "nestjs",
+   "architecture": "modular",
+   "persistence": "memory",
+   "database": null,
+   "auth": "none",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "catalog-api",
+    "framework": "fastapi",
+    "architecture": "layered",
+    "persistence": "memory",
+    "database": null,
+    "auth": "apiKey",
+    "defaultAccess": "authenticated",
+    "javaPackage": "com.example.api"
+   }
+  ],
+  "result": {
+   "name": "catalog-api",
+   "framework": "fastapi",
+   "architecture": "layered",
+   "persistence": "memory",
+   "database": null,
+   "auth": "apiKey",
+   "defaultAccess": "authenticated",
+   "javaPackage": "com.example.api"
+  }
+ }
+]

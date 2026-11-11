@@ -1,0 +1,164 @@
+"""Main window: the presentation card (language switcher and examples), the project bar, the models and endpoints
+panes side by side, the project pane under them at full width, and the credit. Unlike the web version, it has no
+links: the app works on its own, without going online. Mirrors web/src/App.tsx and components/layout/."""
+
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QKeySequence, QShortcut
+from PySide6.QtWidgets import (
+    QButtonGroup,
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QMainWindow,
+    QMessageBox,
+    QPushButton,
+    QSplitter,
+    QVBoxLayout,
+    QWidget,
+)
+
+from ..examples import EXAMPLES
+from .endpoints_pane import EndpointsPane
+from .i18n import MESSAGES, I18n
+from .models_pane import ModelsPane
+from .project_bar import ProjectBar
+from .project_pane import ProjectPane
+from .session import Session
+from .theme import ACCENT
+
+PORTFOLIO_URL = "https://raulesteveza.github.io/"
+
+
+class LanguageSwitcher(QWidget):
+    def __init__(self, i18n: I18n):
+        super().__init__()
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(4)
+        group = QButtonGroup(self)
+        self._buttons = {}
+        for code in MESSAGES:
+            button = QPushButton(code.upper())
+            button.setProperty("lang", True)
+            button.setCheckable(True)
+            button.clicked.connect(lambda _=False, code=code: i18n.set_language(code))
+            group.addButton(button)
+            layout.addWidget(button)
+            self._buttons[code] = button
+        self._i18n = i18n
+        i18n.changed.connect(self._sync)
+        self._sync()
+
+    def _sync(self) -> None:
+        self._buttons[self._i18n.language].setChecked(True)
+
+
+class MainWindow(QMainWindow):
+    def __init__(self, i18n: I18n, session: Session):
+        super().__init__()
+        self._i18n = i18n
+        self.session = session
+        self.setWindowTitle("Model2API")
+        self.resize(1440, 920)
+
+        central = QWidget()
+        page = QVBoxLayout(central)
+        page.setContentsMargins(20, 12, 20, 10)
+        page.setSpacing(10)
+
+        intro = QFrame()
+        intro.setObjectName("card")
+        intro_layout = QHBoxLayout(intro)
+        intro_layout.setContentsMargins(28, 16, 28, 16)
+        text = QVBoxLayout()
+        title_row = QHBoxLayout()
+        title = QLabel("Model2API")
+        title.setProperty("role", "title")
+        self.privacy_tag = QLabel()
+        self.privacy_tag.setProperty("role", "privacyTag")
+        title_row.addWidget(title)
+        title_row.addWidget(self.privacy_tag)
+        title_row.addStretch()
+        text.addLayout(title_row)
+        self.tagline = QLabel()
+        self.tagline.setProperty("role", "subtitle")
+        self.tagline.setWordWrap(True)
+        self.description = QLabel()
+        self.description.setProperty("role", "muted")
+        self.description.setWordWrap(True)
+        text.addWidget(self.tagline)
+        text.addWidget(self.description)
+        intro_layout.addLayout(text, 2)
+
+        side = QVBoxLayout()
+        # The language switcher sits in the card's top right corner: there is no header line
+        side.addWidget(LanguageSwitcher(i18n), 0, Qt.AlignmentFlag.AlignRight)
+        self.examples_label = QLabel()
+        self.examples_label.setProperty("role", "fieldLabel")
+        side.addWidget(self.examples_label)
+        examples = QHBoxLayout()
+        self._example_buttons = {}
+        for example in EXAMPLES:
+            button = QPushButton()
+            button.setProperty("small", True)
+            button.clicked.connect(lambda _=False, example_id=example["id"]: self.load_example(example_id))
+            examples.addWidget(button)
+            self._example_buttons[example["id"]] = button
+        examples.addStretch()
+        side.addLayout(examples)
+        intro_layout.addLayout(side, 1)
+        page.addWidget(intro)
+
+        self.project_bar = ProjectBar(i18n, session)
+        page.addWidget(self.project_bar)
+
+        self.models_pane = ModelsPane(i18n, session)
+        self.endpoints_pane = EndpointsPane(i18n, session)
+        self.project_pane = ProjectPane(i18n, session)
+        top = QSplitter(Qt.Orientation.Horizontal)
+        top.addWidget(self.models_pane)
+        top.addWidget(self.endpoints_pane)
+        top.setChildrenCollapsible(False)
+        top.setSizes([520, 880])
+        # Models and endpoints side by side; the project at full width under them, as in the web version
+        splitter = QSplitter(Qt.Orientation.Vertical)
+        splitter.addWidget(top)
+        splitter.addWidget(self.project_pane)
+        splitter.setChildrenCollapsible(False)
+        splitter.setSizes([520, 440])
+        page.addWidget(splitter, 1)
+
+        # Credit at the bottom; the name opens the portfolio in the browser
+        self.credit = QLabel()
+        self.credit.setProperty("role", "muted")
+        self.credit.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.credit.setOpenExternalLinks(True)
+        self.credit.setTextFormat(Qt.TextFormat.RichText)
+        page.addWidget(self.credit)
+        self.setCentralWidget(central)
+
+        # Undo and redo the design with the keyboard; text fields keep their own undo
+        QShortcut(QKeySequence.StandardKey.Undo, self, session.undo)
+        QShortcut(QKeySequence.StandardKey.Redo, self, session.redo)
+
+        i18n.changed.connect(self._retranslate)
+        self._retranslate()
+
+    def load_example(self, example_id: str) -> None:
+        if self.session.has_work():
+            answer = QMessageBox.question(self, "Model2API", self._i18n.t.confirm_replace)
+            if answer != QMessageBox.StandardButton.Yes:
+                return
+        self.session.load_example(example_id)
+
+    def _retranslate(self) -> None:
+        t = self._i18n.t
+        self.privacy_tag.setText(t.processed_locally)
+        self.tagline.setText(t.tagline)
+        self.description.setText(t.intro_description)
+        self.examples_label.setText(t.examples_label)
+        for example_id, button in self._example_buttons.items():
+            button.setText(t.examples[example_id])
+            button.setToolTip(t.example_descriptions[example_id])
+        link = f'<a href="{PORTFOLIO_URL}" style="color: {ACCENT}; text-decoration: none;">Raúl Estévez</a>'
+        self.credit.setText(f"{t.developed_by} {link}")

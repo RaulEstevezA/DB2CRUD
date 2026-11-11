@@ -1,0 +1,2661 @@
+[
+ {
+  "args": [
+   {
+    "name": "Title",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "string",
+    "annotations": [
+     {
+      "name": "StringLength",
+      "args": "100, MinimumLength = 2"
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "minLength": 2,
+    "maxLength": 100
+   },
+   "sources": [
+    "StringLength(100, MinimumLength = 2)"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "qty",
+    "type": {
+     "kind": "primitive",
+     "name": "integer",
+     "bits": 32
+    },
+    "nullable": false,
+    "optional": true,
+    "originalType": "Int",
+    "defaultValue": 1,
+    "annotations": [
+     {
+      "name": "Positive"
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "exclusiveMinimum": 0
+   },
+   "sources": [
+    "Positive()"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "site",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "HttpUrl"
+   }
+  ],
+  "result": {
+   "constraints": {
+    "format": "uri"
+   },
+   "sources": [
+    "HttpUrl"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "name",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "str",
+    "annotations": [
+     {
+      "name": "Field",
+      "args": "..., min_length=2, max_length=50, pattern=r\"^[a-z ]+$\""
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "minLength": 2,
+    "maxLength": 50,
+    "pattern": "^[a-z ]+$"
+   },
+   "sources": [
+    "Field(..., min_length=2, max_length=50, pattern=r\"^[a-z ]+$\")"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "createdAt",
+    "type": {
+     "kind": "primitive",
+     "name": "datetime"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "Date"
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "id",
+    "type": {
+     "kind": "primitive",
+     "name": "float"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "number"
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "old",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "String",
+    "annotations": [
+     {
+      "name": "Deprecated"
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "Codes",
+    "type": {
+     "kind": "array",
+     "items": {
+      "kind": "primitive",
+      "name": "string"
+     }
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "List<string>",
+    "annotations": [
+     {
+      "name": "MaxLength",
+      "args": "3"
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "maxItems": 3
+   },
+   "sources": [
+    "MaxLength(3)"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "weight",
+    "type": {
+     "kind": "primitive",
+     "name": "decimal"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "BigDecimal",
+    "annotations": [
+     {
+      "name": "DecimalMin",
+      "args": "value = \"0\", inclusive = false"
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "exclusiveMinimum": 0
+   },
+   "sources": [
+    "DecimalMin(value = \"0\", inclusive = false)"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "quantity",
+    "type": {
+     "kind": "primitive",
+     "name": "float"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "number"
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "product",
+    "type": {
+     "kind": "model",
+     "name": "Product"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "Product"
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "status",
+    "type": {
+     "kind": "enum",
+     "name": "OrderStatus"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "OrderStatus"
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "age",
+    "type": {
+     "kind": "primitive",
+     "name": "integer"
+    },
+    "nullable": false,
+    "optional": true,
+    "metadata": {
+     "minimum": 0
+    }
+   }
+  ],
+  "result": {
+   "constraints": {
+    "minimum": 0
+   },
+   "sources": [
+    "minimum: 0"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "age",
+    "type": {
+     "kind": "primitive",
+     "name": "integer"
+    },
+    "nullable": true,
+    "optional": true,
+    "originalType": "Optional[int]",
+    "defaultValue": null,
+    "annotations": [
+     {
+      "name": "Field",
+      "args": "None, ge=0, lt=130"
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "minimum": 0,
+    "exclusiveMaximum": 130
+   },
+   "sources": [
+    "Field(None, ge=0, lt=130)"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "Email",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "string",
+    "annotations": [
+     {
+      "name": "tag",
+      "args": "validate:\"email\""
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "format": "email"
+   },
+   "sources": [
+    "validate:\"email\""
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "name",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "String",
+    "annotations": [
+     {
+      "name": "Size",
+      "args": "max = 20"
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "maxLength": 20
+   },
+   "sources": [
+    "Size(max = 20)"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "isbn",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "str",
+    "annotations": [
+     {
+      "name": "Field",
+      "args": "..., pattern=r\"^[0-9]{13}$\""
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "pattern": "^[0-9]{13}$"
+   },
+   "sources": [
+    "Field(..., pattern=r\"^[0-9]{13}$\")"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "stock",
+    "type": {
+     "kind": "primitive",
+     "name": "float"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "number"
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "address",
+    "type": {
+     "kind": "model",
+     "name": "Address"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "Address"
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "parent",
+    "type": {
+     "kind": "model",
+     "name": "Category"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "Category"
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "name",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "string"
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "active",
+    "type": {
+     "kind": "primitive",
+     "name": "boolean"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "boolean"
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "password",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "string"
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "name",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "String",
+    "annotations": [
+     {
+      "name": "NotBlank"
+     },
+     {
+      "name": "Size",
+      "args": "min = 3, max = 120"
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "minLength": 3,
+    "maxLength": 120
+   },
+   "sources": [
+    "NotBlank()",
+    "Size(min = 3, max = 120)"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "Age",
+    "type": {
+     "kind": "primitive",
+     "name": "integer",
+     "bits": 64
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "int",
+    "annotations": [
+     {
+      "name": "tag",
+      "args": "validate:\"gte=0,lte=130\""
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "minimum": 0,
+    "maximum": 130
+   },
+   "sources": [
+    "validate:\"gte=0,lte=130\""
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "stock",
+    "type": {
+     "kind": "primitive",
+     "name": "integer",
+     "bits": 32
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "int",
+    "annotations": [
+     {
+      "name": "Positive"
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "exclusiveMinimum": 0
+   },
+   "sources": [
+    "Positive()"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "author",
+    "type": {
+     "kind": "model",
+     "name": "Author"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "Author"
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "code",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "String",
+    "annotations": [
+     {
+      "name": "Min",
+      "args": "1"
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "nick",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "string",
+    "annotations": [
+     {
+      "name": "Column",
+      "args": "{ length: 30 }"
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "maxLength": 30
+   },
+   "sources": [
+    "Column({ length: 30 })"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "email",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "string",
+    "annotations": [
+     {
+      "name": "z.email",
+      "args": ""
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "format": "email"
+   },
+   "sources": [
+    ".email()"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "available",
+    "type": {
+     "kind": "primitive",
+     "name": "boolean"
+    },
+    "nullable": false,
+    "optional": true,
+    "originalType": "bool",
+    "defaultValue": true
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "email",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": true,
+    "optional": true,
+    "originalType": "Optional[EmailStr]",
+    "defaultValue": null
+   }
+  ],
+  "result": {
+   "constraints": {
+    "format": "email"
+   },
+   "sources": [
+    "Optional[EmailStr]"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "title",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "str",
+    "annotations": [
+     {
+      "name": "CharField",
+      "args": "max_length=120"
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "maxLength": 120
+   },
+   "sources": [
+    "CharField(max_length=120)"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "phone",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": true,
+    "originalType": "string"
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "name",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "string",
+    "annotations": [
+     {
+      "name": "z.min",
+      "args": "2"
+     },
+     {
+      "name": "z.max",
+      "args": "40"
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "minLength": 2,
+    "maxLength": 40
+   },
+   "sources": [
+    ".min(2)",
+    ".max(40)"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "title",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "str",
+    "annotations": [
+     {
+      "name": "Field",
+      "args": "..., min_length=1, max_length=200"
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "minLength": 1,
+    "maxLength": 200
+   },
+   "sources": [
+    "Field(..., min_length=1, max_length=200)"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "id",
+    "type": {
+     "kind": "primitive",
+     "name": "integer",
+     "bits": 64
+    },
+    "nullable": true,
+    "optional": false,
+    "originalType": "Long",
+    "annotations": [
+     {
+      "name": "Id"
+     },
+     {
+      "name": "GeneratedValue",
+      "args": "strategy = GenerationType.IDENTITY"
+     }
+    ],
+    "generated": true
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "name",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "str",
+    "annotations": [
+     {
+      "name": "Field",
+      "args": "..., min_length=2, max_length=120"
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "minLength": 2,
+    "maxLength": 120
+   },
+   "sources": [
+    "Field(..., min_length=2, max_length=120)"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "email",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "string"
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "id",
+    "type": {
+     "kind": "primitive",
+     "name": "integer",
+     "bits": 32
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "Int",
+    "annotations": [
+     {
+      "name": "id",
+      "args": ""
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "slug",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "string",
+    "annotations": [
+     {
+      "name": "Matches",
+      "args": "/^[a-z]+$/i"
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "pattern": "^[a-z]+$"
+   },
+   "sources": [
+    "Matches(/^[a-z]+$/i)"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "sku",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "string"
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "email",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "EmailStr"
+   }
+  ],
+  "result": {
+   "constraints": {
+    "format": "email"
+   },
+   "sources": [
+    "EmailStr"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "street",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "string"
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "description",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": true,
+    "originalType": "string"
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "genre",
+    "type": {
+     "kind": "enum",
+     "name": "Genre"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "Genre"
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "total",
+    "type": {
+     "kind": "primitive",
+     "name": "float"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "number"
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "name",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "String",
+    "annotations": [
+     {
+      "name": "db.VarChar",
+      "args": "80"
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "maxLength": 80
+   },
+   "sources": [
+    "db.VarChar(80)"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "email",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "str",
+    "annotations": [
+     {
+      "name": "EmailField",
+      "args": "unique=True"
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "format": "email"
+   },
+   "sources": [
+    "EmailField(unique=True)"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "name",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "string",
+    "annotations": [
+     {
+      "name": "Length",
+      "args": "2, 50"
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "minLength": 2,
+    "maxLength": 50
+   },
+   "sources": [
+    "Length(2, 50)"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "price",
+    "type": {
+     "kind": "primitive",
+     "name": "decimal"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "BigDecimal",
+    "annotations": [
+     {
+      "name": "DecimalMin",
+      "args": "\"0.00\""
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "minimum": 0
+   },
+   "sources": [
+    "DecimalMin(\"0.00\")"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "unitPrice",
+    "type": {
+     "kind": "primitive",
+     "name": "float"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "number"
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "code",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "String",
+    "annotations": [
+     {
+      "name": "Pattern",
+      "args": "regexp = \"^[A-Z]{3}$\""
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "pattern": "^[A-Z]{3}$"
+   },
+   "sources": [
+    "Pattern(regexp = \"^[A-Z]{3}$\")"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "lines",
+    "type": {
+     "kind": "array",
+     "items": {
+      "kind": "model",
+      "name": "OrderLine"
+     }
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "OrderLine[]"
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "Name",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "string",
+    "serializedName": "name",
+    "annotations": [
+     {
+      "name": "tag",
+      "args": "json:\"name\" validate:\"required,min=2,max=50\""
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "minLength": 2,
+    "maxLength": 50
+   },
+   "sources": [
+    "json:\"name\" validate:\"required,min=2,max=50\""
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "name",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "String",
+    "annotations": [
+     {
+      "name": "NotBlank"
+     },
+     {
+      "name": "Size",
+      "args": "max = 40"
+     },
+     {
+      "name": "Length",
+      "args": "min = 2, max = 30"
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "minLength": 2,
+    "maxLength": 30
+   },
+   "sources": [
+    "NotBlank()",
+    "Size(max = 40)",
+    "Length(min = 2, max = 30)"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "customer",
+    "type": {
+     "kind": "model",
+     "name": "Customer"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "Customer"
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "id",
+    "type": {
+     "kind": "primitive",
+     "name": "integer"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "Mapped[int]",
+    "annotations": [
+     {
+      "name": "mapped_column",
+      "args": "primary_key=True"
+     }
+    ],
+    "metadata": {
+     "primaryKey": true
+    }
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "notes",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": true,
+    "optional": true,
+    "originalType": "string | null"
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "name",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": true,
+    "originalType": "string(email)",
+    "metadata": {
+     "minLength": 1,
+     "format": "email"
+    }
+   }
+  ],
+  "result": {
+   "constraints": {
+    "minLength": 1,
+    "format": "email"
+   },
+   "sources": [
+    "minLength: 1",
+    "format: email"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "age",
+    "type": {
+     "kind": "primitive",
+     "name": "float"
+    },
+    "nullable": true,
+    "optional": true,
+    "originalType": "number",
+    "annotations": [
+     {
+      "name": "IsOptional",
+      "args": ""
+     },
+     {
+      "name": "Min",
+      "args": "0"
+     },
+     {
+      "name": "Max",
+      "args": "120"
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "minimum": 0,
+    "maximum": 120
+   },
+   "sources": [
+    "Min(0)",
+    "Max(120)"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "name",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "String",
+    "annotations": [
+     {
+      "name": "NotBlank"
+     },
+     {
+      "name": "Size",
+      "args": "max = 80"
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "minLength": 1,
+    "maxLength": 80
+   },
+   "sources": [
+    "NotBlank()",
+    "Size(max = 80)"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "supplierEmail",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "String",
+    "annotations": [
+     {
+      "name": "Email"
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "format": "email"
+   },
+   "sources": [
+    "Email()"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "pages",
+    "type": {
+     "kind": "primitive",
+     "name": "integer"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "int",
+    "annotations": [
+     {
+      "name": "Field",
+      "args": "..., ge=1, le=5000"
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "minimum": 1,
+    "maximum": 5000
+   },
+   "sources": [
+    "Field(..., ge=1, le=5000)"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "category",
+    "type": {
+     "kind": "model",
+     "name": "Category"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "Category"
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "Qty",
+    "type": {
+     "kind": "primitive",
+     "name": "integer",
+     "bits": 32
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "int",
+    "annotations": [
+     {
+      "name": "Range",
+      "args": "1, 10"
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "minimum": 1,
+    "maximum": 10
+   },
+   "sources": [
+    "Range(1, 10)"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "postalCode",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "string"
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "city",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "string"
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "published",
+    "type": {
+     "kind": "primitive",
+     "name": "date"
+    },
+    "nullable": true,
+    "optional": true,
+    "originalType": "Optional[date]",
+    "defaultValue": null
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "born",
+    "type": {
+     "kind": "primitive",
+     "name": "date"
+    },
+    "nullable": true,
+    "optional": true,
+    "originalType": "Optional[date]",
+    "defaultValue": null
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "tags",
+    "type": {
+     "kind": "array",
+     "items": {
+      "kind": "primitive",
+      "name": "string"
+     }
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "string[]",
+    "annotations": [
+     {
+      "name": "z.min",
+      "args": "1"
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "minItems": 1
+   },
+   "sources": [
+    ".min(1)"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "name",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "String",
+    "annotations": [
+     {
+      "name": "NotBlank"
+     },
+     {
+      "name": "Size",
+      "args": "min = 3, max = 80"
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "minLength": 3,
+    "maxLength": 80
+   },
+   "sources": [
+    "NotBlank()",
+    "Size(min = 3, max = 80)"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "age",
+    "type": {
+     "kind": "primitive",
+     "name": "integer"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "integer",
+    "annotations": [
+     {
+      "name": "z.min",
+      "args": "0"
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "minimum": 0
+   },
+   "sources": [
+    ".min(0)"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "price",
+    "type": {
+     "kind": "primitive",
+     "name": "float"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "number"
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "Mail",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "string",
+    "annotations": [
+     {
+      "name": "EmailAddress"
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "format": "email"
+   },
+   "sources": [
+    "EmailAddress()"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "name",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "Mapped[str]",
+    "annotations": [
+     {
+      "name": "mapped_column",
+      "args": "String(80), unique=True"
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "maxLength": 80
+   },
+   "sources": [
+    "mapped_column(String(80), unique=True)"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "tags",
+    "type": {
+     "kind": "array",
+     "items": {
+      "kind": "primitive",
+      "name": "string"
+     }
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "List<String>",
+    "annotations": [
+     {
+      "name": "Size",
+      "args": "max = 5"
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "maxItems": 5
+   },
+   "sources": [
+    "Size(max = 5)"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "price",
+    "type": {
+     "kind": "primitive",
+     "name": "decimal"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "BigDecimal",
+    "annotations": [
+     {
+      "name": "Min",
+      "args": "0"
+     },
+     {
+      "name": "DecimalMax",
+      "args": "\"9999.99\""
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "minimum": 0,
+    "maximum": 9999.99
+   },
+   "sources": [
+    "Min(0)",
+    "DecimalMax(\"9999.99\")"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "id",
+    "type": {
+     "kind": "primitive",
+     "name": "integer"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "int",
+    "generated": true,
+    "metadata": {
+     "primaryKey": true
+    }
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "email",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "string",
+    "annotations": [
+     {
+      "name": "IsEmail",
+      "args": ""
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "format": "email"
+   },
+   "sources": [
+    "IsEmail()"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "country",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "string"
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "stock",
+    "type": {
+     "kind": "primitive",
+     "name": "integer",
+     "bits": 32
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "int",
+    "annotations": [
+     {
+      "name": "Min",
+      "args": "0"
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "minimum": 0
+   },
+   "sources": [
+    "Min(0)"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "id",
+    "type": {
+     "kind": "primitive",
+     "name": "uuid"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "UUID"
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "updatedAt",
+    "type": {
+     "kind": "primitive",
+     "name": "datetime"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "Date"
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "contact",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "String",
+    "annotations": [
+     {
+      "name": "Email"
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {
+    "format": "email"
+   },
+   "sources": [
+    "Email()"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "count",
+    "type": {
+     "kind": "primitive",
+     "name": "integer",
+     "bits": 32
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "int",
+    "annotations": [
+     {
+      "name": "Size",
+      "args": "max = 4"
+     }
+    ]
+   }
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "name",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "string",
+    "annotations": [
+     {
+      "name": "NotBlank"
+     },
+     {
+      "name": "Length",
+      "args": "min: 3, max: 120"
+     }
+    ]
+   },
+   "php"
+  ],
+  "result": {
+   "constraints": {
+    "minLength": 3,
+    "maxLength": 120
+   },
+   "sources": [
+    "NotBlank()",
+    "Length(min: 3, max: 120)"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "postalCode",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "string",
+    "annotations": [
+     {
+      "name": "Length",
+      "args": "exactly: 5"
+     }
+    ]
+   },
+   "php"
+  ],
+  "result": {
+   "constraints": {
+    "minLength": 5,
+    "maxLength": 5
+   },
+   "sources": [
+    "Length(exactly: 5)"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "capacity",
+    "type": {
+     "kind": "primitive",
+     "name": "integer",
+     "bits": 64
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "int",
+    "annotations": [
+     {
+      "name": "Range",
+      "args": "min: 1, max: 5000"
+     }
+    ]
+   },
+   "php"
+  ],
+  "result": {
+   "constraints": {
+    "minimum": 1,
+    "maximum": 5000
+   },
+   "sources": [
+    "Range(min: 1, max: 5000)"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "price",
+    "type": {
+     "kind": "primitive",
+     "name": "float",
+     "bits": 64
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "float",
+    "annotations": [
+     {
+      "name": "GreaterThan",
+      "args": "0"
+     },
+     {
+      "name": "LessThanOrEqual",
+      "args": "value: 999.99"
+     }
+    ]
+   },
+   "php"
+  ],
+  "result": {
+   "constraints": {
+    "maximum": 999.99,
+    "exclusiveMinimum": 0
+   },
+   "sources": [
+    "GreaterThan(0)",
+    "LessThanOrEqual(value: 999.99)"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "code",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "string",
+    "annotations": [
+     {
+      "name": "Regex",
+      "args": "pattern: '/^[A-Z]{2}\\d+$/'"
+     }
+    ]
+   },
+   "php"
+  ],
+  "result": {
+   "constraints": {
+    "pattern": "^[A-Z]{2}\\d+$"
+   },
+   "sources": [
+    "Regex(pattern: '/^[A-Z]{2}\\d+$/')"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "nickname",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "string",
+    "annotations": [
+     {
+      "name": "Regex",
+      "args": "pattern: '/\\d/', match: false"
+     }
+    ]
+   },
+   "php"
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "tags",
+    "type": {
+     "kind": "array",
+     "items": {
+      "kind": "primitive",
+      "name": "string"
+     }
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "array",
+    "annotations": [
+     {
+      "name": "Count",
+      "args": "min: 1, max: 3"
+     }
+    ]
+   },
+   "php"
+  ],
+  "result": {
+   "constraints": {
+    "minItems": 1,
+    "maxItems": 3
+   },
+   "sources": [
+    "Count(min: 1, max: 3)"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "reference",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "string",
+    "annotations": [
+     {
+      "name": "Uuid"
+     }
+    ]
+   },
+   "php"
+  ],
+  "result": {
+   "constraints": {
+    "format": "uuid"
+   },
+   "sources": [
+    "Uuid()"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "title",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "string",
+    "annotations": [
+     {
+      "name": "Max",
+      "args": "255"
+     },
+     {
+      "name": "Min",
+      "args": "3"
+     }
+    ]
+   },
+   "php"
+  ],
+  "result": {
+   "constraints": {
+    "minLength": 3,
+    "maxLength": 255
+   },
+   "sources": [
+    "Max(255)",
+    "Min(3)"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "stars",
+    "type": {
+     "kind": "primitive",
+     "name": "integer",
+     "bits": 64
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "int",
+    "annotations": [
+     {
+      "name": "Between",
+      "args": "1, 5"
+     }
+    ]
+   },
+   "php"
+  ],
+  "result": {
+   "constraints": {
+    "minimum": 1,
+    "maximum": 5
+   },
+   "sources": [
+    "Between(1, 5)"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "country",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "string",
+    "annotations": [
+     {
+      "name": "Size",
+      "args": "2"
+     }
+    ]
+   },
+   "php"
+  ],
+  "result": {
+   "constraints": {
+    "minLength": 2,
+    "maxLength": 2
+   },
+   "sources": [
+    "Size(2)"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "tags",
+    "type": {
+     "kind": "array",
+     "items": {
+      "kind": "primitive",
+      "name": "any"
+     }
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "array",
+    "annotations": [
+     {
+      "name": "Max",
+      "args": "3"
+     }
+    ]
+   },
+   "php"
+  ],
+  "result": {
+   "constraints": {
+    "maxItems": 3
+   },
+   "sources": [
+    "Max(3)"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "author",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "string",
+    "annotations": [
+     {
+      "name": "Rule",
+      "args": "'required|string|max:120'"
+     }
+    ]
+   },
+   "php"
+  ],
+  "result": {
+   "constraints": {
+    "maxLength": 120
+   },
+   "sources": [
+    "Rule('required|string|max:120')"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "email",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "string",
+    "annotations": [
+     {
+      "name": "Rule",
+      "args": "['required', 'email', 'regex:/^[^|]+$/']"
+     }
+    ]
+   },
+   "php"
+  ],
+  "result": {
+   "constraints": {
+    "pattern": "^[^|]+$",
+    "format": "email"
+   },
+   "sources": [
+    "Rule(['required', 'email', 'regex:/^[^|]+$/'])"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "score",
+    "type": {
+     "kind": "primitive",
+     "name": "float",
+     "bits": 64
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "float",
+    "annotations": [
+     {
+      "name": "Rule",
+      "args": "'numeric|gte:0|lt:other'"
+     }
+    ]
+   },
+   "php"
+  ],
+  "result": {
+   "constraints": {
+    "minimum": 0
+   },
+   "sources": [
+    "Rule('numeric|gte:0|lt:other')"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "slug",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "string",
+    "annotations": [
+     {
+      "name": "Regex",
+      "args": "'#^[a-z-]+$#'"
+     }
+    ]
+   },
+   "php"
+  ],
+  "result": {
+   "constraints": {
+    "pattern": "^[a-z-]+$"
+   },
+   "sources": [
+    "Regex('#^[a-z-]+$#')"
+   ]
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "code",
+    "type": {
+     "kind": "primitive",
+     "name": "string"
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "String",
+    "annotations": [
+     {
+      "name": "Min",
+      "args": "3"
+     }
+    ]
+   },
+   "java"
+  ],
+  "result": {
+   "constraints": {},
+   "sources": []
+  }
+ },
+ {
+  "args": [
+   {
+    "name": "level",
+    "type": {
+     "kind": "primitive",
+     "name": "integer",
+     "bits": 32
+    },
+    "nullable": false,
+    "optional": false,
+    "originalType": "int",
+    "annotations": [
+     {
+      "name": "Max",
+      "args": "10"
+     }
+    ]
+   },
+   "java"
+  ],
+  "result": {
+   "constraints": {
+    "maximum": 10
+   },
+   "sources": [
+    "Max(10)"
+   ]
+  }
+ }
+]

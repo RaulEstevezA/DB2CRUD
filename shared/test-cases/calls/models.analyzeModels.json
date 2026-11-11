@@ -1,0 +1,9338 @@
+[
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "typescript",
+     "language": "typescript"
+    },
+    "models": [
+     {
+      "name": "Customer",
+      "kind": "interface",
+      "fields": [
+       {
+        "name": "id",
+        "type": {
+         "kind": "primitive",
+         "name": "float"
+        },
+        "nullable": true,
+        "optional": false,
+        "originalType": "number | null"
+       },
+       {
+        "name": "name",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "email",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       }
+      ]
+     },
+     {
+      "name": "Address",
+      "kind": "interface",
+      "fields": [
+       {
+        "name": "street",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "city",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "zipCode",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "country",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       }
+      ]
+     },
+     {
+      "name": "Order",
+      "kind": "interface",
+      "fields": [
+       {
+        "name": "id",
+        "type": {
+         "kind": "primitive",
+         "name": "float"
+        },
+        "nullable": true,
+        "optional": false,
+        "originalType": "number | null"
+       },
+       {
+        "name": "customer",
+        "type": {
+         "kind": "model",
+         "name": "Customer"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Customer"
+       },
+       {
+        "name": "shipping",
+        "type": {
+         "kind": "model",
+         "name": "Address"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Address"
+       },
+       {
+        "name": "status",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       }
+      ]
+     }
+    ],
+    "enums": []
+   }
+  ],
+  "result": {
+   "Customer": {
+    "model": "Customer",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "id",
+    "keyCandidates": [
+     "name",
+     "email"
+    ],
+    "referencedBy": [
+     {
+      "model": "Order",
+      "field": "customer",
+      "many": false
+     }
+    ]
+   },
+   "Address": {
+    "model": "Address",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [
+     "street",
+     "city",
+     "zipCode",
+     "country"
+    ],
+    "referencedBy": [
+     {
+      "model": "Order",
+      "field": "shipping",
+      "many": false
+     }
+    ]
+   },
+   "Order": {
+    "model": "Order",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "id",
+    "keyCandidates": [
+     "status"
+    ],
+    "referencedBy": []
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "typescript",
+     "language": "typescript"
+    },
+    "models": [
+     {
+      "name": "Root",
+      "kind": "type",
+      "fields": [
+       {
+        "name": "id",
+        "type": {
+         "kind": "primitive",
+         "name": "float"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "number"
+       },
+       {
+        "name": "value",
+        "type": {
+         "kind": "primitive",
+         "name": "any"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "unknown"
+       },
+       {
+        "name": "meta",
+        "type": {
+         "kind": "map",
+         "key": {
+          "kind": "primitive",
+          "name": "string"
+         },
+         "value": {
+          "kind": "primitive",
+          "name": "any"
+         }
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Record<string, unknown>"
+       },
+       {
+        "name": "matrix",
+        "type": {
+         "kind": "array",
+         "items": {
+          "kind": "array",
+          "items": {
+           "kind": "primitive",
+           "name": "float"
+          }
+         }
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "number[][]"
+       },
+       {
+        "name": "points",
+        "type": {
+         "kind": "array",
+         "items": {
+          "kind": "model",
+          "name": "Point"
+         }
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Point[]"
+       }
+      ]
+     },
+     {
+      "name": "Point",
+      "kind": "type",
+      "fields": [
+       {
+        "name": "x",
+        "type": {
+         "kind": "primitive",
+         "name": "float"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "number"
+       },
+       {
+        "name": "y",
+        "type": {
+         "kind": "primitive",
+         "name": "float"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "number"
+       }
+      ]
+     }
+    ],
+    "enums": []
+   }
+  ],
+  "result": {
+   "Root": {
+    "model": "Root",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "id",
+    "keyCandidates": [],
+    "referencedBy": []
+   },
+   "Point": {
+    "model": "Point",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [],
+    "referencedBy": [
+     {
+      "model": "Root",
+      "field": "points",
+      "many": true
+     }
+    ]
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "python",
+     "language": "python",
+     "framework": "django"
+    },
+    "models": [
+     {
+      "name": "Article",
+      "kind": "entity",
+      "fields": [
+       {
+        "name": "id",
+        "type": {
+         "kind": "primitive",
+         "name": "integer"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "int",
+        "generated": true,
+        "metadata": {
+         "primaryKey": true
+        }
+       },
+       {
+        "name": "title",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "str",
+        "annotations": [
+         {
+          "name": "CharField",
+          "args": "max_length=120"
+         }
+        ]
+       },
+       {
+        "name": "email",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "str",
+        "annotations": [
+         {
+          "name": "EmailField",
+          "args": "unique=True"
+         }
+        ]
+       }
+      ],
+      "framework": "django",
+      "construction": "named"
+     }
+    ],
+    "enums": []
+   }
+  ],
+  "result": {
+   "Article": {
+    "model": "Article",
+    "declaredEntity": true,
+    "declaredKey": "id",
+    "declaredKeyGenerated": true,
+    "namedKey": "id",
+    "keyCandidates": [
+     "id",
+     "title",
+     "email"
+    ],
+    "referencedBy": []
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "python",
+     "language": "python",
+     "framework": "dataclass"
+    },
+    "models": [
+     {
+      "name": "Customer",
+      "kind": "class",
+      "fields": [
+       {
+        "name": "name",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "str"
+       },
+       {
+        "name": "email",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "str"
+       },
+       {
+        "name": "id",
+        "type": {
+         "kind": "primitive",
+         "name": "integer"
+        },
+        "nullable": true,
+        "optional": true,
+        "originalType": "int | None",
+        "defaultValue": null
+       }
+      ],
+      "framework": "dataclass",
+      "construction": "named",
+      "annotations": [
+       {
+        "name": "dataclass"
+       }
+      ]
+     },
+     {
+      "name": "Address",
+      "kind": "class",
+      "fields": [
+       {
+        "name": "street",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "str"
+       },
+       {
+        "name": "city",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "str"
+       },
+       {
+        "name": "zip_code",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "str"
+       },
+       {
+        "name": "country",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "str"
+       }
+      ],
+      "framework": "dataclass",
+      "construction": "named",
+      "annotations": [
+       {
+        "name": "dataclass"
+       }
+      ]
+     },
+     {
+      "name": "Order",
+      "kind": "class",
+      "fields": [
+       {
+        "name": "customer",
+        "type": {
+         "kind": "model",
+         "name": "Customer"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Customer"
+       },
+       {
+        "name": "shipping",
+        "type": {
+         "kind": "model",
+         "name": "Address"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Address"
+       },
+       {
+        "name": "status",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "str"
+       },
+       {
+        "name": "id",
+        "type": {
+         "kind": "primitive",
+         "name": "integer"
+        },
+        "nullable": true,
+        "optional": true,
+        "originalType": "int | None",
+        "defaultValue": null
+       }
+      ],
+      "framework": "dataclass",
+      "construction": "named",
+      "annotations": [
+       {
+        "name": "dataclass"
+       }
+      ]
+     }
+    ],
+    "enums": []
+   }
+  ],
+  "result": {
+   "Customer": {
+    "model": "Customer",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "id",
+    "keyCandidates": [
+     "name",
+     "email"
+    ],
+    "referencedBy": [
+     {
+      "model": "Order",
+      "field": "customer",
+      "many": false
+     }
+    ]
+   },
+   "Address": {
+    "model": "Address",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [
+     "street",
+     "city",
+     "zip_code",
+     "country"
+    ],
+    "referencedBy": [
+     {
+      "model": "Order",
+      "field": "shipping",
+      "many": false
+     }
+    ]
+   },
+   "Order": {
+    "model": "Order",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "id",
+    "keyCandidates": [
+     "status"
+    ],
+    "referencedBy": []
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "kotlin",
+     "language": "kotlin"
+    },
+    "models": [
+     {
+      "name": "Invoice",
+      "kind": "record",
+      "fields": [
+       {
+        "name": "id",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "String"
+       },
+       {
+        "name": "total",
+        "type": {
+         "kind": "primitive",
+         "name": "integer",
+         "bits": 32
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Int"
+       }
+      ],
+      "construction": "named"
+     }
+    ],
+    "enums": []
+   }
+  ],
+  "result": {
+   "Invoice": {
+    "model": "Invoice",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "id",
+    "keyCandidates": [
+     "id",
+     "total"
+    ],
+    "referencedBy": []
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "jsonschema"
+    },
+    "models": [
+     {
+      "name": "Order",
+      "kind": "object",
+      "fields": [
+       {
+        "name": "id",
+        "type": {
+         "kind": "primitive",
+         "name": "integer"
+        },
+        "nullable": true,
+        "optional": false
+       },
+       {
+        "name": "customer",
+        "type": {
+         "kind": "model",
+         "name": "Customer"
+        },
+        "nullable": false,
+        "optional": false
+       },
+       {
+        "name": "shipping",
+        "type": {
+         "kind": "model",
+         "name": "Address"
+        },
+        "nullable": false,
+        "optional": false
+       },
+       {
+        "name": "status",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false
+       }
+      ]
+     },
+     {
+      "name": "Customer",
+      "kind": "object",
+      "fields": [
+       {
+        "name": "id",
+        "type": {
+         "kind": "primitive",
+         "name": "integer"
+        },
+        "nullable": true,
+        "optional": false
+       },
+       {
+        "name": "name",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false
+       },
+       {
+        "name": "email",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false
+       }
+      ]
+     },
+     {
+      "name": "Address",
+      "kind": "object",
+      "fields": [
+       {
+        "name": "street",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false
+       },
+       {
+        "name": "city",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false
+       },
+       {
+        "name": "zipCode",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false
+       },
+       {
+        "name": "country",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false
+       }
+      ]
+     }
+    ],
+    "enums": [],
+    "root": "Order"
+   }
+  ],
+  "result": {
+   "Order": {
+    "model": "Order",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "id",
+    "keyCandidates": [
+     "id",
+     "status"
+    ],
+    "referencedBy": []
+   },
+   "Customer": {
+    "model": "Customer",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "id",
+    "keyCandidates": [
+     "id",
+     "name",
+     "email"
+    ],
+    "referencedBy": [
+     {
+      "model": "Order",
+      "field": "customer",
+      "many": false
+     }
+    ]
+   },
+   "Address": {
+    "model": "Address",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [
+     "street",
+     "city",
+     "zipCode",
+     "country"
+    ],
+    "referencedBy": [
+     {
+      "model": "Order",
+      "field": "shipping",
+      "many": false
+     }
+    ]
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "java",
+     "language": "java"
+    },
+    "models": [
+     {
+      "name": "Root",
+      "kind": "record",
+      "fields": [
+       {
+        "name": "users",
+        "type": {
+         "kind": "array",
+         "items": {
+          "kind": "model",
+          "name": "User"
+         }
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "List<User>"
+       }
+      ],
+      "construction": "positional",
+      "metadata": {
+       "accessors": "record"
+      }
+     },
+     {
+      "name": "User",
+      "kind": "record",
+      "fields": [
+       {
+        "name": "userId",
+        "type": {
+         "kind": "primitive",
+         "name": "integer",
+         "bits": 64
+        },
+        "nullable": true,
+        "optional": false,
+        "originalType": "Long"
+       },
+       {
+        "name": "email",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "String"
+       },
+       {
+        "name": "phone",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "String"
+       },
+       {
+        "name": "postalCode",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "String",
+        "serializedName": "Postal Code",
+        "annotations": [
+         {
+          "name": "JsonProperty",
+          "args": "\"Postal Code\""
+         }
+        ]
+       },
+       {
+        "name": "class_",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "String",
+        "serializedName": "class",
+        "annotations": [
+         {
+          "name": "JsonProperty",
+          "args": "\"class\""
+         }
+        ]
+       },
+       {
+        "name": "_2fa",
+        "type": {
+         "kind": "primitive",
+         "name": "boolean"
+        },
+        "nullable": true,
+        "optional": false,
+        "originalType": "Boolean",
+        "serializedName": "2fa",
+        "annotations": [
+         {
+          "name": "JsonProperty",
+          "args": "\"2fa\""
+         }
+        ]
+       },
+       {
+        "name": "tags",
+        "type": {
+         "kind": "array",
+         "items": {
+          "kind": "primitive",
+          "name": "string"
+         }
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "List<String>"
+       },
+       {
+        "name": "deletedAt",
+        "type": {
+         "kind": "primitive",
+         "name": "any"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Object",
+        "serializedName": "deleted_at",
+        "annotations": [
+         {
+          "name": "JsonProperty",
+          "args": "\"deleted_at\""
+         }
+        ]
+       },
+       {
+        "name": "manager",
+        "type": {
+         "kind": "model",
+         "name": "Manager"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Manager"
+       }
+      ],
+      "construction": "positional",
+      "metadata": {
+       "accessors": "record"
+      }
+     },
+     {
+      "name": "Manager",
+      "kind": "record",
+      "fields": [
+       {
+        "name": "userId",
+        "type": {
+         "kind": "primitive",
+         "name": "integer",
+         "bits": 64
+        },
+        "nullable": true,
+        "optional": false,
+        "originalType": "Long",
+        "serializedName": "user_id",
+        "annotations": [
+         {
+          "name": "JsonProperty",
+          "args": "\"user_id\""
+         }
+        ]
+       }
+      ],
+      "construction": "positional",
+      "metadata": {
+       "accessors": "record"
+      }
+     }
+    ],
+    "enums": []
+   }
+  ],
+  "result": {
+   "Root": {
+    "model": "Root",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [],
+    "referencedBy": []
+   },
+   "User": {
+    "model": "User",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "userId",
+    "keyCandidates": [
+     "userId",
+     "email",
+     "phone",
+     "postalCode",
+     "class_"
+    ],
+    "referencedBy": [
+     {
+      "model": "Root",
+      "field": "users",
+      "many": true
+     }
+    ]
+   },
+   "Manager": {
+    "model": "Manager",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [
+     "userId"
+    ],
+    "referencedBy": [
+     {
+      "model": "User",
+      "field": "manager",
+      "many": false
+     }
+    ]
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "csv"
+    },
+    "models": [
+     {
+      "name": "Customer",
+      "kind": "object",
+      "fields": [
+       {
+        "name": "id",
+        "type": {
+         "kind": "primitive",
+         "name": "integer"
+        },
+        "nullable": false,
+        "optional": false
+       },
+       {
+        "name": "name",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false
+       },
+       {
+        "name": "zip",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": true,
+        "optional": false
+       },
+       {
+        "name": "active",
+        "type": {
+         "kind": "primitive",
+         "name": "boolean"
+        },
+        "nullable": false,
+        "optional": false
+       },
+       {
+        "name": "amount",
+        "type": {
+         "kind": "primitive",
+         "name": "float"
+        },
+        "nullable": true,
+        "optional": false
+       }
+      ]
+     }
+    ],
+    "enums": [],
+    "root": "Customer"
+   }
+  ],
+  "result": {
+   "Customer": {
+    "model": "Customer",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "id",
+    "keyCandidates": [
+     "id",
+     "name",
+     "zip"
+    ],
+    "referencedBy": []
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "python",
+     "language": "python",
+     "framework": "pydantic"
+    },
+    "models": [
+     {
+      "name": "User",
+      "kind": "class",
+      "fields": [
+       {
+        "name": "user_id",
+        "type": {
+         "kind": "primitive",
+         "name": "integer"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "int",
+        "serializedName": "userId",
+        "annotations": [
+         {
+          "name": "Field",
+          "args": "alias=\"userId\""
+         }
+        ]
+       },
+       {
+        "name": "email",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "EmailStr"
+       },
+       {
+        "name": "status",
+        "type": {
+         "kind": "enum",
+         "name": "Status"
+        },
+        "nullable": false,
+        "optional": true,
+        "originalType": "Status"
+       },
+       {
+        "name": "kind",
+        "type": {
+         "kind": "enum",
+         "name": "Kind"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Literal[\"admin\", \"member\"]"
+       },
+       {
+        "name": "created_at",
+        "type": {
+         "kind": "primitive",
+         "name": "datetime"
+        },
+        "nullable": false,
+        "optional": true,
+        "originalType": "datetime",
+        "description": "Creation time",
+        "annotations": [
+         {
+          "name": "Field",
+          "args": "default_factory=datetime.now, description=\"Creation time\""
+         }
+        ]
+       }
+      ],
+      "framework": "pydantic",
+      "construction": "named"
+     }
+    ],
+    "enums": [
+     {
+      "name": "Status",
+      "values": [
+       {
+        "name": "ACTIVE",
+        "value": "active"
+       },
+       {
+        "name": "BLOCKED",
+        "value": "blocked"
+       }
+      ]
+     },
+     {
+      "name": "Kind",
+      "values": [
+       {
+        "name": "admin"
+       },
+       {
+        "name": "member"
+       }
+      ],
+      "kind": "literals"
+     }
+    ]
+   }
+  ],
+  "result": {
+   "User": {
+    "model": "User",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "user_id",
+    "keyCandidates": [
+     "user_id",
+     "email"
+    ],
+    "referencedBy": []
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "typescript",
+     "language": "typescript"
+    },
+    "models": [
+     {
+      "name": "Order",
+      "kind": "type",
+      "fields": [
+       {
+        "name": "status",
+        "type": {
+         "kind": "enum",
+         "name": "Status"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Status"
+       },
+       {
+        "name": "role",
+        "type": {
+         "kind": "enum",
+         "name": "Role"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Role"
+       },
+       {
+        "name": "level",
+        "type": {
+         "kind": "enum",
+         "name": "Level"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Level"
+       },
+       {
+        "name": "kind",
+        "type": {
+         "kind": "enum",
+         "name": "Kind"
+        },
+        "nullable": true,
+        "optional": false,
+        "originalType": "'a' | 'b' | null"
+       }
+      ]
+     }
+    ],
+    "enums": [
+     {
+      "name": "Status",
+      "values": [
+       {
+        "name": "PENDING"
+       },
+       {
+        "name": "PAID"
+       }
+      ],
+      "kind": "literals"
+     },
+     {
+      "name": "Role",
+      "values": [
+       {
+        "name": "Admin",
+        "value": "admin"
+       },
+       {
+        "name": "User",
+        "value": "user"
+       }
+      ]
+     },
+     {
+      "name": "Level",
+      "values": [
+       {
+        "name": "Low",
+        "value": 1
+       },
+       {
+        "name": "High",
+        "value": 2
+       }
+      ]
+     },
+     {
+      "name": "Kind",
+      "values": [
+       {
+        "name": "a"
+       },
+       {
+        "name": "b"
+       }
+      ],
+      "kind": "literals"
+     }
+    ]
+   }
+  ],
+  "result": {
+   "Order": {
+    "model": "Order",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [],
+    "referencedBy": []
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "kotlin",
+     "language": "kotlin"
+    },
+    "models": [
+     {
+      "name": "UserDto",
+      "kind": "record",
+      "fields": [
+       {
+        "name": "id",
+        "type": {
+         "kind": "primitive",
+         "name": "integer",
+         "bits": 64
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Long"
+       },
+       {
+        "name": "firstName",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "String",
+        "serializedName": "first_name",
+        "annotations": [
+         {
+          "name": "SerialName",
+          "args": "\"first_name\""
+         }
+        ]
+       },
+       {
+        "name": "lastName",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": true,
+        "optional": true,
+        "originalType": "String?",
+        "defaultValue": null
+       },
+       {
+        "name": "roles",
+        "type": {
+         "kind": "array",
+         "items": {
+          "kind": "primitive",
+          "name": "string"
+         }
+        },
+        "nullable": false,
+        "optional": true,
+        "originalType": "List<String>"
+       },
+       {
+        "name": "status",
+        "type": {
+         "kind": "enum",
+         "name": "Status"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Status"
+       },
+       {
+        "name": "visits",
+        "type": {
+         "kind": "primitive",
+         "name": "integer",
+         "bits": 32
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Int",
+        "defaultValue": 0
+       }
+      ],
+      "namespace": "com.example.api",
+      "construction": "named",
+      "description": "A user as the API returns it",
+      "annotations": [
+       {
+        "name": "Serializable"
+       }
+      ]
+     }
+    ],
+    "enums": [
+     {
+      "name": "Status",
+      "values": [
+       {
+        "name": "ACTIVE",
+        "value": "A"
+       },
+       {
+        "name": "BLOCKED",
+        "value": "B"
+       }
+      ],
+      "namespace": "com.example.api"
+     }
+    ]
+   }
+  ],
+  "result": {
+   "UserDto": {
+    "model": "UserDto",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "id",
+    "keyCandidates": [
+     "id",
+     "firstName",
+     "visits"
+    ],
+    "referencedBy": []
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "typescript",
+     "language": "typescript"
+    },
+    "models": [
+     {
+      "name": "Root",
+      "kind": "interface",
+      "fields": [
+       {
+        "name": "id",
+        "type": {
+         "kind": "primitive",
+         "name": "float"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "number"
+       },
+       {
+        "name": "name",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "active",
+        "type": {
+         "kind": "primitive",
+         "name": "boolean"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "boolean"
+       },
+       {
+        "name": "address",
+        "type": {
+         "kind": "model",
+         "name": "Address"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Address"
+       },
+       {
+        "name": "orders",
+        "type": {
+         "kind": "array",
+         "items": {
+          "kind": "model",
+          "name": "Order"
+         }
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Order[]"
+       }
+      ]
+     },
+     {
+      "name": "Address",
+      "kind": "interface",
+      "fields": [
+       {
+        "name": "city",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "postal_code",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       }
+      ]
+     },
+     {
+      "name": "Order",
+      "kind": "interface",
+      "fields": [
+       {
+        "name": "id",
+        "type": {
+         "kind": "primitive",
+         "name": "float"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "number"
+       },
+       {
+        "name": "total",
+        "type": {
+         "kind": "primitive",
+         "name": "float"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "number"
+       }
+      ]
+     }
+    ],
+    "enums": []
+   }
+  ],
+  "result": {
+   "Root": {
+    "model": "Root",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "id",
+    "keyCandidates": [
+     "name"
+    ],
+    "referencedBy": []
+   },
+   "Address": {
+    "model": "Address",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [
+     "city",
+     "postal_code"
+    ],
+    "referencedBy": [
+     {
+      "model": "Root",
+      "field": "address",
+      "many": false
+     }
+    ]
+   },
+   "Order": {
+    "model": "Order",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "id",
+    "keyCandidates": [],
+    "referencedBy": [
+     {
+      "model": "Root",
+      "field": "orders",
+      "many": true
+     }
+    ]
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "java",
+     "language": "java"
+    },
+    "models": [
+     {
+      "name": "A",
+      "kind": "class",
+      "fields": [
+       {
+        "name": "count",
+        "type": {
+         "kind": "primitive",
+         "name": "integer",
+         "bits": 32
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "int",
+        "annotations": [
+         {
+          "name": "Size",
+          "args": "max = 4"
+         }
+        ]
+       },
+       {
+        "name": "code",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "String",
+        "annotations": [
+         {
+          "name": "Min",
+          "args": "1"
+         }
+        ]
+       }
+      ],
+      "construction": "properties",
+      "metadata": {
+       "accessors": "getters"
+      }
+     }
+    ],
+    "enums": []
+   }
+  ],
+  "result": {
+   "A": {
+    "model": "A",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [
+     "count",
+     "code"
+    ],
+    "referencedBy": []
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "typescript",
+     "language": "typescript"
+    },
+    "models": [
+     {
+      "name": "Invoice",
+      "kind": "interface",
+      "fields": [
+       {
+        "name": "invoiceId",
+        "type": {
+         "kind": "primitive",
+         "name": "float"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "number"
+       },
+       {
+        "name": "total",
+        "type": {
+         "kind": "primitive",
+         "name": "float"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "number"
+       }
+      ]
+     }
+    ],
+    "enums": []
+   }
+  ],
+  "result": {
+   "Invoice": {
+    "model": "Invoice",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "invoiceId",
+    "keyCandidates": [],
+    "referencedBy": []
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "php",
+     "language": "php"
+    },
+    "models": [
+     {
+      "name": "Root",
+      "kind": "class",
+      "fields": [
+       {
+        "name": "id",
+        "type": {
+         "kind": "primitive",
+         "name": "integer",
+         "bits": 64
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "int"
+       },
+       {
+        "name": "value",
+        "type": {
+         "kind": "primitive",
+         "name": "any"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "mixed"
+       },
+       {
+        "name": "meta",
+        "type": {
+         "kind": "array",
+         "items": {
+          "kind": "primitive",
+          "name": "any"
+         }
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "array"
+       },
+       {
+        "name": "matrix",
+        "type": {
+         "kind": "array",
+         "items": {
+          "kind": "array",
+          "items": {
+           "kind": "primitive",
+           "name": "integer",
+           "bits": 64
+          }
+         }
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "array"
+       },
+       {
+        "name": "points",
+        "type": {
+         "kind": "array",
+         "items": {
+          "kind": "model",
+          "name": "Point"
+         }
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "array"
+       }
+      ],
+      "construction": "named",
+      "metadata": {
+       "accessors": "properties"
+      }
+     },
+     {
+      "name": "Point",
+      "kind": "class",
+      "fields": [
+       {
+        "name": "x",
+        "type": {
+         "kind": "primitive",
+         "name": "float",
+         "bits": 64
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "float"
+       },
+       {
+        "name": "y",
+        "type": {
+         "kind": "primitive",
+         "name": "integer",
+         "bits": 64
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "int"
+       }
+      ],
+      "construction": "named",
+      "metadata": {
+       "accessors": "properties"
+      }
+     }
+    ],
+    "enums": []
+   }
+  ],
+  "result": {
+   "Root": {
+    "model": "Root",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "id",
+    "keyCandidates": [
+     "id"
+    ],
+    "referencedBy": []
+   },
+   "Point": {
+    "model": "Point",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [
+     "y"
+    ],
+    "referencedBy": [
+     {
+      "model": "Root",
+      "field": "points",
+      "many": true
+     }
+    ]
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "csharp",
+     "language": "csharp"
+    },
+    "models": [
+     {
+      "name": "User",
+      "kind": "class",
+      "fields": [
+       {
+        "name": "UserId",
+        "type": {
+         "kind": "primitive",
+         "name": "float",
+         "bits": 64
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "double"
+       },
+       {
+        "name": "FirstName",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "LastName",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "EmailAddress",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "CreatedAt",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "IsActive",
+        "type": {
+         "kind": "primitive",
+         "name": "boolean"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "bool"
+       }
+      ],
+      "construction": "properties"
+     }
+    ],
+    "enums": []
+   }
+  ],
+  "result": {
+   "User": {
+    "model": "User",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "UserId",
+    "keyCandidates": [
+     "FirstName",
+     "LastName",
+     "EmailAddress",
+     "CreatedAt"
+    ],
+    "referencedBy": []
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "typescript",
+     "language": "typescript"
+    },
+    "models": [
+     {
+      "name": "Cart",
+      "kind": "interface",
+      "fields": [
+       {
+        "name": "items",
+        "type": {
+         "kind": "array",
+         "items": {
+          "kind": "model",
+          "name": "CartItem"
+         }
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "CartItem[]"
+       },
+       {
+        "name": "tags",
+        "type": {
+         "kind": "array",
+         "items": {
+          "kind": "primitive",
+          "name": "string"
+         }
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string[]"
+       }
+      ]
+     },
+     {
+      "name": "CartItem",
+      "kind": "interface",
+      "fields": [
+       {
+        "name": "sku",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "qty",
+        "type": {
+         "kind": "primitive",
+         "name": "float"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "number"
+       }
+      ]
+     }
+    ],
+    "enums": []
+   }
+  ],
+  "result": {
+   "Cart": {
+    "model": "Cart",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [],
+    "referencedBy": []
+   },
+   "CartItem": {
+    "model": "CartItem",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [
+     "sku"
+    ],
+    "referencedBy": [
+     {
+      "model": "Cart",
+      "field": "items",
+      "many": true
+     }
+    ]
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "scala",
+     "language": "scala"
+    },
+    "models": [
+     {
+      "name": "Root",
+      "kind": "record",
+      "fields": [
+       {
+        "name": "id",
+        "type": {
+         "kind": "primitive",
+         "name": "uuid"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "UUID"
+       },
+       {
+        "name": "created_at",
+        "type": {
+         "kind": "primitive",
+         "name": "datetime"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "OffsetDateTime"
+       },
+       {
+        "name": "birthday",
+        "type": {
+         "kind": "primitive",
+         "name": "date"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "LocalDate"
+       },
+       {
+        "name": "billing_address",
+        "type": {
+         "kind": "model",
+         "name": "Address"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Address"
+       },
+       {
+        "name": "shipping_address",
+        "type": {
+         "kind": "model",
+         "name": "Address"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Address"
+       },
+       {
+        "name": "payments",
+        "type": {
+         "kind": "array",
+         "items": {
+          "kind": "model",
+          "name": "Payment"
+         }
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "List[Payment]"
+       },
+       {
+        "name": "metadata",
+        "type": {
+         "kind": "model",
+         "name": "Metadata"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Metadata"
+       }
+      ],
+      "construction": "named"
+     },
+     {
+      "name": "Address",
+      "kind": "record",
+      "fields": [
+       {
+        "name": "street",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "String"
+       },
+       {
+        "name": "city",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "String"
+       }
+      ],
+      "construction": "named"
+     },
+     {
+      "name": "Payment",
+      "kind": "record",
+      "fields": [
+       {
+        "name": "amount",
+        "type": {
+         "kind": "primitive",
+         "name": "float",
+         "bits": 64
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Double"
+       },
+       {
+        "name": "paid_at",
+        "type": {
+         "kind": "primitive",
+         "name": "datetime"
+        },
+        "nullable": true,
+        "optional": false,
+        "originalType": "Option[OffsetDateTime]"
+       }
+      ],
+      "construction": "named"
+     },
+     {
+      "name": "Metadata",
+      "kind": "record",
+      "fields": [
+       {
+        "name": "source",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "String"
+       }
+      ],
+      "construction": "named"
+     }
+    ],
+    "enums": []
+   }
+  ],
+  "result": {
+   "Root": {
+    "model": "Root",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "id",
+    "keyCandidates": [
+     "id"
+    ],
+    "referencedBy": []
+   },
+   "Address": {
+    "model": "Address",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [
+     "street",
+     "city"
+    ],
+    "referencedBy": [
+     {
+      "model": "Root",
+      "field": "billing_address",
+      "many": false
+     },
+     {
+      "model": "Root",
+      "field": "shipping_address",
+      "many": false
+     }
+    ]
+   },
+   "Payment": {
+    "model": "Payment",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [],
+    "referencedBy": [
+     {
+      "model": "Root",
+      "field": "payments",
+      "many": true
+     }
+    ]
+   },
+   "Metadata": {
+    "model": "Metadata",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [
+     "source"
+    ],
+    "referencedBy": [
+     {
+      "model": "Root",
+      "field": "metadata",
+      "many": false
+     }
+    ]
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "openapi"
+    },
+    "models": [
+     {
+      "name": "Product",
+      "kind": "object",
+      "fields": [
+       {
+        "name": "price",
+        "type": {
+         "kind": "primitive",
+         "name": "float"
+        },
+        "nullable": false,
+        "optional": true,
+        "metadata": {
+         "minimum": 0
+        }
+       }
+      ]
+     }
+    ],
+    "enums": []
+   }
+  ],
+  "result": {
+   "Product": {
+    "model": "Product",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [],
+    "referencedBy": []
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "typescript",
+     "language": "typescript"
+    },
+    "models": [
+     {
+      "name": "Base",
+      "kind": "interface",
+      "fields": [
+       {
+        "name": "id",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Id"
+       }
+      ]
+     },
+     {
+      "name": "Admin",
+      "kind": "type",
+      "fields": [
+       {
+        "name": "level",
+        "type": {
+         "kind": "primitive",
+         "name": "float"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "number"
+       }
+      ],
+      "extends": [
+       "Base"
+      ]
+     }
+    ],
+    "enums": []
+   }
+  ],
+  "result": {
+   "Base": {
+    "model": "Base",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "id",
+    "keyCandidates": [
+     "id"
+    ],
+    "referencedBy": []
+   },
+   "Admin": {
+    "model": "Admin",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "id",
+    "keyCandidates": [
+     "id"
+    ],
+    "referencedBy": []
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "typescript",
+     "language": "typescript"
+    },
+    "models": [
+     {
+      "name": "UserDto",
+      "kind": "interface",
+      "fields": [
+       {
+        "name": "userId",
+        "type": {
+         "kind": "primitive",
+         "name": "float"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "number"
+       },
+       {
+        "name": "emailAddress",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "createdAt",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "age",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "legacyCode",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       }
+      ]
+     }
+    ],
+    "enums": []
+   }
+  ],
+  "result": {
+   "UserDto": {
+    "model": "UserDto",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [
+     "emailAddress",
+     "createdAt",
+     "age",
+     "legacyCode"
+    ],
+    "referencedBy": []
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "json"
+    },
+    "models": [
+     {
+      "name": "Root",
+      "kind": "object",
+      "fields": [
+       {
+        "name": "v",
+        "type": {
+         "kind": "primitive",
+         "name": "any"
+        },
+        "nullable": false,
+        "optional": false
+       }
+      ]
+     }
+    ],
+    "enums": [],
+    "root": "Root"
+   }
+  ],
+  "result": {
+   "Root": {
+    "model": "Root",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [],
+    "referencedBy": []
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "smithy",
+     "language": "smithy"
+    },
+    "models": [
+     {
+      "name": "Root",
+      "kind": "object",
+      "fields": [
+       {
+        "name": "id",
+        "type": {
+         "kind": "primitive",
+         "name": "integer",
+         "bits": 64
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Long",
+        "annotations": [
+         {
+          "name": "required"
+         }
+        ]
+       },
+       {
+        "name": "value",
+        "type": {
+         "kind": "primitive",
+         "name": "any"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Document",
+        "annotations": [
+         {
+          "name": "required"
+         }
+        ]
+       },
+       {
+        "name": "meta",
+        "type": {
+         "kind": "primitive",
+         "name": "any"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Document",
+        "annotations": [
+         {
+          "name": "required"
+         }
+        ]
+       },
+       {
+        "name": "matrix",
+        "type": {
+         "kind": "array",
+         "items": {
+          "kind": "array",
+          "items": {
+           "kind": "primitive",
+           "name": "integer",
+           "bits": 64
+          }
+         }
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "LongListList",
+        "annotations": [
+         {
+          "name": "required"
+         }
+        ]
+       },
+       {
+        "name": "points",
+        "type": {
+         "kind": "array",
+         "items": {
+          "kind": "model",
+          "name": "Point"
+         }
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "PointList",
+        "annotations": [
+         {
+          "name": "required"
+         }
+        ]
+       }
+      ],
+      "namespace": "example.api",
+      "construction": "named"
+     },
+     {
+      "name": "Point",
+      "kind": "object",
+      "fields": [
+       {
+        "name": "x",
+        "type": {
+         "kind": "primitive",
+         "name": "float",
+         "bits": 64
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Double",
+        "annotations": [
+         {
+          "name": "required"
+         }
+        ]
+       },
+       {
+        "name": "y",
+        "type": {
+         "kind": "primitive",
+         "name": "integer",
+         "bits": 64
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Long",
+        "annotations": [
+         {
+          "name": "required"
+         }
+        ]
+       }
+      ],
+      "namespace": "example.api",
+      "construction": "named"
+     }
+    ],
+    "enums": []
+   }
+  ],
+  "result": {
+   "Root": {
+    "model": "Root",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "id",
+    "keyCandidates": [
+     "id"
+    ],
+    "referencedBy": []
+   },
+   "Point": {
+    "model": "Point",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [
+     "y"
+    ],
+    "referencedBy": [
+     {
+      "model": "Root",
+      "field": "points",
+      "many": true
+     }
+    ]
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "typescript",
+     "language": "typescript"
+    },
+    "models": [
+     {
+      "name": "B",
+      "kind": "interface",
+      "fields": [
+       {
+        "name": "label",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       }
+      ]
+     }
+    ],
+    "enums": []
+   }
+  ],
+  "result": {
+   "B": {
+    "model": "B",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [
+     "label"
+    ],
+    "referencedBy": []
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "typescript",
+     "language": "typescript"
+    },
+    "models": [
+     {
+      "name": "B",
+      "kind": "interface",
+      "fields": [
+       {
+        "name": "customer_customer0",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "order_address1",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "total_total2",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "amount_phone3",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "created_created4",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "status_price5",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "name_name6",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "address_order7",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "city_city8",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "phone_amount9",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "email_email10",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "price_status11",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "customer_customer12",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "order_address13",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "total_total14",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "amount_phone15",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "created_created16",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "status_price17",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "name_name18",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "address_order19",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "city_city20",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "phone_amount21",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "email_email22",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "price_status23",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "customer_customer24",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "order_address25",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "total_total26",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "amount_phone27",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "created_created28",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "status_price29",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "name_name30",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "address_order31",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "city_city32",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "phone_amount33",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "email_email34",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "price_status35",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "customer_customer36",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "order_address37",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "total_total38",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "amount_phone39",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "created_created40",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "status_price41",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "name_name42",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "address_order43",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "city_city44",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "phone_amount45",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "email_email46",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "price_status47",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "customer_customer48",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "order_address49",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "total_total50",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "amount_phone51",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "created_created52",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "status_price53",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "name_name54",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "address_order55",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "city_city56",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "phone_amount57",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "email_email58",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "price_status59",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "customer_customer60",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "order_address61",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "total_total62",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "amount_phone63",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "created_created64",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "status_price65",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "name_name66",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "address_order67",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "city_city68",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "phone_amount69",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "email_email70",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "price_status71",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "customer_customer72",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "order_address73",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "total_total74",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "amount_phone75",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "created_created76",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "status_price77",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "name_name78",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "address_order79",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "city_city80",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "phone_amount81",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "email_email82",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "price_status83",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "customer_customer84",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "order_address85",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "total_total86",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "amount_phone87",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "created_created88",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "status_price89",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "name_name90",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "address_order91",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "city_city92",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "phone_amount93",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "email_email94",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "price_status95",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "customer_customer96",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "order_address97",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "total_total98",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "amount_phone99",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "created_created100",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "status_price101",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "name_name102",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "address_order103",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "city_city104",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "phone_amount105",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "email_email106",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "price_status107",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "customer_customer108",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "order_address109",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "total_total110",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "amount_phone111",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "created_created112",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "status_price113",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "name_name114",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "address_order115",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "city_city116",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "phone_amount117",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "email_email118",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "price_status119",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "customer_customer120",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "order_address121",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "total_total122",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "amount_phone123",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "created_created124",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "status_price125",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "name_name126",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "address_order127",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "city_city128",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "phone_amount129",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "email_email130",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "price_status131",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "customer_customer132",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "order_address133",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "total_total134",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "amount_phone135",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "created_created136",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "status_price137",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "name_name138",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "address_order139",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "city_city140",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "phone_amount141",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "email_email142",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "price_status143",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "customer_customer144",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "order_address145",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "total_total146",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "amount_phone147",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "created_created148",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "status_price149",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "name_name150",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "address_order151",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "city_city152",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "phone_amount153",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "email_email154",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "price_status155",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "customer_customer156",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "order_address157",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "total_total158",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "amount_phone159",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "created_created160",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "status_price161",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "name_name162",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "address_order163",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "city_city164",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "phone_amount165",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "email_email166",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "price_status167",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "customer_customer168",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "order_address169",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "total_total170",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "amount_phone171",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "created_created172",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "status_price173",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "name_name174",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "address_order175",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "city_city176",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "phone_amount177",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "email_email178",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "price_status179",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "customer_customer180",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "order_address181",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "total_total182",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "amount_phone183",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "created_created184",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "status_price185",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "name_name186",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "address_order187",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "city_city188",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "phone_amount189",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "email_email190",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "price_status191",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "customer_customer192",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "order_address193",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "total_total194",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "amount_phone195",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "created_created196",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "status_price197",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "name_name198",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "address_order199",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "city_city200",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "phone_amount201",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "email_email202",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "price_status203",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "customer_customer204",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "order_address205",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "total_total206",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "amount_phone207",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "created_created208",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "status_price209",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "name_name210",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "address_order211",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "city_city212",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "phone_amount213",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "email_email214",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "price_status215",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "customer_customer216",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "order_address217",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "total_total218",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "amount_phone219",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "created_created220",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "status_price221",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "name_name222",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "address_order223",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "city_city224",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "phone_amount225",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "email_email226",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "price_status227",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "customer_customer228",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "order_address229",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "total_total230",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "amount_phone231",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "created_created232",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "status_price233",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "name_name234",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "address_order235",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "city_city236",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "phone_amount237",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "email_email238",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "price_status239",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "customer_customer240",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "order_address241",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "total_total242",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "amount_phone243",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "created_created244",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "status_price245",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "name_name246",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "address_order247",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "city_city248",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "phone_amount249",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "email_email250",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "price_status251",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "customer_customer252",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "order_address253",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "total_total254",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "amount_phone255",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "created_created256",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "status_price257",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "name_name258",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "address_order259",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "city_city260",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "phone_amount261",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "email_email262",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "price_status263",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "customer_customer264",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "order_address265",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "total_total266",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "amount_phone267",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "created_created268",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "status_price269",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "name_name270",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "address_order271",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "city_city272",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "phone_amount273",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "email_email274",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "price_status275",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "customer_customer276",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "order_address277",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "total_total278",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "amount_phone279",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "created_created280",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "status_price281",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "name_name282",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "address_order283",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "city_city284",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "phone_amount285",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "email_email286",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "price_status287",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "customer_customer288",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "order_address289",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "total_total290",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "amount_phone291",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "created_created292",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "status_price293",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "name_name294",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "address_order295",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "city_city296",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "phone_amount297",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "email_email298",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "price_status299",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       }
+      ]
+     }
+    ],
+    "enums": []
+   }
+  ],
+  "result": {
+   "B": {
+    "model": "B",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [
+     "customer_customer0",
+     "order_address1",
+     "total_total2",
+     "amount_phone3",
+     "created_created4",
+     "status_price5",
+     "name_name6",
+     "address_order7",
+     "city_city8",
+     "phone_amount9",
+     "email_email10",
+     "price_status11",
+     "customer_customer12",
+     "order_address13",
+     "total_total14",
+     "amount_phone15",
+     "created_created16",
+     "status_price17",
+     "name_name18",
+     "address_order19",
+     "city_city20",
+     "phone_amount21",
+     "email_email22",
+     "price_status23",
+     "customer_customer24",
+     "order_address25",
+     "total_total26",
+     "amount_phone27",
+     "created_created28",
+     "status_price29",
+     "name_name30",
+     "address_order31",
+     "city_city32",
+     "phone_amount33",
+     "email_email34",
+     "price_status35",
+     "customer_customer36",
+     "order_address37",
+     "total_total38",
+     "amount_phone39",
+     "created_created40",
+     "status_price41",
+     "name_name42",
+     "address_order43",
+     "city_city44",
+     "phone_amount45",
+     "email_email46",
+     "price_status47",
+     "customer_customer48",
+     "order_address49",
+     "total_total50",
+     "amount_phone51",
+     "created_created52",
+     "status_price53",
+     "name_name54",
+     "address_order55",
+     "city_city56",
+     "phone_amount57",
+     "email_email58",
+     "price_status59",
+     "customer_customer60",
+     "order_address61",
+     "total_total62",
+     "amount_phone63",
+     "created_created64",
+     "status_price65",
+     "name_name66",
+     "address_order67",
+     "city_city68",
+     "phone_amount69",
+     "email_email70",
+     "price_status71",
+     "customer_customer72",
+     "order_address73",
+     "total_total74",
+     "amount_phone75",
+     "created_created76",
+     "status_price77",
+     "name_name78",
+     "address_order79",
+     "city_city80",
+     "phone_amount81",
+     "email_email82",
+     "price_status83",
+     "customer_customer84",
+     "order_address85",
+     "total_total86",
+     "amount_phone87",
+     "created_created88",
+     "status_price89",
+     "name_name90",
+     "address_order91",
+     "city_city92",
+     "phone_amount93",
+     "email_email94",
+     "price_status95",
+     "customer_customer96",
+     "order_address97",
+     "total_total98",
+     "amount_phone99",
+     "created_created100",
+     "status_price101",
+     "name_name102",
+     "address_order103",
+     "city_city104",
+     "phone_amount105",
+     "email_email106",
+     "price_status107",
+     "customer_customer108",
+     "order_address109",
+     "total_total110",
+     "amount_phone111",
+     "created_created112",
+     "status_price113",
+     "name_name114",
+     "address_order115",
+     "city_city116",
+     "phone_amount117",
+     "email_email118",
+     "price_status119",
+     "customer_customer120",
+     "order_address121",
+     "total_total122",
+     "amount_phone123",
+     "created_created124",
+     "status_price125",
+     "name_name126",
+     "address_order127",
+     "city_city128",
+     "phone_amount129",
+     "email_email130",
+     "price_status131",
+     "customer_customer132",
+     "order_address133",
+     "total_total134",
+     "amount_phone135",
+     "created_created136",
+     "status_price137",
+     "name_name138",
+     "address_order139",
+     "city_city140",
+     "phone_amount141",
+     "email_email142",
+     "price_status143",
+     "customer_customer144",
+     "order_address145",
+     "total_total146",
+     "amount_phone147",
+     "created_created148",
+     "status_price149",
+     "name_name150",
+     "address_order151",
+     "city_city152",
+     "phone_amount153",
+     "email_email154",
+     "price_status155",
+     "customer_customer156",
+     "order_address157",
+     "total_total158",
+     "amount_phone159",
+     "created_created160",
+     "status_price161",
+     "name_name162",
+     "address_order163",
+     "city_city164",
+     "phone_amount165",
+     "email_email166",
+     "price_status167",
+     "customer_customer168",
+     "order_address169",
+     "total_total170",
+     "amount_phone171",
+     "created_created172",
+     "status_price173",
+     "name_name174",
+     "address_order175",
+     "city_city176",
+     "phone_amount177",
+     "email_email178",
+     "price_status179",
+     "customer_customer180",
+     "order_address181",
+     "total_total182",
+     "amount_phone183",
+     "created_created184",
+     "status_price185",
+     "name_name186",
+     "address_order187",
+     "city_city188",
+     "phone_amount189",
+     "email_email190",
+     "price_status191",
+     "customer_customer192",
+     "order_address193",
+     "total_total194",
+     "amount_phone195",
+     "created_created196",
+     "status_price197",
+     "name_name198",
+     "address_order199",
+     "city_city200",
+     "phone_amount201",
+     "email_email202",
+     "price_status203",
+     "customer_customer204",
+     "order_address205",
+     "total_total206",
+     "amount_phone207",
+     "created_created208",
+     "status_price209",
+     "name_name210",
+     "address_order211",
+     "city_city212",
+     "phone_amount213",
+     "email_email214",
+     "price_status215",
+     "customer_customer216",
+     "order_address217",
+     "total_total218",
+     "amount_phone219",
+     "created_created220",
+     "status_price221",
+     "name_name222",
+     "address_order223",
+     "city_city224",
+     "phone_amount225",
+     "email_email226",
+     "price_status227",
+     "customer_customer228",
+     "order_address229",
+     "total_total230",
+     "amount_phone231",
+     "created_created232",
+     "status_price233",
+     "name_name234",
+     "address_order235",
+     "city_city236",
+     "phone_amount237",
+     "email_email238",
+     "price_status239",
+     "customer_customer240",
+     "order_address241",
+     "total_total242",
+     "amount_phone243",
+     "created_created244",
+     "status_price245",
+     "name_name246",
+     "address_order247",
+     "city_city248",
+     "phone_amount249",
+     "email_email250",
+     "price_status251",
+     "customer_customer252",
+     "order_address253",
+     "total_total254",
+     "amount_phone255",
+     "created_created256",
+     "status_price257",
+     "name_name258",
+     "address_order259",
+     "city_city260",
+     "phone_amount261",
+     "email_email262",
+     "price_status263",
+     "customer_customer264",
+     "order_address265",
+     "total_total266",
+     "amount_phone267",
+     "created_created268",
+     "status_price269",
+     "name_name270",
+     "address_order271",
+     "city_city272",
+     "phone_amount273",
+     "email_email274",
+     "price_status275",
+     "customer_customer276",
+     "order_address277",
+     "total_total278",
+     "amount_phone279",
+     "created_created280",
+     "status_price281",
+     "name_name282",
+     "address_order283",
+     "city_city284",
+     "phone_amount285",
+     "email_email286",
+     "price_status287",
+     "customer_customer288",
+     "order_address289",
+     "total_total290",
+     "amount_phone291",
+     "created_created292",
+     "status_price293",
+     "name_name294",
+     "address_order295",
+     "city_city296",
+     "phone_amount297",
+     "email_email298",
+     "price_status299"
+    ],
+    "referencedBy": []
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "python",
+     "language": "python"
+    },
+    "models": [
+     {
+      "name": "Customer",
+      "kind": "class",
+      "fields": [
+       {
+        "name": "name",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "str"
+       },
+       {
+        "name": "age",
+        "type": {
+         "kind": "primitive",
+         "name": "integer"
+        },
+        "nullable": false,
+        "optional": true,
+        "originalType": "int",
+        "defaultValue": 0
+       },
+       {
+        "name": "active",
+        "type": {
+         "kind": "primitive",
+         "name": "boolean"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "bool"
+       }
+      ],
+      "construction": "named"
+     }
+    ],
+    "enums": []
+   }
+  ],
+  "result": {
+   "Customer": {
+    "model": "Customer",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [
+     "name"
+    ],
+    "referencedBy": []
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "typescript",
+     "language": "typescript"
+    },
+    "models": [
+     {
+      "name": "A",
+      "kind": "interface",
+      "fields": [
+       {
+        "name": "b",
+        "type": {
+         "kind": "unknown",
+         "name": "Money"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Money"
+       }
+      ]
+     }
+    ],
+    "enums": []
+   }
+  ],
+  "result": {
+   "A": {
+    "model": "A",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [],
+    "referencedBy": []
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "typescript",
+     "language": "typescript"
+    },
+    "models": [
+     {
+      "name": "Cat",
+      "kind": "interface",
+      "fields": [
+       {
+        "name": "name",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "children",
+        "type": {
+         "kind": "array",
+         "items": {
+          "kind": "model",
+          "name": "Cat"
+         }
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Cat[]"
+       }
+      ]
+     }
+    ],
+    "enums": []
+   }
+  ],
+  "result": {
+   "Cat": {
+    "model": "Cat",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [
+     "name"
+    ],
+    "referencedBy": [
+     {
+      "model": "Cat",
+      "field": "children",
+      "many": true
+     }
+    ]
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "python",
+     "language": "python",
+     "framework": "pydantic"
+    },
+    "models": [
+     {
+      "name": "Root",
+      "kind": "class",
+      "fields": [
+       {
+        "name": "id",
+        "type": {
+         "kind": "primitive",
+         "name": "integer"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "int"
+       },
+       {
+        "name": "value",
+        "type": {
+         "kind": "primitive",
+         "name": "any"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Any"
+       },
+       {
+        "name": "meta",
+        "type": {
+         "kind": "map",
+         "key": {
+          "kind": "primitive",
+          "name": "string"
+         },
+         "value": {
+          "kind": "primitive",
+          "name": "any"
+         }
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "dict[str, Any]"
+       },
+       {
+        "name": "matrix",
+        "type": {
+         "kind": "array",
+         "items": {
+          "kind": "array",
+          "items": {
+           "kind": "primitive",
+           "name": "integer"
+          }
+         }
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "list[list[int]]"
+       },
+       {
+        "name": "points",
+        "type": {
+         "kind": "array",
+         "items": {
+          "kind": "model",
+          "name": "Point"
+         }
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "list[Point]"
+       }
+      ],
+      "framework": "pydantic",
+      "construction": "named"
+     },
+     {
+      "name": "Point",
+      "kind": "class",
+      "fields": [
+       {
+        "name": "x",
+        "type": {
+         "kind": "primitive",
+         "name": "float"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "float"
+       },
+       {
+        "name": "y",
+        "type": {
+         "kind": "primitive",
+         "name": "integer"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "int"
+       }
+      ],
+      "framework": "pydantic",
+      "construction": "named"
+     }
+    ],
+    "enums": []
+   }
+  ],
+  "result": {
+   "Root": {
+    "model": "Root",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "id",
+    "keyCandidates": [
+     "id"
+    ],
+    "referencedBy": []
+   },
+   "Point": {
+    "model": "Point",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [
+     "y"
+    ],
+    "referencedBy": [
+     {
+      "model": "Root",
+      "field": "points",
+      "many": true
+     }
+    ]
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "typescript",
+     "language": "typescript"
+    },
+    "models": [
+     {
+      "name": "A",
+      "kind": "interface",
+      "fields": [
+       {
+        "name": "b",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       }
+      ]
+     }
+    ],
+    "enums": []
+   }
+  ],
+  "result": {
+   "A": {
+    "model": "A",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [
+     "b"
+    ],
+    "referencedBy": []
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "python",
+     "language": "python",
+     "framework": "dataclass"
+    },
+    "models": [
+     {
+      "name": "Customer",
+      "kind": "class",
+      "fields": [
+       {
+        "name": "customer_id",
+        "type": {
+         "kind": "primitive",
+         "name": "integer"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "int"
+       },
+       {
+        "name": "given_name",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "str"
+       },
+       {
+        "name": "surname",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "str"
+       },
+       {
+        "name": "mail",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "str"
+       },
+       {
+        "name": "dob",
+        "type": {
+         "kind": "primitive",
+         "name": "date"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "date"
+       },
+       {
+        "name": "tel",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "str"
+       },
+       {
+        "name": "qty_orders",
+        "type": {
+         "kind": "primitive",
+         "name": "integer"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "int"
+       },
+       {
+        "name": "creation_date",
+        "type": {
+         "kind": "primitive",
+         "name": "datetime"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "datetime"
+       }
+      ],
+      "framework": "dataclass",
+      "construction": "named",
+      "annotations": [
+       {
+        "name": "dataclass"
+       }
+      ]
+     }
+    ],
+    "enums": []
+   }
+  ],
+  "result": {
+   "Customer": {
+    "model": "Customer",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "customer_id",
+    "keyCandidates": [
+     "customer_id",
+     "given_name",
+     "surname",
+     "mail",
+     "tel",
+     "qty_orders"
+    ],
+    "referencedBy": []
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "csv"
+    },
+    "models": [
+     {
+      "name": "Row",
+      "kind": "object",
+      "fields": [
+       {
+        "name": "zip",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false
+       },
+       {
+        "name": "flag",
+        "type": {
+         "kind": "primitive",
+         "name": "boolean"
+        },
+        "nullable": false,
+        "optional": false
+       }
+      ]
+     }
+    ],
+    "enums": [],
+    "root": "Row"
+   }
+  ],
+  "result": {
+   "Row": {
+    "model": "Row",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [
+     "zip"
+    ],
+    "referencedBy": []
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "yaml"
+    },
+    "models": [
+     {
+      "name": "Item",
+      "kind": "object",
+      "fields": [
+       {
+        "name": "id",
+        "type": {
+         "kind": "primitive",
+         "name": "integer"
+        },
+        "nullable": false,
+        "optional": false
+       },
+       {
+        "name": "tags",
+        "type": {
+         "kind": "array",
+         "items": {
+          "kind": "primitive",
+          "name": "string"
+         }
+        },
+        "nullable": false,
+        "optional": false
+       },
+       {
+        "name": "note",
+        "type": {
+         "kind": "primitive",
+         "name": "any"
+        },
+        "nullable": true,
+        "optional": true
+       }
+      ]
+     }
+    ],
+    "enums": [],
+    "root": "Item"
+   }
+  ],
+  "result": {
+   "Item": {
+    "model": "Item",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "id",
+    "keyCandidates": [
+     "id"
+    ],
+    "referencedBy": []
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "typescript",
+     "language": "typescript",
+     "framework": "zod"
+    },
+    "models": [
+     {
+      "name": "User",
+      "kind": "type",
+      "fields": [
+       {
+        "name": "email",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string",
+        "annotations": [
+         {
+          "name": "z.email",
+          "args": ""
+         }
+        ]
+       },
+       {
+        "name": "name",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string",
+        "annotations": [
+         {
+          "name": "z.min",
+          "args": "2"
+         },
+         {
+          "name": "z.max",
+          "args": "40"
+         }
+        ]
+       },
+       {
+        "name": "age",
+        "type": {
+         "kind": "primitive",
+         "name": "integer"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "integer",
+        "annotations": [
+         {
+          "name": "z.min",
+          "args": "0"
+         }
+        ]
+       },
+       {
+        "name": "tags",
+        "type": {
+         "kind": "array",
+         "items": {
+          "kind": "primitive",
+          "name": "string"
+         }
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string[]",
+        "annotations": [
+         {
+          "name": "z.min",
+          "args": "1"
+         }
+        ]
+       }
+      ],
+      "framework": "zod"
+     }
+    ],
+    "enums": []
+   }
+  ],
+  "result": {
+   "User": {
+    "model": "User",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [
+     "email",
+     "name",
+     "age"
+    ],
+    "referencedBy": []
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "java",
+     "language": "java"
+    },
+    "models": [
+     {
+      "name": "Root",
+      "kind": "record",
+      "fields": [
+       {
+        "name": "id",
+        "type": {
+         "kind": "primitive",
+         "name": "integer",
+         "bits": 64
+        },
+        "nullable": true,
+        "optional": false,
+        "originalType": "Long"
+       },
+       {
+        "name": "name",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "String"
+       },
+       {
+        "name": "active",
+        "type": {
+         "kind": "primitive",
+         "name": "boolean"
+        },
+        "nullable": true,
+        "optional": false,
+        "originalType": "Boolean"
+       },
+       {
+        "name": "address",
+        "type": {
+         "kind": "model",
+         "name": "Address"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Address"
+       },
+       {
+        "name": "orders",
+        "type": {
+         "kind": "array",
+         "items": {
+          "kind": "model",
+          "name": "Order"
+         }
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "List<Order>"
+       }
+      ],
+      "construction": "positional",
+      "metadata": {
+       "accessors": "record"
+      }
+     },
+     {
+      "name": "Address",
+      "kind": "record",
+      "fields": [
+       {
+        "name": "city",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "String"
+       },
+       {
+        "name": "postalCode",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "String",
+        "serializedName": "postal_code",
+        "annotations": [
+         {
+          "name": "JsonProperty",
+          "args": "\"postal_code\""
+         }
+        ]
+       }
+      ],
+      "construction": "positional",
+      "metadata": {
+       "accessors": "record"
+      }
+     },
+     {
+      "name": "Order",
+      "kind": "record",
+      "fields": [
+       {
+        "name": "id",
+        "type": {
+         "kind": "primitive",
+         "name": "integer",
+         "bits": 64
+        },
+        "nullable": true,
+        "optional": false,
+        "originalType": "Long"
+       },
+       {
+        "name": "total",
+        "type": {
+         "kind": "primitive",
+         "name": "float",
+         "bits": 64
+        },
+        "nullable": true,
+        "optional": false,
+        "originalType": "Double"
+       }
+      ],
+      "construction": "positional",
+      "metadata": {
+       "accessors": "record"
+      }
+     }
+    ],
+    "enums": []
+   }
+  ],
+  "result": {
+   "Root": {
+    "model": "Root",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "id",
+    "keyCandidates": [
+     "id",
+     "name"
+    ],
+    "referencedBy": []
+   },
+   "Address": {
+    "model": "Address",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [
+     "city",
+     "postalCode"
+    ],
+    "referencedBy": [
+     {
+      "model": "Root",
+      "field": "address",
+      "many": false
+     }
+    ]
+   },
+   "Order": {
+    "model": "Order",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "id",
+    "keyCandidates": [
+     "id"
+    ],
+    "referencedBy": [
+     {
+      "model": "Root",
+      "field": "orders",
+      "many": true
+     }
+    ]
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "typescript",
+     "language": "typescript"
+    },
+    "models": [
+     {
+      "name": "UserDto",
+      "kind": "interface",
+      "fields": [
+       {
+        "name": "userId",
+        "type": {
+         "kind": "primitive",
+         "name": "float"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "number"
+       },
+       {
+        "name": "firstName",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "lastName",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "emailAddress",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "createdAt",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "isActive",
+        "type": {
+         "kind": "primitive",
+         "name": "boolean"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "boolean"
+       }
+      ]
+     }
+    ],
+    "enums": []
+   }
+  ],
+  "result": {
+   "UserDto": {
+    "model": "UserDto",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [
+     "firstName",
+     "lastName",
+     "emailAddress",
+     "createdAt"
+    ],
+    "referencedBy": []
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "prisma",
+     "language": "prisma",
+     "framework": "prisma"
+    },
+    "models": [
+     {
+      "name": "User",
+      "kind": "table",
+      "fields": [
+       {
+        "name": "id",
+        "type": {
+         "kind": "primitive",
+         "name": "integer",
+         "bits": 32
+        },
+        "nullable": false,
+        "optional": true,
+        "originalType": "Int",
+        "annotations": [
+         {
+          "name": "id",
+          "args": ""
+         },
+         {
+          "name": "default",
+          "args": "autoincrement()"
+         }
+        ],
+        "generated": true
+       },
+       {
+        "name": "email",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "String",
+        "annotations": [
+         {
+          "name": "unique",
+          "args": ""
+         }
+        ]
+       },
+       {
+        "name": "name",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": true,
+        "optional": false,
+        "originalType": "String"
+       },
+       {
+        "name": "role",
+        "type": {
+         "kind": "enum",
+         "name": "Role"
+        },
+        "nullable": false,
+        "optional": true,
+        "originalType": "Role",
+        "defaultValue": "MEMBER",
+        "annotations": [
+         {
+          "name": "default",
+          "args": "MEMBER"
+         }
+        ]
+       },
+       {
+        "name": "posts",
+        "type": {
+         "kind": "array",
+         "items": {
+          "kind": "model",
+          "name": "Post"
+         }
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Post[]"
+       },
+       {
+        "name": "createdAt",
+        "type": {
+         "kind": "primitive",
+         "name": "datetime"
+        },
+        "nullable": false,
+        "optional": true,
+        "originalType": "DateTime",
+        "serializedName": "created_at",
+        "annotations": [
+         {
+          "name": "default",
+          "args": "now()"
+         },
+         {
+          "name": "map",
+          "args": "\"created_at\""
+         }
+        ],
+        "generated": true
+       },
+       {
+        "name": "updatedAt",
+        "type": {
+         "kind": "primitive",
+         "name": "datetime"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "DateTime",
+        "annotations": [
+         {
+          "name": "updatedAt",
+          "args": ""
+         }
+        ],
+        "generated": true
+       }
+      ],
+      "framework": "prisma",
+      "construction": "named",
+      "description": "A registered user"
+     },
+     {
+      "name": "Post",
+      "kind": "table",
+      "fields": [
+       {
+        "name": "id",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": true,
+        "originalType": "String",
+        "annotations": [
+         {
+          "name": "id",
+          "args": ""
+         },
+         {
+          "name": "default",
+          "args": "uuid()"
+         },
+         {
+          "name": "relation",
+          "args": "fields: [authorId], references: [id]"
+         }
+        ],
+        "generated": true,
+        "metadata": {
+         "relation": true
+        }
+       }
+      ],
+      "framework": "prisma",
+      "construction": "named"
+     }
+    ],
+    "enums": [
+     {
+      "name": "Role",
+      "values": [
+       {
+        "name": "ADMIN"
+       },
+       {
+        "name": "MEMBER",
+        "value": "member"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "result": {
+   "User": {
+    "model": "User",
+    "declaredEntity": true,
+    "declaredKey": "id",
+    "declaredKeyGenerated": true,
+    "namedKey": "id",
+    "keyCandidates": [
+     "email",
+     "name"
+    ],
+    "referencedBy": []
+   },
+   "Post": {
+    "model": "Post",
+    "declaredEntity": true,
+    "declaredKey": "id",
+    "declaredKeyGenerated": true,
+    "namedKey": "id",
+    "keyCandidates": [],
+    "referencedBy": [
+     {
+      "model": "User",
+      "field": "posts",
+      "many": true
+     }
+    ]
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "typescript",
+     "language": "typescript"
+    },
+    "models": [
+     {
+      "name": "User",
+      "kind": "interface",
+      "fields": [
+       {
+        "name": "userId",
+        "type": {
+         "kind": "primitive",
+         "name": "float"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "number"
+       },
+       {
+        "name": "firstName",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "lastName",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "emailAddress",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "createdAt",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "isActive",
+        "type": {
+         "kind": "primitive",
+         "name": "boolean"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "boolean"
+       }
+      ]
+     }
+    ],
+    "enums": []
+   }
+  ],
+  "result": {
+   "User": {
+    "model": "User",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "userId",
+    "keyCandidates": [
+     "firstName",
+     "lastName",
+     "emailAddress",
+     "createdAt"
+    ],
+    "referencedBy": []
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "typescript",
+     "language": "typescript"
+    },
+    "models": [
+     {
+      "name": "Root",
+      "kind": "interface",
+      "fields": [
+       {
+        "name": "notes",
+        "type": {
+         "kind": "primitive",
+         "name": "any"
+        },
+        "nullable": true,
+        "optional": false,
+        "originalType": "null"
+       }
+      ]
+     }
+    ],
+    "enums": []
+   }
+  ],
+  "result": {
+   "Root": {
+    "model": "Root",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [],
+    "referencedBy": []
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "kotlin",
+     "language": "kotlin"
+    },
+    "models": [
+     {
+      "name": "Root",
+      "kind": "record",
+      "fields": [
+       {
+        "name": "users",
+        "type": {
+         "kind": "array",
+         "items": {
+          "kind": "model",
+          "name": "User"
+         }
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "List<User>"
+       }
+      ],
+      "construction": "named",
+      "annotations": [
+       {
+        "name": "Serializable"
+       }
+      ]
+     },
+     {
+      "name": "User",
+      "kind": "record",
+      "fields": [
+       {
+        "name": "userId",
+        "type": {
+         "kind": "primitive",
+         "name": "integer",
+         "bits": 64
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Long"
+       },
+       {
+        "name": "email",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": true,
+        "optional": true,
+        "originalType": "String?",
+        "defaultValue": null
+       },
+       {
+        "name": "phone",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": true,
+        "optional": false,
+        "originalType": "String?"
+       },
+       {
+        "name": "postalCode",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "String",
+        "serializedName": "Postal Code",
+        "annotations": [
+         {
+          "name": "SerialName",
+          "args": "\"Postal Code\""
+         }
+        ]
+       },
+       {
+        "name": "_2fa",
+        "type": {
+         "kind": "primitive",
+         "name": "boolean"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Boolean",
+        "serializedName": "2fa",
+        "annotations": [
+         {
+          "name": "SerialName",
+          "args": "\"2fa\""
+         }
+        ]
+       },
+       {
+        "name": "tags",
+        "type": {
+         "kind": "array",
+         "items": {
+          "kind": "primitive",
+          "name": "string"
+         },
+         "itemsNullable": true
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "List<String?>"
+       },
+       {
+        "name": "deletedAt",
+        "type": {
+         "kind": "primitive",
+         "name": "any"
+        },
+        "nullable": true,
+        "optional": false,
+        "originalType": "JsonElement?",
+        "serializedName": "deleted_at",
+        "annotations": [
+         {
+          "name": "SerialName",
+          "args": "\"deleted_at\""
+         }
+        ]
+       },
+       {
+        "name": "manager",
+        "type": {
+         "kind": "model",
+         "name": "Manager"
+        },
+        "nullable": true,
+        "optional": true,
+        "originalType": "Manager?",
+        "defaultValue": null
+       }
+      ],
+      "construction": "named",
+      "annotations": [
+       {
+        "name": "Serializable"
+       }
+      ]
+     },
+     {
+      "name": "Manager",
+      "kind": "record",
+      "fields": [
+       {
+        "name": "userId",
+        "type": {
+         "kind": "primitive",
+         "name": "integer",
+         "bits": 64
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Long",
+        "serializedName": "user_id",
+        "annotations": [
+         {
+          "name": "SerialName",
+          "args": "\"user_id\""
+         }
+        ]
+       }
+      ],
+      "construction": "named",
+      "annotations": [
+       {
+        "name": "Serializable"
+       }
+      ]
+     }
+    ],
+    "enums": []
+   }
+  ],
+  "result": {
+   "Root": {
+    "model": "Root",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [],
+    "referencedBy": []
+   },
+   "User": {
+    "model": "User",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "userId",
+    "keyCandidates": [
+     "userId",
+     "phone",
+     "postalCode"
+    ],
+    "referencedBy": [
+     {
+      "model": "Root",
+      "field": "users",
+      "many": true
+     }
+    ]
+   },
+   "Manager": {
+    "model": "Manager",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [
+     "userId"
+    ],
+    "referencedBy": [
+     {
+      "model": "User",
+      "field": "manager",
+      "many": false
+     }
+    ]
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "kotlin",
+     "language": "kotlin"
+    },
+    "models": [
+     {
+      "name": "Customer",
+      "kind": "record",
+      "fields": [
+       {
+        "name": "customerId",
+        "type": {
+         "kind": "primitive",
+         "name": "integer",
+         "bits": 64
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Long"
+       },
+       {
+        "name": "givenName",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "String"
+       },
+       {
+        "name": "surname",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "String"
+       },
+       {
+        "name": "mail",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "String"
+       },
+       {
+        "name": "dob",
+        "type": {
+         "kind": "primitive",
+         "name": "date"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "LocalDate"
+       },
+       {
+        "name": "tel",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "String"
+       },
+       {
+        "name": "qtyOrders",
+        "type": {
+         "kind": "primitive",
+         "name": "integer",
+         "bits": 64
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Long"
+       },
+       {
+        "name": "creationDate",
+        "type": {
+         "kind": "primitive",
+         "name": "datetime"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Instant"
+       }
+      ],
+      "construction": "named"
+     }
+    ],
+    "enums": []
+   }
+  ],
+  "result": {
+   "Customer": {
+    "model": "Customer",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "customerId",
+    "keyCandidates": [
+     "customerId",
+     "givenName",
+     "surname",
+     "mail",
+     "tel",
+     "qtyOrders"
+    ],
+    "referencedBy": []
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "json"
+    },
+    "models": [
+     {
+      "name": "Root",
+      "kind": "object",
+      "fields": [
+       {
+        "name": "price",
+        "type": {
+         "kind": "primitive",
+         "name": "float"
+        },
+        "nullable": false,
+        "optional": false
+       },
+       {
+        "name": "n",
+        "type": {
+         "kind": "primitive",
+         "name": "integer"
+        },
+        "nullable": false,
+        "optional": false
+       },
+       {
+        "name": "when",
+        "type": {
+         "kind": "primitive",
+         "name": "datetime"
+        },
+        "nullable": false,
+        "optional": false
+       },
+       {
+        "name": "id",
+        "type": {
+         "kind": "primitive",
+         "name": "uuid"
+        },
+        "nullable": false,
+        "optional": false
+       },
+       {
+        "name": "t",
+        "type": {
+         "kind": "primitive",
+         "name": "time"
+        },
+        "nullable": false,
+        "optional": false
+       }
+      ]
+     }
+    ],
+    "enums": [],
+    "root": "Root"
+   }
+  ],
+  "result": {
+   "Root": {
+    "model": "Root",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "id",
+    "keyCandidates": [
+     "n",
+     "id"
+    ],
+    "referencedBy": []
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "typescript",
+     "language": "typescript"
+    },
+    "models": [
+     {
+      "name": "B",
+      "kind": "interface",
+      "fields": [
+       {
+        "name": "id",
+        "type": {
+         "kind": "primitive",
+         "name": "float"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "number"
+       },
+       {
+        "name": "createdBy",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "note",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": true,
+        "originalType": "string"
+       }
+      ]
+     }
+    ],
+    "enums": []
+   }
+  ],
+  "result": {
+   "B": {
+    "model": "B",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "id",
+    "keyCandidates": [
+     "createdBy"
+    ],
+    "referencedBy": []
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "graphql",
+     "language": "graphql"
+    },
+    "models": [
+     {
+      "name": "User",
+      "kind": "object",
+      "fields": [
+       {
+        "name": "id",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "ID!"
+       },
+       {
+        "name": "name",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": true,
+        "optional": false,
+        "originalType": "String"
+       },
+       {
+        "name": "emails",
+        "type": {
+         "kind": "array",
+         "items": {
+          "kind": "primitive",
+          "name": "string"
+         }
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "[String!]!"
+       },
+       {
+        "name": "orders",
+        "type": {
+         "kind": "array",
+         "items": {
+          "kind": "model",
+          "name": "Order"
+         },
+         "itemsNullable": true
+        },
+        "nullable": true,
+        "optional": false,
+        "originalType": "[Order]",
+        "metadata": {
+         "arguments": true
+        }
+       },
+       {
+        "name": "createdAt",
+        "type": {
+         "kind": "primitive",
+         "name": "datetime"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "DateTime!"
+       },
+       {
+        "name": "balance",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": true,
+        "optional": false,
+        "originalType": "Money"
+       },
+       {
+        "name": "role",
+        "type": {
+         "kind": "enum",
+         "name": "Role"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Role!"
+       }
+      ],
+      "description": "A user of the shop"
+     },
+     {
+      "name": "Order",
+      "kind": "object",
+      "fields": [
+       {
+        "name": "id",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "ID!"
+       }
+      ]
+     },
+     {
+      "name": "CreateUserInput",
+      "kind": "input",
+      "fields": [
+       {
+        "name": "name",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "String!"
+       },
+       {
+        "name": "role",
+        "type": {
+         "kind": "enum",
+         "name": "Role"
+        },
+        "nullable": true,
+        "optional": false,
+        "originalType": "Role",
+        "defaultValue": "MEMBER"
+       }
+      ]
+     }
+    ],
+    "enums": [
+     {
+      "name": "Role",
+      "values": [
+       {
+        "name": "ADMIN"
+       },
+       {
+        "name": "MEMBER"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "result": {
+   "User": {
+    "model": "User",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "id",
+    "keyCandidates": [
+     "id",
+     "name",
+     "balance"
+    ],
+    "referencedBy": []
+   },
+   "Order": {
+    "model": "Order",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "id",
+    "keyCandidates": [
+     "id"
+    ],
+    "referencedBy": [
+     {
+      "model": "User",
+      "field": "orders",
+      "many": true
+     }
+    ]
+   },
+   "CreateUserInput": {
+    "model": "CreateUserInput",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [
+     "name"
+    ],
+    "referencedBy": []
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "python",
+     "language": "python",
+     "framework": "sqlalchemy"
+    },
+    "models": [
+     {
+      "name": "User",
+      "kind": "entity",
+      "fields": [
+       {
+        "name": "id",
+        "type": {
+         "kind": "primitive",
+         "name": "integer"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Mapped[int]",
+        "annotations": [
+         {
+          "name": "mapped_column",
+          "args": "primary_key=True"
+         }
+        ],
+        "metadata": {
+         "primaryKey": true
+        }
+       },
+       {
+        "name": "name",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Mapped[str]",
+        "annotations": [
+         {
+          "name": "mapped_column",
+          "args": "String(80), unique=True"
+         }
+        ]
+       }
+      ],
+      "framework": "sqlalchemy",
+      "construction": "named"
+     }
+    ],
+    "enums": []
+   }
+  ],
+  "result": {
+   "User": {
+    "model": "User",
+    "declaredEntity": true,
+    "declaredKey": "id",
+    "declaredKeyGenerated": false,
+    "namedKey": "id",
+    "keyCandidates": [
+     "id",
+     "name"
+    ],
+    "referencedBy": []
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "php",
+     "language": "php"
+    },
+    "models": [
+     {
+      "name": "Root",
+      "kind": "class",
+      "fields": [
+       {
+        "name": "id",
+        "type": {
+         "kind": "primitive",
+         "name": "integer",
+         "bits": 64
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "int"
+       },
+       {
+        "name": "name",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "active",
+        "type": {
+         "kind": "primitive",
+         "name": "boolean"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "bool"
+       },
+       {
+        "name": "address",
+        "type": {
+         "kind": "model",
+         "name": "Address"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Address"
+       },
+       {
+        "name": "orders",
+        "type": {
+         "kind": "array",
+         "items": {
+          "kind": "model",
+          "name": "Order"
+         }
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "array"
+       }
+      ],
+      "construction": "named",
+      "metadata": {
+       "accessors": "properties"
+      }
+     },
+     {
+      "name": "Address",
+      "kind": "class",
+      "fields": [
+       {
+        "name": "city",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       },
+       {
+        "name": "postalCode",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "string"
+       }
+      ],
+      "construction": "named",
+      "metadata": {
+       "accessors": "properties"
+      }
+     },
+     {
+      "name": "Order",
+      "kind": "class",
+      "fields": [
+       {
+        "name": "id",
+        "type": {
+         "kind": "primitive",
+         "name": "integer",
+         "bits": 64
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "int"
+       },
+       {
+        "name": "total",
+        "type": {
+         "kind": "primitive",
+         "name": "float",
+         "bits": 64
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "float"
+       }
+      ],
+      "construction": "named",
+      "metadata": {
+       "accessors": "properties"
+      }
+     }
+    ],
+    "enums": []
+   }
+  ],
+  "result": {
+   "Root": {
+    "model": "Root",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "id",
+    "keyCandidates": [
+     "id",
+     "name"
+    ],
+    "referencedBy": []
+   },
+   "Address": {
+    "model": "Address",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [
+     "city",
+     "postalCode"
+    ],
+    "referencedBy": [
+     {
+      "model": "Root",
+      "field": "address",
+      "many": false
+     }
+    ]
+   },
+   "Order": {
+    "model": "Order",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "id",
+    "keyCandidates": [
+     "id"
+    ],
+    "referencedBy": [
+     {
+      "model": "Root",
+      "field": "orders",
+      "many": true
+     }
+    ]
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "json"
+    },
+    "models": [
+     {
+      "name": "Root",
+      "kind": "object",
+      "fields": [
+       {
+        "name": "id",
+        "type": {
+         "kind": "primitive",
+         "name": "integer"
+        },
+        "nullable": false,
+        "optional": false
+       },
+       {
+        "name": "name",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false
+       },
+       {
+        "name": "tags",
+        "type": {
+         "kind": "array",
+         "items": {
+          "kind": "primitive",
+          "name": "string"
+         }
+        },
+        "nullable": false,
+        "optional": false
+       },
+       {
+        "name": "nested",
+        "type": {
+         "kind": "model",
+         "name": "Nested"
+        },
+        "nullable": false,
+        "optional": false
+       }
+      ]
+     },
+     {
+      "name": "Nested",
+      "kind": "object",
+      "fields": [
+       {
+        "name": "value",
+        "type": {
+         "kind": "primitive",
+         "name": "float"
+        },
+        "nullable": false,
+        "optional": false
+       }
+      ]
+     }
+    ],
+    "enums": [],
+    "root": "Root"
+   }
+  ],
+  "result": {
+   "Root": {
+    "model": "Root",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "id",
+    "keyCandidates": [
+     "id",
+     "name"
+    ],
+    "referencedBy": []
+   },
+   "Nested": {
+    "model": "Nested",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [],
+    "referencedBy": [
+     {
+      "model": "Root",
+      "field": "nested",
+      "many": false
+     }
+    ]
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "kotlin",
+     "language": "kotlin"
+    },
+    "models": [
+     {
+      "name": "Root",
+      "kind": "record",
+      "fields": [
+       {
+        "name": "id",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "String"
+       },
+       {
+        "name": "createdAt",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "String",
+        "serializedName": "created_at",
+        "annotations": [
+         {
+          "name": "SerialName",
+          "args": "\"created_at\""
+         }
+        ]
+       },
+       {
+        "name": "birthday",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "String"
+       },
+       {
+        "name": "billingAddress",
+        "type": {
+         "kind": "model",
+         "name": "Address"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Address",
+        "serializedName": "billing_address",
+        "annotations": [
+         {
+          "name": "SerialName",
+          "args": "\"billing_address\""
+         }
+        ]
+       },
+       {
+        "name": "shippingAddress",
+        "type": {
+         "kind": "model",
+         "name": "Address"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Address",
+        "serializedName": "shipping_address",
+        "annotations": [
+         {
+          "name": "SerialName",
+          "args": "\"shipping_address\""
+         }
+        ]
+       },
+       {
+        "name": "payments",
+        "type": {
+         "kind": "array",
+         "items": {
+          "kind": "model",
+          "name": "Payment"
+         }
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "List<Payment>"
+       },
+       {
+        "name": "metadata",
+        "type": {
+         "kind": "model",
+         "name": "Metadata"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Metadata"
+       }
+      ],
+      "construction": "named",
+      "annotations": [
+       {
+        "name": "Serializable"
+       }
+      ]
+     },
+     {
+      "name": "Address",
+      "kind": "record",
+      "fields": [
+       {
+        "name": "street",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "String"
+       },
+       {
+        "name": "city",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "String"
+       }
+      ],
+      "construction": "named",
+      "annotations": [
+       {
+        "name": "Serializable"
+       }
+      ]
+     },
+     {
+      "name": "Payment",
+      "kind": "record",
+      "fields": [
+       {
+        "name": "amount",
+        "type": {
+         "kind": "primitive",
+         "name": "float",
+         "bits": 64
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Double"
+       },
+       {
+        "name": "paidAt",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": true,
+        "optional": false,
+        "originalType": "String?",
+        "serializedName": "paid_at",
+        "annotations": [
+         {
+          "name": "SerialName",
+          "args": "\"paid_at\""
+         }
+        ]
+       }
+      ],
+      "construction": "named",
+      "annotations": [
+       {
+        "name": "Serializable"
+       }
+      ]
+     },
+     {
+      "name": "Metadata",
+      "kind": "record",
+      "fields": [
+       {
+        "name": "source",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "String"
+       }
+      ],
+      "construction": "named",
+      "annotations": [
+       {
+        "name": "Serializable"
+       }
+      ]
+     }
+    ],
+    "enums": []
+   }
+  ],
+  "result": {
+   "Root": {
+    "model": "Root",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "id",
+    "keyCandidates": [
+     "id",
+     "createdAt",
+     "birthday"
+    ],
+    "referencedBy": []
+   },
+   "Address": {
+    "model": "Address",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [
+     "street",
+     "city"
+    ],
+    "referencedBy": [
+     {
+      "model": "Root",
+      "field": "billingAddress",
+      "many": false
+     },
+     {
+      "model": "Root",
+      "field": "shippingAddress",
+      "many": false
+     }
+    ]
+   },
+   "Payment": {
+    "model": "Payment",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [
+     "paidAt"
+    ],
+    "referencedBy": [
+     {
+      "model": "Root",
+      "field": "payments",
+      "many": true
+     }
+    ]
+   },
+   "Metadata": {
+    "model": "Metadata",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [
+     "source"
+    ],
+    "referencedBy": [
+     {
+      "model": "Root",
+      "field": "metadata",
+      "many": false
+     }
+    ]
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "scala",
+     "language": "scala"
+    },
+    "models": [
+     {
+      "name": "Root",
+      "kind": "record",
+      "fields": [
+       {
+        "name": "id",
+        "type": {
+         "kind": "primitive",
+         "name": "integer",
+         "bits": 64
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Long"
+       },
+       {
+        "name": "name",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "String"
+       },
+       {
+        "name": "active",
+        "type": {
+         "kind": "primitive",
+         "name": "boolean"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Boolean"
+       },
+       {
+        "name": "address",
+        "type": {
+         "kind": "model",
+         "name": "Address"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Address"
+       },
+       {
+        "name": "orders",
+        "type": {
+         "kind": "array",
+         "items": {
+          "kind": "model",
+          "name": "Order"
+         }
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "List[Order]"
+       }
+      ],
+      "construction": "named"
+     },
+     {
+      "name": "Address",
+      "kind": "record",
+      "fields": [
+       {
+        "name": "city",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "String"
+       },
+       {
+        "name": "postal_code",
+        "type": {
+         "kind": "primitive",
+         "name": "string"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "String"
+       }
+      ],
+      "construction": "named"
+     },
+     {
+      "name": "Order",
+      "kind": "record",
+      "fields": [
+       {
+        "name": "id",
+        "type": {
+         "kind": "primitive",
+         "name": "integer",
+         "bits": 64
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Long"
+       },
+       {
+        "name": "total",
+        "type": {
+         "kind": "primitive",
+         "name": "float",
+         "bits": 64
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Double"
+       }
+      ],
+      "construction": "named"
+     }
+    ],
+    "enums": []
+   }
+  ],
+  "result": {
+   "Root": {
+    "model": "Root",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "id",
+    "keyCandidates": [
+     "id",
+     "name"
+    ],
+    "referencedBy": []
+   },
+   "Address": {
+    "model": "Address",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [
+     "city",
+     "postal_code"
+    ],
+    "referencedBy": [
+     {
+      "model": "Root",
+      "field": "address",
+      "many": false
+     }
+    ]
+   },
+   "Order": {
+    "model": "Order",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "id",
+    "keyCandidates": [
+     "id"
+    ],
+    "referencedBy": [
+     {
+      "model": "Root",
+      "field": "orders",
+      "many": true
+     }
+    ]
+   }
+  }
+ },
+ {
+  "args": [
+   {
+    "format": "model-schema",
+    "version": 1,
+    "origin": {
+     "format": "rust",
+     "language": "rust",
+     "framework": "serde"
+    },
+    "models": [
+     {
+      "name": "Root",
+      "kind": "struct",
+      "fields": [
+       {
+        "name": "id",
+        "type": {
+         "kind": "primitive",
+         "name": "integer",
+         "bits": 64
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "i64"
+       },
+       {
+        "name": "value",
+        "type": {
+         "kind": "primitive",
+         "name": "any"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "serde_json::Value"
+       },
+       {
+        "name": "meta",
+        "type": {
+         "kind": "unknown",
+         "name": "Map"
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "serde_json::Map<String, serde_json::Value>"
+       },
+       {
+        "name": "matrix",
+        "type": {
+         "kind": "array",
+         "items": {
+          "kind": "array",
+          "items": {
+           "kind": "primitive",
+           "name": "integer",
+           "bits": 64
+          }
+         }
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Vec<Vec<i64>>"
+       },
+       {
+        "name": "points",
+        "type": {
+         "kind": "array",
+         "items": {
+          "kind": "model",
+          "name": "Point"
+         }
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "Vec<Point>"
+       }
+      ],
+      "framework": "serde",
+      "construction": "named",
+      "annotations": [
+       {
+        "name": "derive",
+        "args": "Debug, Clone, PartialEq, Serialize, Deserialize"
+       }
+      ]
+     },
+     {
+      "name": "Point",
+      "kind": "struct",
+      "fields": [
+       {
+        "name": "x",
+        "type": {
+         "kind": "primitive",
+         "name": "float",
+         "bits": 64
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "f64"
+       },
+       {
+        "name": "y",
+        "type": {
+         "kind": "primitive",
+         "name": "integer",
+         "bits": 64
+        },
+        "nullable": false,
+        "optional": false,
+        "originalType": "i64"
+       }
+      ],
+      "framework": "serde",
+      "construction": "named",
+      "annotations": [
+       {
+        "name": "derive",
+        "args": "Debug, Clone, PartialEq, Serialize, Deserialize"
+       }
+      ]
+     }
+    ],
+    "enums": []
+   }
+  ],
+  "result": {
+   "Root": {
+    "model": "Root",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": "id",
+    "keyCandidates": [
+     "id"
+    ],
+    "referencedBy": []
+   },
+   "Point": {
+    "model": "Point",
+    "declaredEntity": false,
+    "declaredKey": null,
+    "declaredKeyGenerated": false,
+    "namedKey": null,
+    "keyCandidates": [
+     "y"
+    ],
+    "referencedBy": [
+     {
+      "model": "Root",
+      "field": "points",
+      "many": true
+     }
+    ]
+   }
+  }
+ }
+]

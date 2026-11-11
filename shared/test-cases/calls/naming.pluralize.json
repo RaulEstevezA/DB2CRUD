@@ -1,0 +1,1880 @@
+[
+ {
+  "args": [
+   "x"
+  ],
+  "result": "xes"
+ },
+ {
+  "args": [
+   "at"
+  ],
+  "result": "ats"
+ },
+ {
+  "args": [
+   "by"
+  ],
+  "result": "bies"
+ },
+ {
+  "args": [
+   "id"
+  ],
+  "result": "ids"
+ },
+ {
+  "args": [
+   "is"
+  ],
+  "result": "ises"
+ },
+ {
+  "args": [
+   "age"
+  ],
+  "result": "ages"
+ },
+ {
+  "args": [
+   "sku"
+  ],
+  "result": "skus"
+ },
+ {
+  "args": [
+   "Root"
+  ],
+  "result": "Roots"
+ },
+ {
+  "args": [
+   "Tags"
+  ],
+  "result": "Tagses"
+ },
+ {
+  "args": [
+   "code"
+  ],
+  "result": "codes"
+ },
+ {
+  "args": [
+   "date"
+  ],
+  "result": "dates"
+ },
+ {
+  "args": [
+   "full"
+  ],
+  "result": "fulls"
+ },
+ {
+  "args": [
+   "item"
+  ],
+  "result": "items"
+ },
+ {
+  "args": [
+   "last"
+  ],
+  "result": "lasts"
+ },
+ {
+  "args": [
+   "note"
+  ],
+  "result": "notes"
+ },
+ {
+  "args": [
+   "tags"
+  ],
+  "result": "tagses"
+ },
+ {
+  "args": [
+   "unit"
+  ],
+  "result": "units"
+ },
+ {
+  "args": [
+   "user"
+  ],
+  "result": "users"
+ },
+ {
+  "args": [
+   "Roles"
+  ],
+  "result": "Roleses"
+ },
+ {
+  "args": [
+   "Users"
+  ],
+  "result": "Userses"
+ },
+ {
+  "args": [
+   "birth"
+  ],
+  "result": "births"
+ },
+ {
+  "args": [
+   "cents"
+  ],
+  "result": "centses"
+ },
+ {
+  "args": [
+   "city8"
+  ],
+  "result": "city8s"
+ },
+ {
+  "args": [
+   "email"
+  ],
+  "result": "emails"
+ },
+ {
+  "args": [
+   "extra"
+  ],
+  "result": "extras"
+ },
+ {
+  "args": [
+   "first"
+  ],
+  "result": "firsts"
+ },
+ {
+  "args": [
+   "given"
+  ],
+  "result": "givens"
+ },
+ {
+  "args": [
+   "label"
+  ],
+  "result": "labels"
+ },
+ {
+  "args": [
+   "lines"
+  ],
+  "result": "lineses"
+ },
+ {
+  "args": [
+   "login"
+  ],
+  "result": "logins"
+ },
+ {
+  "args": [
+   "name6"
+  ],
+  "result": "name6s"
+ },
+ {
+  "args": [
+   "phone"
+  ],
+  "result": "phones"
+ },
+ {
+  "args": [
+   "price"
+  ],
+  "result": "prices"
+ },
+ {
+  "args": [
+   "state"
+  ],
+  "result": "states"
+ },
+ {
+  "args": [
+   "stock"
+  ],
+  "result": "stocks"
+ },
+ {
+  "args": [
+   "title"
+  ],
+  "result": "titles"
+ },
+ {
+  "args": [
+   "active"
+  ],
+  "result": "actives"
+ },
+ {
+  "args": [
+   "amount"
+  ],
+  "result": "amounts"
+ },
+ {
+  "args": [
+   "city20"
+  ],
+  "result": "city20s"
+ },
+ {
+  "args": [
+   "city32"
+  ],
+  "result": "city32s"
+ },
+ {
+  "args": [
+   "city56"
+  ],
+  "result": "city56s"
+ },
+ {
+  "args": [
+   "city68"
+  ],
+  "result": "city68s"
+ },
+ {
+  "args": [
+   "city80"
+  ],
+  "result": "city80s"
+ },
+ {
+  "args": [
+   "city92"
+  ],
+  "result": "city92s"
+ },
+ {
+  "args": [
+   "coupon"
+  ],
+  "result": "coupons"
+ },
+ {
+  "args": [
+   "name18"
+  ],
+  "result": "name18s"
+ },
+ {
+  "args": [
+   "name30"
+  ],
+  "result": "name30s"
+ },
+ {
+  "args": [
+   "name42"
+  ],
+  "result": "name42s"
+ },
+ {
+  "args": [
+   "name54"
+  ],
+  "result": "name54s"
+ },
+ {
+  "args": [
+   "name78"
+  ],
+  "result": "name78s"
+ },
+ {
+  "args": [
+   "name90"
+  ],
+  "result": "name90s"
+ },
+ {
+  "args": [
+   "order7"
+  ],
+  "result": "order7s"
+ },
+ {
+  "args": [
+   "orders"
+  ],
+  "result": "orderses"
+ },
+ {
+  "args": [
+   "placed"
+  ],
+  "result": "placeds"
+ },
+ {
+  "args": [
+   "postal"
+  ],
+  "result": "postals"
+ },
+ {
+  "args": [
+   "price5"
+  ],
+  "result": "price5s"
+ },
+ {
+  "args": [
+   "status"
+  ],
+  "result": "statuses"
+ },
+ {
+  "args": [
+   "street"
+  ],
+  "result": "streets"
+ },
+ {
+  "args": [
+   "address"
+  ],
+  "result": "addresses"
+ },
+ {
+  "args": [
+   "amount9"
+  ],
+  "result": "amount9s"
+ },
+ {
+  "args": [
+   "city104"
+  ],
+  "result": "city104s"
+ },
+ {
+  "args": [
+   "city116"
+  ],
+  "result": "city116s"
+ },
+ {
+  "args": [
+   "city140"
+  ],
+  "result": "city140s"
+ },
+ {
+  "args": [
+   "city152"
+  ],
+  "result": "city152s"
+ },
+ {
+  "args": [
+   "city164"
+  ],
+  "result": "city164s"
+ },
+ {
+  "args": [
+   "city176"
+  ],
+  "result": "city176s"
+ },
+ {
+  "args": [
+   "city188"
+  ],
+  "result": "city188s"
+ },
+ {
+  "args": [
+   "city212"
+  ],
+  "result": "city212s"
+ },
+ {
+  "args": [
+   "city224"
+  ],
+  "result": "city224s"
+ },
+ {
+  "args": [
+   "city236"
+  ],
+  "result": "city236s"
+ },
+ {
+  "args": [
+   "city248"
+  ],
+  "result": "city248s"
+ },
+ {
+  "args": [
+   "city272"
+  ],
+  "result": "city272s"
+ },
+ {
+  "args": [
+   "city284"
+  ],
+  "result": "city284s"
+ },
+ {
+  "args": [
+   "city296"
+  ],
+  "result": "city296s"
+ },
+ {
+  "args": [
+   "country"
+  ],
+  "result": "countries"
+ },
+ {
+  "args": [
+   "email10"
+  ],
+  "result": "email10s"
+ },
+ {
+  "args": [
+   "email22"
+  ],
+  "result": "email22s"
+ },
+ {
+  "args": [
+   "email34"
+  ],
+  "result": "email34s"
+ },
+ {
+  "args": [
+   "email46"
+  ],
+  "result": "email46s"
+ },
+ {
+  "args": [
+   "email58"
+  ],
+  "result": "email58s"
+ },
+ {
+  "args": [
+   "email82"
+  ],
+  "result": "email82s"
+ },
+ {
+  "args": [
+   "email94"
+  ],
+  "result": "email94s"
+ },
+ {
+  "args": [
+   "invoice"
+  ],
+  "result": "invoices"
+ },
+ {
+  "args": [
+   "name102"
+  ],
+  "result": "name102s"
+ },
+ {
+  "args": [
+   "name126"
+  ],
+  "result": "name126s"
+ },
+ {
+  "args": [
+   "name138"
+  ],
+  "result": "name138s"
+ },
+ {
+  "args": [
+   "name150"
+  ],
+  "result": "name150s"
+ },
+ {
+  "args": [
+   "name162"
+  ],
+  "result": "name162s"
+ },
+ {
+  "args": [
+   "name174"
+  ],
+  "result": "name174s"
+ },
+ {
+  "args": [
+   "name198"
+  ],
+  "result": "name198s"
+ },
+ {
+  "args": [
+   "name210"
+  ],
+  "result": "name210s"
+ },
+ {
+  "args": [
+   "name222"
+  ],
+  "result": "name222s"
+ },
+ {
+  "args": [
+   "name234"
+  ],
+  "result": "name234s"
+ },
+ {
+  "args": [
+   "name258"
+  ],
+  "result": "name258s"
+ },
+ {
+  "args": [
+   "name270"
+  ],
+  "result": "name270s"
+ },
+ {
+  "args": [
+   "name282"
+  ],
+  "result": "name282s"
+ },
+ {
+  "args": [
+   "name294"
+  ],
+  "result": "name294s"
+ },
+ {
+  "args": [
+   "order19"
+  ],
+  "result": "order19s"
+ },
+ {
+  "args": [
+   "order43"
+  ],
+  "result": "order43s"
+ },
+ {
+  "args": [
+   "order55"
+  ],
+  "result": "order55s"
+ },
+ {
+  "args": [
+   "order67"
+  ],
+  "result": "order67s"
+ },
+ {
+  "args": [
+   "order79"
+  ],
+  "result": "order79s"
+ },
+ {
+  "args": [
+   "phone15"
+  ],
+  "result": "phone15s"
+ },
+ {
+  "args": [
+   "phone27"
+  ],
+  "result": "phone27s"
+ },
+ {
+  "args": [
+   "phone39"
+  ],
+  "result": "phone39s"
+ },
+ {
+  "args": [
+   "phone51"
+  ],
+  "result": "phone51s"
+ },
+ {
+  "args": [
+   "phone75"
+  ],
+  "result": "phone75s"
+ },
+ {
+  "args": [
+   "phone87"
+  ],
+  "result": "phone87s"
+ },
+ {
+  "args": [
+   "phone99"
+  ],
+  "result": "phone99s"
+ },
+ {
+  "args": [
+   "price17"
+  ],
+  "result": "price17s"
+ },
+ {
+  "args": [
+   "price29"
+  ],
+  "result": "price29s"
+ },
+ {
+  "args": [
+   "price53"
+  ],
+  "result": "price53s"
+ },
+ {
+  "args": [
+   "price65"
+  ],
+  "result": "price65s"
+ },
+ {
+  "args": [
+   "price77"
+  ],
+  "result": "price77s"
+ },
+ {
+  "args": [
+   "price89"
+  ],
+  "result": "price89s"
+ },
+ {
+  "args": [
+   "total14"
+  ],
+  "result": "total14s"
+ },
+ {
+  "args": [
+   "total26"
+  ],
+  "result": "total26s"
+ },
+ {
+  "args": [
+   "total38"
+  ],
+  "result": "total38s"
+ },
+ {
+  "args": [
+   "total50"
+  ],
+  "result": "total50s"
+ },
+ {
+  "args": [
+   "total62"
+  ],
+  "result": "total62s"
+ },
+ {
+  "args": [
+   "total86"
+  ],
+  "result": "total86s"
+ },
+ {
+  "args": [
+   "total98"
+  ],
+  "result": "total98s"
+ },
+ {
+  "args": [
+   "Customer"
+  ],
+  "result": "Customers"
+ },
+ {
+  "args": [
+   "address1"
+  ],
+  "result": "address1s"
+ },
+ {
+  "args": [
+   "amount33"
+  ],
+  "result": "amount33s"
+ },
+ {
+  "args": [
+   "amount45"
+  ],
+  "result": "amount45s"
+ },
+ {
+  "args": [
+   "amount57"
+  ],
+  "result": "amount57s"
+ },
+ {
+  "args": [
+   "amount69"
+  ],
+  "result": "amount69s"
+ },
+ {
+  "args": [
+   "amount93"
+  ],
+  "result": "amount93s"
+ },
+ {
+  "args": [
+   "children"
+  ],
+  "result": "childrens"
+ },
+ {
+  "args": [
+   "created4"
+  ],
+  "result": "created4s"
+ },
+ {
+  "args": [
+   "creation"
+  ],
+  "result": "creations"
+ },
+ {
+  "args": [
+   "customer"
+  ],
+  "result": "customers"
+ },
+ {
+  "args": [
+   "email106"
+  ],
+  "result": "email106s"
+ },
+ {
+  "args": [
+   "email118"
+  ],
+  "result": "email118s"
+ },
+ {
+  "args": [
+   "email130"
+  ],
+  "result": "email130s"
+ },
+ {
+  "args": [
+   "email142"
+  ],
+  "result": "email142s"
+ },
+ {
+  "args": [
+   "email166"
+  ],
+  "result": "email166s"
+ },
+ {
+  "args": [
+   "email178"
+  ],
+  "result": "email178s"
+ },
+ {
+  "args": [
+   "email190"
+  ],
+  "result": "email190s"
+ },
+ {
+  "args": [
+   "email202"
+  ],
+  "result": "email202s"
+ },
+ {
+  "args": [
+   "email214"
+  ],
+  "result": "email214s"
+ },
+ {
+  "args": [
+   "email238"
+  ],
+  "result": "email238s"
+ },
+ {
+  "args": [
+   "email250"
+  ],
+  "result": "email250s"
+ },
+ {
+  "args": [
+   "email262"
+  ],
+  "result": "email262s"
+ },
+ {
+  "args": [
+   "email274"
+  ],
+  "result": "email274s"
+ },
+ {
+  "args": [
+   "email298"
+  ],
+  "result": "email298s"
+ },
+ {
+  "args": [
+   "nickname"
+  ],
+  "result": "nicknames"
+ },
+ {
+  "args": [
+   "order103"
+  ],
+  "result": "order103s"
+ },
+ {
+  "args": [
+   "order115"
+  ],
+  "result": "order115s"
+ },
+ {
+  "args": [
+   "order139"
+  ],
+  "result": "order139s"
+ },
+ {
+  "args": [
+   "order151"
+  ],
+  "result": "order151s"
+ },
+ {
+  "args": [
+   "order163"
+  ],
+  "result": "order163s"
+ },
+ {
+  "args": [
+   "order175"
+  ],
+  "result": "order175s"
+ },
+ {
+  "args": [
+   "order187"
+  ],
+  "result": "order187s"
+ },
+ {
+  "args": [
+   "order211"
+  ],
+  "result": "order211s"
+ },
+ {
+  "args": [
+   "order223"
+  ],
+  "result": "order223s"
+ },
+ {
+  "args": [
+   "order235"
+  ],
+  "result": "order235s"
+ },
+ {
+  "args": [
+   "order247"
+  ],
+  "result": "order247s"
+ },
+ {
+  "args": [
+   "order271"
+  ],
+  "result": "order271s"
+ },
+ {
+  "args": [
+   "order283"
+  ],
+  "result": "order283s"
+ },
+ {
+  "args": [
+   "order295"
+  ],
+  "result": "order295s"
+ },
+ {
+  "args": [
+   "phone111"
+  ],
+  "result": "phone111s"
+ },
+ {
+  "args": [
+   "phone123"
+  ],
+  "result": "phone123s"
+ },
+ {
+  "args": [
+   "phone147"
+  ],
+  "result": "phone147s"
+ },
+ {
+  "args": [
+   "phone159"
+  ],
+  "result": "phone159s"
+ },
+ {
+  "args": [
+   "phone171"
+  ],
+  "result": "phone171s"
+ },
+ {
+  "args": [
+   "phone183"
+  ],
+  "result": "phone183s"
+ },
+ {
+  "args": [
+   "phone207"
+  ],
+  "result": "phone207s"
+ },
+ {
+  "args": [
+   "phone219"
+  ],
+  "result": "phone219s"
+ },
+ {
+  "args": [
+   "phone231"
+  ],
+  "result": "phone231s"
+ },
+ {
+  "args": [
+   "phone243"
+  ],
+  "result": "phone243s"
+ },
+ {
+  "args": [
+   "phone255"
+  ],
+  "result": "phone255s"
+ },
+ {
+  "args": [
+   "phone279"
+  ],
+  "result": "phone279s"
+ },
+ {
+  "args": [
+   "phone291"
+  ],
+  "result": "phone291s"
+ },
+ {
+  "args": [
+   "price101"
+  ],
+  "result": "price101s"
+ },
+ {
+  "args": [
+   "price113"
+  ],
+  "result": "price113s"
+ },
+ {
+  "args": [
+   "price137"
+  ],
+  "result": "price137s"
+ },
+ {
+  "args": [
+   "price149"
+  ],
+  "result": "price149s"
+ },
+ {
+  "args": [
+   "price161"
+  ],
+  "result": "price161s"
+ },
+ {
+  "args": [
+   "price173"
+  ],
+  "result": "price173s"
+ },
+ {
+  "args": [
+   "price197"
+  ],
+  "result": "price197s"
+ },
+ {
+  "args": [
+   "price209"
+  ],
+  "result": "price209s"
+ },
+ {
+  "args": [
+   "price221"
+  ],
+  "result": "price221s"
+ },
+ {
+  "args": [
+   "price233"
+  ],
+  "result": "price233s"
+ },
+ {
+  "args": [
+   "price245"
+  ],
+  "result": "price245s"
+ },
+ {
+  "args": [
+   "price269"
+  ],
+  "result": "price269s"
+ },
+ {
+  "args": [
+   "price281"
+  ],
+  "result": "price281s"
+ },
+ {
+  "args": [
+   "price293"
+  ],
+  "result": "price293s"
+ },
+ {
+  "args": [
+   "products"
+  ],
+  "result": "productses"
+ },
+ {
+  "args": [
+   "shipping"
+  ],
+  "result": "shippings"
+ },
+ {
+  "args": [
+   "status11"
+  ],
+  "result": "status11s"
+ },
+ {
+  "args": [
+   "status23"
+  ],
+  "result": "status23s"
+ },
+ {
+  "args": [
+   "status35"
+  ],
+  "result": "status35s"
+ },
+ {
+  "args": [
+   "status47"
+  ],
+  "result": "status47s"
+ },
+ {
+  "args": [
+   "status71"
+  ],
+  "result": "status71s"
+ },
+ {
+  "args": [
+   "status83"
+  ],
+  "result": "status83s"
+ },
+ {
+  "args": [
+   "status95"
+  ],
+  "result": "status95s"
+ },
+ {
+  "args": [
+   "supplier"
+  ],
+  "result": "suppliers"
+ },
+ {
+  "args": [
+   "total122"
+  ],
+  "result": "total122s"
+ },
+ {
+  "args": [
+   "total134"
+  ],
+  "result": "total134s"
+ },
+ {
+  "args": [
+   "total146"
+  ],
+  "result": "total146s"
+ },
+ {
+  "args": [
+   "total158"
+  ],
+  "result": "total158s"
+ },
+ {
+  "args": [
+   "total182"
+  ],
+  "result": "total182s"
+ },
+ {
+  "args": [
+   "total194"
+  ],
+  "result": "total194s"
+ },
+ {
+  "args": [
+   "total206"
+  ],
+  "result": "total206s"
+ },
+ {
+  "args": [
+   "total218"
+  ],
+  "result": "total218s"
+ },
+ {
+  "args": [
+   "total230"
+  ],
+  "result": "total230s"
+ },
+ {
+  "args": [
+   "total254"
+  ],
+  "result": "total254s"
+ },
+ {
+  "args": [
+   "total266"
+  ],
+  "result": "total266s"
+ },
+ {
+  "args": [
+   "total278"
+  ],
+  "result": "total278s"
+ },
+ {
+  "args": [
+   "total290"
+  ],
+  "result": "total290s"
+ },
+ {
+  "args": [
+   "address13"
+  ],
+  "result": "address13s"
+ },
+ {
+  "args": [
+   "address25"
+  ],
+  "result": "address25s"
+ },
+ {
+  "args": [
+   "address37"
+  ],
+  "result": "address37s"
+ },
+ {
+  "args": [
+   "address49"
+  ],
+  "result": "address49s"
+ },
+ {
+  "args": [
+   "address61"
+  ],
+  "result": "address61s"
+ },
+ {
+  "args": [
+   "address85"
+  ],
+  "result": "address85s"
+ },
+ {
+  "args": [
+   "address97"
+  ],
+  "result": "address97s"
+ },
+ {
+  "args": [
+   "addresses"
+  ],
+  "result": "addresseses"
+ },
+ {
+  "args": [
+   "amount105"
+  ],
+  "result": "amount105s"
+ },
+ {
+  "args": [
+   "amount129"
+  ],
+  "result": "amount129s"
+ },
+ {
+  "args": [
+   "amount141"
+  ],
+  "result": "amount141s"
+ },
+ {
+  "args": [
+   "amount153"
+  ],
+  "result": "amount153s"
+ },
+ {
+  "args": [
+   "amount165"
+  ],
+  "result": "amount165s"
+ },
+ {
+  "args": [
+   "amount189"
+  ],
+  "result": "amount189s"
+ },
+ {
+  "args": [
+   "amount201"
+  ],
+  "result": "amount201s"
+ },
+ {
+  "args": [
+   "amount213"
+  ],
+  "result": "amount213s"
+ },
+ {
+  "args": [
+   "amount225"
+  ],
+  "result": "amount225s"
+ },
+ {
+  "args": [
+   "amount237"
+  ],
+  "result": "amount237s"
+ },
+ {
+  "args": [
+   "amount261"
+  ],
+  "result": "amount261s"
+ },
+ {
+  "args": [
+   "amount273"
+  ],
+  "result": "amount273s"
+ },
+ {
+  "args": [
+   "amount285"
+  ],
+  "result": "amount285s"
+ },
+ {
+  "args": [
+   "amount297"
+  ],
+  "result": "amount297s"
+ },
+ {
+  "args": [
+   "created28"
+  ],
+  "result": "created28s"
+ },
+ {
+  "args": [
+   "created40"
+  ],
+  "result": "created40s"
+ },
+ {
+  "args": [
+   "created52"
+  ],
+  "result": "created52s"
+ },
+ {
+  "args": [
+   "created64"
+  ],
+  "result": "created64s"
+ },
+ {
+  "args": [
+   "created76"
+  ],
+  "result": "created76s"
+ },
+ {
+  "args": [
+   "customer0"
+  ],
+  "result": "customer0s"
+ },
+ {
+  "args": [
+   "status107"
+  ],
+  "result": "status107s"
+ },
+ {
+  "args": [
+   "status119"
+  ],
+  "result": "status119s"
+ },
+ {
+  "args": [
+   "status131"
+  ],
+  "result": "status131s"
+ },
+ {
+  "args": [
+   "status155"
+  ],
+  "result": "status155s"
+ },
+ {
+  "args": [
+   "status167"
+  ],
+  "result": "status167s"
+ },
+ {
+  "args": [
+   "status179"
+  ],
+  "result": "status179s"
+ },
+ {
+  "args": [
+   "status191"
+  ],
+  "result": "status191s"
+ },
+ {
+  "args": [
+   "status203"
+  ],
+  "result": "status203s"
+ },
+ {
+  "args": [
+   "status227"
+  ],
+  "result": "status227s"
+ },
+ {
+  "args": [
+   "status239"
+  ],
+  "result": "status239s"
+ },
+ {
+  "args": [
+   "status251"
+  ],
+  "result": "status251s"
+ },
+ {
+  "args": [
+   "status263"
+  ],
+  "result": "status263s"
+ },
+ {
+  "args": [
+   "status287"
+  ],
+  "result": "status287s"
+ },
+ {
+  "args": [
+   "status299"
+  ],
+  "result": "status299s"
+ },
+ {
+  "args": [
+   "address109"
+  ],
+  "result": "address109s"
+ },
+ {
+  "args": [
+   "address121"
+  ],
+  "result": "address121s"
+ },
+ {
+  "args": [
+   "address145"
+  ],
+  "result": "address145s"
+ },
+ {
+  "args": [
+   "address157"
+  ],
+  "result": "address157s"
+ },
+ {
+  "args": [
+   "address169"
+  ],
+  "result": "address169s"
+ },
+ {
+  "args": [
+   "address181"
+  ],
+  "result": "address181s"
+ },
+ {
+  "args": [
+   "address193"
+  ],
+  "result": "address193s"
+ },
+ {
+  "args": [
+   "address217"
+  ],
+  "result": "address217s"
+ },
+ {
+  "args": [
+   "address229"
+  ],
+  "result": "address229s"
+ },
+ {
+  "args": [
+   "address241"
+  ],
+  "result": "address241s"
+ },
+ {
+  "args": [
+   "address253"
+  ],
+  "result": "address253s"
+ },
+ {
+  "args": [
+   "address277"
+  ],
+  "result": "address277s"
+ },
+ {
+  "args": [
+   "address289"
+  ],
+  "result": "address289s"
+ },
+ {
+  "args": [
+   "created100"
+  ],
+  "result": "created100s"
+ },
+ {
+  "args": [
+   "created112"
+  ],
+  "result": "created112s"
+ },
+ {
+  "args": [
+   "created124"
+  ],
+  "result": "created124s"
+ },
+ {
+  "args": [
+   "created148"
+  ],
+  "result": "created148s"
+ },
+ {
+  "args": [
+   "created160"
+  ],
+  "result": "created160s"
+ },
+ {
+  "args": [
+   "created172"
+  ],
+  "result": "created172s"
+ },
+ {
+  "args": [
+   "created184"
+  ],
+  "result": "created184s"
+ },
+ {
+  "args": [
+   "created208"
+  ],
+  "result": "created208s"
+ },
+ {
+  "args": [
+   "created220"
+  ],
+  "result": "created220s"
+ },
+ {
+  "args": [
+   "created232"
+  ],
+  "result": "created232s"
+ },
+ {
+  "args": [
+   "created244"
+  ],
+  "result": "created244s"
+ },
+ {
+  "args": [
+   "created268"
+  ],
+  "result": "created268s"
+ },
+ {
+  "args": [
+   "created280"
+  ],
+  "result": "created280s"
+ },
+ {
+  "args": [
+   "created292"
+  ],
+  "result": "created292s"
+ },
+ {
+  "args": [
+   "customer12"
+  ],
+  "result": "customer12s"
+ },
+ {
+  "args": [
+   "customer24"
+  ],
+  "result": "customer24s"
+ },
+ {
+  "args": [
+   "customer48"
+  ],
+  "result": "customer48s"
+ },
+ {
+  "args": [
+   "customer60"
+  ],
+  "result": "customer60s"
+ },
+ {
+  "args": [
+   "customer72"
+  ],
+  "result": "customer72s"
+ },
+ {
+  "args": [
+   "customer84"
+  ],
+  "result": "customer84s"
+ },
+ {
+  "args": [
+   "customer108"
+  ],
+  "result": "customer108s"
+ },
+ {
+  "args": [
+   "customer120"
+  ],
+  "result": "customer120s"
+ },
+ {
+  "args": [
+   "customer132"
+  ],
+  "result": "customer132s"
+ },
+ {
+  "args": [
+   "customer144"
+  ],
+  "result": "customer144s"
+ },
+ {
+  "args": [
+   "customer156"
+  ],
+  "result": "customer156s"
+ },
+ {
+  "args": [
+   "customer180"
+  ],
+  "result": "customer180s"
+ },
+ {
+  "args": [
+   "customer192"
+  ],
+  "result": "customer192s"
+ },
+ {
+  "args": [
+   "customer204"
+  ],
+  "result": "customer204s"
+ },
+ {
+  "args": [
+   "customer216"
+  ],
+  "result": "customer216s"
+ },
+ {
+  "args": [
+   "customer240"
+  ],
+  "result": "customer240s"
+ },
+ {
+  "args": [
+   "customer252"
+  ],
+  "result": "customer252s"
+ },
+ {
+  "args": [
+   "customer264"
+  ],
+  "result": "customer264s"
+ },
+ {
+  "args": [
+   "customer276"
+  ],
+  "result": "customer276s"
+ },
+ {
+  "args": [
+   "data"
+  ],
+  "result": "data"
+ },
+ {
+  "args": [
+   "series"
+  ],
+  "result": "series"
+ },
+ {
+  "args": [
+   "person"
+  ],
+  "result": "people"
+ },
+ {
+  "args": [
+   "child"
+  ],
+  "result": "children"
+ },
+ {
+  "args": [
+   "box"
+  ],
+  "result": "boxes"
+ },
+ {
+  "args": [
+   "city"
+  ],
+  "result": "cities"
+ },
+ {
+  "args": [
+   "Category"
+  ],
+  "result": "Categories"
+ },
+ {
+  "args": [
+   "STATUS"
+  ],
+  "result": "STATUSES"
+ },
+ {
+  "args": [
+   "analysis"
+  ],
+  "result": "analysises"
+ },
+ {
+  "args": [
+   "index"
+  ],
+  "result": "indexes"
+ },
+ {
+  "args": [
+   "address"
+  ],
+  "result": "addresses"
+ },
+ {
+  "args": [
+   "bus"
+  ],
+  "result": "buses"
+ },
+ {
+  "args": [
+   "quiz"
+  ],
+  "result": "quizes"
+ }
+]

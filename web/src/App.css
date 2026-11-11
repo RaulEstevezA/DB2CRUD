@@ -1,0 +1,22 @@
+/* Page frame: the content grows so the footer always sits at the bottom of the window. The content has the
+   width of the widest workspace (several columns) and the same side padding as the header. */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.app__main {
+  flex: 1;
+  width: 100%;
+  max-width: var(--content-width-wide);
+  margin: 0 auto;
+  padding: var(--page-padding);
+}
+
+@media (max-width: 600px) {
+  .app__main {
+    padding: var(--page-padding-mobile);
+  }
+}

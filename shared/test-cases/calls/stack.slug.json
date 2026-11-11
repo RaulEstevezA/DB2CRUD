@@ -1,0 +1,92 @@
+[
+ {
+  "args": [
+   "library-api"
+  ],
+  "result": "library-api"
+ },
+ {
+  "args": [
+   "ShopApi"
+  ],
+  "result": "shop-api"
+ },
+ {
+  "args": [
+   "shop-api"
+  ],
+  "result": "shop-api"
+ },
+ {
+  "args": [
+   "My API"
+  ],
+  "result": "my-api"
+ },
+ {
+  "args": [
+   "api"
+  ],
+  "result": "api"
+ },
+ {
+  "args": [
+   "pet store"
+  ],
+  "result": "pet-store"
+ },
+ {
+  "args": [
+   "***"
+  ],
+  "result": ""
+ },
+ {
+  "args": [
+   " My Shop API!"
+  ],
+  "result": "my-shop-api"
+ },
+ {
+  "args": [
+   "catalog-api"
+  ],
+  "result": "catalog-api"
+ },
+ {
+  "args": [
+   "  Shop API v2 "
+  ],
+  "result": "shop-api-v2"
+ },
+ {
+  "args": [
+   "myCoolAPI"
+  ],
+  "result": "my-cool-api"
+ },
+ {
+  "args": [
+   "ÁrbolÑ"
+  ],
+  "result": "rbol"
+ },
+ {
+  "args": [
+   "---"
+  ],
+  "result": ""
+ },
+ {
+  "args": [
+   ""
+  ],
+  "result": ""
+ },
+ {
+  "args": [
+   "a__b"
+  ],
+  "result": "a-b"
+ }
+]

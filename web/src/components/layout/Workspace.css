@@ -1,0 +1,116 @@
+/* Workspace layout. Each pane has a fixed height so its own body scrolls, never the page.
+   Desktop: models and endpoints side by side (endpoints wider), the project under them at full width.
+   Below 1100px: one part at a time, chosen with the tabs, which are hidden on wider screens. */
+
+.workspace {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-cards);
+  margin-top: var(--space-16);
+}
+
+.workspace__top > * {
+  min-height: 0;
+}
+
+.workspace__top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: var(--gap-cards);
+  height: max(520px, calc(100vh - 140px));
+}
+
+.workspace__project {
+  display: flex;
+  height: max(480px, calc(100vh - 160px));
+}
+
+.workspace__project > .pane {
+  flex: 1;
+}
+
+.workspace__tabs {
+  display: none;
+}
+
+@media (max-width: 1100px) {
+  .workspace__tabs {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    display: flex;
+    gap: var(--space-4);
+    margin-top: var(--space-16);
+    padding: var(--space-4);
+    border: var(--border-line);
+    border-radius: var(--radius);
+    background: var(--surface);
+    overflow-x: auto;
+  }
+
+  .workspace__tab {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-6);
+    padding: var(--space-6) var(--space-8);
+    border: none;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--muted);
+    font-size: var(--font-small);
+    font-weight: var(--weight-medium);
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .workspace__tab[aria-selected='true'] {
+    background: var(--surface-raised);
+    color: var(--text);
+  }
+
+  /* Count of what waits for the user on that part */
+  .workspace__tab-badge {
+    min-width: 18px;
+    padding: 0 5px;
+    border-radius: var(--radius-pill);
+    background: var(--warning-soft);
+    color: var(--warning);
+    font-size: var(--font-caption);
+  }
+
+  .workspace__tab-badge--error {
+    background: var(--danger-soft);
+    color: var(--danger);
+  }
+
+  .workspace {
+    margin-top: var(--space-8);
+  }
+
+  /* Only the chosen part is shown */
+  .workspace > * {
+    display: none;
+  }
+
+  .workspace__top {
+    grid-template-columns: minmax(0, 1fr);
+    height: max(440px, calc(100dvh - 140px));
+  }
+
+  .workspace[data-part='models'] > .workspace__top,
+  .workspace[data-part='endpoints'] > .workspace__top {
+    display: grid;
+  }
+
+  .workspace[data-part='models'] > .workspace__top > :nth-child(2),
+  .workspace[data-part='endpoints'] > .workspace__top > :nth-child(1) {
+    display: none;
+  }
+
+  .workspace[data-part='project'] > .workspace__project {
+    display: flex;
+    height: max(440px, calc(100dvh - 140px));
+  }
+}
