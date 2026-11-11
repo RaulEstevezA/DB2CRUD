@@ -1,16 +1,20 @@
 /**
- * Built-in examples: invented models that show what DB2CRUD reads. They are also fixtures of the
- * interface tests.
+ * Built-in examples: invented models saved as Model2DB projects, built with Model2DB's own code (the copy in
+ * core/interop/model2db/vendor), each with a different output so the examples show different inputs. They are
+ * also fixtures of the interface tests.
  */
-import type { InputFormatId } from '../core/importers/types.ts'
+import { createProject } from '../core/interop/model2db/vendor/interop/project.ts'
+import { DEFAULT_NAMING } from '../core/interop/model2db/vendor/physical/naming.ts'
+import type { InputFormatId } from '../core/interop/model2db/vendor/parsers/types.ts'
+import type { Dialect } from '../core/interop/model2db/vendor/physical/types.ts'
 
 export type ExampleId = 'store' | 'library' | 'catalog'
 
 export interface Example {
   id: ExampleId
-  format: InputFormatId
   /** Name of the generated project */
   project: string
+  /** The model2db-project file, as Model2DB saves it */
   text: string
 }
 
@@ -139,10 +143,21 @@ public class Item {
 `
 
 /** Every example, in the order the interface shows them. */
+/** A Model2DB project of these models, with this output and engine, as Model2DB saves it. */
+function model2dbProject(format: InputFormatId, text: string, output: string, engine: Dialect): string {
+  const project = createProject(
+    { format, text },
+    { relational: null, document: null, keyvalue: null, widecolumn: null },
+    { output, naming: DEFAULT_NAMING, strings: 'auto', engine, migrations: false },
+    new Date('2026-11-11T12:00:00.000Z'),
+  )
+  return `${JSON.stringify(project, null, 2)}\n`
+}
+
 export const EXAMPLES: readonly Example[] = [
-  { id: 'store', format: 'typescript', project: 'shop-api', text: STORE },
-  { id: 'library', format: 'python', project: 'library-api', text: LIBRARY },
-  { id: 'catalog', format: 'java', project: 'catalog-api', text: CATALOG },
+  { id: 'store', project: 'shop-data', text: model2dbProject('typescript', STORE, 'postgresql', 'postgresql') },
+  { id: 'library', project: 'library-data', text: model2dbProject('python', LIBRARY, 'sqlalchemy', 'postgresql') },
+  { id: 'catalog', project: 'catalog-data', text: model2dbProject('java', CATALOG, 'mysql', 'mysql') },
 ]
 
 export function findExample(id: ExampleId): Example | undefined {
