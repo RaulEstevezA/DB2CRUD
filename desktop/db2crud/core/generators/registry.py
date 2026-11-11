@@ -4,8 +4,10 @@ from ..settings.settings import normalize_settings
 from .python.common.generator import python_generator
 from .python.django.index import DJANGO_ORM
 from .python.sqlalchemy.index import SQLALCHEMY_ORM
+from .typescript.common.generator import typescript_generator
+from .typescript.typeorm.index import TYPEORM_ORM
 
-GENERATORS = [python_generator(SQLALCHEMY_ORM), python_generator(DJANGO_ORM)]
+GENERATORS = [python_generator(SQLALCHEMY_ORM), python_generator(DJANGO_ORM), typescript_generator(TYPEORM_ORM)]
 
 
 def find_generator(settings: dict) -> dict | None:

@@ -29,6 +29,17 @@ STACKS = [
         "errors": ["exceptions"],
         "dtoKinds": ["pydantic", "dataclass"],
     },
+    {
+        "language": "typescript",
+        "orm": "typeorm",
+        "label": "TypeORM 0.3",
+        "databases": ["postgresql", "mysql", "mariadb", "sqlite"],
+        # Every database call in Node returns a promise
+        "execution": ["async"],
+        # TypeScript has no common result type: errors are thrown
+        "errors": ["exceptions"],
+        "dtoKinds": ["interface", "class"],
+    },
 ]
 
 DEFAULT_SETTINGS = {
