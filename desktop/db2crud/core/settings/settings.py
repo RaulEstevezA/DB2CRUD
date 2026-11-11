@@ -19,6 +19,16 @@ STACKS = [
         "errors": ["exceptions"],
         "dtoKinds": ["pydantic", "dataclass"],
     },
+    {
+        "language": "python",
+        "orm": "django",
+        "label": "Django 5.2",
+        "databases": ["postgresql", "mysql", "mariadb", "sqlite"],
+        # Django's asynchronous ORM cannot hold a transaction (transaction.atomic is synchronous only)
+        "execution": ["sync"],
+        "errors": ["exceptions"],
+        "dtoKinds": ["pydantic", "dataclass"],
+    },
 ]
 
 DEFAULT_SETTINGS = {

@@ -2,9 +2,10 @@
 
 from ..settings.settings import normalize_settings
 from .python.common.generator import python_generator
+from .python.django.index import DJANGO_ORM
 from .python.sqlalchemy.index import SQLALCHEMY_ORM
 
-GENERATORS = [python_generator(SQLALCHEMY_ORM)]
+GENERATORS = [python_generator(SQLALCHEMY_ORM), python_generator(DJANGO_ORM)]
 
 
 def find_generator(settings: dict) -> dict | None:
