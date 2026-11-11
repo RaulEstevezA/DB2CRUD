@@ -27,81 +27,90 @@ def _plural(count, one: str, many: str) -> str:
     return one if count == 1 else many
 
 
-_JSON_DETAIL_EN = {
-    "json.unexpectedEnd": "The JSON ends too early: something is not closed.",
-    "json.unexpectedCharacter": "Unexpected character.",
-    "json.trailingComma": "Comma before the end of a list or object: remove it.",
-    "json.invalidNumber": "Invalid number: JSON does not allow leading zeros or a dot without decimals.",
-    "json.invalidEscape": "Unknown escape sequence.",
-    "json.controlCharacter": "Line break or tab inside a text: write it as \\n or \\t.",
-    "json.trailingContent": "There is more text after the end of the JSON.",
-    "json.tooDeep": "The JSON is nested too deeply.",
-    "modelSchema": "This model schema is not valid.",
+_CHECKS_EN = {
+    "validate": "the values",
+    "unique": "unique values",
+    "parentExists": "the rows it points to",
+    "version": "the version",
+    "children": "rows that point here",
 }
-
-_JSON_DETAIL_ES = {
-    "json.unexpectedEnd": "El JSON termina antes de tiempo: algo no está cerrado.",
-    "json.unexpectedCharacter": "Carácter inesperado.",
-    "json.trailingComma": "Coma antes del final de una lista u objeto: quítala.",
-    "json.invalidNumber": "Número no válido: JSON no admite ceros a la izquierda ni un punto sin decimales.",
-    "json.invalidEscape": "Secuencia de escape desconocida.",
-    "json.controlCharacter": "Salto de línea o tabulador dentro de un texto: escríbelo como \\n o \\t.",
-    "json.trailingContent": "Hay más texto después del final del JSON.",
-    "json.tooDeep": "El JSON tiene demasiados niveles.",
-    "modelSchema": "Este esquema de modelos no es válido.",
+_CHECKS_ES = {
+    "validate": "los valores",
+    "unique": "los valores únicos",
+    "parentExists": "las filas a las que apunta",
+    "version": "la versión",
+    "children": "las filas que apuntan aquí",
 }
 
 
-def _parse_issue_en(issue: dict) -> str:
-    params = issue.get("params")
-    code = issue["code"]
-    if code == "syntax":
-        if params and params.get("detail"):
-            detail = _JSON_DETAIL_EN.get(str(params["detail"]), str(params["detail"]))
-            return detail + (f" ({_p(params, 'path')})" if params.get("path") else "")
-        if params and params.get("message"):
-            return f"It cannot be read as this format: {_p(params, 'message')}"
-        return "It cannot be read as this format."
-    return {
-        "empty": "There is nothing to read.",
-        "unexpectedToken": f"Unexpected “{_p(params, 'token')}”.",
-        "unterminatedString": "A text is not closed.",
-        "unterminatedComment": "A comment is not closed.",
-        "unclosedBlock": "A block is not closed: a “}” is missing.",
-        "noModels": "No model was found. Check the format or paste the declarations.",
-        "unknownType": f"“{_p(params, 'type')}” is not declared here: you will choose its type.",
-        "mixedTypes": f"“{_p(params, 'field')}” has values of different types.",
-        "duplicateField": f"“{_p(params, 'field')}” is declared twice.",
-        "duplicateModel": f"“{_p(params, 'model')}” is declared twice.",
-        "emptyModel": f"“{_p(params, 'model')}” has no fields.",
-        "truncatedRows": f"Only the first {_p(params, 'count')} rows were read.",
-    }.get(code, code)
+def _operation_en(operation: dict) -> str:
+    parts = []
+    if operation["checks"]:
+        parts.append("checks " + ", ".join(_CHECKS_EN[check] for check in operation["checks"]))
+    if operation["errors"]:
+        parts.append("raises " + ", ".join(operation["errors"]))
+    return " · ".join(parts)
 
 
-def _parse_issue_es(issue: dict) -> str:
-    params = issue.get("params")
-    code = issue["code"]
-    if code == "syntax":
-        if params and params.get("detail"):
-            detail = _JSON_DETAIL_ES.get(str(params["detail"]), str(params["detail"]))
-            return detail + (f" ({_p(params, 'path')})" if params.get("path") else "")
-        if params and params.get("message"):
-            return f"No se puede leer con este formato: {_p(params, 'message')}"
-        return "No se puede leer con este formato."
+def _operation_es(operation: dict) -> str:
+    parts = []
+    if operation["checks"]:
+        parts.append("comprueba " + ", ".join(_CHECKS_ES[check] for check in operation["checks"]))
+    if operation["errors"]:
+        parts.append("lanza " + ", ".join(operation["errors"]))
+    return " · ".join(parts)
+
+
+def _query_en(kind: str, columns: list[str]) -> str:
+    joined = ", ".join(columns)
     return {
-        "empty": "No hay nada que leer.",
-        "unexpectedToken": f"No se esperaba «{_p(params, 'token')}».",
-        "unterminatedString": "Hay un texto sin cerrar.",
-        "unterminatedComment": "Hay un comentario sin cerrar.",
-        "unclosedBlock": "Hay un bloque sin cerrar: falta una «}».",
-        "noModels": "No se ha encontrado ningún modelo. Revisa el formato o pega las declaraciones.",
-        "unknownType": f"«{_p(params, 'type')}» no está declarado aquí: elegirás su tipo.",
-        "mixedTypes": f"«{_p(params, 'field')}» tiene valores de tipos distintos.",
-        "duplicateField": f"«{_p(params, 'field')}» está declarado dos veces.",
-        "duplicateModel": f"«{_p(params, 'model')}» está declarado dos veces.",
-        "emptyModel": f"«{_p(params, 'model')}» no tiene campos.",
-        "truncatedRows": f"Solo se han leído las primeras {_p(params, 'count')} filas.",
-    }.get(code, code)
+        "getByKey": f"one row by its key ({joined})",
+        "findByUnique": f"one row by {joined}",
+        "findAllBy": f"rows by {joined}",
+        "listByParent": f"rows that point to a {joined}",
+        "list": "every row",
+        "insert": "stores a new row",
+        "update": "stores changes",
+        "delete": "removes a row",
+    }[kind]
+
+
+def _query_es(kind: str, columns: list[str]) -> str:
+    joined = ", ".join(columns)
+    return {
+        "getByKey": f"una fila por su clave ({joined})",
+        "findByUnique": f"una fila por {joined}",
+        "findAllBy": f"filas por {joined}",
+        "listByParent": f"filas que apuntan a un {joined}",
+        "list": "todas las filas",
+        "insert": "guarda una fila nueva",
+        "update": "guarda cambios",
+        "delete": "elimina una fila",
+    }[kind]
+
+
+def _read_error_en(error: str, path: str | None = None) -> str:
+    return {
+        "notJson": "It is not JSON: open the .model2db.json file Model2DB saves.",
+        "notProject": "It is not a Model2DB project.",
+        "newerVersion": "The project was saved by a newer version of Model2DB.",
+        "invalid": f"The project is damaged{f' ({path})' if path else ''}.",
+        "unreadableInput": "The models inside the project cannot be read.",
+        "noModels": "The project has no models.",
+        "notRelational": "The project is for a database without tables (MongoDB, Redis, Cassandra…): not supported yet.",
+    }[error]
+
+
+def _read_error_es(error: str, path: str | None = None) -> str:
+    return {
+        "notJson": "No es JSON: abre el archivo .model2db.json que guarda Model2DB.",
+        "notProject": "No es un proyecto de Model2DB.",
+        "newerVersion": "El proyecto se guardó con una versión más reciente de Model2DB.",
+        "invalid": f"El proyecto está dañado{f' ({path})' if path else ''}.",
+        "unreadableInput": "No se pueden leer los modelos del proyecto.",
+        "noModels": "El proyecto no tiene modelos.",
+        "notRelational": "El proyecto es para una base de datos sin tablas (MongoDB, Redis, Cassandra…): todavía no se admite.",
+    }[error]
 
 
 def _reason_en(reason: dict) -> str:
@@ -161,37 +170,119 @@ EN = SimpleNamespace(
     "application models. DB2CRUD proposes the repositories, the services and any missing ORM entities, explains "
     "each proposal and lets you change it. Save the code with its tests.",
     developed_by="Developed by",
-    workspace_parts={"models": "Models"},
+    workspace_parts={"database": "Database", "design": "Design", "project": "Project"},
     examples_label="Try an example",
-    examples={"store": "Online shop", "library": "Library", "catalog": "JPA catalogue"},
+    examples={"store": "Online shop", "library": "Library", "catalog": "Catalogue"},
     example_descriptions={
-        "store": "TypeScript interfaces: references, value objects, lists, an enum and a password",
-        "library": "Pydantic models with lengths, ranges, a pattern and UUID keys",
-        "catalog": "JPA entities with Bean Validation and a category tree",
+        "store": "Model2DB project for PostgreSQL: customers, products and orders with a password and an enum",
+        "library": "Model2DB project with SQLAlchemy entities: authors and books with UUID keys",
+        "catalog": "Model2DB project for MySQL: a catalogue of items in a category tree",
     },
-    confirm_replace="Your current models and the decisions made on them will be replaced. Continue?",
-    input_label="Models to analyze",
-    input_placeholder="Paste classes, DTOs, JSON or a schema here, or drop a file…",
+    confirm_replace="Your current database and the decisions made on it will be replaced. Continue?",
+    input_label="Database to read",
+    input_placeholder="Paste a Model2DB project (the .model2db.json file Model2DB saves) or drop it here…",
     editor_keys="Tab indents. To leave the editor with the keyboard, press Escape and then Tab.",
     open_file="Open",
-    open_dialog="Open models",
-    model_files="Models",
+    open_dialog="Open a Model2DB project",
+    project_files="Model2DB projects",
     all_files="All files",
     clear="Clear",
-    format_label="Format",
-    format_auto=lambda detected: f"Detect ({detected})" if detected else "Detect automatically",
     file_too_large=lambda name: f"“{name}” is larger than 10 MB.",
     file_error=lambda name: f"“{name}” could not be read.",
-    received_from=lambda tool: f"Models received from {tool}.",
-    input_empty="Paste or open your models to start.",
-    undetected="The format could not be detected: choose it in the list.",
-    input_summary=lambda format_label, models, fields: (
-        f"{format_label} · {_en_number(models)} "
-        f"{_plural(models, 'model', 'models')} · {_en_number(fields)} {_plural(fields, 'field', 'fields')}"
-    ),
+    input_empty="Open or paste a Model2DB project to start. SQL DDL and ORM code are coming.",
     warnings_count=lambda count: f"{_en_number(count)} {_plural(count, 'note', 'notes')}",
-    error_position=lambda line, column: f"Line {_en_number(line)}, column {_en_number(column)}",
-    parse_issue=_parse_issue_en,
+    read_error=_read_error_en,
+    database_summary=lambda source, dialect, tables, columns: (
+        f"Model2DB ({source}) · {dialect or '?'} · {_en_number(tables)} {_plural(tables, 'table', 'tables')} · "
+        f"{_en_number(columns)} {_plural(columns, 'column', 'columns')}"
+    ),
+    undo="Undo",
+    redo="Redo",
+    reset="Reset",
+    undo_title="Undo (Ctrl/Cmd+Z)",
+    redo_title="Redo (Ctrl/Cmd+Shift+Z)",
+    reset_title="Back to the proposal: every choice you made is discarded",
+    confirm_reset="Every choice you made on this design will be discarded. Continue?",
+    design_empty="The repositories and services proposed for each table will appear here once the database is read.",
+    design_summary=lambda repositories, services: (
+        f"{_en_number(repositories)} {_plural(repositories, 'repository', 'repositories')} · "
+        f"{_en_number(services)} {_plural(services, 'service', 'services')}"
+    ),
+    pending_count=lambda count: f"{_en_number(count)} {_plural(count, 'item', 'items')} to review",
+    policy_kinds={
+        "role": "Table",
+        "delete": "Delete",
+        "concurrency": "Concurrent changes",
+        "children": "Rows that point here",
+        "hidden": "Never returned",
+    },
+    policy_subject=lambda table, kind: f"{table}: {kind.lower()}",
+    item_subject=lambda table, kind, item: f"{table}: {kind if item == kind else item}",
+    roles={"entity": "Read and written", "join": "Links two tables", "readOnly": "Read only"},
+    delete_hard="Remove the row",
+    delete_soft=lambda column: f"Mark it in “{column}”",
+    concurrency_none="Last change wins",
+    concurrency_version=lambda column: f"Check “{column}”",
+    children_policies={"block": "Refuse the delete", "deleteFirst": "Delete them first"},
+    hidden_none="Nothing hidden",
+    entity_missing="entity written",
+    queries_title="Repository",
+    query_description=_query_en,
+    operation_description=_operation_en,
+    project_name="Project name",
+    stack_label="Language and ORM",
+    languages={"python": "Python"},
+    database_label="Database",
+    databases={
+        "postgresql": "PostgreSQL",
+        "mysql": "MySQL",
+        "mariadb": "MariaDB",
+        "sqlite": "SQLite",
+        "sqlserver": "SQL Server",
+        "oracle": "Oracle",
+    },
+    execution_label="Code",
+    executions={"sync": "Synchronous", "async": "Asynchronous"},
+    entities_label="Entities",
+    entities_modes={"missing": "Only the missing ones", "all": "All, written again", "none": "None: import them"},
+    entities_module_label="Module of the entities",
+    services_label="Services",
+    yes="Yes",
+    no="No",
+    service_types_label="Services take and return",
+    service_types={"entities": "The entities", "dtos": "DTOs"},
+    dto_kind_label="DTOs as",
+    dto_kinds={"pydantic": "Pydantic models", "dataclass": "Dataclasses"},
+    transactions_label="Transactions",
+    transactions={"operation": "One per operation", "caller": "The caller’s", "repository": "One per write"},
+    errors_label="Errors",
+    error_styles={"exceptions": "Exceptions", "results": "Result values"},
+    paging_label="Lists",
+    pagings={"offset": "Pages (offset)", "cursor": "Pages (cursor)", "none": "Every row"},
+    architecture_label="Folders",
+    architectures={"layer": "By layer", "table": "By table"},
+    verbs_label="Reads named",
+    verbs={"getFind": "get / find", "get": "get", "find": "find"},
+    interfaces_label="Repository interfaces",
+    memory_label="In-memory repositories",
+    tests_label="Tests",
+    tests_modes={
+        "all": "Services and repositories",
+        "services": "Services",
+        "repositories": "Repositories",
+        "none": "None",
+    },
+    stack_verified="Verified: a project with this language, ORM, database and code has passed its tests in Docker.",
+    stack_not_verified="Not verified yet with this database and code: review it before using it.",
+    project_empty="The files of the generated project will appear here.",
+    file_tree_label="Generated files",
+    file_label=lambda path: f"Content of {path}",
+    copy="Copy",
+    copied="Copied",
+    save_file="Save file",
+    save_zip=lambda count: f"Save .zip ({_en_number(count)} {_plural(count, 'file', 'files')})",
+    saved=lambda name: f"Saved as “{name}”.",
+    todo_count=lambda count: f"{_en_number(count)} TODO {_plural(count, 'mark', 'marks')} left for you",
     status={
         "exact": "Exact",
         "high": "High",
@@ -213,37 +304,123 @@ ES = SimpleNamespace(
     "tienes, tus modelos de aplicación. DB2CRUD propone los repositorios, los servicios y las entidades ORM que "
     "falten, explica cada propuesta y te deja cambiarla. Guarda el código con sus pruebas.",
     developed_by="Desarrollado por",
-    workspace_parts={"models": "Modelos"},
+    workspace_parts={"database": "Base de datos", "design": "Diseño", "project": "Proyecto"},
     examples_label="Prueba un ejemplo",
-    examples={"store": "Tienda online", "library": "Biblioteca", "catalog": "Catálogo JPA"},
+    examples={"store": "Tienda online", "library": "Biblioteca", "catalog": "Catálogo"},
     example_descriptions={
-        "store": "Interfaces de TypeScript: referencias, objetos de valor, listas, un enum y una contraseña",
-        "library": "Modelos de Pydantic con longitudes, rangos, un patrón y claves UUID",
-        "catalog": "Entidades JPA con Bean Validation y un árbol de categorías",
+        "store": "Proyecto de Model2DB para PostgreSQL: clientes, productos y pedidos con una contraseña y un enum",
+        "library": "Proyecto de Model2DB con entidades de SQLAlchemy: autores y libros con claves UUID",
+        "catalog": "Proyecto de Model2DB para MySQL: un catálogo de artículos en un árbol de categorías",
     },
-    confirm_replace="Se sustituirán tus modelos actuales y las decisiones tomadas sobre ellos. ¿Continuar?",
-    input_label="Modelos para analizar",
-    input_placeholder="Pega aquí clases, DTOs, JSON o un esquema, o suelta un archivo…",
+    confirm_replace="Se sustituirán tu base de datos actual y las decisiones tomadas sobre ella. ¿Continuar?",
+    input_label="Base de datos que leer",
+    input_placeholder="Pega un proyecto de Model2DB (el archivo .model2db.json que guarda Model2DB) o suéltalo aquí…",
     editor_keys="Tab sangra. Para salir del editor con el teclado, pulsa Escape y después Tab.",
     open_file="Abrir",
-    open_dialog="Abrir modelos",
-    model_files="Modelos",
+    open_dialog="Abrir un proyecto de Model2DB",
+    project_files="Proyectos de Model2DB",
     all_files="Todos los archivos",
     clear="Limpiar",
-    format_label="Formato",
-    format_auto=lambda detected: f"Detectar ({detected})" if detected else "Detectar automáticamente",
-    file_too_large=lambda name: f"«{name}» supera los 10 MB.",
-    file_error=lambda name: f"«{name}» no se ha podido leer.",
-    received_from=lambda tool: f"Modelos recibidos de {tool}.",
-    input_empty="Pega o abre tus modelos para empezar.",
-    undetected="No se ha podido detectar el formato: elígelo en la lista.",
-    input_summary=lambda format_label, models, fields: (
-        f"{format_label} · {_es_number(models)} "
-        f"{_plural(models, 'modelo', 'modelos')} · {_es_number(fields)} {_plural(fields, 'campo', 'campos')}"
-    ),
+    file_too_large=lambda name: f"«{name}» ocupa más de 10 MB.",
+    file_error=lambda name: f"No se ha podido leer «{name}».",
+    input_empty="Abre o pega un proyecto de Model2DB para empezar. El DDL de SQL y el código ORM llegarán después.",
     warnings_count=lambda count: f"{_es_number(count)} {_plural(count, 'nota', 'notas')}",
-    error_position=lambda line, column: f"Línea {_es_number(line)}, columna {_es_number(column)}",
-    parse_issue=_parse_issue_es,
+    read_error=_read_error_es,
+    database_summary=lambda source, dialect, tables, columns: (
+        f"Model2DB ({source}) · {dialect or '?'} · {_es_number(tables)} {_plural(tables, 'tabla', 'tablas')} · "
+        f"{_es_number(columns)} {_plural(columns, 'columna', 'columnas')}"
+    ),
+    undo="Deshacer",
+    redo="Rehacer",
+    reset="Restablecer",
+    undo_title="Deshacer (Ctrl/Cmd+Z)",
+    redo_title="Rehacer (Ctrl/Cmd+Mayús+Z)",
+    reset_title="Volver a la propuesta: se descartan todas tus elecciones",
+    confirm_reset="Se descartarán todas las elecciones que has hecho en este diseño. ¿Continuar?",
+    design_empty="Aquí aparecerán los repositorios y servicios propuestos para cada tabla en cuanto se lea la base de datos.",
+    design_summary=lambda repositories, services: (
+        f"{_es_number(repositories)} {_plural(repositories, 'repositorio', 'repositorios')} · "
+        f"{_es_number(services)} {_plural(services, 'servicio', 'servicios')}"
+    ),
+    pending_count=lambda count: f"{_es_number(count)} {_plural(count, 'elemento', 'elementos')} por revisar",
+    policy_kinds={
+        "role": "Tabla",
+        "delete": "Borrado",
+        "concurrency": "Cambios a la vez",
+        "children": "Filas que apuntan aquí",
+        "hidden": "Nunca se devuelve",
+    },
+    policy_subject=lambda table, kind: f"{table}: {kind.lower()}",
+    item_subject=lambda table, kind, item: f"{table}: {kind if item == kind else item}",
+    roles={"entity": "Se lee y se escribe", "join": "Relaciona dos tablas", "readOnly": "Solo lectura"},
+    delete_hard="Eliminar la fila",
+    delete_soft=lambda column: f"Marcarla en «{column}»",
+    concurrency_none="Gana el último cambio",
+    concurrency_version=lambda column: f"Comprobar «{column}»",
+    children_policies={"block": "Rechazar el borrado", "deleteFirst": "Borrarlas antes"},
+    hidden_none="Nada oculto",
+    entity_missing="entidad generada",
+    queries_title="Repositorio",
+    query_description=_query_es,
+    operation_description=_operation_es,
+    project_name="Nombre del proyecto",
+    stack_label="Lenguaje y ORM",
+    languages={"python": "Python"},
+    database_label="Base de datos",
+    databases={
+        "postgresql": "PostgreSQL",
+        "mysql": "MySQL",
+        "mariadb": "MariaDB",
+        "sqlite": "SQLite",
+        "sqlserver": "SQL Server",
+        "oracle": "Oracle",
+    },
+    execution_label="Código",
+    executions={"sync": "Síncrono", "async": "Asíncrono"},
+    entities_label="Entidades",
+    entities_modes={
+        "missing": "Solo las que faltan",
+        "all": "Todas, escritas de nuevo",
+        "none": "Ninguna: se importan",
+    },
+    entities_module_label="Módulo de las entidades",
+    services_label="Servicios",
+    yes="Sí",
+    no="No",
+    service_types_label="Los servicios reciben y devuelven",
+    service_types={"entities": "Las entidades", "dtos": "DTOs"},
+    dto_kind_label="DTOs como",
+    dto_kinds={"pydantic": "Modelos de Pydantic", "dataclass": "Dataclasses"},
+    transactions_label="Transacciones",
+    transactions={"operation": "Una por operación", "caller": "Las de quien llama", "repository": "Una por escritura"},
+    errors_label="Errores",
+    error_styles={"exceptions": "Excepciones", "results": "Valores de resultado"},
+    paging_label="Listas",
+    pagings={"offset": "Páginas (desplazamiento)", "cursor": "Páginas (cursor)", "none": "Todas las filas"},
+    architecture_label="Carpetas",
+    architectures={"layer": "Por capa", "table": "Por tabla"},
+    verbs_label="Lecturas con",
+    verbs={"getFind": "get / find", "get": "get", "find": "find"},
+    interfaces_label="Interfaces de repositorio",
+    memory_label="Repositorios en memoria",
+    tests_label="Pruebas",
+    tests_modes={
+        "all": "Servicios y repositorios",
+        "services": "Servicios",
+        "repositories": "Repositorios",
+        "none": "Ninguna",
+    },
+    stack_verified="Verificado: un proyecto con este lenguaje, ORM, base de datos y código ha pasado sus pruebas en Docker.",
+    stack_not_verified="Todavía sin verificar con esta base de datos y este código: revísalo antes de usarlo.",
+    project_empty="Aquí aparecerán los archivos del proyecto generado.",
+    file_tree_label="Archivos generados",
+    file_label=lambda path: f"Contenido de {path}",
+    copy="Copiar",
+    copied="Copiado",
+    save_file="Guardar archivo",
+    save_zip=lambda count: f"Guardar .zip ({_es_number(count)} {_plural(count, 'archivo', 'archivos')})",
+    saved=lambda name: f"Guardado como «{name}».",
+    todo_count=lambda count: f"{_es_number(count)} {_plural(count, 'marca', 'marcas')} TODO para ti",
     status={
         "exact": "Exacta",
         "high": "Alta",

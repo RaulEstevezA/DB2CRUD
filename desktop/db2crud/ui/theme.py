@@ -137,6 +137,8 @@ QPushButton[lang="true"]:checked {{
     font-weight: 700;
     border-radius: 4px;
 }}
+QFrame#reviewBox {{ background: {WARNING_SOFT}; border: 1px solid {WARNING}; border-radius: 6px; }}
+QFrame#reviewBox QPushButton[link="true"] {{ color: {WARNING}; font-family: "Menlo", "Consolas", monospace; }}
 QPushButton[link="true"] {{ background: transparent; border: none; color: {ACCENT}; padding: 0; }}
 QPushButton[link="true"]:hover {{ text-decoration: underline; }}
 QComboBox, QLineEdit {{

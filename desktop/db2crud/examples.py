@@ -1,4 +1,11 @@
-"""Built-in examples: invented models that show what the tool reads. The same as web/src/examples/index.ts."""
+"""Built-in examples: invented models saved as Model2DB projects, built with Model2DB's own code. The same as
+web/src/examples/index.ts, character by character."""
+
+import json
+from datetime import UTC, datetime
+
+from .core.interop.model2db.vendor.interop.project import create_project
+from .core.interop.model2db.vendor.physical.naming import DEFAULT_NAMING
 
 STORE = """\
 // Online shop: customers, products and orders
@@ -127,11 +134,27 @@ public class Item {
 }
 """
 
+
+def _model2db_project(format_id: str, text: str, output: str, engine: str) -> str:
+    """A Model2DB project of these models, with this output and engine, as Model2DB saves it."""
+    project = create_project(
+        {"format": format_id, "text": text},
+        {"relational": None, "document": None, "keyvalue": None, "widecolumn": None},
+        {"output": output, "naming": DEFAULT_NAMING, "strings": "auto", "engine": engine, "migrations": False},
+        datetime(2026, 11, 11, 12, 0, 0, tzinfo=UTC),
+    )
+    return json.dumps(project, indent=2, ensure_ascii=False) + "\n"
+
+
 # Every example, in the order the interface shows them
 EXAMPLES = (
-    {"id": "store", "format": "typescript", "project": "shop-api", "text": STORE},
-    {"id": "library", "format": "python", "project": "library-api", "text": LIBRARY},
-    {"id": "catalog", "format": "java", "project": "catalog-api", "text": CATALOG},
+    {"id": "store", "project": "shop-data", "text": _model2db_project("typescript", STORE, "postgresql", "postgresql")},
+    {
+        "id": "library",
+        "project": "library-data",
+        "text": _model2db_project("python", LIBRARY, "sqlalchemy", "postgresql"),
+    },
+    {"id": "catalog", "project": "catalog-data", "text": _model2db_project("java", CATALOG, "mysql", "mysql")},
 )
 
 

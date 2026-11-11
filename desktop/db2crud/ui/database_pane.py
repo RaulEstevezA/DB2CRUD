@@ -1,20 +1,19 @@
-"""The models to make an API of: editor, open, clear, format and the reading status. Read on this computer and never
-sent anywhere. Mirrors web/src/components/models/ModelsPane.tsx."""
+"""The database the code is generated for: editor, open, clear and the reading status. Read on this computer and never
+sent anywhere. Today it reads Model2DB projects. Mirrors web/src/components/database/DatabasePane.tsx."""
 
 from pathlib import Path
 
 from PySide6.QtCore import Qt, QTimer, Signal
-from PySide6.QtWidgets import QComboBox, QFileDialog, QHBoxLayout, QLabel, QPushButton
+from PySide6.QtWidgets import QFileDialog, QLabel, QPushButton
 
-from ..core.importers.registry import PARSERS, accepted_extensions, detect_format, find_parser
 from ..core.js import trim
-from ..workspace import field_count
+from ..workspace import column_count
 from .code_view import CodeView
 from .i18n import I18n
-from .pane import Pane, section
+from .pane import Pane
 from .session import Session
 
-# Far above any model or example document; avoids freezing the window with a huge file opened by mistake
+# Far above any project; avoids freezing the window with a huge file opened by mistake
 MAX_FILE_SIZE = 10 * 1024 * 1024
 
 
@@ -44,7 +43,7 @@ class InputEditor(CodeView):
             super().dropEvent(event)
 
 
-class ModelsPane(Pane):
+class DatabasePane(Pane):
     def __init__(self, i18n: I18n, session: Session):
         super().__init__()
         self._i18n = i18n
@@ -59,19 +58,7 @@ class ModelsPane(Pane):
         for button in (self.open_button, self.clear_button):
             self.header.addWidget(button)
 
-        settings = section()
-        row = QHBoxLayout(settings)
-        row.setContentsMargins(14, 0, 14, 10)
-        self.format_label = QLabel()
-        self.format_label.setProperty("role", "fieldLabel")
-        self.format = QComboBox()
-        self.format.currentIndexChanged.connect(self._format_chosen)
-        self.format_label.setBuddy(self.format)
-        row.addWidget(self.format_label)
-        row.addWidget(self.format, 1)
-        self.body.addWidget(settings)
-
-        self.editor = InputEditor("text")
+        self.editor = InputEditor("json")
         self.editor.file_dropped.connect(self.open_file)
         self.editor.textChanged.connect(self._typed)
         self.body.addWidget(self.editor, 1)
@@ -94,10 +81,7 @@ class ModelsPane(Pane):
 
     def choose_file(self) -> None:
         t = self._i18n.t
-        patterns = " ".join(f"*{extension}" for extension in accepted_extensions())
-        path, _ = QFileDialog.getOpenFileName(
-            self, t.open_dialog, "", f"{t.model_files} ({patterns});;{t.all_files} (*)"
-        )
+        path, _ = QFileDialog.getOpenFileName(self, t.open_dialog, "", f"{t.project_files} (*.json);;{t.all_files} (*)")
         if path:
             self.open_file(path)
 
@@ -114,7 +98,7 @@ class ModelsPane(Pane):
             self._show_file_error(t.file_error(file.name))
             return
         self._file_error = None
-        self._session.set_input({"text": text, "format": None, "fileName": file.name})
+        self._session.set_input({"text": text, "fileName": file.name})
 
     def set_text(self, text: str) -> None:
         self.editor.setPlainText(text)
@@ -126,7 +110,7 @@ class ModelsPane(Pane):
 
     def _clear(self) -> None:
         self._file_error = None
-        self._session.set_input({"text": "", "format": None})
+        self._session.set_input({"text": ""})
 
     def _typed(self) -> None:
         if not self._updating:
@@ -137,12 +121,7 @@ class ModelsPane(Pane):
         self._timer.stop()
         text = self.editor.toPlainText()
         if text != self._session.input["text"]:
-            self._session.change_input(text=text, receivedFrom=None)
-
-    def _format_chosen(self) -> None:
-        if not self._updating:
-            self._commit_text()
-            self._session.change_input(format=self.format.currentData())
+            self._session.set_input({"text": text})
 
     # Display
 
@@ -152,11 +131,10 @@ class ModelsPane(Pane):
         state = session.input
         read = session.read
         self._updating = True
-        self.title.setText(t.workspace_parts["models"])
+        self.title.setText(t.workspace_parts["database"])
         self.open_button.setText(t.open_file)
         self.clear_button.setText(t.clear)
         self.clear_button.setEnabled(state["text"] != "")
-        self.format_label.setText(t.format_label)
         self.editor.setPlaceholderText(t.input_placeholder)
         self.editor.setAccessibleName(t.input_label)
         self.editor.setAccessibleDescription(t.editor_keys)
@@ -164,44 +142,23 @@ class ModelsPane(Pane):
         if self.editor.toPlainText() != state["text"] and not self._timer.isActive():
             self.editor.setPlainText(state["text"])
 
-        detected = detect_format(state["text"], state.get("fileName")) if trim(state["text"]) else None
-        detected_parser = find_parser(detected) if detected else None
-        self.format.clear()
-        self.format.addItem(t.format_auto(detected_parser.label if detected_parser else detected), None)
-        for parser in PARSERS:
-            self.format.addItem(parser.label, parser.id)
-        self.format.setCurrentIndex(max(0, self.format.findData(state["format"])) if state["format"] else 0)
-
-        outcome = read["outcome"]
-        parser = find_parser(read["format"]) if read["format"] else None
-        self.editor.set_language(parser.editor_language if parser else "text")
         error_line = None
         tooltip = ""
         if self._file_error:
             text, role = self._file_error, "error"
-        elif trim(state["text"]) == "":
+        elif trim(state["text"]) == "" or read is None:
             text, role = t.input_empty, "muted"
-        elif not read["format"]:
-            text, role = t.undetected, "warning"
-        elif outcome and not outcome["ok"]:
-            error = outcome["error"]
-            prefix = f"{t.error_position(error['line'], error.get('column', 1))} · " if "line" in error else ""
-            text, role = prefix + t.parse_issue(error), "error"
-            error_line = error.get("line")
-        elif outcome:
-            schema = outcome["schema"]
-            text = t.input_summary(
-                parser.label if parser else read["format"], len(schema["models"]), field_count(schema)
-            )
-            if state.get("receivedFrom"):
-                text = f"{t.received_from(state['receivedFrom'])} {text}"
-            warnings = outcome["warnings"]
-            if warnings:
-                text += f" · {t.warnings_count(len(warnings))}"
-            tooltip = "\n".join(t.parse_issue(warning) for warning in warnings)
-            role = "success"
+        elif not read["ok"]:
+            text, role = t.read_error(read["error"], read.get("path")), "error"
         else:
-            text, role = "", "muted"
+            schema = read["schema"]
+            text = t.database_summary(
+                schema["source"]["format"], schema["dialect"], len(schema["tables"]), column_count(schema)
+            )
+            if schema["notes"]:
+                text += f" · {t.warnings_count(len(schema['notes']))}"
+            tooltip = "\n".join(note["code"] for note in schema["notes"])
+            role = "success"
         self.editor.highlight_error_line(error_line)
         self.status.setText(text)
         self.status.setToolTip(tooltip)
