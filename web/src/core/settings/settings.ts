@@ -9,8 +9,8 @@
  */
 import type { Dialect } from '../schema/types.ts'
 
-export type LanguageId = 'python' | 'typescript' | 'java'
-export type OrmId = 'sqlalchemy' | 'django' | 'typeorm' | 'prisma' | 'drizzle' | 'sequelize' | 'jpa'
+export type LanguageId = 'python' | 'typescript' | 'java' | 'csharp'
+export type OrmId = 'sqlalchemy' | 'django' | 'typeorm' | 'prisma' | 'drizzle' | 'sequelize' | 'jpa' | 'efcore'
 
 /** Which ORM entities are written: only those the input lacks, all of them (replacing the input's), or none. */
 export type EntitiesMode = 'missing' | 'all' | 'none'
@@ -144,6 +144,17 @@ export const STACKS: readonly StackInfo[] = [
     errors: ['exceptions'],
     dtoKinds: ['record', 'class'],
     updates: ['patch', 'optional', 'full'],
+  },
+  {
+    language: 'csharp',
+    orm: 'efcore',
+    label: 'EF Core 9',
+    databases: ['postgresql', 'mysql', 'mariadb', 'sqlite'],
+    execution: ['async'],
+    errors: ['exceptions'],
+    dtoKinds: ['record', 'class'],
+    // .NET has no Optional<T>: a Patch<T> or every field
+    updates: ['patch', 'full'],
   },
 ]
 

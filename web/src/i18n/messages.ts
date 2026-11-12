@@ -150,7 +150,7 @@ const en = {
   // Project pane
   projectName: 'Project name',
   stackLabel: 'Language and ORM',
-  languages: { python: 'Python', typescript: 'TypeScript', java: 'Java' } satisfies Record<LanguageId, string>,
+  languages: { python: 'Python', typescript: 'TypeScript', java: 'Java', csharp: 'C#' } satisfies Record<LanguageId, string>,
   databaseLabel: 'Database',
   databases: {
     postgresql: 'PostgreSQL',
@@ -381,7 +381,7 @@ const es: Messages = {
   },
   projectName: 'Nombre del proyecto',
   stackLabel: 'Lenguaje y ORM',
-  languages: { python: 'Python', typescript: 'TypeScript', java: 'Java' },
+  languages: { python: 'Python', typescript: 'TypeScript', java: 'Java', csharp: 'C#' },
   databaseLabel: 'Base de datos',
   databases: { postgresql: 'PostgreSQL', mysql: 'MySQL', mariadb: 'MariaDB', sqlite: 'SQLite', sqlserver: 'SQL Server', oracle: 'Oracle' },
   executionLabel: 'Código',
