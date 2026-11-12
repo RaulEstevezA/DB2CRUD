@@ -5,6 +5,7 @@ from .python.common.generator import python_generator
 from .python.django.index import DJANGO_ORM
 from .python.sqlalchemy.index import SQLALCHEMY_ORM
 from .typescript.common.generator import typescript_generator
+from .typescript.drizzle.index import DRIZZLE_ORM
 from .typescript.prisma.index import PRISMA_ORM
 from .typescript.typeorm.index import TYPEORM_ORM
 
@@ -13,6 +14,7 @@ GENERATORS = [
     python_generator(DJANGO_ORM),
     typescript_generator(TYPEORM_ORM),
     typescript_generator(PRISMA_ORM),
+    typescript_generator(DRIZZLE_ORM),
 ]
 
 

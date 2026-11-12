@@ -49,6 +49,15 @@ STACKS = [
         "errors": ["exceptions"],
         "dtoKinds": ["interface", "class"],
     },
+    {
+        "language": "typescript",
+        "orm": "drizzle",
+        "label": "Drizzle 0.45",
+        "databases": ["postgresql", "mysql", "mariadb", "sqlite"],
+        "execution": ["async"],
+        "errors": ["exceptions"],
+        "dtoKinds": ["interface", "class"],
+    },
 ]
 
 DEFAULT_SETTINGS = {
