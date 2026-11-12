@@ -2,7 +2,7 @@
 
 Producing files is not proof that they work. A language, ORM and database combination will be offered as verified only after a project generated with it has been built and its tests have passed, with their own tools, in Docker, by the scripts of `verification/`.
 
-Verified today, on PostgreSQL, MySQL, MariaDB and SQLite: Python + SQLAlchemy 2 (synchronous and asynchronous), Python + Django 5.2 and TypeScript + TypeORM 0.3. The list the interface reads is `web/src/core/settings/verified.ts` (and its desktop copy), with the scenarios that proved each combination and their date. The runners of the other languages come from Model2API and are kept for the stacks still to write.
+Verified today, on PostgreSQL, MySQL, MariaDB and SQLite: Python + SQLAlchemy 2 (synchronous and asynchronous), Python + Django 5.2, TypeScript + TypeORM 0.3 and TypeScript + Prisma 7. The list the interface reads is `web/src/core/settings/verified.ts` (and its desktop copy), with the scenarios that proved each combination and their date. The runners of the other languages come from Model2API and are kept for the stacks still to write.
 
 ## Runners
 
@@ -30,6 +30,8 @@ The tests are generated with the project and are the same the developer keeps:
 - **Services**, with in-memory repositories: conversions between application models and entities, lookups, validation from the constraints, and domain errors.
 - **Repositories**, against a real database created from the entities: every query the schema allows, unique and foreign key checks, and generated columns.
 - **The database itself**: one test fails when the tests did not run on the database `TEST_DATABASE_URL` names, so a green run proves which one it was.
+
+The test database is created empty for every test. Most ORMs create it from their entities; with Prisma, a Vitest global setup asks Prisma for the SQL of the schema (`prisma migrate diff --from-empty`) once, and every test drops the tables and runs it. A Prisma schema is for one kind of database, so a Prisma project on PostgreSQL, MySQL or MariaDB has no SQLite fallback: its database tests need `TEST_DATABASE_URL`.
 
 ## Scenarios
 
