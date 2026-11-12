@@ -3,7 +3,7 @@
 DB2CRUD genera la capa de acceso a datos de una base de datos que ya tienes: entidades ORM cuando faltan, repositorios y servicios, relacionados con los modelos de tu aplicación. No diseña la base de datos ni escribe migraciones (eso es [Model2DB](https://github.com/RaulEstevezA/Model2DB)), ni escribe controladores o endpoints. Todo ocurre en tu lado, en el navegador: lo que pegas o abres no se envía a ningún sitio, no se conecta a ninguna base de datos y el código se analiza, nunca se ejecuta.
 
 > [!IMPORTANT]
-> DB2CRUD está en desarrollo y todavía no se ha publicado en la web. Hoy lee proyectos de Model2DB y escribe proyectos Python (SQLAlchemy 2, Django 5.2) y TypeScript (TypeORM 0.3, Prisma 7, Drizzle 0.45, Sequelize 6), verificados en Docker en PostgreSQL, MySQL, MariaDB y SQLite; el DDL de SQL, el código ORM, los modelos de aplicación y los demás lenguajes se están escribiendo. Lo que ya funciona está en el [registro de cambios](./CHANGELOG.md).
+> DB2CRUD está en desarrollo y todavía no se ha publicado en la web. Hoy lee proyectos de Model2DB y escribe proyectos Python (SQLAlchemy 2, Django 5.2) y TypeScript (TypeORM 0.3, Prisma 7, Drizzle 0.45, Sequelize 6) y Java (JPA con Hibernate 7), verificados en Docker en PostgreSQL, MySQL, MariaDB y SQLite; el DDL de SQL, el código ORM, los modelos de aplicación y los demás lenguajes se están escribiendo. Lo que ya funciona está en el [registro de cambios](./CHANGELOG.md).
 
 ```text
 Pegar o abrir la base de datos y los modelos  →  Revisar los repositorios y servicios propuestos  →  Elegir lenguaje y ORM  →  Descargar el código
