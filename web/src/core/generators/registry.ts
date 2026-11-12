@@ -6,6 +6,7 @@ import type { CrudDesign } from '../crud/types.ts'
 import type { GeneratedFile } from '../export/files.ts'
 import type { DbSchema } from '../schema/types.ts'
 import { normalizeSettings, type ProjectSettings } from '../settings/settings.ts'
+import { javaGenerator } from './java/generator.ts'
 import { pythonGenerator } from './python/common/generator.ts'
 import { djangoOrm } from './python/django/index.ts'
 import { sqlalchemyOrm } from './python/sqlalchemy/index.ts'
@@ -23,6 +24,7 @@ export const GENERATORS: readonly Generator[] = [
   typescriptGenerator(prismaOrm),
   typescriptGenerator(drizzleOrm),
   typescriptGenerator(sequelizeOrm),
+  javaGenerator,
 ]
 
 export function findGenerator(settings: Pick<ProjectSettings, 'language' | 'orm'>): Generator | undefined {

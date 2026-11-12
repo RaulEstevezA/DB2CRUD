@@ -13,6 +13,7 @@ import type { Dialect } from '../core/schema/types.ts'
 import type {
   Architecture,
   DtoKind,
+  Updates,
   EntitiesMode,
   ErrorStyle,
   Execution,
@@ -149,7 +150,7 @@ const en = {
   // Project pane
   projectName: 'Project name',
   stackLabel: 'Language and ORM',
-  languages: { python: 'Python', typescript: 'TypeScript' } satisfies Record<LanguageId, string>,
+  languages: { python: 'Python', typescript: 'TypeScript', java: 'Java' } satisfies Record<LanguageId, string>,
   databaseLabel: 'Database',
   databases: {
     postgresql: 'PostgreSQL',
@@ -173,10 +174,20 @@ const en = {
   serviceTypesLabel: 'Services take and return',
   serviceTypes: { entities: 'The entities', dtos: 'DTOs' } satisfies Record<ServiceTypes, string>,
   dtoKindLabel: 'DTOs as',
-  dtoKinds: { pydantic: 'Pydantic models', dataclass: 'Dataclasses', interface: 'Interfaces', class: 'Classes' } satisfies Record<
-    DtoKind,
-    string
-  >,
+  dtoKinds: {
+    pydantic: 'Pydantic models',
+    dataclass: 'Dataclasses',
+    interface: 'Interfaces',
+    class: 'Classes',
+    record: 'Records',
+  } satisfies Record<DtoKind, string>,
+  updatesLabel: 'Updates take',
+  updatesModes: {
+    partial: 'The changed fields',
+    patch: 'Patch<T> per field',
+    optional: 'Optional<T> per field',
+    full: 'Every field (PUT)',
+  } satisfies Record<Updates, string>,
   transactionsLabel: 'Transactions',
   transactions: {
     operation: 'One per operation',
@@ -370,7 +381,7 @@ const es: Messages = {
   },
   projectName: 'Nombre del proyecto',
   stackLabel: 'Lenguaje y ORM',
-  languages: { python: 'Python', typescript: 'TypeScript' },
+  languages: { python: 'Python', typescript: 'TypeScript', java: 'Java' },
   databaseLabel: 'Base de datos',
   databases: { postgresql: 'PostgreSQL', mysql: 'MySQL', mariadb: 'MariaDB', sqlite: 'SQLite', sqlserver: 'SQL Server', oracle: 'Oracle' },
   executionLabel: 'Código',
@@ -384,7 +395,14 @@ const es: Messages = {
   serviceTypesLabel: 'Los servicios reciben y devuelven',
   serviceTypes: { entities: 'Las entidades', dtos: 'DTOs' },
   dtoKindLabel: 'DTOs como',
-  dtoKinds: { pydantic: 'Modelos de Pydantic', dataclass: 'Dataclasses', interface: 'Interfaces', class: 'Clases' },
+  dtoKinds: { pydantic: 'Modelos de Pydantic', dataclass: 'Dataclasses', interface: 'Interfaces', class: 'Clases', record: 'Records' },
+  updatesLabel: 'Las actualizaciones reciben',
+  updatesModes: {
+    partial: 'Los campos que cambian',
+    patch: 'Patch<T> por campo',
+    optional: 'Optional<T> por campo',
+    full: 'Todos los campos (PUT)',
+  },
   transactionsLabel: 'Transacciones',
   transactions: { operation: 'Una por operación', caller: 'Las de quien llama', repository: 'Una por escritura' },
   errorsLabel: 'Errores',

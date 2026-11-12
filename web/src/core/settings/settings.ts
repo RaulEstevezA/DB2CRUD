@@ -9,8 +9,8 @@
  */
 import type { Dialect } from '../schema/types.ts'
 
-export type LanguageId = 'python' | 'typescript'
-export type OrmId = 'sqlalchemy' | 'django' | 'typeorm' | 'prisma' | 'drizzle' | 'sequelize'
+export type LanguageId = 'python' | 'typescript' | 'java'
+export type OrmId = 'sqlalchemy' | 'django' | 'typeorm' | 'prisma' | 'drizzle' | 'sequelize' | 'jpa'
 
 /** Which ORM entities are written: only those the input lacks, all of them (replacing the input's), or none. */
 export type EntitiesMode = 'missing' | 'all' | 'none'
@@ -28,7 +28,10 @@ export type Architecture = 'layer' | 'table'
 export type Verbs = 'getFind' | 'get' | 'find'
 export type Tests = 'all' | 'services' | 'repositories' | 'none'
 /** The kind of class DTOs are written as, per language. */
-export type DtoKind = 'pydantic' | 'dataclass' | 'interface' | 'class'
+export type DtoKind = 'pydantic' | 'dataclass' | 'interface' | 'class' | 'record'
+/** How a service takes the changes of an update: the language's partial object (TypeScript, Python), or, in typed
+ * languages, a Patch<T> per field (absent, null or a value), Optional<T> (null when not sent), or every field. */
+export type Updates = 'partial' | 'patch' | 'optional' | 'full'
 
 export interface ProjectSettings {
   /** Name of the generated project, in lowercase words: `shop-data` */
@@ -42,6 +45,7 @@ export interface ProjectSettings {
   services: boolean
   serviceTypes: ServiceTypes
   dtoKind: DtoKind
+  updates: Updates
   transactions: Transactions
   execution: Execution
   errors: ErrorStyle
@@ -61,6 +65,7 @@ export interface StackInfo {
   execution: readonly Execution[]
   errors: readonly ErrorStyle[]
   dtoKinds: readonly DtoKind[]
+  updates: readonly Updates[]
 }
 
 /** Every stack a generator writes, in the order the interface shows them. */
@@ -74,6 +79,7 @@ export const STACKS: readonly StackInfo[] = [
     // Python has no common result type: exceptions are its way
     errors: ['exceptions'],
     dtoKinds: ['pydantic', 'dataclass'],
+    updates: ['partial'],
   },
   {
     language: 'python',
@@ -84,6 +90,7 @@ export const STACKS: readonly StackInfo[] = [
     execution: ['sync'],
     errors: ['exceptions'],
     dtoKinds: ['pydantic', 'dataclass'],
+    updates: ['partial'],
   },
   {
     language: 'typescript',
@@ -95,6 +102,7 @@ export const STACKS: readonly StackInfo[] = [
     // TypeScript has no common result type: errors are thrown
     errors: ['exceptions'],
     dtoKinds: ['interface', 'class'],
+    updates: ['partial'],
   },
   {
     language: 'typescript',
@@ -104,6 +112,7 @@ export const STACKS: readonly StackInfo[] = [
     execution: ['async'],
     errors: ['exceptions'],
     dtoKinds: ['interface', 'class'],
+    updates: ['partial'],
   },
   {
     language: 'typescript',
@@ -113,6 +122,7 @@ export const STACKS: readonly StackInfo[] = [
     execution: ['async'],
     errors: ['exceptions'],
     dtoKinds: ['interface', 'class'],
+    updates: ['partial'],
   },
   {
     language: 'typescript',
@@ -122,6 +132,18 @@ export const STACKS: readonly StackInfo[] = [
     execution: ['async'],
     errors: ['exceptions'],
     dtoKinds: ['interface', 'class'],
+    updates: ['partial'],
+  },
+  {
+    language: 'java',
+    orm: 'jpa',
+    label: 'JPA · Hibernate 7',
+    databases: ['postgresql', 'mysql', 'mariadb', 'sqlite'],
+    // JPA is blocking: an EntityManager has no asynchronous API
+    execution: ['sync'],
+    errors: ['exceptions'],
+    dtoKinds: ['record', 'class'],
+    updates: ['patch', 'optional', 'full'],
   },
 ]
 
@@ -135,6 +157,7 @@ export const DEFAULT_SETTINGS: ProjectSettings = {
   services: true,
   serviceTypes: 'entities',
   dtoKind: 'pydantic',
+  updates: 'partial',
   transactions: 'operation',
   execution: 'sync',
   errors: 'exceptions',
@@ -193,6 +216,7 @@ export function normalizeSettings(settings: Partial<ProjectSettings>): ProjectSe
     services,
     serviceTypes: pick(settings.serviceTypes, SERVICE_TYPES, DEFAULT_SETTINGS.serviceTypes),
     dtoKind: pick(settings.dtoKind, stack.dtoKinds, stack.dtoKinds[0]),
+    updates: pick(settings.updates, stack.updates, stack.updates[0]),
     transactions: pick(settings.transactions, TRANSACTIONS, DEFAULT_SETTINGS.transactions),
     execution: pick(settings.execution, stack.execution, stack.execution[0]),
     errors: pick(settings.errors, stack.errors, stack.errors[0]),

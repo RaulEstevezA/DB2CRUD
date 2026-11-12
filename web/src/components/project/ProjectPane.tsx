@@ -151,6 +151,9 @@ export function ProjectPane({ settings, files, onSettingsChange }: ProjectPanePr
           {settings.services &&
             settings.serviceTypes === 'dtos' &&
             choice('dtoKind', t.dtoKindLabel, stack.dtoKinds, (value) => t.dtoKinds[value])}
+          {settings.services &&
+            stack.updates.length > 1 &&
+            choice('updates', t.updatesLabel, stack.updates, (value) => t.updatesModes[value])}
           {choice('transactions', t.transactionsLabel, ['operation', 'caller', 'repository'], (value) => t.transactions[value])}
           {stack.errors.length > 1 && choice('errors', t.errorsLabel, stack.errors, (value) => t.errorStyles[value])}
           {choice('paging', t.pagingLabel, ['offset', 'cursor', 'none'], (value) => t.pagings[value])}
