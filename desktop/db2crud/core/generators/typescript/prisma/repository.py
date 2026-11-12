@@ -123,7 +123,13 @@ def _writable(column: dict) -> bool:
 
 def _changeable(info: dict, column: dict) -> bool:
     """Nor the key of a stored row, nor what the database fills."""
-    return _writable(column) and not is_in(column, info["key"]) and not column["generated"]
+    # A column the database sets on every change (ON UPDATE) is left for it, or the ORM, to set
+    return (
+        _writable(column)
+        and not is_in(column, info["key"])
+        and not column["generated"]
+        and column["column"].get("generated") != "onUpdateNow"
+    )
 
 
 def _multiline(opening: str, items: list[str], closing: str) -> list:

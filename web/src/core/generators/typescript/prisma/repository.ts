@@ -107,7 +107,9 @@ function condition(context: Context, column: ColumnInfo, value: string, imports:
 
 /** What a computed column or the key of a stored row is never written with. */
 const writable = (column: ColumnInfo) => typeof column.column.generated !== 'object'
-const changeable = (info: TableInfo, column: ColumnInfo) => writable(column) && !info.key.includes(column) && !column.generated
+// A column the database sets on every change (ON UPDATE) is left for it, or the ORM, to set
+const changeable = (info: TableInfo, column: ColumnInfo) =>
+  writable(column) && !info.key.includes(column) && !column.generated && column.column.generated !== 'onUpdateNow'
 
 function multiline(open: string, items: string[], close: string): Line[] {
   return [open, ...items.map((item) => `    ${item},`), close]
