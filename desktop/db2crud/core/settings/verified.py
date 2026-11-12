@@ -210,6 +210,42 @@ VERIFIED = [
         ],
         "date": "2026-11-12",
     },
+    {
+        "language": "typescript",
+        "orm": "sequelize",
+        "database": "postgresql",
+        "execution": "async",
+        "scenarios": ["sequelize-postgresql-class-dtos", "sequelize-postgresql-repository-commits"],
+        "date": "2026-11-12",
+    },
+    {
+        "language": "typescript",
+        "orm": "sequelize",
+        "database": "mysql",
+        "execution": "async",
+        "scenarios": ["sequelize-mysql-decided-cursor-by-table"],
+        "date": "2026-11-12",
+    },
+    {
+        "language": "typescript",
+        "orm": "sequelize",
+        "database": "mariadb",
+        "execution": "async",
+        "scenarios": ["sequelize-mariadb-caller-interface-dtos"],
+        "date": "2026-11-12",
+    },
+    {
+        "language": "typescript",
+        "orm": "sequelize",
+        "database": "sqlite",
+        "execution": "async",
+        "scenarios": [
+            "sequelize-sqlite-defaults",
+            "sequelize-sqlite-no-interfaces-services-tests",
+            "sequelize-sqlite-repositories-only",
+        ],
+        "date": "2026-11-12",
+    },
 ]
 
 
