@@ -2,6 +2,7 @@
 offset or after a key (a query builder), and writes that turn a database refusal into a ConflictError. Mirrors
 web/src/core/generators/typescript/typeorm/repository.ts."""
 
+from ..common.context import find_info
 from ..typescript import TsImports
 
 
@@ -41,6 +42,25 @@ def _write(info: dict, action: str, imports: TsImports) -> list:
         "  throw error",
         "}",
     ]
+
+
+def _reaches_json(context: dict, info: dict, seen: set) -> bool:
+    """Whether the entity holds JSON (unknown) values, itself or through the rows its relations point to: TypeORM's
+    insert() then cannot check it against its deep partial type, and is told what it is."""
+    if info["name"] in seen:
+        return False
+    seen.add(info["name"])
+    if any(column["column"]["type"]["kind"] in ("json", "array") for column in info["columns"]):
+        return True
+    for key in info["table"]["foreignKeys"]:
+        parent = find_info(context, key["references"]["table"])
+        if (
+            parent is not None
+            and parent["table"].get("primaryKey") is not None
+            and _reaches_json(context, parent, seen)
+        ):
+            return True
+    return False
 
 
 def typeorm_body(context: dict, info: dict, method: dict, imports: TsImports) -> list:
@@ -101,8 +121,12 @@ def typeorm_body(context: dict, info: dict, method: dict, imports: TsImports) ->
             and column["column"]["type"]["kind"] == "integer"
             and column["column"]["type"].get("bits") == 64
         ]
+        json = _reaches_json(context, info, set())
+        if json:
+            imports.type("typeorm", "QueryDeepPartialEntity")
+        value = f"entity as QueryDeepPartialEntity<{entity}>" if json else "entity"
         return [
-            *_write(info, f"await this.manager.insert({entity}, entity)", imports),
+            *_write(info, f"await this.manager.insert({entity}, {value})", imports),
             bool(big_keys) and "// The driver returns a new 64-bit key as text",
             *(f"entity.{column['prop']} = Number(entity.{column['prop']})" for column in big_keys),
             "return entity",

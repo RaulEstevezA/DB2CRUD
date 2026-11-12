@@ -5,7 +5,7 @@
  */
 import type { Line } from '../../types.ts'
 import type { TsImports } from '../typescript.ts'
-import type { Context, TableInfo } from '../common/context.ts'
+import { findInfo, type Context, type TableInfo } from '../common/context.ts'
 import type { RepositoryMethod } from '../common/orm.ts'
 
 /** The condition that leaves out rows marked as deleted, as a find option. */
@@ -39,6 +39,18 @@ function write(info: TableInfo, action: string, imports: TsImports): Line[] {
     '  throw error',
     '}',
   ]
+}
+
+/** Whether the entity holds JSON (unknown) values, itself or through the rows its relations point to: TypeORM's
+ * insert() then cannot check it against its deep partial type, and is told what it is. */
+function reachesJson(context: Context, info: TableInfo, seen = new Set<string>()): boolean {
+  if (seen.has(info.name)) return false
+  seen.add(info.name)
+  if (info.columns.some((column) => column.column.type.kind === 'json' || column.column.type.kind === 'array')) return true
+  return info.table.foreignKeys.some((key) => {
+    const parent = findInfo(context, key.references.table)
+    return parent !== undefined && parent.table.primaryKey !== null && reachesJson(context, parent, seen)
+  })
 }
 
 export function typeormBody(context: Context, info: TableInfo, method: RepositoryMethod, imports: TsImports): Line[] {
@@ -88,8 +100,10 @@ export function typeormBody(context: Context, info: TableInfo, method: Repositor
       const bigKeys = info.columns.filter(
         (column) => column.column.generated === 'identity' && column.column.type.kind === 'integer' && column.column.type.bits === 64,
       )
+      const json = reachesJson(context, info)
+      if (json) imports.type('typeorm', 'QueryDeepPartialEntity')
       return [
-        ...write(info, `await this.manager.insert(${entity}, entity)`, imports),
+        ...write(info, `await this.manager.insert(${entity}, ${json ? `entity as QueryDeepPartialEntity<${entity}>` : 'entity'})`, imports),
         bigKeys.length > 0 && '// The driver returns a new 64-bit key as text',
         ...bigKeys.map((column) => `entity.${column.prop} = Number(entity.${column.prop})`),
         'return entity',
