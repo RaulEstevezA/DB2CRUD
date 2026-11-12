@@ -13,7 +13,7 @@ status=0
 runner_of() {
   case "$1" in
     sqlalchemy-* | django-*) echo ./runners/python.sh ;;
-    typeorm-* | prisma-* | drizzle-*) echo ./runners/node.sh ;;
+    typeorm-* | prisma-* | drizzle-* | sequelize-*) echo ./runners/node.sh ;;
   esac
 }
 

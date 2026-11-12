@@ -165,4 +165,36 @@ export const SCENARIOS = [
     settings: { language: 'typescript', orm: 'drizzle', database: 'sqlite', repositoryInterfaces: false, verbs: 'find', tests: 'services', entities: 'all' },
   },
   { id: 'drizzle-sqlite-repositories-only', schema: 'shop', settings: { language: 'typescript', orm: 'drizzle', database: 'sqlite', services: false } },
+  { id: 'sequelize-sqlite-defaults', schema: 'shop', settings: { language: 'typescript', orm: 'sequelize', database: 'sqlite' } },
+  {
+    id: 'sequelize-postgresql-class-dtos',
+    schema: 'shop',
+    settings: { language: 'typescript', orm: 'sequelize', database: 'postgresql', serviceTypes: 'dtos', dtoKind: 'class' },
+    service: 'postgresql',
+  },
+  {
+    id: 'sequelize-mysql-decided-cursor-by-table',
+    schema: 'shop',
+    settings: { language: 'typescript', orm: 'sequelize', database: 'mysql', paging: 'cursor', architecture: 'table' },
+    decisions: OTHER_WAY,
+    service: 'mysql',
+  },
+  {
+    id: 'sequelize-mariadb-caller-interface-dtos',
+    schema: 'shop',
+    settings: { language: 'typescript', orm: 'sequelize', database: 'mariadb', transactions: 'caller', serviceTypes: 'dtos', dtoKind: 'interface', paging: 'none' },
+    service: 'mariadb',
+  },
+  {
+    id: 'sequelize-postgresql-repository-commits',
+    schema: 'shop',
+    settings: { language: 'typescript', orm: 'sequelize', database: 'postgresql', transactions: 'repository', repositoryInterfaces: false, memoryRepositories: false, verbs: 'get' },
+    service: 'postgresql',
+  },
+  {
+    id: 'sequelize-sqlite-no-interfaces-services-tests',
+    schema: 'shop',
+    settings: { language: 'typescript', orm: 'sequelize', database: 'sqlite', repositoryInterfaces: false, verbs: 'find', tests: 'services', entities: 'all' },
+  },
+  { id: 'sequelize-sqlite-repositories-only', schema: 'shop', settings: { language: 'typescript', orm: 'sequelize', database: 'sqlite', services: false } },
 ]
