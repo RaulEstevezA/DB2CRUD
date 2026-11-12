@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Runs the generated Java projects (Spring Boot) in a clean container: Maven compiles them and runs their
+# Runs the generated Java projects in a clean container: Maven compiles them and runs their
 # own tests. Maven downloads are cached in a Docker volume between runs.
 #
 # Usage: verification/runners/java.sh <scenario-folder>...

@@ -197,4 +197,36 @@ export const SCENARIOS = [
     settings: { language: 'typescript', orm: 'sequelize', database: 'sqlite', repositoryInterfaces: false, verbs: 'find', tests: 'services', entities: 'all' },
   },
   { id: 'sequelize-sqlite-repositories-only', schema: 'shop', settings: { language: 'typescript', orm: 'sequelize', database: 'sqlite', services: false } },
+  { id: 'jpa-sqlite-defaults', schema: 'shop', settings: { language: 'java', orm: 'jpa', database: 'sqlite' } },
+  {
+    id: 'jpa-postgresql-record-dtos-patch',
+    schema: 'shop',
+    settings: { language: 'java', orm: 'jpa', database: 'postgresql', serviceTypes: 'dtos', dtoKind: 'record', updates: 'patch' },
+    service: 'postgresql',
+  },
+  {
+    id: 'jpa-mysql-decided-cursor-by-table-optional',
+    schema: 'shop',
+    settings: { language: 'java', orm: 'jpa', database: 'mysql', paging: 'cursor', architecture: 'table', updates: 'optional' },
+    decisions: OTHER_WAY,
+    service: 'mysql',
+  },
+  {
+    id: 'jpa-mariadb-caller-class-dtos-full',
+    schema: 'shop',
+    settings: { language: 'java', orm: 'jpa', database: 'mariadb', transactions: 'caller', serviceTypes: 'dtos', dtoKind: 'class', paging: 'none', updates: 'full' },
+    service: 'mariadb',
+  },
+  {
+    id: 'jpa-postgresql-repository-commits',
+    schema: 'shop',
+    settings: { language: 'java', orm: 'jpa', database: 'postgresql', transactions: 'repository', repositoryInterfaces: false, memoryRepositories: false, verbs: 'get' },
+    service: 'postgresql',
+  },
+  {
+    id: 'jpa-sqlite-no-interfaces-services-tests',
+    schema: 'shop',
+    settings: { language: 'java', orm: 'jpa', database: 'sqlite', repositoryInterfaces: false, verbs: 'find', tests: 'services', entities: 'all', updates: 'full' },
+  },
+  { id: 'jpa-sqlite-repositories-only', schema: 'shop', settings: { language: 'java', orm: 'jpa', database: 'sqlite', services: false } },
 ]
