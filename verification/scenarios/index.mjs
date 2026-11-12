@@ -133,4 +133,36 @@ export const SCENARIOS = [
     settings: { language: 'typescript', orm: 'prisma', database: 'sqlite', repositoryInterfaces: false, verbs: 'find', tests: 'services', entities: 'all' },
   },
   { id: 'prisma-sqlite-repositories-only', schema: 'shop', settings: { language: 'typescript', orm: 'prisma', database: 'sqlite', services: false } },
+  { id: 'drizzle-sqlite-defaults', schema: 'shop', settings: { language: 'typescript', orm: 'drizzle', database: 'sqlite' } },
+  {
+    id: 'drizzle-postgresql-class-dtos',
+    schema: 'shop',
+    settings: { language: 'typescript', orm: 'drizzle', database: 'postgresql', serviceTypes: 'dtos', dtoKind: 'class' },
+    service: 'postgresql',
+  },
+  {
+    id: 'drizzle-mysql-decided-cursor-by-table',
+    schema: 'shop',
+    settings: { language: 'typescript', orm: 'drizzle', database: 'mysql', paging: 'cursor', architecture: 'table' },
+    decisions: OTHER_WAY,
+    service: 'mysql',
+  },
+  {
+    id: 'drizzle-mariadb-caller-interface-dtos',
+    schema: 'shop',
+    settings: { language: 'typescript', orm: 'drizzle', database: 'mariadb', transactions: 'caller', serviceTypes: 'dtos', dtoKind: 'interface', paging: 'none' },
+    service: 'mariadb',
+  },
+  {
+    id: 'drizzle-postgresql-repository-commits',
+    schema: 'shop',
+    settings: { language: 'typescript', orm: 'drizzle', database: 'postgresql', transactions: 'repository', repositoryInterfaces: false, memoryRepositories: false, verbs: 'get' },
+    service: 'postgresql',
+  },
+  {
+    id: 'drizzle-sqlite-no-interfaces-services-tests',
+    schema: 'shop',
+    settings: { language: 'typescript', orm: 'drizzle', database: 'sqlite', repositoryInterfaces: false, verbs: 'find', tests: 'services', entities: 'all' },
+  },
+  { id: 'drizzle-sqlite-repositories-only', schema: 'shop', settings: { language: 'typescript', orm: 'drizzle', database: 'sqlite', services: false } },
 ]
