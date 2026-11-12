@@ -174,6 +174,42 @@ VERIFIED = [
         ],
         "date": "2026-11-12",
     },
+    {
+        "language": "typescript",
+        "orm": "drizzle",
+        "database": "postgresql",
+        "execution": "async",
+        "scenarios": ["drizzle-postgresql-class-dtos", "drizzle-postgresql-repository-commits"],
+        "date": "2026-11-12",
+    },
+    {
+        "language": "typescript",
+        "orm": "drizzle",
+        "database": "mysql",
+        "execution": "async",
+        "scenarios": ["drizzle-mysql-decided-cursor-by-table"],
+        "date": "2026-11-12",
+    },
+    {
+        "language": "typescript",
+        "orm": "drizzle",
+        "database": "mariadb",
+        "execution": "async",
+        "scenarios": ["drizzle-mariadb-caller-interface-dtos"],
+        "date": "2026-11-12",
+    },
+    {
+        "language": "typescript",
+        "orm": "drizzle",
+        "database": "sqlite",
+        "execution": "async",
+        "scenarios": [
+            "drizzle-sqlite-defaults",
+            "drizzle-sqlite-no-interfaces-services-tests",
+            "drizzle-sqlite-repositories-only",
+        ],
+        "date": "2026-11-12",
+    },
 ]
 
 
