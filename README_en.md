@@ -3,7 +3,7 @@
 DB2CRUD generates the data access layer of a database you already have: ORM entities when they are missing, repositories and services, linked to the models of your application. It does not design the database or write migrations (that is [Model2DB](https://github.com/RaulEstevezA/Model2DB)), and it does not write controllers or endpoints. Everything happens on your side, in the browser: what you paste or open is never sent anywhere, no database is connected to, and code is analyzed, never run.
 
 > [!IMPORTANT]
-> DB2CRUD is in development and not published on the website yet. Today it reads Model2DB projects and writes Python (SQLAlchemy 2, Django 5.2) and TypeScript (TypeORM 0.3, Prisma 7, Drizzle 0.45) projects, verified in Docker on PostgreSQL, MySQL, MariaDB and SQLite; SQL DDL, ORM code, application models and the other languages are being written. What already works is listed in the [changelog](./CHANGELOG.md).
+> DB2CRUD is in development and not published on the website yet. Today it reads Model2DB projects and writes Python (SQLAlchemy 2, Django 5.2) and TypeScript (TypeORM 0.3, Prisma 7, Drizzle 0.45, Sequelize 6) projects, verified in Docker on PostgreSQL, MySQL, MariaDB and SQLite; SQL DDL, ORM code, application models and the other languages are being written. What already works is listed in the [changelog](./CHANGELOG.md).
 
 ```text
 Paste or open the database and the models  →  Review the proposed repositories and services  →  Choose the language and ORM  →  Download the code
@@ -19,7 +19,7 @@ Paste or open the database and the models  →  Review the proposed repositories
 6. **Never decides an ambiguity**: transactions, soft or hard deletes, concurrency, cascades or sensitive fields wait for you, and the generated code leaves a `TODO` where each decision goes.
 7. **Writes tests**: services with in-memory repositories, and repositories against a real database. A language, ORM and database combination is shown as verified only after a generated project with it has passed its tests in Docker.
 
-The first stack taken end to end was Python + SQLAlchemy 2 + PostgreSQL; Django, TypeORM, Prisma and Drizzle followed.
+The first stack taken end to end was Python + SQLAlchemy 2 + PostgreSQL; Django and the four TypeScript ORMs (TypeORM, Prisma, Drizzle, Sequelize) followed.
 
 ## Versions
 
