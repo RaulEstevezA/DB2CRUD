@@ -229,4 +229,36 @@ export const SCENARIOS = [
     settings: { language: 'java', orm: 'jpa', database: 'sqlite', repositoryInterfaces: false, verbs: 'find', tests: 'services', entities: 'all', updates: 'full' },
   },
   { id: 'jpa-sqlite-repositories-only', schema: 'shop', settings: { language: 'java', orm: 'jpa', database: 'sqlite', services: false } },
+  { id: 'efcore-sqlite-defaults', schema: 'shop', settings: { language: 'csharp', orm: 'efcore', database: 'sqlite' } },
+  {
+    id: 'efcore-postgresql-record-dtos-patch',
+    schema: 'shop',
+    settings: { language: 'csharp', orm: 'efcore', database: 'postgresql', serviceTypes: 'dtos', dtoKind: 'record', updates: 'patch' },
+    service: 'postgresql',
+  },
+  {
+    id: 'efcore-mysql-decided-cursor-by-table-full',
+    schema: 'shop',
+    settings: { language: 'csharp', orm: 'efcore', database: 'mysql', paging: 'cursor', architecture: 'table', updates: 'full' },
+    decisions: OTHER_WAY,
+    service: 'mysql',
+  },
+  {
+    id: 'efcore-mariadb-caller-class-dtos-full',
+    schema: 'shop',
+    settings: { language: 'csharp', orm: 'efcore', database: 'mariadb', transactions: 'caller', serviceTypes: 'dtos', dtoKind: 'class', paging: 'none', updates: 'full' },
+    service: 'mariadb',
+  },
+  {
+    id: 'efcore-postgresql-repository-commits',
+    schema: 'shop',
+    settings: { language: 'csharp', orm: 'efcore', database: 'postgresql', transactions: 'repository', repositoryInterfaces: false, memoryRepositories: false, verbs: 'get' },
+    service: 'postgresql',
+  },
+  {
+    id: 'efcore-sqlite-no-interfaces-services-tests',
+    schema: 'shop',
+    settings: { language: 'csharp', orm: 'efcore', database: 'sqlite', repositoryInterfaces: false, verbs: 'find', tests: 'services', entities: 'all' },
+  },
+  { id: 'efcore-sqlite-repositories-only', schema: 'shop', settings: { language: 'csharp', orm: 'efcore', database: 'sqlite', services: false } },
 ]

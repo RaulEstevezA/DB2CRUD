@@ -15,6 +15,7 @@ runner_of() {
     sqlalchemy-* | django-*) echo ./runners/python.sh ;;
     typeorm-* | prisma-* | drizzle-* | sequelize-*) echo ./runners/node.sh ;;
     jpa-*) echo ./runners/java.sh ;;
+    efcore-*) echo ./runners/dotnet.sh ;;
   esac
 }
 

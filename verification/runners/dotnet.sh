@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Runs the generated .NET projects (ASP.NET Core) in a clean container: the .NET SDK restores the packages,
+# Runs the generated .NET projects in a clean container: the .NET SDK restores the packages,
 # builds the solution and runs its own tests with xUnit. NuGet downloads are cached in a Docker volume.
 #
 # Usage: verification/runners/dotnet.sh <scenario-folder>...
