@@ -7,6 +7,7 @@ from .python.sqlalchemy.index import SQLALCHEMY_ORM
 from .typescript.common.generator import typescript_generator
 from .typescript.drizzle.index import DRIZZLE_ORM
 from .typescript.prisma.index import PRISMA_ORM
+from .typescript.sequelize.index import SEQUELIZE_ORM
 from .typescript.typeorm.index import TYPEORM_ORM
 
 GENERATORS = [
@@ -15,6 +16,7 @@ GENERATORS = [
     typescript_generator(TYPEORM_ORM),
     typescript_generator(PRISMA_ORM),
     typescript_generator(DRIZZLE_ORM),
+    typescript_generator(SEQUELIZE_ORM),
 ]
 
 
