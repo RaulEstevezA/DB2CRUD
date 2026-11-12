@@ -282,7 +282,9 @@ def _service_tests(context: dict, info: dict, imports: TsImports, memory: bool) 
     start = [*opening, "const n = 1", *parents_first]
 
     def factory(n: int, extra: list[str] | None = None) -> str:
-        values = [*overrides, *(extra or [])]
+        # A value given for this test replaces the parent's (a foreign key that is also unique)
+        given = {item[: item.index(":")] for item in extra or []}
+        values = [*(item for item in overrides if item[: item.index(":")] not in given), *(extra or [])]
         given = f", {{ {', '.join(values)} }}" if values else ""
         return f"{_new_name(info)}({n}{given})"
 
@@ -340,7 +342,16 @@ def _service_tests(context: dict, info: dict, imports: TsImports, memory: bool) 
                     ],
                 )
             )
-        unique = next((item for item in info["table"]["uniques"] if query(info, "findByUnique", item["columns"])), None)
+        # A unique value the client gives: one the database fills is never sent
+        unique = next(
+            (
+                item
+                for item in info["table"]["uniques"]
+                if query(info, "findByUnique", item["columns"])
+                and all(not column_of(info, name)["generated"] for name in item["columns"])
+            ),
+            None,
+        )
         if unique:
             imports.from_("src/errors", "ConflictError")
             own = [column_of(info, column) for column in unique["columns"]]

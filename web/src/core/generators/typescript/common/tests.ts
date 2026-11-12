@@ -226,7 +226,9 @@ function serviceTests(context: Context, info: TableInfo, imports: TsImports, mem
   })
   const start = [...open, 'const n = 1', ...parentsFirst]
   const factory = (n: number, extra: string[] = []) => {
-    const values = [...overrides, ...extra]
+    // A value given for this test replaces the parent's (a foreign key that is also unique)
+    const given = new Set(extra.map((item) => item.slice(0, item.indexOf(':'))))
+    const values = [...overrides.filter((item) => !given.has(item.slice(0, item.indexOf(':')))), ...extra]
     return `${newName(info)}(${n}${values.length > 0 ? `, { ${values.join(', ')} }` : ''})`
   }
   const fresh = (n: number, extra: string[] = []) =>
@@ -264,7 +266,10 @@ function serviceTests(context: Context, info: TableInfo, imports: TsImports, mem
         ]),
       )
     }
-    const unique = info.table.uniques.find((item) => query(info, 'findByUnique', item.columns))
+    // A unique value the client gives: one the database fills is never sent
+    const unique = info.table.uniques.find(
+      (item) => query(info, 'findByUnique', item.columns) && item.columns.every((name) => !columnOf(info, name).generated),
+    )
     if (unique) {
       imports.from('src/errors', 'ConflictError')
       const own = unique.columns.map((column) => columnOf(info, column))

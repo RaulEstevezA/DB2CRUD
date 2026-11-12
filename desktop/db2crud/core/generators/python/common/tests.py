@@ -212,6 +212,13 @@ def _repository_tests(context: dict, info: dict, imports: Imports) -> list:
 # Service tests
 
 
+def _replaced(overrides: list[str], given: list[str]) -> list[str]:
+    """The parents' values and the given ones; a value given replaces the parent's (a foreign key that is also
+    unique)."""
+    names = {item[: item.index("=")] for item in given}
+    return [*(item for item in overrides if item[: item.index("=")] not in names), *given]
+
+
 def _service_tests(context: dict, info: dict, imports: Imports, uow: str) -> list:
     a = aw(context)
     service = service_class(info)
@@ -306,7 +313,16 @@ def _service_tests(context: dict, info: dict, imports: Imports, uow: str) -> lis
                     f'assert [error.field for error in raised.value.errors] == ["{required["column"]["name"]}"]',
                 ],
             )
-        unique = next((item for item in info["table"]["uniques"] if query(info, "findByUnique", item["columns"])), None)
+        # A unique value the client gives: one the database fills is never sent
+        unique = next(
+            (
+                item
+                for item in info["table"]["uniques"]
+                if query(info, "findByUnique", item["columns"])
+                and all(not _column(info, name)["generated"] for name in item["columns"])
+            ),
+            None,
+        )
         if unique:
             imports.from_("app.errors", "ConflictError")
             same = [f"{_column(info, name)['attr']}=first.{_column(info, name)['attr']}" for name in unique["columns"]]
@@ -317,7 +333,7 @@ def _service_tests(context: dict, info: dict, imports: Imports, uow: str) -> lis
                     *parents_first,
                     f"first = {a}service.{name}({built(base_args)})",
                     "with pytest.raises(ConflictError):",
-                    f"    {a}service.{name}({built(', '.join(['2', *overrides, *same]))})",
+                    f"    {a}service.{name}({built(', '.join(['2', *_replaced(overrides, same)]))})",
                 ],
             )
             # A row keeps its own unique value when it changes: the check must not take it for another row

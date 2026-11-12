@@ -233,7 +233,9 @@ function serviceTests(context: Context, info: TableInfo, imports: Imports, uow: 
   if (create) {
     imports.from('tests.factories', `new_${info.module}`)
     const fresh = (n: number, extra: string[] = []) => {
-      const args = [`${n}`, ...overrides, ...extra].join(', ')
+      // A value given for this test replaces the parent's (a foreign key that is also unique)
+      const given = new Set(extra.map((item) => item.slice(0, item.indexOf('='))))
+      const args = [`${n}`, ...overrides.filter((item) => !given.has(item.slice(0, item.indexOf('=')))), ...extra].join(', ')
       return dtos ? `${createDto(info)}(**_values(new_${info.module}(${args}), ${createDto(info)}))` : `new_${info.module}(${args})`
     }
     if (dtos) imports.from(moduleOf(context, info, 'dtos'), createDto(info))
@@ -269,7 +271,12 @@ function serviceTests(context: Context, info: TableInfo, imports: Imports, uow: 
         ]),
       )
     }
-    const unique = info.table.uniques.find((item) => query(info, 'findByUnique', item.columns))
+    // A unique value the client gives: one the database fills is never sent
+    const unique = info.table.uniques.find(
+      (item) =>
+        query(info, 'findByUnique', item.columns) &&
+        item.columns.every((name) => !info.columns.find((column) => column.column.name === name)!.generated),
+    )
     if (unique) {
       imports.from('app.errors', 'ConflictError')
       const same = unique.columns.map((name) => {
