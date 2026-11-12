@@ -252,6 +252,8 @@ class ProjectPane(Pane):
             )
             if settings["serviceTypes"] == "dtos":
                 choice("dtoKind", t.dto_kind_label, [(t.dto_kinds[item], item) for item in stack["dtoKinds"]])
+        if settings["services"] and len(stack["updates"]) > 1:
+            choice("updates", t.updates_label, [(t.updates_modes[item], item) for item in stack["updates"]])
         choice(
             "transactions",
             t.transactions_label,

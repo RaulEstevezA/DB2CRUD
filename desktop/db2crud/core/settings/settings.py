@@ -18,6 +18,7 @@ STACKS = [
         # Python has no common result type: exceptions are its way
         "errors": ["exceptions"],
         "dtoKinds": ["pydantic", "dataclass"],
+        "updates": ["partial"],
     },
     {
         "language": "python",
@@ -28,6 +29,7 @@ STACKS = [
         "execution": ["sync"],
         "errors": ["exceptions"],
         "dtoKinds": ["pydantic", "dataclass"],
+        "updates": ["partial"],
     },
     {
         "language": "typescript",
@@ -39,6 +41,7 @@ STACKS = [
         # TypeScript has no common result type: errors are thrown
         "errors": ["exceptions"],
         "dtoKinds": ["interface", "class"],
+        "updates": ["partial"],
     },
     {
         "language": "typescript",
@@ -48,6 +51,7 @@ STACKS = [
         "execution": ["async"],
         "errors": ["exceptions"],
         "dtoKinds": ["interface", "class"],
+        "updates": ["partial"],
     },
     {
         "language": "typescript",
@@ -57,6 +61,7 @@ STACKS = [
         "execution": ["async"],
         "errors": ["exceptions"],
         "dtoKinds": ["interface", "class"],
+        "updates": ["partial"],
     },
     {
         "language": "typescript",
@@ -66,6 +71,18 @@ STACKS = [
         "execution": ["async"],
         "errors": ["exceptions"],
         "dtoKinds": ["interface", "class"],
+        "updates": ["partial"],
+    },
+    {
+        "language": "java",
+        "orm": "jpa",
+        "label": "JPA · Hibernate 7",
+        "databases": ["postgresql", "mysql", "mariadb", "sqlite"],
+        # JPA is blocking: an EntityManager has no asynchronous API
+        "execution": ["sync"],
+        "errors": ["exceptions"],
+        "dtoKinds": ["record", "class"],
+        "updates": ["patch", "optional", "full"],
     },
 ]
 
@@ -79,6 +96,7 @@ DEFAULT_SETTINGS = {
     "services": True,
     "serviceTypes": "entities",
     "dtoKind": "pydantic",
+    "updates": "partial",
     "transactions": "operation",
     "execution": "sync",
     "errors": "exceptions",
@@ -143,6 +161,7 @@ def normalize_settings(settings: dict) -> dict:
         "services": services,
         "serviceTypes": _pick(settings.get("serviceTypes"), SERVICE_TYPES, DEFAULT_SETTINGS["serviceTypes"]),
         "dtoKind": _pick(settings.get("dtoKind"), stack["dtoKinds"], stack["dtoKinds"][0]),
+        "updates": _pick(settings.get("updates"), stack["updates"], stack["updates"][0]),
         "transactions": _pick(settings.get("transactions"), TRANSACTIONS, DEFAULT_SETTINGS["transactions"]),
         "execution": _pick(settings.get("execution"), stack["execution"], stack["execution"][0]),
         "errors": _pick(settings.get("errors"), stack["errors"], stack["errors"][0]),
