@@ -154,11 +154,13 @@ def _layout(context: dict) -> list[str]:
 TYPEORM_ORM = {
     "id": "typeorm",
     "label": "TypeORM 0.3",
+    "plainEntities": False,
     "databaseFiles": database_files,
     "repository": {"doc": _doc, "init": _init, "body": typeorm_body},
     "unitOfWork": _unit_of_work,
     "unset": lambda target: f"{target} === undefined",
     "testDatabase": _test_database,
+    "memoryTests": lambda context: True,
     "dependencies": _dependencies,
     "devDependencies": _dev_dependencies,
     "defaultUrl": default_url,

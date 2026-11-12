@@ -31,7 +31,7 @@ def typescript_generator(orm: dict) -> dict:
             package_file(context),
             *tsconfig_files(context),
             env_example_file(context),
-            gitignore_file(),
+            gitignore_file(context),
             contract_file(context),
             *_code(context),
             *test_files(context),

@@ -40,6 +40,7 @@ def package_file(context: dict) -> dict:
             "test": "vitest run"
             if tests
             else 'echo "No tests: the project writes no entities, or the settings asked for none"',
+            **(orm["scripts"](context) if "scripts" in orm else {}),
         },
         "dependencies": _sorted(orm["dependencies"](context)),
         "devDependencies": _sorted(
@@ -56,6 +57,8 @@ def package_file(context: dict) -> dict:
 
 def tsconfig_files(context: dict) -> list[dict]:
     tests = _has_tests(context)
+    orm = context["orm"]
+    setup = orm["testSetup"](context) if "testSetup" in orm else None
     options = {
         "target": "ES2022",
         "module": "NodeNext",
@@ -92,6 +95,7 @@ def tsconfig_files(context: dict) -> list[dict]:
                     "export default defineConfig({",
                     "  test: {",
                     "    include: ['test/**/*.test.ts'],",
+                    setup and f"    globalSetup: ['{setup}'],",
                     "    // Every test file empties the same test database: they run one after another",
                     "    fileParallelism: false,",
                     "  },",
@@ -109,15 +113,19 @@ def env_example_file(context: dict) -> dict:
         "content": lines(
             "# Where the database is",
             f"DATABASE_URL={context['orm']['defaultUrl'](context)}",
-            "# The tests use SQLite in memory unless this names another database (it is emptied by the tests)",
+            "# The tests use SQLite in memory unless this names another database (it is emptied by the tests)"
+            if context["orm"]["memoryTests"](context)
+            else "# The database the tests use (it is emptied by the tests): they need one of the same kind as DATABASE_URL",
             "# TEST_DATABASE_URL=",
             "",
         ),
     }
 
 
-def gitignore_file() -> dict:
-    return {"path": ".gitignore", "content": lines("node_modules/", "dist/", ".env", "*.db", "")}
+def gitignore_file(context: dict) -> dict:
+    orm = context["orm"]
+    ignored = orm["ignored"](context) if "ignored" in orm else []
+    return {"path": ".gitignore", "content": lines("node_modules/", "dist/", ".env", "*.db", *ignored, "")}
 
 
 LABELS = {
@@ -189,7 +197,7 @@ def readme_file(context: dict) -> dict:
             "```bash",
             "npm install",
             "npm run typecheck && npm run build",
-            "npm test                                  # SQLite in memory",
+            context["orm"]["memoryTests"](context) and "npm test                                  # SQLite in memory",
             f"TEST_DATABASE_URL={url} npm test   # a real, disposable database: it is emptied",
             "```",
             "",

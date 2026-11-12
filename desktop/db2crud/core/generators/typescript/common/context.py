@@ -136,8 +136,9 @@ def is_in(column: dict, columns: list[dict]) -> bool:
 def module_of(context: dict, info: dict, kind: str) -> str:
     """Module path (without extension) of one kind of file of a table: src/repositories/order-line or
     src/order-line/repository."""
-    # Entities the project does not write are imported from the module the settings name (dots become slashes)
-    if kind == "entity" and not info["writesEntity"]:
+    # Entities the project does not write are imported from the module the settings name (dots become slashes);
+    # plain entities are always written: the setting decides on the ORM's own tables
+    if kind == "entity" and not info["writesEntity"] and not context["orm"]["plainEntities"]:
         return context["settings"]["entitiesModule"].replace(".", "/")
     if context["settings"]["architecture"] == "table":
         return f"src/{info['file']}/{kind}"

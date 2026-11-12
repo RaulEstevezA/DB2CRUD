@@ -173,6 +173,7 @@ def repository_file(context: dict, info: dict) -> dict:
         _method_block(method, orm["repository"]["body"](context, info, method, imports)) for method in methods
     ]
     init_lines = orm["repository"]["init"](context, imports)
+    helpers = orm["repository"]["helpers"](context, info, imports) if "helpers" in orm["repository"] else []
     memory_methods = (
         [_method_block(method, _memory_body(context, info, method, imports)) for method in methods] if memory else []
     )
@@ -211,6 +212,7 @@ def repository_file(context: dict, info: dict) -> dict:
             "}",
             "",
         ],
+        bool(helpers) and [*helpers, ""],
         f"/** {orm['repository']['doc'](context, info)} */",
         f"export class {sql_repository_class(info)}{implements} {{",
         *((("" if line == "" else f"  {line}") if isinstance(line, str) else line) for line in init_lines),
