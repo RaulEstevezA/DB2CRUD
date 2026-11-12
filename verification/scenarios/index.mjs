@@ -101,4 +101,36 @@ export const SCENARIOS = [
     settings: { language: 'typescript', orm: 'typeorm', database: 'sqlite', repositoryInterfaces: false, verbs: 'find', tests: 'services', entities: 'all' },
   },
   { id: 'typeorm-sqlite-repositories-only', schema: 'shop', settings: { language: 'typescript', orm: 'typeorm', database: 'sqlite', services: false } },
+  { id: 'prisma-sqlite-defaults', schema: 'shop', settings: { language: 'typescript', orm: 'prisma', database: 'sqlite' } },
+  {
+    id: 'prisma-postgresql-class-dtos',
+    schema: 'shop',
+    settings: { language: 'typescript', orm: 'prisma', database: 'postgresql', serviceTypes: 'dtos', dtoKind: 'class' },
+    service: 'postgresql',
+  },
+  {
+    id: 'prisma-mysql-decided-cursor-by-table',
+    schema: 'shop',
+    settings: { language: 'typescript', orm: 'prisma', database: 'mysql', paging: 'cursor', architecture: 'table' },
+    decisions: OTHER_WAY,
+    service: 'mysql',
+  },
+  {
+    id: 'prisma-mariadb-caller-interface-dtos',
+    schema: 'shop',
+    settings: { language: 'typescript', orm: 'prisma', database: 'mariadb', transactions: 'caller', serviceTypes: 'dtos', dtoKind: 'interface', paging: 'none' },
+    service: 'mariadb',
+  },
+  {
+    id: 'prisma-postgresql-repository-commits',
+    schema: 'shop',
+    settings: { language: 'typescript', orm: 'prisma', database: 'postgresql', transactions: 'repository', repositoryInterfaces: false, memoryRepositories: false, verbs: 'get' },
+    service: 'postgresql',
+  },
+  {
+    id: 'prisma-sqlite-no-interfaces-services-tests',
+    schema: 'shop',
+    settings: { language: 'typescript', orm: 'prisma', database: 'sqlite', repositoryInterfaces: false, verbs: 'find', tests: 'services', entities: 'all' },
+  },
+  { id: 'prisma-sqlite-repositories-only', schema: 'shop', settings: { language: 'typescript', orm: 'prisma', database: 'sqlite', services: false } },
 ]

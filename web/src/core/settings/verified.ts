@@ -139,6 +139,38 @@ export const VERIFIED: readonly VerifiedStack[] = [
     scenarios: ['typeorm-sqlite-defaults', 'typeorm-sqlite-no-interfaces-services-tests', 'typeorm-sqlite-repositories-only'],
     date: '2026-11-11',
   },
+  {
+    language: 'typescript',
+    orm: 'prisma',
+    database: 'postgresql',
+    execution: 'async',
+    scenarios: ['prisma-postgresql-class-dtos', 'prisma-postgresql-repository-commits'],
+    date: '2026-11-12',
+  },
+  {
+    language: 'typescript',
+    orm: 'prisma',
+    database: 'mysql',
+    execution: 'async',
+    scenarios: ['prisma-mysql-decided-cursor-by-table'],
+    date: '2026-11-12',
+  },
+  {
+    language: 'typescript',
+    orm: 'prisma',
+    database: 'mariadb',
+    execution: 'async',
+    scenarios: ['prisma-mariadb-caller-interface-dtos'],
+    date: '2026-11-12',
+  },
+  {
+    language: 'typescript',
+    orm: 'prisma',
+    database: 'sqlite',
+    execution: 'async',
+    scenarios: ['prisma-sqlite-defaults', 'prisma-sqlite-no-interfaces-services-tests', 'prisma-sqlite-repositories-only'],
+    date: '2026-11-12',
+  },
 ]
 
 /** Whether this stack has passed the verification. */
