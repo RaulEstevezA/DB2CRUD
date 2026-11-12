@@ -246,6 +246,38 @@ VERIFIED = [
         ],
         "date": "2026-11-12",
     },
+    {
+        "language": "java",
+        "orm": "jpa",
+        "database": "postgresql",
+        "execution": "sync",
+        "scenarios": ["jpa-postgresql-record-dtos-patch", "jpa-postgresql-repository-commits"],
+        "date": "2026-11-12",
+    },
+    {
+        "language": "java",
+        "orm": "jpa",
+        "database": "mysql",
+        "execution": "sync",
+        "scenarios": ["jpa-mysql-decided-cursor-by-table-optional"],
+        "date": "2026-11-12",
+    },
+    {
+        "language": "java",
+        "orm": "jpa",
+        "database": "mariadb",
+        "execution": "sync",
+        "scenarios": ["jpa-mariadb-caller-class-dtos-full"],
+        "date": "2026-11-12",
+    },
+    {
+        "language": "java",
+        "orm": "jpa",
+        "database": "sqlite",
+        "execution": "sync",
+        "scenarios": ["jpa-sqlite-defaults", "jpa-sqlite-no-interfaces-services-tests", "jpa-sqlite-repositories-only"],
+        "date": "2026-11-12",
+    },
 ]
 
 
