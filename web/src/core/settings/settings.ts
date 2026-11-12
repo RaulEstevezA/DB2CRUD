@@ -10,7 +10,7 @@
 import type { Dialect } from '../schema/types.ts'
 
 export type LanguageId = 'python' | 'typescript'
-export type OrmId = 'sqlalchemy' | 'django' | 'typeorm'
+export type OrmId = 'sqlalchemy' | 'django' | 'typeorm' | 'prisma'
 
 /** Which ORM entities are written: only those the input lacks, all of them (replacing the input's), or none. */
 export type EntitiesMode = 'missing' | 'all' | 'none'
@@ -93,6 +93,15 @@ export const STACKS: readonly StackInfo[] = [
     // Every database call in Node returns a promise
     execution: ['async'],
     // TypeScript has no common result type: errors are thrown
+    errors: ['exceptions'],
+    dtoKinds: ['interface', 'class'],
+  },
+  {
+    language: 'typescript',
+    orm: 'prisma',
+    label: 'Prisma 7',
+    databases: ['postgresql', 'mysql', 'mariadb', 'sqlite'],
+    execution: ['async'],
     errors: ['exceptions'],
     dtoKinds: ['interface', 'class'],
   },

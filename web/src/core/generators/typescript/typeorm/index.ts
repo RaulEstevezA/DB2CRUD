@@ -120,6 +120,7 @@ function testDatabase(): GeneratedFile[] {
 export const typeormOrm: TsOrm = {
   id: 'typeorm',
   label: 'TypeORM 0.3',
+  plainEntities: false,
   databaseFiles,
   repository: {
     doc: (context, info) =>
@@ -133,6 +134,7 @@ export const typeormOrm: TsOrm = {
   unitOfWork,
   unset: (target) => `${target} === undefined`,
   testDatabase,
+  memoryTests: () => true,
   dependencies,
   devDependencies,
   defaultUrl,

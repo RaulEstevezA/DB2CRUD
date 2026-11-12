@@ -11,12 +11,14 @@ import { djangoOrm } from './python/django/index.ts'
 import { sqlalchemyOrm } from './python/sqlalchemy/index.ts'
 import type { Generator } from './types.ts'
 import { typescriptGenerator } from './typescript/common/generator.ts'
+import { prismaOrm } from './typescript/prisma/index.ts'
 import { typeormOrm } from './typescript/typeorm/index.ts'
 
 export const GENERATORS: readonly Generator[] = [
   pythonGenerator(sqlalchemyOrm),
   pythonGenerator(djangoOrm),
   typescriptGenerator(typeormOrm),
+  typescriptGenerator(prismaOrm),
 ]
 
 export function findGenerator(settings: Pick<ProjectSettings, 'language' | 'orm'>): Generator | undefined {

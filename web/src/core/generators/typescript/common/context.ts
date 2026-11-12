@@ -172,8 +172,9 @@ export const columnOf = (info: TableInfo, name: string) => info.columns.find((co
 
 /** Module path (without extension) of one kind of file of a table: `src/repositories/order-line` or `src/order-line/repository`. */
 export function moduleOf(context: Context, info: TableInfo, kind: 'entity' | 'repository' | 'service' | 'dtos'): string {
-  // Entities the project does not write are imported from the module the settings name (dots become slashes)
-  if (kind === 'entity' && !info.writesEntity) return context.settings.entitiesModule.replace(/\./g, '/')
+  // Entities the project does not write are imported from the module the settings name (dots become slashes);
+  // plain entities are always written: the setting decides on the ORM's own tables
+  if (kind === 'entity' && !info.writesEntity && !context.orm.plainEntities) return context.settings.entitiesModule.replace(/\./g, '/')
   if (context.settings.architecture === 'table') return `src/${info.file}/${kind}`
   const folder = { entity: 'entities', repository: 'repositories', service: 'services', dtos: 'dtos' }[kind]
   return `src/${folder}/${info.file}`

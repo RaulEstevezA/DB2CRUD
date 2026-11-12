@@ -165,6 +165,7 @@ export function repositoryFile(context: Context, info: TableInfo): GeneratedFile
   // Written before the imports, which they add to
   const sqlMethods = methods.map((method) => methodBlock(method, context.orm.repository.body(context, info, method, imports)))
   const constructorLines = context.orm.repository.init(context, imports)
+  const helpers = context.orm.repository.helpers?.(context, info, imports) ?? []
   const memoryMethods = memory ? methods.map((method) => methodBlock(method, memoryBody(context, info, method, imports))) : []
   const identity = info.columns.some((column) => column.column.generated === 'identity')
   const implementsClause = interfaces ? ` implements ${repositoryInterface(info)}` : ''
@@ -197,6 +198,7 @@ export function repositoryFile(context: Context, info: TableInfo): GeneratedFile
       '}',
       '',
     ],
+    helpers.length > 0 && [...helpers, ''],
     `/** ${context.orm.repository.doc(context, info)} */`,
     `export class ${sqlRepositoryClass(info)}${implementsClause} {`,
     ...constructorLines.map((line) => (typeof line === 'string' ? (line === '' ? '' : `  ${line}`) : line)),

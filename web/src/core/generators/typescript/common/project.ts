@@ -31,6 +31,7 @@ export function packageFile(context: Context): GeneratedFile {
       typecheck: 'tsc --noEmit',
       build: 'tsc -p tsconfig.build.json',
       test: tests ? 'vitest run' : 'echo "No tests: the project writes no entities, or the settings asked for none"',
+      ...context.orm.scripts?.(context),
     },
     dependencies: sorted(context.orm.dependencies(context)),
     devDependencies: sorted({
@@ -45,6 +46,7 @@ export function packageFile(context: Context): GeneratedFile {
 
 export function tsconfigFiles(context: Context): GeneratedFile[] {
   const tests = context.settings.tests !== 'none' && writesEntities(context)
+  const setup = context.orm.testSetup?.(context) ?? null
   const options = {
     target: 'ES2022',
     module: 'NodeNext',
@@ -76,6 +78,7 @@ export function tsconfigFiles(context: Context): GeneratedFile[] {
         'export default defineConfig({',
         '  test: {',
         "    include: ['test/**/*.test.ts'],",
+        setup && `    globalSetup: ['${setup}'],`,
         '    // Every test file empties the same test database: they run one after another',
         '    fileParallelism: false,',
         '  },',
@@ -92,15 +95,17 @@ export function envExampleFile(context: Context): GeneratedFile {
     content: lines(
       '# Where the database is',
       `DATABASE_URL=${context.orm.defaultUrl(context)}`,
-      '# The tests use SQLite in memory unless this names another database (it is emptied by the tests)',
+      context.orm.memoryTests(context)
+        ? '# The tests use SQLite in memory unless this names another database (it is emptied by the tests)'
+        : `# The database the tests use (it is emptied by the tests): they need one of the same kind as DATABASE_URL`,
       '# TEST_DATABASE_URL=',
       '',
     ),
   }
 }
 
-export function gitignoreFile(): GeneratedFile {
-  return { path: '.gitignore', content: lines('node_modules/', 'dist/', '.env', '*.db', '') }
+export function gitignoreFile(context: Context): GeneratedFile {
+  return { path: '.gitignore', content: lines('node_modules/', 'dist/', '.env', '*.db', ...(context.orm.ignored?.(context) ?? []), '') }
 }
 
 const LABELS = {
@@ -157,7 +162,7 @@ export function readmeFile(context: Context): GeneratedFile {
       '```bash',
       'npm install',
       'npm run typecheck && npm run build',
-      'npm test                                  # SQLite in memory',
+      context.orm.memoryTests(context) && 'npm test                                  # SQLite in memory',
       `TEST_DATABASE_URL=${context.orm.defaultUrl(context)} npm test   # a real, disposable database: it is emptied`,
       '```',
       '',

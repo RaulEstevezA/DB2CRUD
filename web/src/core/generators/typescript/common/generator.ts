@@ -42,7 +42,7 @@ export function typescriptGenerator(orm: TsOrm): Generator {
         packageFile(context),
         ...tsconfigFiles(context),
         envExampleFile(context),
-        gitignoreFile(),
+        gitignoreFile(context),
         contractFile(context),
         ...code(context),
         ...testFiles(context),
