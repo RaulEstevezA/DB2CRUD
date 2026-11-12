@@ -278,6 +278,42 @@ VERIFIED = [
         "scenarios": ["jpa-sqlite-defaults", "jpa-sqlite-no-interfaces-services-tests", "jpa-sqlite-repositories-only"],
         "date": "2026-11-12",
     },
+    {
+        "language": "csharp",
+        "orm": "efcore",
+        "database": "postgresql",
+        "execution": "async",
+        "scenarios": ["efcore-postgresql-record-dtos-patch", "efcore-postgresql-repository-commits"],
+        "date": "2026-11-12",
+    },
+    {
+        "language": "csharp",
+        "orm": "efcore",
+        "database": "mysql",
+        "execution": "async",
+        "scenarios": ["efcore-mysql-decided-cursor-by-table-full"],
+        "date": "2026-11-12",
+    },
+    {
+        "language": "csharp",
+        "orm": "efcore",
+        "database": "mariadb",
+        "execution": "async",
+        "scenarios": ["efcore-mariadb-caller-class-dtos-full"],
+        "date": "2026-11-12",
+    },
+    {
+        "language": "csharp",
+        "orm": "efcore",
+        "database": "sqlite",
+        "execution": "async",
+        "scenarios": [
+            "efcore-sqlite-defaults",
+            "efcore-sqlite-no-interfaces-services-tests",
+            "efcore-sqlite-repositories-only",
+        ],
+        "date": "2026-11-12",
+    },
 ]
 
 
