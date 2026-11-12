@@ -84,6 +84,17 @@ STACKS = [
         "dtoKinds": ["record", "class"],
         "updates": ["patch", "optional", "full"],
     },
+    {
+        "language": "csharp",
+        "orm": "efcore",
+        "label": "EF Core 9",
+        "databases": ["postgresql", "mysql", "mariadb", "sqlite"],
+        "execution": ["async"],
+        "errors": ["exceptions"],
+        "dtoKinds": ["record", "class"],
+        # .NET has no Optional<T>: a Patch<T> or every field
+        "updates": ["patch", "full"],
+    },
 ]
 
 DEFAULT_SETTINGS = {

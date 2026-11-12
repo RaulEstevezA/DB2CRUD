@@ -231,7 +231,7 @@ EN = SimpleNamespace(
     operation_description=_operation_en,
     project_name="Project name",
     stack_label="Language and ORM",
-    languages={"python": "Python", "typescript": "TypeScript", "java": "Java"},
+    languages={"python": "Python", "typescript": "TypeScript", "java": "Java", "csharp": "C#"},
     database_label="Database",
     databases={
         "postgresql": "PostgreSQL",
@@ -378,7 +378,7 @@ ES = SimpleNamespace(
     operation_description=_operation_es,
     project_name="Nombre del proyecto",
     stack_label="Lenguaje y ORM",
-    languages={"python": "Python", "typescript": "TypeScript", "java": "Java"},
+    languages={"python": "Python", "typescript": "TypeScript", "java": "Java", "csharp": "C#"},
     database_label="Base de datos",
     databases={
         "postgresql": "PostgreSQL",

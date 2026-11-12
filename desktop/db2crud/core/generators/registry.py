@@ -1,6 +1,7 @@
 """Registry of the generators (Registry pattern). Mirrors web/src/core/generators/registry.ts."""
 
 from ..settings.settings import normalize_settings
+from .csharp.generator import CSHARP_GENERATOR
 from .java.generator import JAVA_GENERATOR
 from .python.common.generator import python_generator
 from .python.django.index import DJANGO_ORM
@@ -19,6 +20,7 @@ GENERATORS = [
     typescript_generator(DRIZZLE_ORM),
     typescript_generator(SEQUELIZE_ORM),
     JAVA_GENERATOR,
+    CSHARP_GENERATOR,
 ]
 
 
