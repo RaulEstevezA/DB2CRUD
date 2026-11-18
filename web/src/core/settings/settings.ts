@@ -9,8 +9,8 @@
  */
 import type { Dialect } from '../schema/types.ts'
 
-export type LanguageId = 'python' | 'typescript' | 'java' | 'csharp'
-export type OrmId = 'sqlalchemy' | 'django' | 'typeorm' | 'prisma' | 'drizzle' | 'sequelize' | 'jpa' | 'efcore'
+export type LanguageId = 'python' | 'typescript' | 'java' | 'csharp' | 'php'
+export type OrmId = 'sqlalchemy' | 'django' | 'typeorm' | 'prisma' | 'drizzle' | 'sequelize' | 'jpa' | 'efcore' | 'doctrine' | 'eloquent'
 
 /** Which ORM entities are written: only those the input lacks, all of them (replacing the input's), or none. */
 export type EntitiesMode = 'missing' | 'all' | 'none'
@@ -28,9 +28,10 @@ export type Architecture = 'layer' | 'table'
 export type Verbs = 'getFind' | 'get' | 'find'
 export type Tests = 'all' | 'services' | 'repositories' | 'none'
 /** The kind of class DTOs are written as, per language. */
-export type DtoKind = 'pydantic' | 'dataclass' | 'interface' | 'class' | 'record'
-/** How a service takes the changes of an update: the language's partial object (TypeScript, Python), or, in typed
- * languages, a Patch<T> per field (absent, null or a value), Optional<T> (null when not sent), or every field. */
+export type DtoKind = 'pydantic' | 'dataclass' | 'interface' | 'class' | 'record' | 'readonly'
+/** How a service takes the changes of an update: the language's partial object (TypeScript, Python; in PHP an array
+ * of the changed fields), or, in typed languages, a Patch<T> per field (absent, null or a value), Optional<T> (null
+ * when not sent), or every field. */
 export type Updates = 'partial' | 'patch' | 'optional' | 'full'
 
 export interface ProjectSettings {
@@ -155,6 +156,28 @@ export const STACKS: readonly StackInfo[] = [
     dtoKinds: ['record', 'class'],
     // .NET has no Optional<T>: a Patch<T> or every field
     updates: ['patch', 'full'],
+  },
+  {
+    language: 'php',
+    orm: 'doctrine',
+    label: 'Doctrine ORM 3',
+    databases: ['postgresql', 'mysql', 'mariadb', 'sqlite'],
+    // PHP's database calls block
+    execution: ['sync'],
+    errors: ['exceptions'],
+    dtoKinds: ['readonly', 'class'],
+    // PHP has no Optional<T>: a Patch per field, an array of the changed fields, or every field
+    updates: ['patch', 'partial', 'full'],
+  },
+  {
+    language: 'php',
+    orm: 'eloquent',
+    label: 'Eloquent 12',
+    databases: ['postgresql', 'mysql', 'mariadb', 'sqlite'],
+    execution: ['sync'],
+    errors: ['exceptions'],
+    dtoKinds: ['readonly', 'class'],
+    updates: ['patch', 'partial', 'full'],
   },
 ]
 

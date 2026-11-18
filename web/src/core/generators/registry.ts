@@ -8,6 +8,9 @@ import type { DbSchema } from '../schema/types.ts'
 import { normalizeSettings, type ProjectSettings } from '../settings/settings.ts'
 import { csharpGenerator } from './csharp/generator.ts'
 import { javaGenerator } from './java/generator.ts'
+import { phpGenerator } from './php/common/generator.ts'
+import { doctrineOrm } from './php/doctrine/index.ts'
+import { eloquentOrm } from './php/eloquent/index.ts'
 import { pythonGenerator } from './python/common/generator.ts'
 import { djangoOrm } from './python/django/index.ts'
 import { sqlalchemyOrm } from './python/sqlalchemy/index.ts'
@@ -27,6 +30,8 @@ export const GENERATORS: readonly Generator[] = [
   typescriptGenerator(sequelizeOrm),
   javaGenerator,
   csharpGenerator,
+  phpGenerator(doctrineOrm),
+  phpGenerator(eloquentOrm),
 ]
 
 export function findGenerator(settings: Pick<ProjectSettings, 'language' | 'orm'>): Generator | undefined {

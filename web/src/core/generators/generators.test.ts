@@ -135,3 +135,54 @@ describe('the SQLAlchemy generator', () => {
     expect(customers.operations[0]).toEqual({ name: 'create_customer', kind: 'create', errors: ['validation', 'conflict'] })
   })
 })
+
+describe('the PHP generators', () => {
+  const doctrine = { language: 'php', orm: 'doctrine' } as const
+  const eloquent = { language: 'php', orm: 'eloquent' } as const
+
+  it('write PSR-4 projects with the same services for every ORM', () => {
+    for (const stack of [doctrine, eloquent])
+      expect(paths(stack)).toEqual(
+        expect.arrayContaining([
+          'composer.json',
+          'phpunit.xml',
+          'src/Database.php',
+          'src/UnitOfWork.php',
+          'src/Entities/Customer.php',
+          'src/Repositories/SqlCustomerRepository.php',
+          'src/Services/CustomerService.php',
+          'tests/CustomerServiceTest.php',
+        ]),
+      )
+    expect(file('src/Services/CustomerService.php', doctrine)).toContain("$entity->passwordHash = $values['passwordHash'];")
+    expect(file('src/Services/CustomerService.php', eloquent)).toContain("$entity->password_hash = $values['passwordHash'];")
+  })
+
+  it('map the entities with each ORM', () => {
+    expect(file('src/Entities/Product.php', doctrine)).toContain("#[ORM\\Column(name: 'price', type: 'decimal', precision: 10, scale: 2)]")
+    expect(file('src/Entities/Product.php', eloquent)).toContain("'price' => 'decimal:2',")
+    // Eloquent keys a model by one column: a key of several is read and written by all of them
+    expect(file('src/Repositories/SqlOrderLineRepository.php', eloquent)).toContain("->where('line', $entity->getOriginal('line'))")
+  })
+
+  it('take updates as the settings say', () => {
+    expect(file('src/Services/CustomerChanges.php', doctrine)).toContain('public Patch $email = new Patch(),')
+    expect(file('src/Services/CustomerService.php', { ...doctrine, updates: 'partial' })).toContain('array $changes')
+    expect(paths({ ...doctrine, updates: 'partial' })).not.toContain('src/Services/CustomerChanges.php')
+    expect(file('src/Dtos/CustomerUpdate.php', { ...doctrine, serviceTypes: 'dtos', dtoKind: 'class', updates: 'full' })).toContain(
+      'final class CustomerUpdate',
+    )
+  })
+
+  it('never write a value they could not compute', () => {
+    const variants: Partial<ProjectSettings>[] = [
+      {},
+      { serviceTypes: 'dtos', paging: 'cursor', architecture: 'table', updates: 'partial' },
+      { transactions: 'caller', repositoryInterfaces: false, memoryRepositories: false, verbs: 'get', updates: 'full' },
+    ]
+    for (const stack of [doctrine, eloquent])
+      for (const settings of variants)
+        for (const item of generate({ ...stack, ...settings }))
+          expect(item.content, item.path).not.toMatch(/undefined|\[object Object\]|NaN/)
+  })
+})

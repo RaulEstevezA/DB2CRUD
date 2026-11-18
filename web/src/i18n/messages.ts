@@ -150,7 +150,7 @@ const en = {
   // Project pane
   projectName: 'Project name',
   stackLabel: 'Language and ORM',
-  languages: { python: 'Python', typescript: 'TypeScript', java: 'Java', csharp: 'C#' } satisfies Record<LanguageId, string>,
+  languages: { python: 'Python', typescript: 'TypeScript', java: 'Java', csharp: 'C#', php: 'PHP' } satisfies Record<LanguageId, string>,
   databaseLabel: 'Database',
   databases: {
     postgresql: 'PostgreSQL',
@@ -180,6 +180,7 @@ const en = {
     interface: 'Interfaces',
     class: 'Classes',
     record: 'Records',
+    readonly: 'Readonly classes',
   } satisfies Record<DtoKind, string>,
   updatesLabel: 'Updates take',
   updatesModes: {
@@ -381,7 +382,7 @@ const es: Messages = {
   },
   projectName: 'Nombre del proyecto',
   stackLabel: 'Lenguaje y ORM',
-  languages: { python: 'Python', typescript: 'TypeScript', java: 'Java', csharp: 'C#' },
+  languages: { python: 'Python', typescript: 'TypeScript', java: 'Java', csharp: 'C#', php: 'PHP' },
   databaseLabel: 'Base de datos',
   databases: { postgresql: 'PostgreSQL', mysql: 'MySQL', mariadb: 'MariaDB', sqlite: 'SQLite', sqlserver: 'SQL Server', oracle: 'Oracle' },
   executionLabel: 'Código',
@@ -395,7 +396,14 @@ const es: Messages = {
   serviceTypesLabel: 'Los servicios reciben y devuelven',
   serviceTypes: { entities: 'Las entidades', dtos: 'DTOs' },
   dtoKindLabel: 'DTOs como',
-  dtoKinds: { pydantic: 'Modelos de Pydantic', dataclass: 'Dataclasses', interface: 'Interfaces', class: 'Clases', record: 'Records' },
+  dtoKinds: {
+    pydantic: 'Modelos de Pydantic',
+    dataclass: 'Dataclasses',
+    interface: 'Interfaces',
+    class: 'Clases',
+    record: 'Records',
+    readonly: 'Clases readonly',
+  },
   updatesLabel: 'Las actualizaciones reciben',
   updatesModes: {
     partial: 'Los campos que cambian',
