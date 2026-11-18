@@ -22,8 +22,9 @@ import type { PhpOrm } from '../common/orm.ts'
 import { fieldName, phpString, PhpUses } from '../common/php.ts'
 import { uuidFills, type RepositoryMethod } from '../common/repositories.ts'
 import { repositoryAssignments, repositoryProperties } from '../common/support.ts'
-import { testFile, TESTS_NS } from '../common/tests.ts'
+import { schemasOf, testFile, TESTS_NS } from '../common/tests.ts'
 import { doctrineEntityFile, doctrinePhpType, idColumns, pgEnums, quoted } from './entities.ts'
+import { PRECISE_TYPES, typeFiles, typesNamespace, usesPreciseTypes } from './types.ts'
 
 const URLS: Record<string, string> = {
   postgresql: 'postgresql://app:app@localhost:5432/app',
@@ -38,41 +39,53 @@ const ind = (items: Line[], spaces: number): Line[] =>
   items.map((line) => (typeof line === 'string' ? (line === '' ? '' : ' '.repeat(spaces) + line) : line))
 
 function databaseFile(context: Context): GeneratedFile {
-  return phpFile(
-    pathOf(context.base, 'Database'),
-    context.base,
-    [
-      'use Doctrine\\DBAL\\DriverManager;',
-      'use Doctrine\\DBAL\\Tools\\DsnParser;',
-      'use Doctrine\\ORM\\EntityManager;',
-      'use Doctrine\\ORM\\ORMSetup;',
-    ].join('\n'),
-    [
-      '/** The database DATABASE_URL names, through Doctrine. It never migrates: the database already exists. */',
-      'final class Database',
-      '{',
-      `    public const DEFAULT_URL = ${phpString(URLS[context.settings.database] ?? URLS.postgresql)};`,
-      '',
-      '    /** The URL of DATABASE_URL, or the default one. */',
-      '    public static function url(): string',
-      '    {',
-      "        $url = getenv('DATABASE_URL');",
-      "        return is_string($url) && $url !== '' ? $url : self::DEFAULT_URL;",
-      '    }',
-      '',
-      '    /** An EntityManager over the database at $url (DATABASE_URL when null), with the mapping of the entities. */',
-      '    public static function open(?string $url = null): EntityManager',
-      '    {',
-      '        // The mapping is read from the attributes of the classes under src/',
-      '        $config = ORMSetup::createAttributeMetadataConfiguration([__DIR__], true);',
-      '        $config->enableNativeLazyObjects(true);',
-      "        $parser = new DsnParser(['postgresql' => 'pdo_pgsql', 'postgres' => 'pdo_pgsql', 'mysql' => 'pdo_mysql', 'mariadb' => 'pdo_mysql', 'sqlite' => 'pdo_sqlite']);",
-      '        $connection = DriverManager::getConnection($parser->parse($url ?? self::url()), $config);',
-      '        return new EntityManager($connection, $config);',
-      '    }',
-      '}',
-    ],
+  const precise = usesPreciseTypes(context)
+  const uses = new PhpUses(context.base).add(
+    'Doctrine\\DBAL\\DriverManager',
+    'Doctrine\\DBAL\\Tools\\DsnParser',
+    'Doctrine\\ORM\\EntityManager',
+    'Doctrine\\ORM\\ORMSetup',
   )
+  if (precise) {
+    uses.add('Doctrine\\DBAL\\Types\\Type')
+    for (const type of PRECISE_TYPES) uses.add(className(typesNamespace(context), type.name))
+  }
+  const registration = precise
+    ? [
+        '        // The timestamps of the entities keep their fractions of a second',
+        ...PRECISE_TYPES.flatMap((type) => [
+          `        if (!Type::hasType(${type.name}::NAME)) {`,
+          `            Type::addType(${type.name}::NAME, ${type.name}::class);`,
+          '        }',
+        ]),
+      ]
+    : []
+  return phpFile(pathOf(context.base, 'Database'), context.base, uses.write(), [
+    '/** The database DATABASE_URL names, through Doctrine. It never migrates: the database already exists. */',
+    'final class Database',
+    '{',
+    `    public const DEFAULT_URL = ${phpString(URLS[context.settings.database] ?? URLS.postgresql)};`,
+    '',
+    '    /** The URL of DATABASE_URL, or the default one. */',
+    '    public static function url(): string',
+    '    {',
+    "        $url = getenv('DATABASE_URL');",
+    "        return is_string($url) && $url !== '' ? $url : self::DEFAULT_URL;",
+    '    }',
+    '',
+    '    /** An EntityManager over the database at $url (DATABASE_URL when null), with the mapping of the entities. */',
+    '    public static function open(?string $url = null): EntityManager',
+    '    {',
+    ...registration,
+    '        // The mapping is read from the attributes of the classes under src/',
+    '        $config = ORMSetup::createAttributeMetadataConfiguration([__DIR__], true);',
+    '        $config->enableNativeLazyObjects(true);',
+    "        $parser = new DsnParser(['postgresql' => 'pdo_pgsql', 'postgres' => 'pdo_pgsql', 'mysql' => 'pdo_mysql', 'mariadb' => 'pdo_mysql', 'sqlite' => 'pdo_sqlite']);",
+    '        $connection = DriverManager::getConnection($parser->parse($url ?? self::url()), $config);',
+    '        return new EntityManager($connection, $config);',
+    '    }',
+    '}',
+  ])
 }
 
 // Repositories
@@ -263,6 +276,7 @@ function testDatabase(context: Context): GeneratedFile[] {
     if (!info.table.primaryKey) additions.push(`$schema->getTable(${phpString(tableName(info))})->dropPrimaryKey();`)
   }
   const quote = (text: string) => `'${text.replace(/'/g, "''")}'`
+  const namespaces = schemasOf(context)
   const files: GeneratedFile[] = [
     testFile('TestDatabase', uses, [
       sqlite
@@ -287,11 +301,17 @@ function testDatabase(context: Context): GeneratedFile[] {
           ]),
       '        $connection = $em->getConnection();',
       '        $tool = new SchemaTool($em);',
+      ...(namespaces.length > 0 ? ['        // The schemas the tables are in go too: the mapping creates them again'] : []),
+      ...namespaces.map((name) => `        $connection->executeStatement(${phpString(`DROP SCHEMA IF EXISTS "${name}" CASCADE`)});`),
+      ...(enums.length > 0
+        ? ['        // DBAL cannot read a column of an enum type: the types go first, and their columns with them']
+        : []),
+      ...enums.map((item) => `        $connection->executeStatement(${phpString(`DROP TYPE IF EXISTS "${item.name}" CASCADE`)});`),
       '        $tool->dropDatabase();',
-      ...enums.flatMap((item) => [
-        `        $connection->executeStatement(${phpString(`DROP TYPE IF EXISTS "${item.name}" CASCADE`)});`,
-        `        $connection->executeStatement(${phpString(`CREATE TYPE "${item.name}" AS ENUM (${item.values.map(quote).join(', ')})`)});`,
-      ]),
+      ...enums.map(
+        (item) =>
+          `        $connection->executeStatement(${phpString(`CREATE TYPE "${item.name}" AS ENUM (${item.values.map(quote).join(', ')})`)});`,
+      ),
       '        $schema = $tool->getSchemaFromMetadata($em->getMetadataFactory()->getAllMetadata());',
       ...(additions.length > 0
         ? [
@@ -333,7 +353,7 @@ export const doctrineOrm: PhpOrm = {
   property: (column) => fieldName(column.name),
   phpType: doctrinePhpType,
   entityFile: doctrineEntityFile,
-  databaseFiles: (context) => [databaseFile(context)],
+  databaseFiles: (context) => [databaseFile(context), ...typeFiles(context)],
   repository: {
     doc: () => "through Doctrine's EntityManager; every write is flushed at once.",
     init: (_context, uses) => {

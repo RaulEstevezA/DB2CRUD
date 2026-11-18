@@ -24,7 +24,7 @@ import type { PhpOrm } from '../common/orm.ts'
 import { phpLiteral, phpString, PhpUses } from '../common/php.ts'
 import { filledByDatabase, uuidFills, type RepositoryMethod } from '../common/repositories.ts'
 import { repositoryAssignments, repositoryProperties } from '../common/support.ts'
-import { testFile, TESTS_NS } from '../common/tests.ts'
+import { schemasOf, testFile, TESTS_NS } from '../common/tests.ts'
 import { eloquentModelFile, eloquentPhpType } from './models.ts'
 
 const URLS: Record<string, string> = {
@@ -333,12 +333,15 @@ function createTable(context: Context, info: TableInfo, uses: PhpUses): string[]
   const { table } = info
   const enums = new Set(context.schema.enums.filter((item) => item.storage === 'native').map((item) => item.name))
   const native = (column: DbColumn) => column.type.kind === 'enum' && enums.has(column.type.name) && context.settings.database !== 'sqlite'
+  // A column of an enum of PostgreSQL takes its default once it has its type (the text default cannot be cast)
+  const pgEnum = (column: DbColumn) => native(column) && context.settings.database === 'postgresql'
   const lines: string[] = []
   for (const column of table.columns) {
     if (column.default?.kind === 'expression') uses.add('Illuminate\\Database\\Query\\Expression')
     if (column.generated === 'identity' && !(table.primaryKey?.length === 1 && table.primaryKey[0] === column.name))
       lines.push('// TODO: the database numbers this column; the schema builder numbers only a key of one column')
-    lines.push(`${columnCall(context, table, column, native(column))}${columnModifiers(column)};`)
+    const modifiers = columnModifiers(pgEnum(column) ? { ...column, default: undefined } : column)
+    lines.push(`${columnCall(context, table, column, native(column))}${modifiers};`)
   }
   const identityKey =
     table.primaryKey?.length === 1 && table.columns.find((column) => column.name === table.primaryKey![0])?.generated === 'identity'
@@ -354,13 +357,18 @@ function createTable(context: Context, info: TableInfo, uses: PhpUses): string[]
     )
   }
   for (const check of table.checks) lines.push(`// CHECK (${check.sql}): the schema builder has no CHECK constraints`)
-  const after = table.columns
-    .filter((column) => native(column) && context.settings.database === 'postgresql')
-    .map((column) => {
-      const type = column.type.kind === 'enum' ? column.type.name : ''
-      const sql = `ALTER TABLE "${table.name}" ALTER COLUMN "${column.name}" TYPE "${type}" USING "${column.name}"::"${type}"`
-      return `$schema->getConnection()->statement(${phpString(sql)});`
-    })
+  const qualified = table.schema ? `"${table.schema}"."${table.name}"` : `"${table.name}"`
+  const after = table.columns.filter(pgEnum).flatMap((column) => {
+    const type = column.type.kind === 'enum' ? column.type.name : ''
+    const statements = [`ALTER TABLE ${qualified} ALTER COLUMN "${column.name}" TYPE "${type}" USING "${column.name}"::"${type}"`]
+    if (column.default?.kind === 'literal' && column.default.value !== null)
+      statements.push(
+        `ALTER TABLE ${qualified} ALTER COLUMN "${column.name}" SET DEFAULT '${String(column.default.value).replace(/'/g, "''")}'`,
+      )
+    else if (column.default?.kind === 'expression')
+      statements.push(`ALTER TABLE ${qualified} ALTER COLUMN "${column.name}" SET DEFAULT ${column.default.sql}`)
+    return statements.map((sql) => `$schema->getConnection()->statement(${phpString(sql)});`)
+  })
   return [
     `$schema->create(${phpString(tableName(table))}, function (Blueprint $table): void {`,
     ...lines.map((line) => `    ${line}`),
@@ -380,6 +388,7 @@ function testDatabase(context: Context): GeneratedFile[] {
   )
   const enums = database === 'postgresql' ? context.schema.enums.filter((item) => item.storage === 'native') : []
   const quote = (text: string) => `'${text.replace(/'/g, "''")}'`
+  const namespaces = schemasOf(context)
   const tables = creationOrder(context).flatMap((info, index) => [...(index > 0 ? [''] : []), ...createTable(context, info, uses)])
   const files: GeneratedFile[] = [
     testFile('TestDatabase', uses, [
@@ -405,6 +414,11 @@ function testDatabase(context: Context): GeneratedFile[] {
           ]),
       '        $schema = $db->getSchemaBuilder();',
       '        $schema->dropAllTables();',
+      ...(namespaces.length > 0 ? ['        // The schemas the tables are in, emptied and created again'] : []),
+      ...namespaces.flatMap((name) => [
+        `        $db->statement(${phpString(`DROP SCHEMA IF EXISTS "${name}" CASCADE`)});`,
+        `        $db->statement(${phpString(`CREATE SCHEMA "${name}"`)});`,
+      ]),
       ...(enums.length > 0 ? ['        $schema->dropAllTypes();'] : []),
       ...enums.map(
         (item) => `        $db->statement(${phpString(`CREATE TYPE "${item.name}" AS ENUM (${item.values.map(quote).join(', ')})`)});`,

@@ -44,6 +44,18 @@ def _can_make(context: dict, info: dict, seen: frozenset = frozenset()) -> bool:
     return True
 
 
+def schemas_of(context: dict) -> list[str]:
+    """The schemas of PostgreSQL the tables are in (sales in sales.orders), which the tests empty with their tables."""
+    if context["settings"]["database"] != "postgresql":
+        return []
+    names = []
+    for info in context["tables"]:
+        schema = info["table"].get("schema")
+        if schema and schema not in names:
+            names.append(schema)
+    return names
+
+
 def _new_name(info: dict) -> str:
     return f"new{info['entity']}"
 
@@ -183,6 +195,15 @@ def _test(name: str, body: list) -> list:
     ]
 
 
+def _when_set(columns: list[dict], assertion: str) -> list[str]:
+    """An assertion on a stored row's values, made only when those that may be null have one."""
+    optional = [column for column in columns if column["column"]["nullable"]]
+    if not optional:
+        return [assertion]
+    present = " && ".join(f"{access('$stored', column['prop'])} !== null" for column in optional)
+    return [f"if ({present}) {{", f"    {assertion}", "}"]
+
+
 def _repository_tests(context: dict, info: dict) -> list[list]:
     repo = f"$uow->{info['attr']}"
 
@@ -208,8 +229,9 @@ def _repository_tests(context: dict, info: dict) -> list[list]:
     for unique in info["table"]["uniques"]:
         read = query(info, "findByUnique", unique["columns"])
         if read:
-            args = ", ".join(access("$stored", column_of(info, name)["prop"]) for name in read["columns"])
-            uniques.append(f"self::assertNotNull({repo}->{query_name(context, read)}({args}));")
+            columns = [column_of(info, name) for name in read["columns"]]
+            args = ", ".join(access("$stored", column["prop"]) for column in columns)
+            uniques.extend(_when_set(columns, f"self::assertNotNull({repo}->{query_name(context, read)}({args}));"))
     parents = []
     for key in info["table"]["foreignKeys"]:
         read = query(info, "listByParent", key["columns"])
@@ -217,13 +239,7 @@ def _repository_tests(context: dict, info: dict) -> list[list]:
             continue
         columns = [column_of(info, name) for name in read["columns"]]
         args = ", ".join(access("$stored", column["prop"]) for column in columns)
-        assertion = f"self::assertCount(1, {repo}->{query_name(context, read)}({args}));"
-        optional = [column for column in columns if column["column"]["nullable"]]
-        if optional:
-            present = " && ".join(f"{access('$stored', column['prop'])} !== null" for column in optional)
-            parents.extend([f"if ({present}) {{", f"    {assertion}", "}"])
-        else:
-            parents.append(assertion)
+        parents.extend(_when_set(columns, f"self::assertCount(1, {repo}->{query_name(context, read)}({args}));"))
     tests.append(_test("IsStoredAndReadBack", [stored, forget, reads if get_by_key else None, *uniques, *parents]))
     paging = context["settings"]["paging"]
     if listing:
@@ -319,7 +335,8 @@ def _service_tests(context: dict, info: dict, uses: PhpUses) -> list[list]:
         for position, column in enumerate(key["columns"]):
             value = access(f"$parent{index}", column_of(parent, key["references"]["columns"][position])["prop"])
             overrides.append({"column": column, "value": value})
-    start = ["$n = 1;", *parents_first]
+    # The parents take a number the rows of the test never take: a parent may be a row of the same table
+    start = [*(["$n = 100;"] if parents_first else []), *parents_first]
 
     def row(variable: str, n: int, extra: list[dict] | None = None) -> list[str]:
         """A row from the factory with the parents' keys and the given values set."""

@@ -5,6 +5,7 @@ database has them. Mirrors web/src/core/generators/php/eloquent/index.ts."""
 
 import re
 
+from ....js import number_text
 from ..common.context import (
     class_name,
     column_of,
@@ -19,7 +20,7 @@ from ..common.context import (
 from ..common.php import PhpUses, php_literal, php_string
 from ..common.repositories import filled_by_database, uuid_fills
 from ..common.support import repository_assignments, repository_properties
-from ..common.tests import TESTS_NS, test_file
+from ..common.tests import TESTS_NS, schemas_of, test_file
 from .models import eloquent_model_file, eloquent_php_type
 
 URLS = {
@@ -385,6 +386,10 @@ def _create_table(context: dict, info: dict, uses: PhpUses) -> list[str]:
     def native(column: dict) -> bool:
         return column["type"]["kind"] == "enum" and column["type"]["name"] in enums and database != "sqlite"
 
+    # A column of an enum of PostgreSQL takes its default once it has its type (the text default cannot be cast)
+    def pg_enum(column: dict) -> bool:
+        return native(column) and database == "postgresql"
+
     result = []
     for column in table["columns"]:
         if (column.get("default") or {}).get("kind") == "expression":
@@ -393,7 +398,8 @@ def _create_table(context: dict, info: dict, uses: PhpUses) -> list[str]:
             result.append(
                 "// TODO: the database numbers this column; the schema builder numbers only a key of one column"
             )
-        result.append(f"{_column_call(context, table, column, native(column))}{_column_modifiers(column)};")
+        modifiers = _column_modifiers({**column, "default": None} if pg_enum(column) else column)
+        result.append(f"{_column_call(context, table, column, native(column))}{modifiers};")
     key = table["primaryKey"]
     identity_key = False
     if key is not None and len(key) == 1:
@@ -419,21 +425,31 @@ def _create_table(context: dict, info: dict, uses: PhpUses) -> list[str]:
         )
     for check in table["checks"]:
         result.append(f"// CHECK ({check['sql']}): the schema builder has no CHECK constraints")
+    qualified = f'"{table["schema"]}"."{table["name"]}"' if table.get("schema") else f'"{table["name"]}"'
     after = []
     for column in table["columns"]:
-        if native(column) and database == "postgresql":
-            type_name = column["type"]["name"]
-            sql = (
-                f'ALTER TABLE "{table["name"]}" ALTER COLUMN "{column["name"]}" TYPE "{type_name}" '
-                f'USING "{column["name"]}"::"{type_name}"'
-            )
-            after.append(f"$schema->getConnection()->statement({php_string(sql)});")
+        if not pg_enum(column):
+            continue
+        type_name = column["type"]["name"]
+        alter = f'ALTER TABLE {qualified} ALTER COLUMN "{column["name"]}"'
+        statements = [f'{alter} TYPE "{type_name}" USING "{column["name"]}"::"{type_name}"']
+        default = column.get("default")
+        if default and default["kind"] == "literal" and default["value"] is not None:
+            value = _text(default["value"]).replace("'", "''")
+            statements.append(f"{alter} SET DEFAULT '{value}'")
+        elif default and default["kind"] == "expression":
+            statements.append(f"{alter} SET DEFAULT {default['sql']}")
+        after.extend(f"$schema->getConnection()->statement({php_string(sql)});" for sql in statements)
     return [
         f"$schema->create({php_string(_table_name(table))}, function (Blueprint $table): void {{",
         *(f"    {line}" for line in result),
         "});",
         *after,
     ]
+
+
+def _text(value) -> str:
+    return value if isinstance(value, str) else number_text(value)
 
 
 def _quote(text: str) -> str:
@@ -480,6 +496,12 @@ def _test_database(context: dict) -> list[dict]:
         values = ", ".join(_quote(value) for value in item["values"])
         create = php_string('CREATE TYPE "' + item["name"] + '" AS ENUM (' + values + ")")
         types.append(f"        $db->statement({create});")
+    namespaces = schemas_of(context)
+    schemas = ["        // The schemas the tables are in, emptied and created again"] if namespaces else []
+    for name in namespaces:
+        drop = php_string('DROP SCHEMA IF EXISTS "' + name + '" CASCADE')
+        create = php_string('CREATE SCHEMA "' + name + '"')
+        schemas.extend([f"        $db->statement({drop});", f"        $db->statement({create});"])
     files = [
         test_file(
             "TestDatabase",
@@ -500,6 +522,7 @@ def _test_database(context: dict) -> list[dict]:
                 *opening,
                 "        $schema = $db->getSchemaBuilder();",
                 "        $schema->dropAllTables();",
+                *schemas,
                 *(["        $schema->dropAllTypes();"] if enums else []),
                 *types,
                 "        self::createTables($schema);",

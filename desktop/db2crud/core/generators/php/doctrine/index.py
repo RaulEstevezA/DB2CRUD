@@ -17,8 +17,9 @@ from ..common.context import (
 from ..common.php import PhpUses, field_name, php_string
 from ..common.repositories import uuid_fills
 from ..common.support import repository_assignments, repository_properties
-from ..common.tests import TESTS_NS, test_file
+from ..common.tests import TESTS_NS, schemas_of, test_file
 from .entities import doctrine_entity_file, doctrine_php_type, id_columns, pg_enums, quoted
+from .types import PRECISE_TYPES, type_files, types_namespace, uses_precise_types
 
 URLS = {
     "postgresql": "postgresql://app:app@localhost:5432/app",
@@ -35,17 +36,30 @@ def _url(context: dict) -> str:
 
 
 def _database_file(context: dict) -> dict:
+    precise = uses_precise_types(context)
+    uses = PhpUses(context["base"]).add(
+        "Doctrine\\DBAL\\DriverManager",
+        "Doctrine\\DBAL\\Tools\\DsnParser",
+        "Doctrine\\ORM\\EntityManager",
+        "Doctrine\\ORM\\ORMSetup",
+    )
+    registration = []
+    if precise:
+        uses.add("Doctrine\\DBAL\\Types\\Type")
+        registration.append("        // The timestamps of the entities keep their fractions of a second")
+        for item in PRECISE_TYPES:
+            uses.add(class_name(types_namespace(context), item["name"]))
+            registration.extend(
+                [
+                    f"        if (!Type::hasType({item['name']}::NAME)) {{",
+                    f"            Type::addType({item['name']}::NAME, {item['name']}::class);",
+                    "        }",
+                ]
+            )
     return php_file(
         path_of(context["base"], "Database"),
         context["base"],
-        "\n".join(
-            [
-                "use Doctrine\\DBAL\\DriverManager;",
-                "use Doctrine\\DBAL\\Tools\\DsnParser;",
-                "use Doctrine\\ORM\\EntityManager;",
-                "use Doctrine\\ORM\\ORMSetup;",
-            ]
-        ),
+        uses.write(),
         [
             "/** The database DATABASE_URL names, through Doctrine. It never migrates: the database already exists. */",
             "final class Database",
@@ -62,6 +76,7 @@ def _database_file(context: dict) -> dict:
             "    /** An EntityManager over the database at $url (DATABASE_URL when null), with the mapping of the entities. */",
             "    public static function open(?string $url = null): EntityManager",
             "    {",
+            *registration,
             "        // The mapping is read from the attributes of the classes under src/",
             "        $config = ORMSetup::createAttributeMetadataConfiguration([__DIR__], true);",
             "        $config->enableNativeLazyObjects(true);",
@@ -312,14 +327,22 @@ def _test_database(context: dict) -> list[dict]:
             f"/** The test database: the {NAMES[database]} database TEST_DATABASE_URL names, created empty from the "
             "mapping for every test. */"
         )
-    types = []
+    namespaces = schemas_of(context)
+    drops = ["        // The schemas the tables are in go too: the mapping creates them again"] if namespaces else []
+    for name in namespaces:
+        statement = php_string('DROP SCHEMA IF EXISTS "' + name + '" CASCADE')
+        drops.append(f"        $connection->executeStatement({statement});")
+    if enums:
+        drops.append(
+            "        // DBAL cannot read a column of an enum type: the types go first, and their columns with them"
+        )
+    creates = []
     for item in enums:
         values = ", ".join(_quote(value) for value in item["values"])
         drop = php_string('DROP TYPE IF EXISTS "' + item["name"] + '" CASCADE')
         create = php_string('CREATE TYPE "' + item["name"] + '" AS ENUM (' + values + ")")
-        types.extend(
-            [f"        $connection->executeStatement({drop});", f"        $connection->executeStatement({create});"]
-        )
+        drops.append(f"        $connection->executeStatement({drop});")
+        creates.append(f"        $connection->executeStatement({create});")
     files = [
         test_file(
             "TestDatabase",
@@ -340,8 +363,9 @@ def _test_database(context: dict) -> list[dict]:
                 *opening,
                 "        $connection = $em->getConnection();",
                 "        $tool = new SchemaTool($em);",
+                *drops,
                 "        $tool->dropDatabase();",
-                *types,
+                *creates,
                 "        $schema = $tool->getSchemaFromMetadata($em->getMetadataFactory()->getAllMetadata());",
                 *(
                     [
@@ -402,7 +426,7 @@ DOCTRINE_ORM = {
     "property": lambda column: field_name(column["name"]),
     "phpType": doctrine_php_type,
     "entityFile": doctrine_entity_file,
-    "databaseFiles": lambda context: [_database_file(context)],
+    "databaseFiles": lambda context: [_database_file(context), *type_files(context)],
     "repository": {
         "doc": lambda context: "through Doctrine's EntityManager; every write is flushed at once.",
         "init": _init,

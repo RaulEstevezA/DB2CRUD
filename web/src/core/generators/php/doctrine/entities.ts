@@ -11,6 +11,7 @@ import type { Line } from '../../types.ts'
 import { namespaceOf, optionalType, pathOf, phpFile, type ColumnInfo, type Context, type TableInfo } from '../common/context.ts'
 import { phpLiteral, phpString } from '../common/php.ts'
 import { defaultLiteral } from '../common/repositories.ts'
+import { PRECISE, PRECISE_TZ } from './types.ts'
 
 /** The PHP type of a value as Doctrine reads it. */
 export function doctrinePhpType(type: DbType): string {
@@ -57,8 +58,9 @@ function dbalType(type: DbType): { name: string; length?: number; precision?: nu
       return { name: 'date_immutable' }
     case 'time':
       return { name: 'time_immutable' }
+    // DBAL's own timestamps expect no fractions of a second, which a real database often keeps (types.ts)
     case 'datetime':
-      return { name: type.timezone ? 'datetimetz_immutable' : 'datetime_immutable' }
+      return { name: type.timezone ? PRECISE_TZ : PRECISE }
     case 'uuid':
       return { name: 'guid' }
     case 'binary':

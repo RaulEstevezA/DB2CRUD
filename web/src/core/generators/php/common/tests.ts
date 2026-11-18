@@ -64,6 +64,14 @@ export function testFile(name: string, uses: PhpUses, body: Line[]): GeneratedFi
   }
 }
 
+/** The schemas of PostgreSQL the tables are in (`sales` in `sales.orders`), which the tests empty with their tables. */
+export function schemasOf(context: Context): string[] {
+  if (context.settings.database !== 'postgresql') return []
+  const names: string[] = []
+  for (const info of context.tables) if (info.table.schema && !names.includes(info.table.schema)) names.push(info.table.schema)
+  return names
+}
+
 const ind = (items: Line[], spaces: number): Line[] =>
   items.map((line) => (typeof line === 'string' ? (line === '' ? '' : ' '.repeat(spaces) + line) : line))
 
@@ -150,6 +158,13 @@ const test = (name: string, body: (Line | Line[])[]): Line[] => [
   '    }',
 ]
 
+/** An assertion on a stored row's values, made only when those that may be null have one. */
+function whenSet(columns: ColumnInfo[], assert: string): string[] {
+  const optional = columns.filter((column) => column.column.nullable)
+  if (optional.length === 0) return [assert]
+  return [`if (${optional.map((column) => `${access('$stored', column.prop)} !== null`).join(' && ')}) {`, `    ${assert}`, '}']
+}
+
 function repositoryTests(context: Context, info: TableInfo): Line[][] {
   const repo = `$uow->${info.attr}`
   const keyOf = (variable: string) => info.key.map((column) => access(variable, column.prop)).join(', ')
@@ -170,20 +185,22 @@ function repositoryTests(context: Context, info: TableInfo): Line[][] {
       ...info.table.uniques
         .map((unique) => query(info, 'findByUnique', unique.columns))
         .filter((item) => item !== undefined)
-        .map(
-          (read) =>
-            `self::assertNotNull(${repo}->${queryName(context, read)}(${read.columns.map((name) => access('$stored', columnOf(info, name).prop)).join(', ')}));`,
-        ),
+        .flatMap((read) => {
+          const columns = read.columns.map((name) => columnOf(info, name))
+          return whenSet(
+            columns,
+            `self::assertNotNull(${repo}->${queryName(context, read)}(${columns.map((column) => access('$stored', column.prop)).join(', ')}));`,
+          )
+        }),
       ...info.table.foreignKeys
         .map((key) => query(info, 'listByParent', key.columns))
         .filter((item) => item !== undefined)
         .flatMap((read) => {
           const columns = read.columns.map((name) => columnOf(info, name))
-          const assert = `self::assertCount(1, ${repo}->${queryName(context, read)}(${columns.map((column) => access('$stored', column.prop)).join(', ')}));`
-          const optional = columns.filter((column) => column.column.nullable)
-          return optional.length > 0
-            ? [`if (${optional.map((column) => `${access('$stored', column.prop)} !== null`).join(' && ')}) {`, `    ${assert}`, '}']
-            : [assert]
+          return whenSet(
+            columns,
+            `self::assertCount(1, ${repo}->${queryName(context, read)}(${columns.map((column) => access('$stored', column.prop)).join(', ')}));`,
+          )
         }),
     ]),
   )
@@ -258,7 +275,8 @@ function serviceTests(context: Context, info: TableInfo, uses: PhpUses): Line[][
       overrides.push({ column, value: access(`$parent${index}`, columnOf(parent, key.references.columns[position]).prop) }),
     )
   })
-  const start = ['$n = 1;', ...parentsFirst]
+  // The parents take a number the rows of the test never take: a parent may be a row of the same table
+  const start = [...(parentsFirst.length > 0 ? ['$n = 100;'] : []), ...parentsFirst]
   /** A row from the factory with the parents' keys and the given values set */
   const row = (variable: string, n: number, extra: { column: string; value: string }[] = []) => {
     const given = new Set(extra.map((item) => item.column))

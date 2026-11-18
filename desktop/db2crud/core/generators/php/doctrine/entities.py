@@ -8,6 +8,7 @@ import re
 from ..common.context import is_in, namespace_of, optional_type, path_of, php_file
 from ..common.php import php_literal, php_string
 from ..common.repositories import default_literal
+from .types import PRECISE, PRECISE_TZ
 
 DATE_TIME = "\\DateTimeImmutable"
 
@@ -56,7 +57,8 @@ def _dbal_type(column_type: dict) -> dict:
     if kind == "time":
         return {"name": "time_immutable"}
     if kind == "datetime":
-        return {"name": "datetimetz_immutable" if column_type.get("timezone") else "datetime_immutable"}
+        # DBAL's own timestamps expect no fractions of a second, which a real database often keeps (types.py)
+        return {"name": PRECISE_TZ if column_type.get("timezone") else PRECISE}
     if kind == "uuid":
         return {"name": "guid"}
     if kind == "binary":
