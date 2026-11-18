@@ -325,4 +325,36 @@ export const SCENARIOS = [
     settings: { language: 'php', orm: 'eloquent', database: 'sqlite', repositoryInterfaces: false, verbs: 'find', tests: 'services', entities: 'all', updates: 'partial' },
   },
   { id: 'eloquent-sqlite-repositories-only', schema: 'shop', settings: { language: 'php', orm: 'eloquent', database: 'sqlite', services: false } },
+  { id: 'exposed-sqlite-defaults', schema: 'shop', settings: { language: 'kotlin', orm: 'exposed', database: 'sqlite' } },
+  {
+    id: 'exposed-postgresql-data-dtos-patch',
+    schema: 'shop',
+    settings: { language: 'kotlin', orm: 'exposed', database: 'postgresql', serviceTypes: 'dtos', dtoKind: 'data', updates: 'patch' },
+    service: 'postgresql',
+  },
+  {
+    id: 'exposed-mysql-decided-cursor-by-table-optional',
+    schema: 'shop',
+    settings: { language: 'kotlin', orm: 'exposed', database: 'mysql', paging: 'cursor', architecture: 'table', updates: 'optional' },
+    decisions: OTHER_WAY,
+    service: 'mysql',
+  },
+  {
+    id: 'exposed-mariadb-caller-class-dtos-full',
+    schema: 'shop',
+    settings: { language: 'kotlin', orm: 'exposed', database: 'mariadb', transactions: 'caller', serviceTypes: 'dtos', dtoKind: 'class', paging: 'none', updates: 'full' },
+    service: 'mariadb',
+  },
+  {
+    id: 'exposed-postgresql-repository-commits',
+    schema: 'shop',
+    settings: { language: 'kotlin', orm: 'exposed', database: 'postgresql', transactions: 'repository', repositoryInterfaces: false, memoryRepositories: false, verbs: 'get' },
+    service: 'postgresql',
+  },
+  {
+    id: 'exposed-sqlite-no-interfaces-services-tests',
+    schema: 'shop',
+    settings: { language: 'kotlin', orm: 'exposed', database: 'sqlite', repositoryInterfaces: false, verbs: 'find', tests: 'services', entities: 'all', updates: 'full' },
+  },
+  { id: 'exposed-sqlite-repositories-only', schema: 'shop', settings: { language: 'kotlin', orm: 'exposed', database: 'sqlite', services: false } },
 ]

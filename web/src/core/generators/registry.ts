@@ -8,6 +8,7 @@ import type { DbSchema } from '../schema/types.ts'
 import { normalizeSettings, type ProjectSettings } from '../settings/settings.ts'
 import { csharpGenerator } from './csharp/generator.ts'
 import { javaGenerator } from './java/generator.ts'
+import { kotlinGenerator } from './kotlin/generator.ts'
 import { phpGenerator } from './php/common/generator.ts'
 import { doctrineOrm } from './php/doctrine/index.ts'
 import { eloquentOrm } from './php/eloquent/index.ts'
@@ -32,6 +33,7 @@ export const GENERATORS: readonly Generator[] = [
   csharpGenerator,
   phpGenerator(doctrineOrm),
   phpGenerator(eloquentOrm),
+  kotlinGenerator,
 ]
 
 export function findGenerator(settings: Pick<ProjectSettings, 'language' | 'orm'>): Generator | undefined {

@@ -9,8 +9,9 @@
  */
 import type { Dialect } from '../schema/types.ts'
 
-export type LanguageId = 'python' | 'typescript' | 'java' | 'csharp' | 'php'
-export type OrmId = 'sqlalchemy' | 'django' | 'typeorm' | 'prisma' | 'drizzle' | 'sequelize' | 'jpa' | 'efcore' | 'doctrine' | 'eloquent'
+export type LanguageId = 'python' | 'typescript' | 'java' | 'csharp' | 'php' | 'kotlin'
+export type OrmId =
+  'sqlalchemy' | 'django' | 'typeorm' | 'prisma' | 'drizzle' | 'sequelize' | 'jpa' | 'efcore' | 'doctrine' | 'eloquent' | 'exposed'
 
 /** Which ORM entities are written: only those the input lacks, all of them (replacing the input's), or none. */
 export type EntitiesMode = 'missing' | 'all' | 'none'
@@ -28,7 +29,7 @@ export type Architecture = 'layer' | 'table'
 export type Verbs = 'getFind' | 'get' | 'find'
 export type Tests = 'all' | 'services' | 'repositories' | 'none'
 /** The kind of class DTOs are written as, per language. */
-export type DtoKind = 'pydantic' | 'dataclass' | 'interface' | 'class' | 'record' | 'readonly'
+export type DtoKind = 'pydantic' | 'dataclass' | 'interface' | 'class' | 'record' | 'readonly' | 'data'
 /** How a service takes the changes of an update: the language's partial object (TypeScript, Python; in PHP an array
  * of the changed fields), or, in typed languages, a Patch<T> per field (absent, null or a value), Optional<T> (null
  * when not sent), or every field. */
@@ -178,6 +179,17 @@ export const STACKS: readonly StackInfo[] = [
     errors: ['exceptions'],
     dtoKinds: ['readonly', 'class'],
     updates: ['patch', 'partial', 'full'],
+  },
+  {
+    language: 'kotlin',
+    orm: 'exposed',
+    label: 'Exposed 1.6',
+    databases: ['postgresql', 'mysql', 'mariadb', 'sqlite'],
+    // Exposed's JDBC transactions block
+    execution: ['sync'],
+    errors: ['exceptions'],
+    dtoKinds: ['data', 'class'],
+    updates: ['patch', 'optional', 'full'],
   },
 ]
 

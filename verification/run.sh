@@ -17,6 +17,7 @@ runner_of() {
     jpa-*) echo ./runners/java.sh ;;
     efcore-*) echo ./runners/dotnet.sh ;;
     doctrine-* | eloquent-*) echo ./runners/php.sh ;;
+    exposed-*) echo ./runners/kotlin.sh ;;
   esac
 }
 

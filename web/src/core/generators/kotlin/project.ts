@@ -1,0 +1,245 @@
+/**
+ * The files around the Kotlin code: the Gradle build (Kotlin on the JVM, Exposed, the JDBC driver of the database and
+ * kotlin.test on JUnit), the README, an example environment, .gitignore and crud-contract.json for CRUD2Controller.
+ */
+import type { GeneratedFile } from '../../export/files.ts'
+import { lines } from '../types.ts'
+import {
+  commonPackage,
+  errorsPackage,
+  operationName,
+  packageOf,
+  serviceClass,
+  storedType,
+  writesEntities,
+  type ColumnInfo,
+  type Context,
+} from './context.ts'
+import { createColumns, createDto, readColumns, readDto, updateColumns, updatePackage, updateType } from './dtos.ts'
+import { usesEnumColumns } from './entities.ts'
+import { defaultUrl } from './support.ts'
+
+const VERSIONS = {
+  kotlin: '2.4.21',
+  exposed: '1.6.1',
+  junit: '6.1.3',
+  postgresql: '42.7.14',
+  mysql: '26.10.0',
+  mariadb: '3.5.11',
+  sqlite: '3.54.1.0',
+}
+
+const DRIVERS: Record<string, string> = {
+  postgresql: `org.postgresql:postgresql:${VERSIONS.postgresql}`,
+  mysql: `com.mysql:mysql-connector-j:${VERSIONS.mysql}`,
+  mariadb: `org.mariadb.jdbc:mariadb-java-client:${VERSIONS.mariadb}`,
+  sqlite: `org.xerial:sqlite-jdbc:${VERSIONS.sqlite}`,
+}
+
+const tests = (context: Context) => context.settings.tests !== 'none' && writesEntities(context)
+
+export function gradleFiles(context: Context): GeneratedFile[] {
+  const driver = DRIVERS[context.settings.database] ?? DRIVERS.postgresql
+  // The column type of PostgreSQL's enums sends a PGobject: the driver is needed to compile, not only to run
+  const driverScope = usesEnumColumns(context) ? 'implementation' : 'runtimeOnly'
+  return [
+    { path: 'settings.gradle.kts', content: lines(`rootProject.name = "${context.settings.name}"`, '') },
+    {
+      path: 'build.gradle.kts',
+      content: lines(
+        'plugins {',
+        `    kotlin("jvm") version "${VERSIONS.kotlin}"`,
+        '}',
+        '',
+        'repositories {',
+        '    mavenCentral()',
+        '}',
+        '',
+        'dependencies {',
+        `    implementation("org.jetbrains.exposed:exposed-core:${VERSIONS.exposed}")`,
+        `    implementation("org.jetbrains.exposed:exposed-jdbc:${VERSIONS.exposed}")`,
+        `    implementation("org.jetbrains.exposed:exposed-java-time:${VERSIONS.exposed}")`,
+        `    ${driverScope}("${driver}")`,
+        tests(context) && [
+          '    testImplementation(kotlin("test"))',
+          `    testImplementation(platform("org.junit:junit-bom:${VERSIONS.junit}"))`,
+          '    testImplementation("org.junit.jupiter:junit-jupiter")',
+          '    testRuntimeOnly("org.junit.platform:junit-platform-launcher")',
+        ],
+        '}',
+        '',
+        'kotlin {',
+        '    jvmToolchain(21)',
+        '}',
+        tests(context) && [
+          '',
+          'tasks.test {',
+          '    useJUnitPlatform()',
+          '    // Every test empties the same database: they run one after another',
+          '    maxParallelForks = 1',
+          '}',
+        ],
+        '',
+      ),
+    },
+  ]
+}
+
+export function envExampleFile(context: Context): GeneratedFile {
+  const sqlite = context.settings.database === 'sqlite'
+  return {
+    path: '.env.example',
+    content: lines(
+      '# Where the database is (a JDBC URL), and who connects',
+      `DATABASE_URL=${defaultUrl(context)}`,
+      sqlite ? null : ['DATABASE_USER=app', 'DATABASE_PASSWORD=app'],
+      sqlite
+        ? '# The tests use SQLite in a temporary file unless this names another database (it is emptied by the tests)'
+        : '# The database the tests use (it is emptied by the tests): one of the same kind as DATABASE_URL',
+      '# TEST_DATABASE_URL=',
+      sqlite ? null : ['# TEST_DATABASE_USER=', '# TEST_DATABASE_PASSWORD='],
+      '',
+    ),
+  }
+}
+
+export const gitignoreFile = (): GeneratedFile => ({
+  path: '.gitignore',
+  content: lines('build/', '.gradle/', '.kotlin/', '.env', '*.db', ''),
+})
+
+const LABELS = {
+  transactions: {
+    operation: 'one transaction per service operation, committed when it ends',
+    caller: 'the caller owns the transaction: nothing commits',
+    repository: 'every repository write is committed at once',
+  },
+  paging: {
+    none: 'lists return every row',
+    offset: 'lists return pages by offset and limit',
+    cursor: 'lists return pages after a key (cursor)',
+  },
+  updates: {
+    patch: 'updates take a Patch per field: absent, or a value that may be null',
+    optional: 'updates take an Optional per field: null when not sent, Optional.empty() to empty it',
+    full: 'updates take every field that can change',
+    partial: '',
+  },
+}
+
+export function readmeFile(context: Context): GeneratedFile {
+  const { settings } = context
+  const sqlite = settings.database === 'sqlite'
+  return {
+    path: 'README.md',
+    content: lines(
+      `# ${settings.name}`,
+      '',
+      `Data access layer generated by [DB2CRUD](https://github.com/RaulEstevezA/DB2CRUD) for a database that already exists: entities and table objects for Exposed ${VERSIONS.exposed}, repositories and services, in Kotlin on the JVM. It does not create or migrate the database, and it depends on no web framework.`,
+      '',
+      '## Settings',
+      '',
+      `- Database: ${settings.database}.`,
+      `- Entities: ${settings.entities === 'missing' ? 'written for the tables the input had no class for' : settings.entities === 'all' ? 'written for every table' : `imported from \`${settings.entitiesModule}\``}.`,
+      `- Services: ${settings.services ? `take and return ${settings.serviceTypes === 'dtos' ? `DTOs (${settings.dtoKind === 'class' ? 'classes' : 'data classes'})` : 'the entities'}; ${LABELS.updates[settings.updates]}` : 'not written'}.`,
+      `- Transactions: ${LABELS.transactions[settings.transactions]}.`,
+      `- Lists: ${LABELS.paging[settings.paging]}.`,
+      '',
+      '## Layout',
+      '',
+      '```text',
+      'src/main/kotlin/app/AppDatabase.kt      the connection of DATABASE_URL',
+      'src/main/kotlin/app/UnitOfWork.kt       the repositories of every table, and the transaction of each operation',
+      'src/main/kotlin/app/errors/             NotFoundException, ConflictException, ValidationFailedException: no HTTP codes',
+      settings.architecture === 'layer'
+        ? [
+            'src/main/kotlin/app/entities/           one entity and one table object per table',
+            'src/main/kotlin/app/repositories/       the repositories of each table',
+            settings.services && 'src/main/kotlin/app/services/           one service per table',
+          ]
+        : 'src/main/kotlin/app/<table>/            entity, table object, repositories and service of each table',
+      tests(context) && 'src/test/kotlin/app/                    repositories against a database, services on the in-memory repositories',
+      'crud-contract.json                      what was written, for CRUD2Controller',
+      '```',
+      '',
+      '## Running the tests',
+      '',
+      '```bash',
+      sqlite ? 'gradle test                                       # SQLite in a temporary file' : null,
+      `TEST_DATABASE_URL="${defaultUrl(context)}"${sqlite ? '' : ' TEST_DATABASE_USER=app TEST_DATABASE_PASSWORD=app'} gradle test   # a real, disposable database: it is emptied`,
+      '```',
+      '',
+      'Look for `TODO` in the code: each one marks a decision the input did not settle.',
+      '',
+    ),
+  }
+}
+
+function typeOf(column: ColumnInfo): Record<string, unknown> {
+  const type = column.column.type
+  return {
+    kind: type.kind,
+    kotlin: storedType(column),
+    ...(type.kind === 'text' && type.length !== undefined ? { length: type.length } : {}),
+  }
+}
+
+export function contractFile(context: Context): GeneratedFile {
+  const dtos = context.settings.serviceTypes === 'dtos'
+  const fields = (columns: ColumnInfo[], optional: boolean) =>
+    columns.map((column) => ({ name: column.key, type: typeOf(column), nullable: optional || column.column.nullable }))
+  const types = context.tables.flatMap((info) => {
+    const result: Record<string, unknown>[] = [
+      { name: info.entity, module: packageOf(context, info, 'entity'), kind: 'entity', fields: fields(info.columns, true) },
+    ]
+    const writes = info.role === 'entity' && info.service
+    if (dtos && writes)
+      result.push({
+        name: createDto(info),
+        module: packageOf(context, info, 'dtos'),
+        kind: 'create',
+        fields: fields(createColumns(info), true),
+      })
+    if (writes)
+      result.push({
+        name: updateType(context, info),
+        module: updatePackage(context, info),
+        kind: 'update',
+        updates: context.settings.updates,
+        fields: fields(updateColumns(info), true),
+      })
+    if (dtos && info.service)
+      result.push({ name: readDto(info), module: packageOf(context, info, 'dtos'), kind: 'read', fields: fields(readColumns(info), false) })
+    return result
+  })
+  const errorsOf: Record<string, string> = { NotFound: 'notFound', Conflict: 'conflict', ValidationFailed: 'validation' }
+  const services = context.tables
+    .filter((info) => info.service)
+    .map((info) => ({
+      name: serviceClass(info),
+      module: packageOf(context, info, 'service'),
+      operations: info.operations.map((operation) => ({
+        name: operationName(context, operation),
+        kind: operation.kind,
+        ...(operation.columns.length > 0 ? { by: operation.columns } : {}),
+        ...(operation.through ? { through: operation.through } : {}),
+        errors: operation.errors.map((error) => errorsOf[error]),
+      })),
+    }))
+  const contract = {
+    format: 'crud-contract',
+    version: 1,
+    stack: { language: 'kotlin', orm: 'exposed', database: context.settings.database, execution: 'sync' },
+    transactions: context.settings.transactions,
+    paging: context.settings.paging,
+    types,
+    errors: [
+      { kind: 'notFound', name: 'NotFoundException', module: errorsPackage(context) },
+      { kind: 'conflict', name: 'ConflictException', module: errorsPackage(context) },
+      { kind: 'validation', name: 'ValidationFailedException', module: errorsPackage(context) },
+    ],
+    common: commonPackage(context),
+    services,
+  }
+  return { path: 'crud-contract.json', content: `${JSON.stringify(contract, null, 2)}\n` }
+}
