@@ -5,7 +5,12 @@ not clash on unique columns. Mirrors web/src/core/generators/typescript/samples.
 import math
 import re
 
+from ...js import number_text
 from ..python.python import js_json
+
+
+def _text(value) -> str:
+    return value if isinstance(value, str) else number_text(value)
 
 
 def _checks_of(column: dict, checks: list[dict]) -> list[dict]:
@@ -46,6 +51,9 @@ def sample_value(column: dict, checks: list[dict], enums: list[dict]) -> str:
     if kind == "integer":
         return _number(column, checks)
     if kind == "decimal":
+        # One of the values a CHECK allows, when there is such a list
+        if choices:
+            return f"'{_text(choices['values'][0])}'"
         # Exact decimals are text: small enough for the precision, never more digits than the column keeps
         scale = column_type.get("scale", 2)
         integer_digits = column_type["precision"] - scale if "precision" in column_type else 6
@@ -54,7 +62,7 @@ def sample_value(column: dict, checks: list[dict], enums: list[dict]) -> str:
         whole = f"n % {10 ** min(integer_digits, 4)}"
         return f"`${{{whole}}}.{'5'.ljust(scale, '0')}`" if scale > 0 else f"String({whole})"
     if kind == "float":
-        return f"{_number(column, checks)} + 0.5"
+        return _text(choices["values"][0]) if choices else f"{_number(column, checks)} + 0.5"
     if kind == "text":
         length = column_type.get("length", 40)
         if column_type.get("fixed"):

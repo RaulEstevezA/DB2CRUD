@@ -26,6 +26,19 @@ def conftest_file(context: dict) -> dict:
     else:
         imports.from_("collections.abc", "Iterator")
     fixture = "@pytest_asyncio.fixture" if is_async else "@pytest.fixture"
+    # The schemas of PostgreSQL the tables are in: create_all creates tables, not schemas
+    schemas = []
+    if context["settings"]["database"] == "postgresql":
+        for info in context["tables"]:
+            name = info["table"].get("schema")
+            if name and name not in schemas:
+                schemas.append(name)
+    if schemas:
+        imports.from_("sqlalchemy", "text")
+
+    def create_schemas(pad: str, connection: str) -> list[str]:
+        return [f"""{pad}{connection}(text('CREATE SCHEMA IF NOT EXISTS "{name}"'))""" for name in schemas]
+
     content = lines(
         '"""Fixtures of the tests: a database created from the entities, and the units of work."""',
         "",
@@ -43,6 +56,7 @@ def conftest_file(context: dict) -> dict:
         "    engine = create_db_engine(url)",
         [
             "    async with engine.begin() as connection:",
+            *create_schemas("        ", "await connection.execute"),
             "        await connection.run_sync(Base.metadata.drop_all)",
             "        await connection.run_sync(Base.metadata.create_all)",
             "    yield engine",
@@ -52,6 +66,11 @@ def conftest_file(context: dict) -> dict:
         ]
         if is_async
         else [
+            *(
+                ["    with engine.begin() as connection:", *create_schemas("        ", "connection.execute")]
+                if schemas
+                else []
+            ),
             "    Base.metadata.drop_all(engine)",
             "    Base.metadata.create_all(engine)",
             "    yield engine",

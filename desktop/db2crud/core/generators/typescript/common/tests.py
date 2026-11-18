@@ -20,6 +20,16 @@ from .context import (
 from .dtos import create_columns, create_dto, update_columns
 
 
+def _when_set(info: dict, names: list[str], assertion: str) -> str:
+    """The assertion, made only when the columns of the row that may be null have a value."""
+    optional = [
+        f"stored.{column_of(info, name)['prop']} != null"
+        for name in names
+        if column_of(info, name)["column"]["nullable"]
+    ]
+    return f"if ({' && '.join(optional)}) {assertion}" if optional else assertion
+
+
 def _is_nullable_key(info: dict, key: dict) -> bool:
     return all(column_of(info, name)["column"]["nullable"] for name in key["columns"])
 
@@ -179,8 +189,13 @@ def _repository_tests(context: dict, info: dict, imports: TsImports) -> list[lis
                 ],
                 bool(get_by_key)
                 and [f"expect(found!.{column['prop']}).toEqual(stored.{column['prop']})" for column in info["key"]],
+                # A unique value that may be null is looked up only when the row has one
                 *(
-                    f"expect(await {repo}.{query_name(context, read)}({', '.join(props(read['columns']))})).not.toBeNull()"
+                    _when_set(
+                        info,
+                        read["columns"],
+                        f"expect(await {repo}.{query_name(context, read)}({', '.join(props(read['columns']))})).not.toBeNull()",
+                    )
                     for read in uniques
                 ),
                 *(
@@ -279,7 +294,8 @@ def _service_tests(context: dict, info: dict, imports: TsImports, memory: bool) 
         for position, column in enumerate(key["columns"]):
             target = column_of(parent, key["references"]["columns"][position])["prop"]
             overrides.append(f"{column_of(info, column)['prop']}: parent{index}.{target}")
-    start = [*opening, "const n = 1", *parents_first]
+    # The parents take a number the rows of the test never take: a parent may be a row of the same table
+    start = [*opening, "const n = 100", *parents_first]
 
     def factory(n: int, extra: list[str] | None = None) -> str:
         # A value given for this test replaces the parent's (a foreign key that is also unique)

@@ -53,6 +53,15 @@ def _included(items: list[dict]) -> list[dict]:
     return [item for item in items if item["include"]["value"]]
 
 
+# The variables the services already use: a column with one of these names gets Value after it
+TAKEN = {"values", "errors", "creating", "current", "uow", "value", "other", "entity", "changes", "data", "link", "row"}
+
+
+def _column_local(name: str) -> str:
+    local = local_name(name)
+    return f"{local}Value" if local in TAKEN else local
+
+
 def _column_info(column: dict, entity: str, primary: bool, database: str) -> dict:
     generated = column.get("generated") is not None and column.get("generated") != "onUpdateNow"
     base = pascal_name(column["name"])
@@ -63,7 +72,7 @@ def _column_info(column: dict, entity: str, primary: bool, database: str) -> dic
     return {
         "column": column,
         "prop": prop,
-        "local": local_name(column["name"]),
+        "local": _column_local(column["name"]),
         "cs": cs,
         "valueType": value_type,
         "optional": optional,

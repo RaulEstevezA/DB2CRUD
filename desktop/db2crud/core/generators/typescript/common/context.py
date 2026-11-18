@@ -30,7 +30,23 @@ def ts_type(column_type: dict) -> str:
         return "Buffer"
     if kind == "array":
         return f"{ts_type(column_type['items'])}[]"
+    # A type the rules do not know is kept as its text
+    if kind == "unknown":
+        return "string"
     return "unknown"
+
+
+def pg_schemas(context: dict) -> list[str]:
+    """The schemas of PostgreSQL the tables are in (sales in sales.orders): the tests create them, as the ORMs create
+    tables only."""
+    if context["settings"]["database"] != "postgresql":
+        return []
+    names = []
+    for info in context["tables"]:
+        schema = info["table"].get("schema")
+        if schema and schema not in names:
+            names.append(schema)
+    return names
 
 
 def column_type(info: dict, optional: bool | None = None) -> str:

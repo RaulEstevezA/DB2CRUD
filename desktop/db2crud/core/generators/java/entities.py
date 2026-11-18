@@ -132,7 +132,8 @@ def _column_annotations(context: dict, info: dict, column: dict, imports: JavaIm
         result.append(f"@ColumnDefault({java_string(default['sql'])})")
     if db.get("comment"):
         imports.add(f"{HIBERNATE}.Comment")
-        result.append(f"@Comment({java_string(db['comment'])})")
+        # Hibernate writes the comment into its DDL as it is: its quotes are doubled here
+        result.append(f"@Comment({java_string(db['comment'].replace(chr(39), chr(39) * 2))})")
     return result
 
 

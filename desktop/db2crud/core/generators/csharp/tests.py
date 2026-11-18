@@ -295,7 +295,14 @@ def _repository_tests(context: dict, info: dict) -> list[list]:
             args = ", ".join(
                 _plain(f"stored.{column_of(info, name)['prop']}", column_of(info, name)) for name in read["columns"]
             )
-            uniques.append(f"Assert.NotNull(await {repo}.{query_name(context, read)}({args}));")
+            assertion = f"Assert.NotNull(await {repo}.{query_name(context, read)}({args}));"
+            # A unique value that may be null is looked up only when the row has one
+            optional = [
+                f"stored.{column_of(info, name)['prop']} is not null"
+                for name in read["columns"]
+                if column_of(info, name)["column"]["nullable"]
+            ]
+            uniques.append(f"if ({' && '.join(optional)}) {assertion}" if optional else assertion)
     parents = []
     for key in info["table"]["foreignKeys"]:
         read = query(info, "listByParent", key["columns"])
@@ -410,7 +417,8 @@ def _service_tests(context: dict, info: dict, usings: CsUsings) -> list[list]:
         for position, column in enumerate(key["columns"]):
             referenced = column_of(parent, key["references"]["columns"][position])["prop"]
             overrides.append({"column": column, "value": f"parent{index}.{referenced}"})
-    start = ["var n = 1;", *parents_first]
+    # The parents take a number the rows of the test never take: a parent may be a row of the same table
+    start = ["var n = 100;", *parents_first]
 
     def row(variable: str, n: int, extra: list | None = None) -> list[str]:
         extra = extra or []

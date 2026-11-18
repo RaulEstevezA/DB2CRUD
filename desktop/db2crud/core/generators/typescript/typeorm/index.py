@@ -4,7 +4,7 @@ created from the entities (SQLite in memory unless TEST_DATABASE_URL names anoth
 web/src/core/generators/typescript/typeorm/index.ts."""
 
 from ...types import lines
-from ..common.context import repository_interface, sql_repository_class, writes_entities
+from ..common.context import pg_schemas, repository_interface, sql_repository_class, writes_entities
 from ..typescript import TsImports
 from .database import database_files, default_url
 from .repository import typeorm_body
@@ -124,9 +124,19 @@ DATABASE_TEST = [
 ]
 
 
-def _test_database(_context: dict) -> list[dict]:
+def _test_database(context: dict) -> list[dict]:
+    schemas = pg_schemas(context)
+    content = list(TEST_DATABASE)
+    if schemas:
+        at = content.index("    await dataSource.initialize()") + 1
+        content[at:at] = [
+            "    if (dataSource.options.type === 'postgres') {",
+            "      // The schemas the tables are in: synchronize creates tables only",
+            *(f"""      await dataSource.query('CREATE SCHEMA IF NOT EXISTS "{name}"')""" for name in schemas),
+            "    }",
+        ]
     return [
-        {"path": "test/database.ts", "content": lines(*TEST_DATABASE)},
+        {"path": "test/database.ts", "content": lines(*content)},
         {"path": "test/database.test.ts", "content": lines(*DATABASE_TEST)},
     ]
 

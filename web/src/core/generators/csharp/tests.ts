@@ -244,10 +244,15 @@ function repositoryTests(context: Context, info: TableInfo): Line[][] {
       ...info.table.uniques
         .map((unique) => query(info, 'findByUnique', unique.columns))
         .filter((item) => item !== undefined)
-        .map(
-          (read) =>
-            `Assert.NotNull(await ${repo}.${queryName(context, read)}(${read.columns.map((name) => plain(`stored.${columnOf(info, name).prop}`, columnOf(info, name))).join(', ')}));`,
-        ),
+        .map((read) => {
+          // A unique value that may be null is looked up only when the row has one
+          const columns = read.columns.map((name) => columnOf(info, name))
+          const assert = `Assert.NotNull(await ${repo}.${queryName(context, read)}(${columns.map((column) => plain(`stored.${column.prop}`, column)).join(', ')}));`
+          const optional = columns.filter((column) => column.column.nullable)
+          return optional.length > 0
+            ? `if (${optional.map((column) => `stored.${column.prop} is not null`).join(' && ')}) ${assert}`
+            : assert
+        }),
       ...info.table.foreignKeys
         .map((key) => query(info, 'listByParent', key.columns))
         .filter((item) => item !== undefined)
@@ -329,7 +334,8 @@ function serviceTests(context: Context, info: TableInfo, usings: CsUsings): Line
       overrides.push({ column, value: `parent${index}.${columnOf(parent, key.references.columns[position]).prop}` }),
     )
   })
-  const start = ['var n = 1;', ...parentsFirst]
+  // The parents take a number the rows of the test never take: a parent may be a row of the same table
+  const start = ['var n = 100;', ...parentsFirst]
   /** A row from the factory with the parents' keys and the given values set */
   const row = (variable: string, n: number, extra: { column: string; value: string }[] = []) => {
     const given = new Set(extra.map((item) => item.column))

@@ -115,7 +115,8 @@ function columnAnnotations(context: Context, info: TableInfo, column: ColumnInfo
   }
   if (db.comment) {
     imports.add(`${HIBERNATE}.Comment`)
-    result.push(`@Comment(${javaString(db.comment)})`)
+    // Hibernate writes the comment into its DDL as it is: its quotes are doubled here
+    result.push(`@Comment(${javaString(db.comment.replace(/'/g, "''"))})`)
   }
   return result
 }

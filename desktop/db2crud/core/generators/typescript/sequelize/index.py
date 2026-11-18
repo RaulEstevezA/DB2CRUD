@@ -5,7 +5,7 @@ the models (SQLite in memory, or the database TEST_DATABASE_URL names: the model
 database). Mirrors web/src/core/generators/typescript/sequelize/index.ts."""
 
 from ...types import lines
-from ..common.context import repository_interface, sql_repository_class, writes_entities
+from ..common.context import pg_schemas, repository_interface, sql_repository_class, writes_entities
 from ..common.entities import plain_entity_file
 from ..typescript import TsImports, quote
 from .models import dialect_of, models_file, models_module
@@ -222,6 +222,8 @@ def _test_database(context: dict) -> list[dict]:
         "  beforeEach(async () => {",
         "    db = createDatabase(TEST_DATABASE_URL)",
         "    await empty(db)",
+        *(["    // The schemas the tables are in: sync() creates tables only"] if pg_schemas(context) else []),
+        *(f"""    await db.sequelize.query('CREATE SCHEMA IF NOT EXISTS "{name}"')""" for name in pg_schemas(context)),
         "    // Creates every table from the models",
         "    await db.sequelize.sync()",
         "  })",

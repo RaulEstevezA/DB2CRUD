@@ -34,6 +34,8 @@ export function sampleValue(column: DbColumn, checks: DbCheck[], enums: DbEnum[]
     case 'integer':
       return number(column, checks)
     case 'decimal': {
+      // One of the values a CHECK allows, when there is such a list
+      if (choices?.kind === 'in') return `'${String(choices.values[0])}'`
       // Exact decimals are text: small enough for the precision, never more digits than the column keeps
       const scale = type.scale ?? 2
       const integerDigits = type.precision !== undefined ? type.precision - scale : 6
@@ -42,7 +44,7 @@ export function sampleValue(column: DbColumn, checks: DbCheck[], enums: DbEnum[]
       return scale > 0 ? `\`\${${whole}}.${'5'.padEnd(scale, '0')}\`` : `String(${whole})`
     }
     case 'float':
-      return `${number(column, checks)} + 0.5`
+      return choices?.kind === 'in' ? String(choices.values[0]) : `${number(column, checks)} + 0.5`
     case 'text': {
       const length = type.length ?? 40
       if (type.fixed) return `String(n).padStart(${length}, '0').slice(-${length})`

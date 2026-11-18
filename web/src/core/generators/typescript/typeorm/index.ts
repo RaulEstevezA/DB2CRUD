@@ -5,7 +5,7 @@
  */
 import type { GeneratedFile } from '../../../export/files.ts'
 import type { Line } from '../../types.ts'
-import { repositoryInterface, sqlRepositoryClass, writesEntities, type Context } from '../common/context.ts'
+import { pgSchemas, repositoryInterface, sqlRepositoryClass, writesEntities, type Context } from '../common/context.ts'
 import type { TsOrm } from '../common/orm.ts'
 import type { TsImports } from '../typescript.ts'
 import { databaseFiles, defaultUrl } from './database.ts'
@@ -64,7 +64,8 @@ function unitOfWork(context: Context, imports: TsImports): Line[] {
   ].flat()
 }
 
-function testDatabase(): GeneratedFile[] {
+function testDatabase(context: Context): GeneratedFile[] {
+  const schemas = pgSchemas(context)
   return [
     {
       path: 'test/database.ts',
@@ -83,6 +84,14 @@ function testDatabase(): GeneratedFile[] {
         '  beforeEach(async () => {',
         '    dataSource = createDataSource(TEST_DATABASE_URL)',
         '    await dataSource.initialize()',
+        ...(schemas.length > 0
+          ? [
+              "    if (dataSource.options.type === 'postgres') {",
+              '      // The schemas the tables are in: synchronize creates tables only',
+              ...schemas.map((name) => `      await dataSource.query('CREATE SCHEMA IF NOT EXISTS "${name}"')`),
+              '    }',
+            ]
+          : []),
         '    // Drops every table and creates them again from the entities',
         '    await dataSource.synchronize(true)',
         '  })',

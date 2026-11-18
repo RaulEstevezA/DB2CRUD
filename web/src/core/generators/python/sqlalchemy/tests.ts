@@ -19,6 +19,14 @@ export function conftestFile(context: Context): GeneratedFile {
   if (async) imports.module('pytest_asyncio').from('collections.abc', 'AsyncIterator')
   else imports.from('collections.abc', 'Iterator')
   const fixture = async ? '@pytest_asyncio.fixture' : '@pytest.fixture'
+  // The schemas of PostgreSQL the tables are in: create_all creates tables, not schemas
+  const schemas =
+    context.settings.database === 'postgresql'
+      ? [...new Set(context.tables.map((info) => info.table.schema).filter((name): name is string => !!name))]
+      : []
+  if (schemas.length > 0) imports.from('sqlalchemy', 'text')
+  const createSchemas = (pad: string, connection: string) =>
+    schemas.map((name) => `${pad}${connection}(text('CREATE SCHEMA IF NOT EXISTS "${name}"'))`)
   const content = lines(
     '"""Fixtures of the tests: a database created from the entities, and the units of work."""',
     '',
@@ -35,6 +43,7 @@ export function conftestFile(context: Context): GeneratedFile {
     async
       ? [
           '    async with engine.begin() as connection:',
+          ...createSchemas('        ', 'await connection.execute'),
           '        await connection.run_sync(Base.metadata.drop_all)',
           '        await connection.run_sync(Base.metadata.create_all)',
           '    yield engine',
@@ -43,6 +52,7 @@ export function conftestFile(context: Context): GeneratedFile {
           '    await engine.dispose()',
         ]
       : [
+          ...(schemas.length > 0 ? ['    with engine.begin() as connection:', ...createSchemas('        ', 'connection.execute')] : []),
           '    Base.metadata.drop_all(engine)',
           '    Base.metadata.create_all(engine)',
           '    yield engine',

@@ -292,7 +292,14 @@ def _repository_tests(context: dict, info: dict) -> list[list]:
         read = query(info, "findByUnique", unique["columns"])
         if read:
             args = ", ".join(f"stored.{column_of(info, name)['getter']}()" for name in read["columns"])
-            uniques.append(f"assertTrue({repo}.{query_name(context, read)}({args}).isPresent());")
+            assertion = f"assertTrue({repo}.{query_name(context, read)}({args}).isPresent());"
+            # A unique value that may be null is looked up only when the row has one
+            optional = [
+                f"stored.{column_of(info, name)['getter']}() != null"
+                for name in read["columns"]
+                if column_of(info, name)["column"]["nullable"]
+            ]
+            uniques.append(f"if ({' && '.join(optional)}) {assertion}" if optional else assertion)
     parents = []
     for key in info["table"]["foreignKeys"]:
         read = query(info, "listByParent", key["columns"])
@@ -413,7 +420,8 @@ def _service_tests(context: dict, info: dict, imports: JavaImports) -> list[list
         for position, column in enumerate(key["columns"]):
             referenced = column_of(parent, key["references"]["columns"][position])["getter"]
             overrides.append({"column": column, "value": f"parent{index}.{referenced}()"})
-    start = ["int n = 1;", *parents_first]
+    # The parents take a number the rows of the test never take: a parent may be a row of the same table
+    start = ["int n = 100;", *parents_first]
 
     def row(variable: str, n: int, extra: list | None = None) -> list[str]:
         """A row from the factory with the parents' keys and the given values set"""

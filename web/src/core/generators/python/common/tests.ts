@@ -142,10 +142,14 @@ function repositoryTests(context: Context, info: TableInfo, imports: Imports): B
       ...info.table.uniques
         .map((unique) => query(info, 'findByUnique', unique.columns))
         .filter((item) => item !== undefined)
-        .map(
-          (read) =>
-            `assert ${a}${repo}.${queryName(context, read)}(${read.columns.map((name) => `stored.${info.columns.find((column) => column.column.name === name)!.attr}`).join(', ')}) is not None`,
-        ),
+        .map((read) => {
+          const attrs = read.columns.map((name) => `stored.${info.columns.find((column) => column.column.name === name)!.attr}`)
+          // A unique value that may be null is looked up only when the row has one
+          const optional = read.columns
+            .filter((name) => info.columns.find((column) => column.column.name === name)!.column.nullable)
+            .map((name) => `stored.${info.columns.find((column) => column.column.name === name)!.attr} is None or `)
+          return `assert ${optional.join('')}${a}${repo}.${queryName(context, read)}(${attrs.join(', ')}) is not None`
+        }),
       ...info.table.foreignKeys
         .map((key) => query(info, 'listByParent', key.columns))
         .filter((item) => item !== undefined)
@@ -217,7 +221,8 @@ function serviceTests(context: Context, info: TableInfo, imports: Imports, uow: 
   ]
   const uowName = uow.split(':')[0]
   const blocks: Block = []
-  // Rows go in through the service (when it creates them) and the parents through the factories
+  // Rows go in through the service (when it creates them) and the parents through the factories, numbered 100: the
+  // rows of the test never take that number, and a parent may be a row of the same table
   const parentsFirst: Line[] = []
   const overrides: string[] = []
   info.table.foreignKeys.forEach((key, index) => {
@@ -242,7 +247,7 @@ function serviceTests(context: Context, info: TableInfo, imports: Imports, uow: 
     const name = operationName(context, create)
     blocks.push(
       ...test('creates_a_valid_row', [
-        'n = 1',
+        'n = 100',
         ...parentsFirst,
         `created = ${a}service.${name}(${fresh(1)})`,
         get && `found = ${a}service.${operationName(context, get)}(${keyOf('created')})`,
@@ -263,7 +268,7 @@ function serviceTests(context: Context, info: TableInfo, imports: Imports, uow: 
           : missing
       blocks.push(
         ...test('refuses_a_missing_value', [
-          'n = 1',
+          'n = 100',
           ...parentsFirst,
           'with pytest.raises(ValidationFailedError) as raised:',
           `    ${a}service.${name}(${pydanticOrEntity})`,
@@ -285,7 +290,7 @@ function serviceTests(context: Context, info: TableInfo, imports: Imports, uow: 
       })
       blocks.push(
         ...test('refuses_a_repeated_unique_value', [
-          'n = 1',
+          'n = 100',
           ...parentsFirst,
           `first = ${a}service.${name}(${fresh(1)})`,
           'with pytest.raises(ConflictError):',
@@ -303,7 +308,7 @@ function serviceTests(context: Context, info: TableInfo, imports: Imports, uow: 
         if (dtos) imports.from(moduleOf(context, info, 'dtos'), updateDto(info))
         blocks.push(
           ...test('keeps_its_own_unique_value', [
-            'n = 1',
+            'n = 100',
             ...parentsFirst,
             `created = ${a}service.${name}(${fresh(1)})`,
             `${a}service.${operationName(context, update)}(${keyOf('created')}, ${change}${version})`,
@@ -323,7 +328,7 @@ function serviceTests(context: Context, info: TableInfo, imports: Imports, uow: 
       const args = ['1', ...others, `${column.attr}=${value}`].join(', ')
       blocks.push(
         ...test('refuses_a_missing_parent', [
-          'n = 1',
+          'n = 100',
           ...parentsFirst,
           'with pytest.raises(ValidationFailedError) as raised:',
           `    ${a}service.${name}(${dtos ? `${createDto(info)}(**_values(new_${info.module}(${args}), ${createDto(info)}))` : `new_${info.module}(${args})`})`,
@@ -349,7 +354,7 @@ function serviceTests(context: Context, info: TableInfo, imports: Imports, uow: 
     if (dtos) imports.from(moduleOf(context, info, 'dtos'), updateDto(info))
     blocks.push(
       ...test('changes_a_row', [
-        'n = 1',
+        'n = 100',
         ...parentsFirst,
         `created = ${a}service.${operationName(context, create)}(${dtos ? `${createDto(info)}(**_values(new_${info.module}(${['1', ...overrides].join(', ')}), ${createDto(info)}))` : `new_${info.module}(${['1', ...overrides].join(', ')})`})`,
         `updated = ${a}service.${operationName(context, update)}(${keyOf('created')}, ${change}${version})`,
@@ -363,7 +368,7 @@ function serviceTests(context: Context, info: TableInfo, imports: Imports, uow: 
     const version = info.version ? ', version=created.' + info.version.attr : ''
     blocks.push(
       ...test('deletes_a_row', [
-        'n = 1',
+        'n = 100',
         ...parentsFirst,
         `created = ${a}service.${operationName(context, create)}(${dtos ? `${createDto(info)}(**_values(new_${info.module}(${['1', ...overrides].join(', ')}), ${createDto(info)}))` : `new_${info.module}(${['1', ...overrides].join(', ')})`})`,
         `${a}service.${operationName(context, remove)}(${keyOf('created')}${version})`,

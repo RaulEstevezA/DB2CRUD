@@ -118,6 +118,10 @@ function blockingLinks(schema: DbSchema, table: DbTable): ChildLink[] {
 
 const included = <T extends { include: { value: boolean } }>(items: T[]) => items.filter((item) => item.include.value)
 
+/** The variables the services already use: a column with one of these names gets `Value` after it. */
+const TAKEN = new Set(['values', 'errors', 'creating', 'current', 'uow', 'value', 'other', 'entity', 'changes', 'data', 'link', 'row'])
+const columnLocal = (name: string) => (TAKEN.has(localName(name)) ? `${localName(name)}Value` : localName(name))
+
 function columnInfo(column: DbColumn, entity: string, primary: boolean, database: string): ColumnInfo {
   const generated = column.generated !== undefined && column.generated !== 'onUpdateNow'
   const base = pascalName(column.name)
@@ -128,7 +132,7 @@ function columnInfo(column: DbColumn, entity: string, primary: boolean, database
   return {
     column,
     prop,
-    local: localName(column.name),
+    local: columnLocal(column.name),
     cs,
     valueType,
     optional,

@@ -9,7 +9,7 @@ import type { GeneratedFile } from '../../../export/files.ts'
 import { lines, type Line } from '../../types.ts'
 import { quote, type TsImports } from '../typescript.ts'
 import { plainEntityFile } from '../common/entities.ts'
-import { repositoryInterface, sqlRepositoryClass, writesEntities, type Context } from '../common/context.ts'
+import { pgSchemas, repositoryInterface, sqlRepositoryClass, writesEntities, type Context } from '../common/context.ts'
 import type { TsOrm } from '../common/orm.ts'
 import { dialectOf, modelsFile, modelsModule, type Dialect } from './models.ts'
 import { sequelizeBody, sequelizeHelpers } from './repository.ts'
@@ -201,6 +201,8 @@ function testDatabase(context: Context): GeneratedFile[] {
         '  beforeEach(async () => {',
         '    db = createDatabase(TEST_DATABASE_URL)',
         '    await empty(db)',
+        ...(pgSchemas(context).length > 0 ? ['    // The schemas the tables are in: sync() creates tables only'] : []),
+        ...pgSchemas(context).map((name) => `    await db.sequelize.query('CREATE SCHEMA IF NOT EXISTS "${name}"')`),
         '    // Creates every table from the models',
         '    await db.sequelize.sync()',
         '  })',

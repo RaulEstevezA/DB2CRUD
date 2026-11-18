@@ -138,7 +138,16 @@ function repositoryTests(context: Context, info: TableInfo, imports: TsImports):
       ...info.table.uniques
         .map((unique) => query(info, 'findByUnique', unique.columns))
         .filter((item) => item !== undefined)
-        .map((read) => `expect(await ${repo}.${queryName(context, read)}(${props(read.columns).join(', ')})).not.toBeNull()`),
+        .map((read) => {
+          // A unique value that may be null is looked up only when the row has one
+          const optional = read.columns.filter((name) => columnOf(info, name).column.nullable)
+          const assert = `expect(await ${repo}.${queryName(context, read)}(${props(read.columns).join(', ')})).not.toBeNull()`
+          return optional.length > 0
+            ? `if (${props(optional)
+                .map((prop) => `${prop} != null`)
+                .join(' && ')}) ${assert}`
+            : assert
+        }),
       ...info.table.foreignKeys
         .map((key) => query(info, 'listByParent', key.columns))
         .filter((item) => item !== undefined)
@@ -224,7 +233,8 @@ function serviceTests(context: Context, info: TableInfo, imports: TsImports, mem
       overrides.push(`${columnOf(info, column).prop}: parent${index}.${columnOf(parent, key.references.columns[position]).prop}`),
     )
   })
-  const start = [...open, 'const n = 1', ...parentsFirst]
+  // The parents take a number the rows of the test never take: a parent may be a row of the same table
+  const start = [...open, 'const n = 100', ...parentsFirst]
   const factory = (n: number, extra: string[] = []) => {
     // A value given for this test replaces the parent's (a foreign key that is also unique)
     const given = new Set(extra.map((item) => item.slice(0, item.indexOf(':'))))

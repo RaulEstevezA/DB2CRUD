@@ -247,10 +247,15 @@ function repositoryTests(context: Context, info: TableInfo): Line[][] {
       ...info.table.uniques
         .map((unique) => query(info, 'findByUnique', unique.columns))
         .filter((item) => item !== undefined)
-        .map(
-          (read) =>
-            `assertTrue(${repo}.${queryName(context, read)}(${read.columns.map((name) => `stored.${columnOf(info, name).getter}()`).join(', ')}).isPresent());`,
-        ),
+        .map((read) => {
+          // A unique value that may be null is looked up only when the row has one
+          const args = read.columns.map((name) => `stored.${columnOf(info, name).getter}()`)
+          const optional = read.columns
+            .filter((name) => columnOf(info, name).column.nullable)
+            .map((name) => `stored.${columnOf(info, name).getter}()`)
+          const assert = `assertTrue(${repo}.${queryName(context, read)}(${args.join(', ')}).isPresent());`
+          return optional.length > 0 ? `if (${optional.map((arg) => `${arg} != null`).join(' && ')}) ${assert}` : assert
+        }),
       ...info.table.foreignKeys
         .map((key) => query(info, 'listByParent', key.columns))
         .filter((item) => item !== undefined)
@@ -332,7 +337,8 @@ function serviceTests(context: Context, info: TableInfo, imports: JavaImports): 
       overrides.push({ column, value: `parent${index}.${columnOf(parent, key.references.columns[position]).getter}()` }),
     )
   })
-  const start = ['int n = 1;', ...parentsFirst]
+  // The parents take a number the rows of the test never take: a parent may be a row of the same table
+  const start = ['int n = 100;', ...parentsFirst]
   /** A row from the factory with the parents' keys and the given values set */
   const row = (variable: string, n: number, extra: { column: string; value: string }[] = []) => {
     const given = new Set(extra.map((item) => item.column))

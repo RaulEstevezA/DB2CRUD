@@ -5,7 +5,12 @@ unique columns. Mirrors web/src/core/generators/python/samples.ts."""
 import math
 import re
 
+from ...js import number_text
 from .python import Imports, js_json
+
+
+def _text(value) -> str:
+    return value if isinstance(value, str) else number_text(value)
 
 
 def _checks_of(column: dict, checks: list[dict]) -> list[dict]:
@@ -36,6 +41,9 @@ def sample_value(column: dict, checks: list[dict], enums: list[dict], imports: I
         return _number(column, checks)
     if kind == "decimal":
         imports.from_("decimal", "Decimal")
+        # One of the values a CHECK allows, when there is such a list
+        if choices:
+            return f'Decimal("{_text(choices["values"][0])}")'
         scale = column_type.get("scale", 2)
         integer_digits = column_type["precision"] - scale if "precision" in column_type else 6
         if integer_digits <= 0:
@@ -45,7 +53,7 @@ def sample_value(column: dict, checks: list[dict], enums: list[dict], imports: I
             return f'Decimal(f"{{n % {modulo}}}.{"5".ljust(scale, "0")}")'
         return f"Decimal(n % {modulo})"
     if kind == "float":
-        return f"{_number(column, checks)} + 0.5"
+        return _text(choices["values"][0]) if choices else f"{_number(column, checks)} + 0.5"
     if kind == "text":
         length = column_type.get("length", 40)
         if column_type.get("fixed"):

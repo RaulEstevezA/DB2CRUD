@@ -2,6 +2,7 @@
 implementation (written by each ORM, common/orm.py) and its in-memory one, with the same methods. Repositories read
 and write rows and never decide anything. Mirrors web/src/core/generators/typescript/common/repositories.ts."""
 
+from ....js import number_text
 from ...types import indent, lines
 from ..typescript import TsImports, ts_literal
 from .context import (
@@ -115,8 +116,12 @@ def _memory_fill(context: dict, column: dict, imports: TsImports) -> str | None:
     if generated in ("now", "onUpdateNow"):
         return f"if ({unset}) {target} = new Date()"
     default = db.get("default")
+    # Exact decimals are kept as text: a number default becomes its text
     if default and default["kind"] == "literal":
-        return f"if ({unset}) {target} = {ts_literal(default['value'])}"
+        value = default["value"]
+        if column["ts"] == "string" and isinstance(value, (int, float)) and not isinstance(value, bool):
+            value = number_text(value)
+        return f"if ({unset}) {target} = {ts_literal(value)}"
     return None
 
 

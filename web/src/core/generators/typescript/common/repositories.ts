@@ -114,7 +114,9 @@ function memoryFill(context: Context, column: ColumnInfo, imports: TsImports): s
     return `if (${unset}) ${target} = randomUUID()`
   }
   if (db.generated === 'now' || db.generated === 'onUpdateNow') return `if (${unset}) ${target} = new Date()`
-  if (db.default?.kind === 'literal') return `if (${unset}) ${target} = ${tsLiteral(db.default.value)}`
+  // Exact decimals are kept as text: a number default becomes its text
+  if (db.default?.kind === 'literal')
+    return `if (${unset}) ${target} = ${tsLiteral(column.ts === 'string' && typeof db.default.value === 'number' ? String(db.default.value) : db.default.value)}`
   return null
 }
 

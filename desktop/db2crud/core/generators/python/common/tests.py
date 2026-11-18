@@ -9,6 +9,12 @@ from .context import aw, find_info, module_of, operation_name, query, query_name
 from .dtos import create_dto, update_columns, update_dto
 
 
+def _nullable_first(info: dict, names: list[str]) -> str:
+    """`stored.x is None or ` for each column that may be null, so a lookup by it is made only when it has a value."""
+    columns = [next(column for column in info["columns"] if column["column"]["name"] == name) for name in names]
+    return "".join(f"stored.{column['attr']} is None or " for column in columns if column["column"]["nullable"])
+
+
 def _column(info: dict, name: str) -> dict:
     return next(column for column in info["columns"] if column["column"]["name"] == name)
 
@@ -157,8 +163,10 @@ def _repository_tests(context: dict, info: dict, imports: Imports) -> list:
             bool(get_by_key) and "assert found is not None",
             bool(get_by_key)
             and [f"assert found.{column['attr']} == stored.{column['attr']}" for column in info["key"]],
+            # A unique value that may be null is looked up only when the row has one
             *[
-                f"assert {a}{repo}.{query_name(context, read)}({stored_args(read['columns'], ', ')}) is not None"
+                f"assert {_nullable_first(info, read['columns'])}{a}{repo}.{query_name(context, read)}"
+                f"({stored_args(read['columns'], ', ')}) is not None"
                 for read in uniques
             ],
             *[
@@ -249,7 +257,8 @@ def _service_tests(context: dict, info: dict, imports: Imports, uow: str) -> lis
         ]
 
     blocks = []
-    # Rows go in through the service (when it creates them) and the parents through the factories
+    # Rows go in through the service (when it creates them) and the parents through the factories, numbered 100: the
+    # rows of the test never take that number, and a parent may be a row of the same table
     parents_first = []
     overrides = []
     for index, key in enumerate(info["table"]["foreignKeys"]):
@@ -278,7 +287,7 @@ def _service_tests(context: dict, info: dict, imports: Imports, uow: str) -> lis
         blocks += test(
             "creates_a_valid_row",
             [
-                "n = 1",
+                "n = 100",
                 *parents_first,
                 f"created = {a}service.{name}({built(base_args)})",
                 bool(get) and f"found = {a}service.{operation_name(context, get)}({key_of('created')})",
@@ -306,7 +315,7 @@ def _service_tests(context: dict, info: dict, imports: Imports, uow: str) -> lis
             blocks += test(
                 "refuses_a_missing_value",
                 [
-                    "n = 1",
+                    "n = 100",
                     *parents_first,
                     "with pytest.raises(ValidationFailedError) as raised:",
                     f"    {a}service.{name}({missing})",
@@ -329,7 +338,7 @@ def _service_tests(context: dict, info: dict, imports: Imports, uow: str) -> lis
             blocks += test(
                 "refuses_a_repeated_unique_value",
                 [
-                    "n = 1",
+                    "n = 100",
                     *parents_first,
                     f"first = {a}service.{name}({built(base_args)})",
                     "with pytest.raises(ConflictError):",
@@ -352,7 +361,7 @@ def _service_tests(context: dict, info: dict, imports: Imports, uow: str) -> lis
                 blocks += test(
                     "keeps_its_own_unique_value",
                     [
-                        "n = 1",
+                        "n = 100",
                         *parents_first,
                         f"created = {a}service.{name}({built(base_args)})",
                         f"{a}service.{operation_name(context, update)}({key_of('created')}, {change}{version})",
@@ -377,7 +386,7 @@ def _service_tests(context: dict, info: dict, imports: Imports, uow: str) -> lis
             blocks += test(
                 "refuses_a_missing_parent",
                 [
-                    "n = 1",
+                    "n = 100",
                     *parents_first,
                     "with pytest.raises(ValidationFailedError) as raised:",
                     f"    {a}service.{name}({built(args)})",
@@ -401,7 +410,7 @@ def _service_tests(context: dict, info: dict, imports: Imports, uow: str) -> lis
         blocks += test(
             "changes_a_row",
             [
-                "n = 1",
+                "n = 100",
                 *parents_first,
                 f"created = {a}service.{operation_name(context, create)}({built(base_args)})",
                 f"updated = {a}service.{operation_name(context, update)}({key_of('created')}, {change}{version})",
@@ -415,7 +424,7 @@ def _service_tests(context: dict, info: dict, imports: Imports, uow: str) -> lis
         blocks += test(
             "deletes_a_row",
             [
-                "n = 1",
+                "n = 100",
                 *parents_first,
                 f"created = {a}service.{operation_name(context, create)}({built(base_args)})",
                 f"{a}service.{operation_name(context, remove)}({key_of('created')}{version})",

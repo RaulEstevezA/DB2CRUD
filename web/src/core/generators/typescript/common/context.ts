@@ -89,9 +89,20 @@ export function tsType(type: DbType): string {
     case 'array':
       return `${tsType(type.items)}[]`
     case 'json':
-    case 'unknown':
       return 'unknown'
+    // A type the rules do not know is kept as its text
+    case 'unknown':
+      return 'string'
   }
+}
+
+/** The schemas of PostgreSQL the tables are in (`sales` in `sales.orders`): the tests create them, as the ORMs create
+ * tables only. */
+export function pgSchemas(context: Context): string[] {
+  if (context.settings.database !== 'postgresql') return []
+  const names: string[] = []
+  for (const info of context.tables) if (info.table.schema && !names.includes(info.table.schema)) names.push(info.table.schema)
+  return names
 }
 
 /** The type of a column, `| null` when it is nullable (or `optional` says so). */
