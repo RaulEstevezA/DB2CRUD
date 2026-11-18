@@ -231,7 +231,7 @@ EN = SimpleNamespace(
     operation_description=_operation_en,
     project_name="Project name",
     stack_label="Language and ORM",
-    languages={"python": "Python", "typescript": "TypeScript", "java": "Java", "csharp": "C#"},
+    languages={"python": "Python", "typescript": "TypeScript", "java": "Java", "csharp": "C#", "php": "PHP"},
     database_label="Database",
     databases={
         "postgresql": "PostgreSQL",
@@ -258,6 +258,7 @@ EN = SimpleNamespace(
         "interface": "Interfaces",
         "class": "Classes",
         "record": "Records",
+        "readonly": "Readonly classes",
     },
     updates_label="Updates take",
     updates_modes={
@@ -378,7 +379,7 @@ ES = SimpleNamespace(
     operation_description=_operation_es,
     project_name="Nombre del proyecto",
     stack_label="Lenguaje y ORM",
-    languages={"python": "Python", "typescript": "TypeScript", "java": "Java", "csharp": "C#"},
+    languages={"python": "Python", "typescript": "TypeScript", "java": "Java", "csharp": "C#", "php": "PHP"},
     database_label="Base de datos",
     databases={
         "postgresql": "PostgreSQL",
@@ -409,6 +410,7 @@ ES = SimpleNamespace(
         "interface": "Interfaces",
         "class": "Clases",
         "record": "Records",
+        "readonly": "Clases readonly",
     },
     updates_label="Las actualizaciones reciben",
     updates_modes={

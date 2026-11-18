@@ -95,6 +95,28 @@ STACKS = [
         # .NET has no Optional<T>: a Patch<T> or every field
         "updates": ["patch", "full"],
     },
+    {
+        "language": "php",
+        "orm": "doctrine",
+        "label": "Doctrine ORM 3",
+        "databases": ["postgresql", "mysql", "mariadb", "sqlite"],
+        # PHP's database calls block
+        "execution": ["sync"],
+        "errors": ["exceptions"],
+        "dtoKinds": ["readonly", "class"],
+        # PHP has no Optional<T>: a Patch per field, an array of the changed fields, or every field
+        "updates": ["patch", "partial", "full"],
+    },
+    {
+        "language": "php",
+        "orm": "eloquent",
+        "label": "Eloquent 12",
+        "databases": ["postgresql", "mysql", "mariadb", "sqlite"],
+        "execution": ["sync"],
+        "errors": ["exceptions"],
+        "dtoKinds": ["readonly", "class"],
+        "updates": ["patch", "partial", "full"],
+    },
 ]
 
 DEFAULT_SETTINGS = {

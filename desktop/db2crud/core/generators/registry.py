@@ -3,6 +3,9 @@
 from ..settings.settings import normalize_settings
 from .csharp.generator import CSHARP_GENERATOR
 from .java.generator import JAVA_GENERATOR
+from .php.common.generator import php_generator
+from .php.doctrine.index import DOCTRINE_ORM
+from .php.eloquent.index import ELOQUENT_ORM
 from .python.common.generator import python_generator
 from .python.django.index import DJANGO_ORM
 from .python.sqlalchemy.index import SQLALCHEMY_ORM
@@ -21,6 +24,8 @@ GENERATORS = [
     typescript_generator(SEQUELIZE_ORM),
     JAVA_GENERATOR,
     CSHARP_GENERATOR,
+    php_generator(DOCTRINE_ORM),
+    php_generator(ELOQUENT_ORM),
 ]
 
 
