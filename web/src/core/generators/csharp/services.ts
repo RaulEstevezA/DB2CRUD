@@ -103,8 +103,10 @@ function validateMethod(writer: Writer): Block {
       ...(missing
         ? [
             '    if (value is null)',
-            `        ${missing}`,
-            ...(rules.length > 0 ? ['    else', '    {', ...rules.map((rule) => `        ${rule}`), '    }'] : []),
+            // Braces when an else follows: without them the else would belong to the inner if
+            ...(rules.length > 0
+              ? ['    {', `        ${missing}`, '    }', '    else', '    {', ...rules.map((rule) => `        ${rule}`), '    }']
+              : [`        ${missing}`]),
           ]
         : ['    if (value is not null)', '    {', ...rules.map((rule) => `        ${rule}`), '    }']),
       '}',

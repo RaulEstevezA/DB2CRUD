@@ -115,9 +115,12 @@ def _validate_method(writer: dict) -> list:
         if not missing and not rules:
             continue
         if missing:
-            inner = ["    if (value is null)", f"        {missing}"]
+            # Braces when an else follows: without them the else would belong to the inner if
             if rules:
-                inner += ["    else", "    {", *(f"        {rule}" for rule in rules), "    }"]
+                inner = ["    if (value is null)", "    {", f"        {missing}", "    }", "    else", "    {"]
+                inner += [*(f"        {rule}" for rule in rules), "    }"]
+            else:
+                inner = ["    if (value is null)", f"        {missing}"]
         else:
             inner = ["    if (value is not null)", "    {", *(f"        {rule}" for rule in rules), "    }"]
         blocks.append(["{", f"    var value = values.GetValueOrDefault({prop});", *inner, "}"])

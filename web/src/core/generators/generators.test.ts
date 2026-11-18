@@ -186,3 +186,19 @@ describe('the PHP generators', () => {
           expect(item.content, item.path).not.toMatch(/undefined|\[object Object\]|NaN/)
   })
 })
+
+describe('the C# generator', () => {
+  it('checks the rules of a value that is given', () => {
+    const service = file('src/App/Services/ProductService.cs', { language: 'csharp', orm: 'efcore' })
+    // The else belongs to `value is null`, not to the check inside it
+    expect(service).toContain(
+      [
+        '            if (value is null)',
+        '            {',
+        '                if (creating || values.ContainsKey("Name")) errors.Add(new FieldError("name", "is required"));',
+        '            }',
+        '            else',
+      ].join('\n'),
+    )
+  })
+})
