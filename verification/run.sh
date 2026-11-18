@@ -16,6 +16,7 @@ runner_of() {
     typeorm-* | prisma-* | drizzle-* | sequelize-*) echo ./runners/node.sh ;;
     jpa-*) echo ./runners/java.sh ;;
     efcore-*) echo ./runners/dotnet.sh ;;
+    doctrine-* | eloquent-*) echo ./runners/php.sh ;;
   esac
 }
 

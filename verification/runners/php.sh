@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Runs the generated PHP projects (Laravel, Symfony) in a clean container: installs their dependencies with Composer,
+# Runs the generated PHP projects (Doctrine, Eloquent) in a clean container: installs their dependencies with Composer,
 # checks the syntax of every file and runs their own tests with PHPUnit. The image (PHP with the PostgreSQL
 # and MySQL drivers, and Composer) is built once; Composer downloads are cached in a Docker volume.
 #

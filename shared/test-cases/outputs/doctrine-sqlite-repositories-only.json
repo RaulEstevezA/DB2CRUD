@@ -1,0 +1,533 @@
+{
+ "schema": {
+  "format": "db-schema",
+  "version": 1,
+  "dialect": "postgresql",
+  "source": {
+   "kind": "ddl",
+   "format": "postgresql"
+  },
+  "tables": [
+   {
+    "name": "customers",
+    "columns": [
+     {
+      "name": "id",
+      "type": {
+       "sql": "bigint",
+       "kind": "integer",
+       "bits": 64
+      },
+      "nullable": false,
+      "generated": "identity"
+     },
+     {
+      "name": "email",
+      "type": {
+       "sql": "varchar(120)",
+       "kind": "text",
+       "length": 120
+      },
+      "nullable": false
+     },
+     {
+      "name": "password_hash",
+      "type": {
+       "sql": "text",
+       "kind": "text"
+      },
+      "nullable": false
+     },
+     {
+      "name": "created_at",
+      "type": {
+       "sql": "timestamptz",
+       "kind": "datetime",
+       "timezone": true
+      },
+      "nullable": false,
+      "generated": "now"
+     }
+    ],
+    "primaryKey": [
+     "id"
+    ],
+    "foreignKeys": [],
+    "uniques": [
+     {
+      "name": "uq_customers_email",
+      "columns": [
+       "email"
+      ]
+     }
+    ],
+    "indexes": [],
+    "checks": []
+   },
+   {
+    "name": "categories",
+    "columns": [
+     {
+      "name": "id",
+      "type": {
+       "sql": "bigint",
+       "kind": "integer",
+       "bits": 64
+      },
+      "nullable": false,
+      "generated": "identity"
+     },
+     {
+      "name": "name",
+      "type": {
+       "sql": "varchar(60)",
+       "kind": "text",
+       "length": 60
+      },
+      "nullable": false
+     }
+    ],
+    "primaryKey": [
+     "id"
+    ],
+    "foreignKeys": [],
+    "uniques": [
+     {
+      "columns": [
+       "name"
+      ]
+     }
+    ],
+    "indexes": [],
+    "checks": []
+   },
+   {
+    "name": "products",
+    "columns": [
+     {
+      "name": "id",
+      "type": {
+       "sql": "bigint",
+       "kind": "integer",
+       "bits": 64
+      },
+      "nullable": false,
+      "generated": "identity"
+     },
+     {
+      "name": "category_id",
+      "type": {
+       "sql": "bigint",
+       "kind": "integer",
+       "bits": 64
+      },
+      "nullable": false
+     },
+     {
+      "name": "name",
+      "type": {
+       "sql": "varchar(100)",
+       "kind": "text",
+       "length": 100
+      },
+      "nullable": false
+     },
+     {
+      "name": "price",
+      "type": {
+       "sql": "numeric(10,2)",
+       "kind": "decimal",
+       "precision": 10,
+       "scale": 2
+      },
+      "nullable": false
+     },
+     {
+      "name": "status",
+      "type": {
+       "sql": "varchar(10)",
+       "kind": "text",
+       "length": 10
+      },
+      "nullable": false
+     },
+     {
+      "name": "version",
+      "type": {
+       "sql": "integer",
+       "kind": "integer",
+       "bits": 32
+      },
+      "nullable": false,
+      "default": {
+       "kind": "literal",
+       "value": 1
+      }
+     },
+     {
+      "name": "deleted_at",
+      "type": {
+       "sql": "timestamptz",
+       "kind": "datetime",
+       "timezone": true
+      },
+      "nullable": true
+     }
+    ],
+    "primaryKey": [
+     "id"
+    ],
+    "foreignKeys": [
+     {
+      "name": "fk_products_category",
+      "columns": [
+       "category_id"
+      ],
+      "references": {
+       "table": "categories",
+       "columns": [
+        "id"
+       ]
+      }
+     }
+    ],
+    "uniques": [],
+    "indexes": [
+     {
+      "name": "ix_products_status",
+      "columns": [
+       "status"
+      ]
+     },
+     {
+      "columns": [
+       "category_id"
+      ]
+     }
+    ],
+    "checks": [
+     {
+      "sql": "price >= 0",
+      "parsed": {
+       "kind": "compare",
+       "column": "price",
+       "op": ">=",
+       "value": 0
+      }
+     }
+    ]
+   },
+   {
+    "name": "orders",
+    "columns": [
+     {
+      "name": "id",
+      "type": {
+       "sql": "bigint",
+       "kind": "integer",
+       "bits": 64
+      },
+      "nullable": false,
+      "generated": "identity"
+     },
+     {
+      "name": "customer_id",
+      "type": {
+       "sql": "bigint",
+       "kind": "integer",
+       "bits": 64
+      },
+      "nullable": false
+     },
+     {
+      "name": "placed_at",
+      "type": {
+       "sql": "timestamptz",
+       "kind": "datetime",
+       "timezone": true
+      },
+      "nullable": false,
+      "generated": "now"
+     }
+    ],
+    "primaryKey": [
+     "id"
+    ],
+    "foreignKeys": [
+     {
+      "columns": [
+       "customer_id"
+      ],
+      "references": {
+       "table": "customers",
+       "columns": [
+        "id"
+       ]
+      }
+     }
+    ],
+    "uniques": [],
+    "indexes": [],
+    "checks": []
+   },
+   {
+    "name": "order_lines",
+    "columns": [
+     {
+      "name": "order_id",
+      "type": {
+       "sql": "bigint",
+       "kind": "integer",
+       "bits": 64
+      },
+      "nullable": false
+     },
+     {
+      "name": "line",
+      "type": {
+       "sql": "integer",
+       "kind": "integer",
+       "bits": 32
+      },
+      "nullable": false
+     },
+     {
+      "name": "product_id",
+      "type": {
+       "sql": "bigint",
+       "kind": "integer",
+       "bits": 64
+      },
+      "nullable": false
+     },
+     {
+      "name": "quantity",
+      "type": {
+       "sql": "integer",
+       "kind": "integer",
+       "bits": 32
+      },
+      "nullable": false
+     }
+    ],
+    "primaryKey": [
+     "order_id",
+     "line"
+    ],
+    "foreignKeys": [
+     {
+      "columns": [
+       "order_id"
+      ],
+      "references": {
+       "table": "orders",
+       "columns": [
+        "id"
+       ]
+      },
+      "onDelete": "cascade"
+     },
+     {
+      "columns": [
+       "product_id"
+      ],
+      "references": {
+       "table": "products",
+       "columns": [
+        "id"
+       ]
+      },
+      "onDelete": "restrict"
+     }
+    ],
+    "uniques": [],
+    "indexes": [],
+    "checks": []
+   },
+   {
+    "name": "tags",
+    "columns": [
+     {
+      "name": "id",
+      "type": {
+       "sql": "bigint",
+       "kind": "integer",
+       "bits": 64
+      },
+      "nullable": false,
+      "generated": "identity"
+     },
+     {
+      "name": "label",
+      "type": {
+       "sql": "varchar(30)",
+       "kind": "text",
+       "length": 30
+      },
+      "nullable": false
+     }
+    ],
+    "primaryKey": [
+     "id"
+    ],
+    "foreignKeys": [],
+    "uniques": [],
+    "indexes": [],
+    "checks": []
+   },
+   {
+    "name": "product_tags",
+    "columns": [
+     {
+      "name": "product_id",
+      "type": {
+       "sql": "bigint",
+       "kind": "integer",
+       "bits": 64
+      },
+      "nullable": false
+     },
+     {
+      "name": "tag_id",
+      "type": {
+       "sql": "bigint",
+       "kind": "integer",
+       "bits": 64
+      },
+      "nullable": false
+     }
+    ],
+    "primaryKey": [
+     "product_id",
+     "tag_id"
+    ],
+    "foreignKeys": [
+     {
+      "columns": [
+       "product_id"
+      ],
+      "references": {
+       "table": "products",
+       "columns": [
+        "id"
+       ]
+      },
+      "onDelete": "cascade"
+     },
+     {
+      "columns": [
+       "tag_id"
+      ],
+      "references": {
+       "table": "tags",
+       "columns": [
+        "id"
+       ]
+      },
+      "onDelete": "cascade"
+     }
+    ],
+    "uniques": [],
+    "indexes": [],
+    "checks": []
+   },
+   {
+    "name": "audit_log",
+    "columns": [
+     {
+      "name": "at",
+      "type": {
+       "sql": "timestamptz",
+       "kind": "datetime",
+       "timezone": true
+      },
+      "nullable": false
+     },
+     {
+      "name": "message",
+      "type": {
+       "sql": "text",
+       "kind": "text"
+      },
+      "nullable": false
+     }
+    ],
+    "primaryKey": null,
+    "foreignKeys": [],
+    "uniques": [],
+    "indexes": [],
+    "checks": []
+   }
+  ],
+  "enums": [],
+  "notes": []
+ },
+ "decisions": [],
+ "settings": {
+  "name": "doctrine-sqlite-repositories-only",
+  "language": "php",
+  "orm": "doctrine",
+  "database": "sqlite",
+  "services": false
+ },
+ "files": {
+  ".env.example": "# Where the database is\nDATABASE_URL=sqlite:///app.db\n# The tests use SQLite in memory unless this names another database (it is emptied by the tests)\n# TEST_DATABASE_URL=\n",
+  ".gitignore": "/vendor/\ncomposer.lock\n.phpunit.cache/\n.env\n*.db\n",
+  "README.md": "# doctrine-sqlite-repositories-only\n\nData access layer generated by [DB2CRUD](https://github.com/RaulEstevezA/DB2CRUD) for a database that already exists: entities mapped with Doctrine ORM 3, repositories and services, in PHP 8.4. It does not create or migrate the database, and it depends on no web framework.\n\n## Settings\n\n- Database: sqlite.\n- Entities: written for the tables the input had no class for.\n- Services: not written.\n- Transactions: one transaction per service operation, committed when it ends.\n- Lists: lists return pages by offset and limit.\n\n## Layout\n\n```text\nsrc/Database.php             the EntityManager of DATABASE_URL, with the mapping of the entities\nsrc/UnitOfWork.php           the repositories of every table, and the transaction of each operation\nsrc/Errors/                  NotFoundException, ConflictException, ValidationFailedException: no HTTP codes\nsrc/Entities/                one entity per table\nsrc/Repositories/            the repositories of each table\ntests/                       repositories against a database, services on the in-memory repositories\ncrud-contract.json           what was written, for CRUD2Controller\n```\n\n## Running the tests\n\n```bash\ncomposer install\nvendor/bin/phpunit                                    # SQLite in memory\nTEST_DATABASE_URL=\"sqlite:///app.db\" vendor/bin/phpunit   # a real, disposable database: it is emptied\n```\n\nLook for `TODO` in the code: each one marks a decision the input did not settle.\n",
+  "composer.json": "{\n    \"name\": \"app/doctrine-sqlite-repositories-only\",\n    \"description\": \"Data access layer generated by DB2CRUD (Doctrine ORM 3)\",\n    \"type\": \"project\",\n    \"license\": \"proprietary\",\n    \"require\": {\n        \"php\": \">=8.4\",\n        \"ext-mbstring\": \"*\",\n        \"ext-pdo_sqlite\": \"*\",\n        \"doctrine/dbal\": \"^4.3\",\n        \"doctrine/orm\": \"^3.5\",\n        \"symfony/cache\": \"^7.3 || ^8.0\"\n    },\n    \"require-dev\": {\n        \"phpunit/phpunit\": \"^12.4\"\n    },\n    \"autoload\": {\n        \"psr-4\": {\n            \"App\\\\\": \"src/\"\n        }\n    },\n    \"autoload-dev\": {\n        \"psr-4\": {\n            \"Tests\\\\\": \"tests/\"\n        }\n    },\n    \"scripts\": {\n        \"test\": \"phpunit\"\n    },\n    \"config\": {\n        \"sort-packages\": true\n    }\n}\n",
+  "crud-contract.json": "{\n  \"format\": \"crud-contract\",\n  \"version\": 1,\n  \"stack\": {\n    \"language\": \"php\",\n    \"orm\": \"doctrine\",\n    \"database\": \"sqlite\",\n    \"execution\": \"sync\"\n  },\n  \"transactions\": \"operation\",\n  \"paging\": \"offset\",\n  \"types\": [\n    {\n      \"name\": \"Customer\",\n      \"module\": \"App\\\\Entities\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"integer\",\n            \"php\": \"int\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"email\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"php\": \"string\",\n            \"length\": 120\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"passwordHash\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"php\": \"string\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"createdAt\",\n          \"type\": {\n            \"kind\": \"datetime\",\n            \"php\": \"\\\\DateTimeImmutable\"\n          },\n          \"nullable\": false\n        }\n      ]\n    },\n    {\n      \"name\": \"Category\",\n      \"module\": \"App\\\\Entities\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"integer\",\n            \"php\": \"int\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"name\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"php\": \"string\",\n            \"length\": 60\n          },\n          \"nullable\": false\n        }\n      ]\n    },\n    {\n      \"name\": \"Product\",\n      \"module\": \"App\\\\Entities\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"integer\",\n            \"php\": \"int\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"categoryId\",\n          \"type\": {\n            \"kind\": \"integer\",\n            \"php\": \"int\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"name\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"php\": \"string\",\n            \"length\": 100\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"price\",\n          \"type\": {\n            \"kind\": \"decimal\",\n            \"php\": \"string\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"status\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"php\": \"string\",\n            \"length\": 10\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"version\",\n          \"type\": {\n            \"kind\": \"integer\",\n            \"php\": \"int\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"deletedAt\",\n          \"type\": {\n            \"kind\": \"datetime\",\n            \"php\": \"?\\\\DateTimeImmutable\"\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"Order\",\n      \"module\": \"App\\\\Entities\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"integer\",\n            \"php\": \"int\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"customerId\",\n          \"type\": {\n            \"kind\": \"integer\",\n            \"php\": \"int\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"placedAt\",\n          \"type\": {\n            \"kind\": \"datetime\",\n            \"php\": \"\\\\DateTimeImmutable\"\n          },\n          \"nullable\": false\n        }\n      ]\n    },\n    {\n      \"name\": \"OrderLine\",\n      \"module\": \"App\\\\Entities\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"orderId\",\n          \"type\": {\n            \"kind\": \"integer\",\n            \"php\": \"int\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"line\",\n          \"type\": {\n            \"kind\": \"integer\",\n            \"php\": \"int\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"productId\",\n          \"type\": {\n            \"kind\": \"integer\",\n            \"php\": \"int\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"quantity\",\n          \"type\": {\n            \"kind\": \"integer\",\n            \"php\": \"int\"\n          },\n          \"nullable\": false\n        }\n      ]\n    },\n    {\n      \"name\": \"Tag\",\n      \"module\": \"App\\\\Entities\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"integer\",\n            \"php\": \"int\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"label\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"php\": \"string\",\n            \"length\": 30\n          },\n          \"nullable\": false\n        }\n      ]\n    },\n    {\n      \"name\": \"ProductTag\",\n      \"module\": \"App\\\\Entities\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"productId\",\n          \"type\": {\n            \"kind\": \"integer\",\n            \"php\": \"int\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"tagId\",\n          \"type\": {\n            \"kind\": \"integer\",\n            \"php\": \"int\"\n          },\n          \"nullable\": false\n        }\n      ]\n    },\n    {\n      \"name\": \"AuditLog\",\n      \"module\": \"App\\\\Entities\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"at\",\n          \"type\": {\n            \"kind\": \"datetime\",\n            \"php\": \"\\\\DateTimeImmutable\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"message\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"php\": \"string\"\n          },\n          \"nullable\": false\n        }\n      ]\n    }\n  ],\n  \"errors\": [\n    {\n      \"kind\": \"notFound\",\n      \"name\": \"NotFoundException\",\n      \"module\": \"App\\\\Errors\"\n    },\n    {\n      \"kind\": \"conflict\",\n      \"name\": \"ConflictException\",\n      \"module\": \"App\\\\Errors\"\n    },\n    {\n      \"kind\": \"validation\",\n      \"name\": \"ValidationFailedException\",\n      \"module\": \"App\\\\Errors\"\n    }\n  ],\n  \"common\": \"App\\\\Common\",\n  \"services\": []\n}\n",
+  "phpunit.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<phpunit xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n         xsi:noNamespaceSchemaLocation=\"vendor/phpunit/phpunit/phpunit.xsd\"\n         bootstrap=\"vendor/autoload.php\"\n         cacheDirectory=\".phpunit.cache\"\n         failOnWarning=\"true\"\n         colors=\"true\">\n    <testsuites>\n        <testsuite name=\"all\">\n            <directory>tests</directory>\n        </testsuite>\n    </testsuites>\n    <source>\n        <include>\n            <directory>src</directory>\n        </include>\n    </source>\n</phpunit>\n",
+  "src/Common/Page.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Common;\n\n/**\n * A page of a list: the rows from an offset, and how many there are in all.\n *\n * @template T\n */\nfinal readonly class Page\n{\n    /** @param list<T> $items */\n    public function __construct(public array $items, public int $total, public int $offset, public int $limit)\n    {\n    }\n\n    /**\n     * The same page with every row turned into something else.\n     *\n     * @template R\n     * @param callable(T): R $mapper\n     * @return Page<R>\n     */\n    public function map(callable $mapper): self\n    {\n        return new self(array_map($mapper, $this->items), $this->total, $this->offset, $this->limit);\n    }\n}\n",
+  "src/Database.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App;\n\nuse Doctrine\\DBAL\\DriverManager;\nuse Doctrine\\DBAL\\Tools\\DsnParser;\nuse Doctrine\\ORM\\EntityManager;\nuse Doctrine\\ORM\\ORMSetup;\n\n/** The database DATABASE_URL names, through Doctrine. It never migrates: the database already exists. */\nfinal class Database\n{\n    public const DEFAULT_URL = 'sqlite:///app.db';\n\n    /** The URL of DATABASE_URL, or the default one. */\n    public static function url(): string\n    {\n        $url = getenv('DATABASE_URL');\n        return is_string($url) && $url !== '' ? $url : self::DEFAULT_URL;\n    }\n\n    /** An EntityManager over the database at $url (DATABASE_URL when null), with the mapping of the entities. */\n    public static function open(?string $url = null): EntityManager\n    {\n        // The mapping is read from the attributes of the classes under src/\n        $config = ORMSetup::createAttributeMetadataConfiguration([__DIR__], true);\n        $config->enableNativeLazyObjects(true);\n        $parser = new DsnParser(['postgresql' => 'pdo_pgsql', 'postgres' => 'pdo_pgsql', 'mysql' => 'pdo_mysql', 'mariadb' => 'pdo_mysql', 'sqlite' => 'pdo_sqlite']);\n        $connection = DriverManager::getConnection($parser->parse($url ?? self::url()), $config);\n        return new EntityManager($connection, $config);\n    }\n}\n",
+  "src/Entities/AuditLog.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Entities;\n\nuse Doctrine\\ORM\\Mapping as ORM;\n\n/**\n * A row of the \"audit_log\" table.\n *\n * The table has no primary key: Doctrine tells its rows apart by message.\n */\n#[ORM\\Entity]\n#[ORM\\Table(name: 'audit_log')]\nclass AuditLog\n{\n    #[ORM\\Column(name: 'at', type: 'datetimetz_immutable')]\n    public ?\\DateTimeImmutable $at = null;\n\n    #[ORM\\Id]\n    #[ORM\\Column(name: 'message', type: 'text')]\n    public ?string $message = null;\n}\n",
+  "src/Entities/Category.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Entities;\n\nuse Doctrine\\ORM\\Mapping as ORM;\n\n/**\n * A row of the \"categories\" table.\n */\n#[ORM\\Entity]\n#[ORM\\Table(name: 'categories')]\n#[ORM\\UniqueConstraint(columns: ['name'])]\nclass Category\n{\n    #[ORM\\Id]\n    #[ORM\\GeneratedValue(strategy: 'IDENTITY')]\n    #[ORM\\Column(name: 'id', type: 'bigint')]\n    public ?int $id = null;\n\n    #[ORM\\Column(name: 'name', type: 'string', length: 60)]\n    public ?string $name = null;\n}\n",
+  "src/Entities/Customer.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Entities;\n\nuse Doctrine\\ORM\\Mapping as ORM;\n\n/**\n * A row of the \"customers\" table.\n */\n#[ORM\\Entity]\n#[ORM\\Table(name: 'customers')]\n#[ORM\\UniqueConstraint(name: 'uq_customers_email', columns: ['email'])]\nclass Customer\n{\n    #[ORM\\Id]\n    #[ORM\\GeneratedValue(strategy: 'IDENTITY')]\n    #[ORM\\Column(name: 'id', type: 'bigint')]\n    public ?int $id = null;\n\n    #[ORM\\Column(name: 'email', type: 'string', length: 120)]\n    public ?string $email = null;\n\n    #[ORM\\Column(name: 'password_hash', type: 'text')]\n    public ?string $passwordHash = null;\n\n    #[ORM\\Column(name: 'created_at', type: 'datetimetz_immutable', insertable: false, updatable: false, generated: 'INSERT', options: ['default' => 'CURRENT_TIMESTAMP'])]\n    public ?\\DateTimeImmutable $createdAt = null;\n}\n",
+  "src/Entities/Order.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Entities;\n\nuse Doctrine\\ORM\\Mapping as ORM;\n\n/**\n * A row of the \"orders\" table.\n *\n * Foreign key: customer_id → customers(id).\n */\n#[ORM\\Entity]\n#[ORM\\Table(name: 'orders')]\nclass Order\n{\n    #[ORM\\Id]\n    #[ORM\\GeneratedValue(strategy: 'IDENTITY')]\n    #[ORM\\Column(name: 'id', type: 'bigint')]\n    public ?int $id = null;\n\n    #[ORM\\Column(name: 'customer_id', type: 'bigint')]\n    public ?int $customerId = null;\n\n    #[ORM\\Column(name: 'placed_at', type: 'datetimetz_immutable', insertable: false, updatable: false, generated: 'INSERT', options: ['default' => 'CURRENT_TIMESTAMP'])]\n    public ?\\DateTimeImmutable $placedAt = null;\n}\n",
+  "src/Entities/OrderLine.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Entities;\n\nuse Doctrine\\ORM\\Mapping as ORM;\n\n/**\n * A row of the \"order_lines\" table.\n *\n * Foreign key: order_id → orders(id), on delete cascade.\n * Foreign key: product_id → products(id), on delete restrict.\n */\n#[ORM\\Entity]\n#[ORM\\Table(name: 'order_lines')]\nclass OrderLine\n{\n    #[ORM\\Id]\n    #[ORM\\Column(name: 'order_id', type: 'bigint')]\n    public ?int $orderId = null;\n\n    #[ORM\\Id]\n    #[ORM\\Column(name: 'line', type: 'integer')]\n    public ?int $line = null;\n\n    #[ORM\\Column(name: 'product_id', type: 'bigint')]\n    public ?int $productId = null;\n\n    #[ORM\\Column(name: 'quantity', type: 'integer')]\n    public ?int $quantity = null;\n}\n",
+  "src/Entities/Product.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Entities;\n\nuse Doctrine\\ORM\\Mapping as ORM;\n\n/**\n * A row of the \"products\" table.\n *\n * Foreign key: category_id → categories(id).\n * CHECK (price >= 0): the service checks what it understands of it.\n */\n#[ORM\\Entity]\n#[ORM\\Table(name: 'products')]\n#[ORM\\Index(name: 'ix_products_status', columns: ['status'])]\n#[ORM\\Index(columns: ['category_id'])]\nclass Product\n{\n    #[ORM\\Id]\n    #[ORM\\GeneratedValue(strategy: 'IDENTITY')]\n    #[ORM\\Column(name: 'id', type: 'bigint')]\n    public ?int $id = null;\n\n    #[ORM\\Column(name: 'category_id', type: 'bigint')]\n    public ?int $categoryId = null;\n\n    #[ORM\\Column(name: 'name', type: 'string', length: 100)]\n    public ?string $name = null;\n\n    #[ORM\\Column(name: 'price', type: 'decimal', precision: 10, scale: 2)]\n    public ?string $price = null;\n\n    #[ORM\\Column(name: 'status', type: 'string', length: 10)]\n    public ?string $status = null;\n\n    #[ORM\\Column(name: 'version', type: 'integer', options: ['default' => 1])]\n    public ?int $version = 1;\n\n    #[ORM\\Column(name: 'deleted_at', type: 'datetimetz_immutable', nullable: true)]\n    public ?\\DateTimeImmutable $deletedAt = null;\n}\n",
+  "src/Entities/ProductTag.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Entities;\n\nuse Doctrine\\ORM\\Mapping as ORM;\n\n/**\n * A row of the \"product_tags\" table.\n *\n * Foreign key: product_id → products(id), on delete cascade.\n * Foreign key: tag_id → tags(id), on delete cascade.\n */\n#[ORM\\Entity]\n#[ORM\\Table(name: 'product_tags')]\nclass ProductTag\n{\n    #[ORM\\Id]\n    #[ORM\\Column(name: 'product_id', type: 'bigint')]\n    public ?int $productId = null;\n\n    #[ORM\\Id]\n    #[ORM\\Column(name: 'tag_id', type: 'bigint')]\n    public ?int $tagId = null;\n}\n",
+  "src/Entities/Tag.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Entities;\n\nuse Doctrine\\ORM\\Mapping as ORM;\n\n/**\n * A row of the \"tags\" table.\n */\n#[ORM\\Entity]\n#[ORM\\Table(name: 'tags')]\nclass Tag\n{\n    #[ORM\\Id]\n    #[ORM\\GeneratedValue(strategy: 'IDENTITY')]\n    #[ORM\\Column(name: 'id', type: 'bigint')]\n    public ?int $id = null;\n\n    #[ORM\\Column(name: 'label', type: 'string', length: 30)]\n    public ?string $label = null;\n}\n",
+  "src/Errors/ConflictException.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Errors;\n\n/** The change clashes with what is stored: a unique value, a newer version, rows that depend on it. */\nfinal class ConflictException extends DomainException\n{\n    /** @param list<string> $fields */\n    public function __construct(public readonly string $entity, public readonly string $reason, public readonly array $fields = [])\n    {\n        parent::__construct(\"{$entity}: {$reason}\");\n    }\n}\n",
+  "src/Errors/DomainException.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Errors;\n\n/** Base of every error a service throws on purpose. They carry no HTTP codes: whoever calls the services translates them. */\nabstract class DomainException extends \\RuntimeException\n{\n}\n",
+  "src/Errors/FieldError.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Errors;\n\n/** What is wrong with one field. */\nfinal readonly class FieldError\n{\n    public function __construct(public string $field, public string $message)\n    {\n    }\n}\n",
+  "src/Errors/NotFoundException.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Errors;\n\n/** No row has this key. */\nfinal class NotFoundException extends DomainException\n{\n    public function __construct(public readonly string $entity, public readonly mixed $key)\n    {\n        $text = is_array($key) ? implode(', ', array_map('strval', $key)) : strval($key);\n        parent::__construct(\"No {$entity} has the key {$text}\");\n    }\n}\n",
+  "src/Errors/ValidationFailedException.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Errors;\n\n/** The values break the rules of the table: missing, too long, out of range, pointing nowhere. */\nfinal class ValidationFailedException extends DomainException\n{\n    /** @param list<FieldError> $errors */\n    public function __construct(public readonly string $entity, public readonly array $errors)\n    {\n        parent::__construct($entity . ': ' . implode('; ', array_map(fn (FieldError $error) => \"{$error->field}: {$error->message}\", $errors)));\n    }\n}\n",
+  "src/MemoryUnitOfWork.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App;\n\nuse App\\Repositories\\AuditLogRepository;\nuse App\\Repositories\\CategoryRepository;\nuse App\\Repositories\\CustomerRepository;\nuse App\\Repositories\\MemoryAuditLogRepository;\nuse App\\Repositories\\MemoryCategoryRepository;\nuse App\\Repositories\\MemoryCustomerRepository;\nuse App\\Repositories\\MemoryOrderLineRepository;\nuse App\\Repositories\\MemoryOrderRepository;\nuse App\\Repositories\\MemoryProductRepository;\nuse App\\Repositories\\MemoryProductTagRepository;\nuse App\\Repositories\\MemoryTagRepository;\nuse App\\Repositories\\OrderLineRepository;\nuse App\\Repositories\\OrderRepository;\nuse App\\Repositories\\ProductRepository;\nuse App\\Repositories\\ProductTagRepository;\nuse App\\Repositories\\TagRepository;\n\n/** The in-memory repositories, for tests and for trying the services without a database. */\nfinal class MemoryUnitOfWork implements UnitOfWork\n{\n    public readonly CustomerRepository $customers;\n    public readonly CategoryRepository $categories;\n    public readonly ProductRepository $products;\n    public readonly OrderRepository $orders;\n    public readonly OrderLineRepository $orderLines;\n    public readonly TagRepository $tags;\n    public readonly ProductTagRepository $productTags;\n    public readonly AuditLogRepository $auditLog;\n\n    public function __construct()\n    {\n        $this->customers = new MemoryCustomerRepository();\n        $this->categories = new MemoryCategoryRepository();\n        $this->products = new MemoryProductRepository();\n        $this->orders = new MemoryOrderRepository();\n        $this->orderLines = new MemoryOrderLineRepository();\n        $this->tags = new MemoryTagRepository();\n        $this->productTags = new MemoryProductTagRepository();\n        $this->auditLog = new MemoryAuditLogRepository();\n    }\n\n    /** Memory has no transactions: changes are kept as they are made. */\n    public function transaction(callable $work): mixed\n    {\n        return $work($this);\n    }\n}\n",
+  "src/Repositories/AuditLogRepository.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Repositories;\n\nuse App\\Common\\Page;\nuse App\\Entities\\AuditLog;\n\n/** Where audit_log rows are kept. Services depend only on this interface. */\ninterface AuditLogRepository\n{\n    /**\n     * At most $limit rows from $offset, by primary key, and how many there are.\n     *\n     * @return Page<AuditLog>\n     */\n    public function list(int $offset, int $limit): Page;\n}\n",
+  "src/Repositories/CategoryRepository.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Repositories;\n\nuse App\\Common\\Page;\nuse App\\Entities\\Category;\n\n/** Where categories rows are kept. Services depend only on this interface. */\ninterface CategoryRepository\n{\n    /** The row with this primary key, or null. */\n    public function findById(int $id): ?Category;\n\n    /**\n     * At most $limit rows from $offset, by primary key, and how many there are.\n     *\n     * @return Page<Category>\n     */\n    public function list(int $offset, int $limit): Page;\n\n    /** The row with this name, or null. */\n    public function findByName(string $name): ?Category;\n\n    /** Stores a new row; the values the database fills are read back. */\n    public function insert(Category $entity): Category;\n\n    /** Stores the changes made to a row read from this repository. */\n    public function update(Category $entity): Category;\n\n    /** Removes a row read from this repository. */\n    public function delete(Category $entity): void;\n}\n",
+  "src/Repositories/CustomerRepository.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Repositories;\n\nuse App\\Common\\Page;\nuse App\\Entities\\Customer;\n\n/** Where customers rows are kept. Services depend only on this interface. */\ninterface CustomerRepository\n{\n    /** The row with this primary key, or null. */\n    public function findById(int $id): ?Customer;\n\n    /**\n     * At most $limit rows from $offset, by primary key, and how many there are.\n     *\n     * @return Page<Customer>\n     */\n    public function list(int $offset, int $limit): Page;\n\n    /** The row with this email, or null. */\n    public function findByEmail(string $email): ?Customer;\n\n    /** Stores a new row; the values the database fills are read back. */\n    public function insert(Customer $entity): Customer;\n\n    /** Stores the changes made to a row read from this repository. */\n    public function update(Customer $entity): Customer;\n\n    /** Removes a row read from this repository. */\n    public function delete(Customer $entity): void;\n}\n",
+  "src/Repositories/MemoryAuditLogRepository.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Repositories;\n\nuse App\\Common\\Page;\nuse App\\Entities\\AuditLog;\n\n/** Keeps audit_log rows in memory, for tests and for trying the services without a database. */\nfinal class MemoryAuditLogRepository implements AuditLogRepository\n{\n    /** @var array<string, AuditLog> */\n    private array $rows = [];\n\n    /**\n     * The key of a row, as a list of its key values.\n     *\n     * @return list<mixed>\n     */\n    private static function keyOf(AuditLog $row): array\n    {\n        return [$row->at, $row->message];\n    }\n\n    private static function keyText(AuditLog $row): string\n    {\n        return serialize(array_map(fn (mixed $value) => $value instanceof \\DateTimeInterface ? $value->format('Y-m-d H:i:s.u P') : $value, self::keyOf($row)));\n    }\n\n    /**\n     * The rows reads can see, by primary key.\n     *\n     * @return list<AuditLog>\n     */\n    private function visible(): array\n    {\n        $rows = array_values(array_filter($this->rows, fn (AuditLog $row) => true));\n        usort($rows, fn (AuditLog $a, AuditLog $b) => self::keyOf($a) <=> self::keyOf($b));\n        return $rows;\n    }\n\n    public function list(int $offset, int $limit): Page\n    {\n        $rows = $this->visible();\n        return new Page(array_slice($rows, $offset, $limit), count($rows), $offset, $limit);\n    }\n}\n",
+  "src/Repositories/MemoryCategoryRepository.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Repositories;\n\nuse App\\Common\\Page;\nuse App\\Entities\\Category;\n\n/** Keeps categories rows in memory, for tests and for trying the services without a database. */\nfinal class MemoryCategoryRepository implements CategoryRepository\n{\n    /** @var array<string, Category> */\n    private array $rows = [];\n\n    private int $nextId = 1;\n\n    /**\n     * The key of a row, as a list of its key values.\n     *\n     * @return list<mixed>\n     */\n    private static function keyOf(Category $row): array\n    {\n        return [$row->id];\n    }\n\n    private static function keyText(Category $row): string\n    {\n        return serialize(array_map(fn (mixed $value) => $value instanceof \\DateTimeInterface ? $value->format('Y-m-d H:i:s.u P') : $value, self::keyOf($row)));\n    }\n\n    /**\n     * The rows reads can see, by primary key.\n     *\n     * @return list<Category>\n     */\n    private function visible(): array\n    {\n        $rows = array_values(array_filter($this->rows, fn (Category $row) => true));\n        usort($rows, fn (Category $a, Category $b) => self::keyOf($a) <=> self::keyOf($b));\n        return $rows;\n    }\n\n    public function findById(int $id): ?Category\n    {\n        foreach ($this->visible() as $row) {\n            if ($row->id == $id) {\n                return $row;\n            }\n        }\n        return null;\n    }\n\n    public function list(int $offset, int $limit): Page\n    {\n        $rows = $this->visible();\n        return new Page(array_slice($rows, $offset, $limit), count($rows), $offset, $limit);\n    }\n\n    public function findByName(string $name): ?Category\n    {\n        foreach ($this->visible() as $row) {\n            if ($row->name == $name) {\n                return $row;\n            }\n        }\n        return null;\n    }\n\n    public function insert(Category $entity): Category\n    {\n        if ($entity->id === null) {\n            $entity->id = $this->nextId++;\n        }\n        $this->rows[self::keyText($entity)] = $entity;\n        return $entity;\n    }\n\n    public function update(Category $entity): Category\n    {\n        $this->rows[self::keyText($entity)] = $entity;\n        return $entity;\n    }\n\n    public function delete(Category $entity): void\n    {\n        unset($this->rows[self::keyText($entity)]);\n    }\n}\n",
+  "src/Repositories/MemoryCustomerRepository.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Repositories;\n\nuse App\\Common\\Page;\nuse App\\Entities\\Customer;\n\n/** Keeps customers rows in memory, for tests and for trying the services without a database. */\nfinal class MemoryCustomerRepository implements CustomerRepository\n{\n    /** @var array<string, Customer> */\n    private array $rows = [];\n\n    private int $nextId = 1;\n\n    /**\n     * The key of a row, as a list of its key values.\n     *\n     * @return list<mixed>\n     */\n    private static function keyOf(Customer $row): array\n    {\n        return [$row->id];\n    }\n\n    private static function keyText(Customer $row): string\n    {\n        return serialize(array_map(fn (mixed $value) => $value instanceof \\DateTimeInterface ? $value->format('Y-m-d H:i:s.u P') : $value, self::keyOf($row)));\n    }\n\n    /**\n     * The rows reads can see, by primary key.\n     *\n     * @return list<Customer>\n     */\n    private function visible(): array\n    {\n        $rows = array_values(array_filter($this->rows, fn (Customer $row) => true));\n        usort($rows, fn (Customer $a, Customer $b) => self::keyOf($a) <=> self::keyOf($b));\n        return $rows;\n    }\n\n    public function findById(int $id): ?Customer\n    {\n        foreach ($this->visible() as $row) {\n            if ($row->id == $id) {\n                return $row;\n            }\n        }\n        return null;\n    }\n\n    public function list(int $offset, int $limit): Page\n    {\n        $rows = $this->visible();\n        return new Page(array_slice($rows, $offset, $limit), count($rows), $offset, $limit);\n    }\n\n    public function findByEmail(string $email): ?Customer\n    {\n        foreach ($this->visible() as $row) {\n            if ($row->email == $email) {\n                return $row;\n            }\n        }\n        return null;\n    }\n\n    public function insert(Customer $entity): Customer\n    {\n        if ($entity->id === null) {\n            $entity->id = $this->nextId++;\n        }\n        $entity->createdAt ??= new \\DateTimeImmutable();\n        $this->rows[self::keyText($entity)] = $entity;\n        return $entity;\n    }\n\n    public function update(Customer $entity): Customer\n    {\n        $this->rows[self::keyText($entity)] = $entity;\n        return $entity;\n    }\n\n    public function delete(Customer $entity): void\n    {\n        unset($this->rows[self::keyText($entity)]);\n    }\n}\n",
+  "src/Repositories/MemoryOrderLineRepository.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Repositories;\n\nuse App\\Common\\Page;\nuse App\\Entities\\OrderLine;\n\n/** Keeps order_lines rows in memory, for tests and for trying the services without a database. */\nfinal class MemoryOrderLineRepository implements OrderLineRepository\n{\n    /** @var array<string, OrderLine> */\n    private array $rows = [];\n\n    /**\n     * The key of a row, as a list of its key values.\n     *\n     * @return list<mixed>\n     */\n    private static function keyOf(OrderLine $row): array\n    {\n        return [$row->orderId, $row->line];\n    }\n\n    private static function keyText(OrderLine $row): string\n    {\n        return serialize(array_map(fn (mixed $value) => $value instanceof \\DateTimeInterface ? $value->format('Y-m-d H:i:s.u P') : $value, self::keyOf($row)));\n    }\n\n    /**\n     * The rows reads can see, by primary key.\n     *\n     * @return list<OrderLine>\n     */\n    private function visible(): array\n    {\n        $rows = array_values(array_filter($this->rows, fn (OrderLine $row) => true));\n        usort($rows, fn (OrderLine $a, OrderLine $b) => self::keyOf($a) <=> self::keyOf($b));\n        return $rows;\n    }\n\n    public function findByOrderIdAndLine(int $orderId, int $line): ?OrderLine\n    {\n        foreach ($this->visible() as $row) {\n            if ($row->orderId == $orderId && $row->line == $line) {\n                return $row;\n            }\n        }\n        return null;\n    }\n\n    public function list(int $offset, int $limit): Page\n    {\n        $rows = $this->visible();\n        return new Page(array_slice($rows, $offset, $limit), count($rows), $offset, $limit);\n    }\n\n    public function listByOrderId(int $orderId): array\n    {\n        return array_values(array_filter($this->visible(), fn (OrderLine $row) => $row->orderId == $orderId));\n    }\n\n    public function listByProductId(int $productId): array\n    {\n        return array_values(array_filter($this->visible(), fn (OrderLine $row) => $row->productId == $productId));\n    }\n\n    public function insert(OrderLine $entity): OrderLine\n    {\n        $this->rows[self::keyText($entity)] = $entity;\n        return $entity;\n    }\n\n    public function update(OrderLine $entity): OrderLine\n    {\n        $this->rows[self::keyText($entity)] = $entity;\n        return $entity;\n    }\n\n    public function delete(OrderLine $entity): void\n    {\n        unset($this->rows[self::keyText($entity)]);\n    }\n}\n",
+  "src/Repositories/MemoryOrderRepository.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Repositories;\n\nuse App\\Common\\Page;\nuse App\\Entities\\Order;\n\n/** Keeps orders rows in memory, for tests and for trying the services without a database. */\nfinal class MemoryOrderRepository implements OrderRepository\n{\n    /** @var array<string, Order> */\n    private array $rows = [];\n\n    private int $nextId = 1;\n\n    /**\n     * The key of a row, as a list of its key values.\n     *\n     * @return list<mixed>\n     */\n    private static function keyOf(Order $row): array\n    {\n        return [$row->id];\n    }\n\n    private static function keyText(Order $row): string\n    {\n        return serialize(array_map(fn (mixed $value) => $value instanceof \\DateTimeInterface ? $value->format('Y-m-d H:i:s.u P') : $value, self::keyOf($row)));\n    }\n\n    /**\n     * The rows reads can see, by primary key.\n     *\n     * @return list<Order>\n     */\n    private function visible(): array\n    {\n        $rows = array_values(array_filter($this->rows, fn (Order $row) => true));\n        usort($rows, fn (Order $a, Order $b) => self::keyOf($a) <=> self::keyOf($b));\n        return $rows;\n    }\n\n    public function findById(int $id): ?Order\n    {\n        foreach ($this->visible() as $row) {\n            if ($row->id == $id) {\n                return $row;\n            }\n        }\n        return null;\n    }\n\n    public function list(int $offset, int $limit): Page\n    {\n        $rows = $this->visible();\n        return new Page(array_slice($rows, $offset, $limit), count($rows), $offset, $limit);\n    }\n\n    public function listByCustomerId(int $customerId): array\n    {\n        return array_values(array_filter($this->visible(), fn (Order $row) => $row->customerId == $customerId));\n    }\n\n    public function insert(Order $entity): Order\n    {\n        if ($entity->id === null) {\n            $entity->id = $this->nextId++;\n        }\n        $entity->placedAt ??= new \\DateTimeImmutable();\n        $this->rows[self::keyText($entity)] = $entity;\n        return $entity;\n    }\n\n    public function update(Order $entity): Order\n    {\n        $this->rows[self::keyText($entity)] = $entity;\n        return $entity;\n    }\n\n    public function delete(Order $entity): void\n    {\n        unset($this->rows[self::keyText($entity)]);\n    }\n}\n",
+  "src/Repositories/MemoryProductRepository.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Repositories;\n\nuse App\\Common\\Page;\nuse App\\Entities\\Product;\n\n/** Keeps products rows in memory, for tests and for trying the services without a database. */\nfinal class MemoryProductRepository implements ProductRepository\n{\n    /** @var array<string, Product> */\n    private array $rows = [];\n\n    private int $nextId = 1;\n\n    /**\n     * The key of a row, as a list of its key values.\n     *\n     * @return list<mixed>\n     */\n    private static function keyOf(Product $row): array\n    {\n        return [$row->id];\n    }\n\n    private static function keyText(Product $row): string\n    {\n        return serialize(array_map(fn (mixed $value) => $value instanceof \\DateTimeInterface ? $value->format('Y-m-d H:i:s.u P') : $value, self::keyOf($row)));\n    }\n\n    /**\n     * The rows reads can see, by primary key.\n     *\n     * @return list<Product>\n     */\n    private function visible(): array\n    {\n        $rows = array_values(array_filter($this->rows, fn (Product $row) => $row->deletedAt === null));\n        usort($rows, fn (Product $a, Product $b) => self::keyOf($a) <=> self::keyOf($b));\n        return $rows;\n    }\n\n    public function findById(int $id): ?Product\n    {\n        foreach ($this->visible() as $row) {\n            if ($row->id == $id) {\n                return $row;\n            }\n        }\n        return null;\n    }\n\n    public function list(int $offset, int $limit): Page\n    {\n        $rows = $this->visible();\n        return new Page(array_slice($rows, $offset, $limit), count($rows), $offset, $limit);\n    }\n\n    public function listByCategoryId(int $categoryId): array\n    {\n        return array_values(array_filter($this->visible(), fn (Product $row) => $row->categoryId == $categoryId));\n    }\n\n    public function findAllByStatus(string $status): array\n    {\n        return array_values(array_filter($this->visible(), fn (Product $row) => $row->status == $status));\n    }\n\n    public function insert(Product $entity): Product\n    {\n        if ($entity->id === null) {\n            $entity->id = $this->nextId++;\n        }\n        $entity->version ??= 1;\n        $this->rows[self::keyText($entity)] = $entity;\n        return $entity;\n    }\n\n    public function update(Product $entity): Product\n    {\n        $this->rows[self::keyText($entity)] = $entity;\n        return $entity;\n    }\n\n    public function delete(Product $entity): void\n    {\n        unset($this->rows[self::keyText($entity)]);\n    }\n}\n",
+  "src/Repositories/MemoryProductTagRepository.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Repositories;\n\nuse App\\Common\\Page;\nuse App\\Entities\\ProductTag;\n\n/** Keeps product_tags rows in memory, for tests and for trying the services without a database. */\nfinal class MemoryProductTagRepository implements ProductTagRepository\n{\n    /** @var array<string, ProductTag> */\n    private array $rows = [];\n\n    /**\n     * The key of a row, as a list of its key values.\n     *\n     * @return list<mixed>\n     */\n    private static function keyOf(ProductTag $row): array\n    {\n        return [$row->productId, $row->tagId];\n    }\n\n    private static function keyText(ProductTag $row): string\n    {\n        return serialize(array_map(fn (mixed $value) => $value instanceof \\DateTimeInterface ? $value->format('Y-m-d H:i:s.u P') : $value, self::keyOf($row)));\n    }\n\n    /**\n     * The rows reads can see, by primary key.\n     *\n     * @return list<ProductTag>\n     */\n    private function visible(): array\n    {\n        $rows = array_values(array_filter($this->rows, fn (ProductTag $row) => true));\n        usort($rows, fn (ProductTag $a, ProductTag $b) => self::keyOf($a) <=> self::keyOf($b));\n        return $rows;\n    }\n\n    public function findByProductIdAndTagId(int $productId, int $tagId): ?ProductTag\n    {\n        foreach ($this->visible() as $row) {\n            if ($row->productId == $productId && $row->tagId == $tagId) {\n                return $row;\n            }\n        }\n        return null;\n    }\n\n    public function list(int $offset, int $limit): Page\n    {\n        $rows = $this->visible();\n        return new Page(array_slice($rows, $offset, $limit), count($rows), $offset, $limit);\n    }\n\n    public function listByProductId(int $productId): array\n    {\n        return array_values(array_filter($this->visible(), fn (ProductTag $row) => $row->productId == $productId));\n    }\n\n    public function listByTagId(int $tagId): array\n    {\n        return array_values(array_filter($this->visible(), fn (ProductTag $row) => $row->tagId == $tagId));\n    }\n\n    public function insert(ProductTag $entity): ProductTag\n    {\n        $this->rows[self::keyText($entity)] = $entity;\n        return $entity;\n    }\n\n    public function delete(ProductTag $entity): void\n    {\n        unset($this->rows[self::keyText($entity)]);\n    }\n}\n",
+  "src/Repositories/MemoryTagRepository.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Repositories;\n\nuse App\\Common\\Page;\nuse App\\Entities\\Tag;\n\n/** Keeps tags rows in memory, for tests and for trying the services without a database. */\nfinal class MemoryTagRepository implements TagRepository\n{\n    /** @var array<string, Tag> */\n    private array $rows = [];\n\n    private int $nextId = 1;\n\n    /**\n     * The key of a row, as a list of its key values.\n     *\n     * @return list<mixed>\n     */\n    private static function keyOf(Tag $row): array\n    {\n        return [$row->id];\n    }\n\n    private static function keyText(Tag $row): string\n    {\n        return serialize(array_map(fn (mixed $value) => $value instanceof \\DateTimeInterface ? $value->format('Y-m-d H:i:s.u P') : $value, self::keyOf($row)));\n    }\n\n    /**\n     * The rows reads can see, by primary key.\n     *\n     * @return list<Tag>\n     */\n    private function visible(): array\n    {\n        $rows = array_values(array_filter($this->rows, fn (Tag $row) => true));\n        usort($rows, fn (Tag $a, Tag $b) => self::keyOf($a) <=> self::keyOf($b));\n        return $rows;\n    }\n\n    public function findById(int $id): ?Tag\n    {\n        foreach ($this->visible() as $row) {\n            if ($row->id == $id) {\n                return $row;\n            }\n        }\n        return null;\n    }\n\n    public function list(int $offset, int $limit): Page\n    {\n        $rows = $this->visible();\n        return new Page(array_slice($rows, $offset, $limit), count($rows), $offset, $limit);\n    }\n\n    public function insert(Tag $entity): Tag\n    {\n        if ($entity->id === null) {\n            $entity->id = $this->nextId++;\n        }\n        $this->rows[self::keyText($entity)] = $entity;\n        return $entity;\n    }\n\n    public function update(Tag $entity): Tag\n    {\n        $this->rows[self::keyText($entity)] = $entity;\n        return $entity;\n    }\n\n    public function delete(Tag $entity): void\n    {\n        unset($this->rows[self::keyText($entity)]);\n    }\n}\n",
+  "src/Repositories/OrderLineRepository.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Repositories;\n\nuse App\\Common\\Page;\nuse App\\Entities\\OrderLine;\n\n/** Where order_lines rows are kept. Services depend only on this interface. */\ninterface OrderLineRepository\n{\n    /** The row with this primary key, or null. */\n    public function findByOrderIdAndLine(int $orderId, int $line): ?OrderLine;\n\n    /**\n     * At most $limit rows from $offset, by primary key, and how many there are.\n     *\n     * @return Page<OrderLine>\n     */\n    public function list(int $offset, int $limit): Page;\n\n    /**\n     * Rows with this order_id, by primary key.\n     *\n     * @return list<OrderLine>\n     */\n    public function listByOrderId(int $orderId): array;\n\n    /**\n     * Rows with this product_id, by primary key.\n     *\n     * @return list<OrderLine>\n     */\n    public function listByProductId(int $productId): array;\n\n    /** Stores a new row; the values the database fills are read back. */\n    public function insert(OrderLine $entity): OrderLine;\n\n    /** Stores the changes made to a row read from this repository. */\n    public function update(OrderLine $entity): OrderLine;\n\n    /** Removes a row read from this repository. */\n    public function delete(OrderLine $entity): void;\n}\n",
+  "src/Repositories/OrderRepository.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Repositories;\n\nuse App\\Common\\Page;\nuse App\\Entities\\Order;\n\n/** Where orders rows are kept. Services depend only on this interface. */\ninterface OrderRepository\n{\n    /** The row with this primary key, or null. */\n    public function findById(int $id): ?Order;\n\n    /**\n     * At most $limit rows from $offset, by primary key, and how many there are.\n     *\n     * @return Page<Order>\n     */\n    public function list(int $offset, int $limit): Page;\n\n    /**\n     * Rows with this customer_id, by primary key.\n     *\n     * @return list<Order>\n     */\n    public function listByCustomerId(int $customerId): array;\n\n    /** Stores a new row; the values the database fills are read back. */\n    public function insert(Order $entity): Order;\n\n    /** Stores the changes made to a row read from this repository. */\n    public function update(Order $entity): Order;\n\n    /** Removes a row read from this repository. */\n    public function delete(Order $entity): void;\n}\n",
+  "src/Repositories/ProductRepository.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Repositories;\n\nuse App\\Common\\Page;\nuse App\\Entities\\Product;\n\n/** Where products rows are kept. Services depend only on this interface. */\ninterface ProductRepository\n{\n    /** The row with this primary key, or null. */\n    public function findById(int $id): ?Product;\n\n    /**\n     * At most $limit rows from $offset, by primary key, and how many there are.\n     *\n     * @return Page<Product>\n     */\n    public function list(int $offset, int $limit): Page;\n\n    /**\n     * Rows with this category_id, by primary key.\n     *\n     * @return list<Product>\n     */\n    public function listByCategoryId(int $categoryId): array;\n\n    /**\n     * Rows with this status, by primary key.\n     *\n     * @return list<Product>\n     */\n    public function findAllByStatus(string $status): array;\n\n    /** Stores a new row; the values the database fills are read back. */\n    public function insert(Product $entity): Product;\n\n    /** Stores the changes made to a row read from this repository. */\n    public function update(Product $entity): Product;\n\n    /** Removes a row read from this repository. */\n    public function delete(Product $entity): void;\n}\n",
+  "src/Repositories/ProductTagRepository.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Repositories;\n\nuse App\\Common\\Page;\nuse App\\Entities\\ProductTag;\n\n/** Where product_tags rows are kept. Services depend only on this interface. */\ninterface ProductTagRepository\n{\n    /** The row with this primary key, or null. */\n    public function findByProductIdAndTagId(int $productId, int $tagId): ?ProductTag;\n\n    /**\n     * At most $limit rows from $offset, by primary key, and how many there are.\n     *\n     * @return Page<ProductTag>\n     */\n    public function list(int $offset, int $limit): Page;\n\n    /**\n     * Rows with this product_id, by primary key.\n     *\n     * @return list<ProductTag>\n     */\n    public function listByProductId(int $productId): array;\n\n    /**\n     * Rows with this tag_id, by primary key.\n     *\n     * @return list<ProductTag>\n     */\n    public function listByTagId(int $tagId): array;\n\n    /** Stores a new row; the values the database fills are read back. */\n    public function insert(ProductTag $entity): ProductTag;\n\n    /** Removes a row read from this repository. */\n    public function delete(ProductTag $entity): void;\n}\n",
+  "src/Repositories/SqlAuditLogRepository.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Repositories;\n\nuse App\\Common\\Page;\nuse App\\Entities\\AuditLog;\nuse Doctrine\\ORM\\EntityManagerInterface;\n\n/** Keeps audit_log rows in the database, through Doctrine's EntityManager; every write is flushed at once. A write joins the transaction already open, or is committed at once. */\nfinal class SqlAuditLogRepository implements AuditLogRepository\n{\n    public function __construct(private readonly EntityManagerInterface $em)\n    {\n    }\n\n    public function list(int $offset, int $limit): Page\n    {\n        $query = $this->em->createQueryBuilder()\n            ->select('e')\n            ->from(AuditLog::class, 'e');\n        $total = (int) (clone $query)->select('COUNT(e.message)')->getQuery()->getSingleScalarResult();\n        $items = $query\n            ->orderBy('e.at')\n            ->addOrderBy('e.message')\n            ->setFirstResult($offset)\n            ->setMaxResults($limit)\n            ->getQuery()\n            ->getResult();\n        return new Page($items, $total, $offset, $limit);\n    }\n}\n",
+  "src/Repositories/SqlCategoryRepository.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Repositories;\n\nuse App\\Common\\Page;\nuse App\\Entities\\Category;\nuse App\\Errors\\ConflictException;\nuse Doctrine\\DBAL\\Exception\\ConstraintViolationException;\nuse Doctrine\\ORM\\EntityManagerInterface;\n\n/** Keeps categories rows in the database, through Doctrine's EntityManager; every write is flushed at once. A write joins the transaction already open, or is committed at once. */\nfinal class SqlCategoryRepository implements CategoryRepository\n{\n    public function __construct(private readonly EntityManagerInterface $em)\n    {\n    }\n\n    public function findById(int $id): ?Category\n    {\n        return $this->em->createQueryBuilder()\n            ->select('e')\n            ->from(Category::class, 'e')\n            ->where('e.id = :p0')\n            ->setParameter('p0', $id)\n            ->getQuery()\n            ->getOneOrNullResult();\n    }\n\n    public function list(int $offset, int $limit): Page\n    {\n        $query = $this->em->createQueryBuilder()\n            ->select('e')\n            ->from(Category::class, 'e');\n        $total = (int) (clone $query)->select('COUNT(e.id)')->getQuery()->getSingleScalarResult();\n        $items = $query\n            ->orderBy('e.id')\n            ->setFirstResult($offset)\n            ->setMaxResults($limit)\n            ->getQuery()\n            ->getResult();\n        return new Page($items, $total, $offset, $limit);\n    }\n\n    public function findByName(string $name): ?Category\n    {\n        return $this->em->createQueryBuilder()\n            ->select('e')\n            ->from(Category::class, 'e')\n            ->where('e.name = :p0')\n            ->setParameter('p0', $name)\n            ->getQuery()\n            ->getOneOrNullResult();\n    }\n\n    public function insert(Category $entity): Category\n    {\n        $this->em->persist($entity);\n        $this->flush();\n        return $entity;\n    }\n\n    public function update(Category $entity): Category\n    {\n        $this->flush();\n        return $entity;\n    }\n\n    public function delete(Category $entity): void\n    {\n        $this->em->remove($entity);\n        $this->flush();\n    }\n\n    /**\n     * Stores the pending changes; a database refusal (a unique value, a row still pointed to) becomes a ConflictException.\n     * Doctrine closes the EntityManager when the database refuses a change: open another one to go on.\n     */\n    private function flush(): void\n    {\n        try {\n            $this->em->flush();\n        } catch (ConstraintViolationException $error) {\n            throw new ConflictException('Category', 'the database refused the change: ' . $error->getMessage());\n        }\n    }\n}\n",
+  "src/Repositories/SqlCustomerRepository.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Repositories;\n\nuse App\\Common\\Page;\nuse App\\Entities\\Customer;\nuse App\\Errors\\ConflictException;\nuse Doctrine\\DBAL\\Exception\\ConstraintViolationException;\nuse Doctrine\\ORM\\EntityManagerInterface;\n\n/** Keeps customers rows in the database, through Doctrine's EntityManager; every write is flushed at once. A write joins the transaction already open, or is committed at once. */\nfinal class SqlCustomerRepository implements CustomerRepository\n{\n    public function __construct(private readonly EntityManagerInterface $em)\n    {\n    }\n\n    public function findById(int $id): ?Customer\n    {\n        return $this->em->createQueryBuilder()\n            ->select('e')\n            ->from(Customer::class, 'e')\n            ->where('e.id = :p0')\n            ->setParameter('p0', $id)\n            ->getQuery()\n            ->getOneOrNullResult();\n    }\n\n    public function list(int $offset, int $limit): Page\n    {\n        $query = $this->em->createQueryBuilder()\n            ->select('e')\n            ->from(Customer::class, 'e');\n        $total = (int) (clone $query)->select('COUNT(e.id)')->getQuery()->getSingleScalarResult();\n        $items = $query\n            ->orderBy('e.id')\n            ->setFirstResult($offset)\n            ->setMaxResults($limit)\n            ->getQuery()\n            ->getResult();\n        return new Page($items, $total, $offset, $limit);\n    }\n\n    public function findByEmail(string $email): ?Customer\n    {\n        return $this->em->createQueryBuilder()\n            ->select('e')\n            ->from(Customer::class, 'e')\n            ->where('e.email = :p0')\n            ->setParameter('p0', $email)\n            ->getQuery()\n            ->getOneOrNullResult();\n    }\n\n    public function insert(Customer $entity): Customer\n    {\n        $this->em->persist($entity);\n        $this->flush();\n        return $entity;\n    }\n\n    public function update(Customer $entity): Customer\n    {\n        $this->flush();\n        return $entity;\n    }\n\n    public function delete(Customer $entity): void\n    {\n        $this->em->remove($entity);\n        $this->flush();\n    }\n\n    /**\n     * Stores the pending changes; a database refusal (a unique value, a row still pointed to) becomes a ConflictException.\n     * Doctrine closes the EntityManager when the database refuses a change: open another one to go on.\n     */\n    private function flush(): void\n    {\n        try {\n            $this->em->flush();\n        } catch (ConstraintViolationException $error) {\n            throw new ConflictException('Customer', 'the database refused the change: ' . $error->getMessage());\n        }\n    }\n}\n",
+  "src/Repositories/SqlOrderLineRepository.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Repositories;\n\nuse App\\Common\\Page;\nuse App\\Entities\\OrderLine;\nuse App\\Errors\\ConflictException;\nuse Doctrine\\DBAL\\Exception\\ConstraintViolationException;\nuse Doctrine\\ORM\\EntityManagerInterface;\n\n/** Keeps order_lines rows in the database, through Doctrine's EntityManager; every write is flushed at once. A write joins the transaction already open, or is committed at once. */\nfinal class SqlOrderLineRepository implements OrderLineRepository\n{\n    public function __construct(private readonly EntityManagerInterface $em)\n    {\n    }\n\n    public function findByOrderIdAndLine(int $orderId, int $line): ?OrderLine\n    {\n        return $this->em->createQueryBuilder()\n            ->select('e')\n            ->from(OrderLine::class, 'e')\n            ->where('e.orderId = :p0')\n            ->andWhere('e.line = :p1')\n            ->setParameter('p0', $orderId)\n            ->setParameter('p1', $line)\n            ->getQuery()\n            ->getOneOrNullResult();\n    }\n\n    public function list(int $offset, int $limit): Page\n    {\n        $query = $this->em->createQueryBuilder()\n            ->select('e')\n            ->from(OrderLine::class, 'e');\n        $total = (int) (clone $query)->select('COUNT(e.orderId)')->getQuery()->getSingleScalarResult();\n        $items = $query\n            ->orderBy('e.orderId')\n            ->addOrderBy('e.line')\n            ->setFirstResult($offset)\n            ->setMaxResults($limit)\n            ->getQuery()\n            ->getResult();\n        return new Page($items, $total, $offset, $limit);\n    }\n\n    public function listByOrderId(int $orderId): array\n    {\n        return $this->em->createQueryBuilder()\n            ->select('e')\n            ->from(OrderLine::class, 'e')\n            ->where('e.orderId = :p0')\n            ->setParameter('p0', $orderId)\n            ->orderBy('e.orderId')\n            ->addOrderBy('e.line')\n            ->getQuery()\n            ->getResult();\n    }\n\n    public function listByProductId(int $productId): array\n    {\n        return $this->em->createQueryBuilder()\n            ->select('e')\n            ->from(OrderLine::class, 'e')\n            ->where('e.productId = :p0')\n            ->setParameter('p0', $productId)\n            ->orderBy('e.orderId')\n            ->addOrderBy('e.line')\n            ->getQuery()\n            ->getResult();\n    }\n\n    public function insert(OrderLine $entity): OrderLine\n    {\n        $this->em->persist($entity);\n        $this->flush();\n        return $entity;\n    }\n\n    public function update(OrderLine $entity): OrderLine\n    {\n        $this->flush();\n        return $entity;\n    }\n\n    public function delete(OrderLine $entity): void\n    {\n        $this->em->remove($entity);\n        $this->flush();\n    }\n\n    /**\n     * Stores the pending changes; a database refusal (a unique value, a row still pointed to) becomes a ConflictException.\n     * Doctrine closes the EntityManager when the database refuses a change: open another one to go on.\n     */\n    private function flush(): void\n    {\n        try {\n            $this->em->flush();\n        } catch (ConstraintViolationException $error) {\n            throw new ConflictException('OrderLine', 'the database refused the change: ' . $error->getMessage());\n        }\n    }\n}\n",
+  "src/Repositories/SqlOrderRepository.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Repositories;\n\nuse App\\Common\\Page;\nuse App\\Entities\\Order;\nuse App\\Errors\\ConflictException;\nuse Doctrine\\DBAL\\Exception\\ConstraintViolationException;\nuse Doctrine\\ORM\\EntityManagerInterface;\n\n/** Keeps orders rows in the database, through Doctrine's EntityManager; every write is flushed at once. A write joins the transaction already open, or is committed at once. */\nfinal class SqlOrderRepository implements OrderRepository\n{\n    public function __construct(private readonly EntityManagerInterface $em)\n    {\n    }\n\n    public function findById(int $id): ?Order\n    {\n        return $this->em->createQueryBuilder()\n            ->select('e')\n            ->from(Order::class, 'e')\n            ->where('e.id = :p0')\n            ->setParameter('p0', $id)\n            ->getQuery()\n            ->getOneOrNullResult();\n    }\n\n    public function list(int $offset, int $limit): Page\n    {\n        $query = $this->em->createQueryBuilder()\n            ->select('e')\n            ->from(Order::class, 'e');\n        $total = (int) (clone $query)->select('COUNT(e.id)')->getQuery()->getSingleScalarResult();\n        $items = $query\n            ->orderBy('e.id')\n            ->setFirstResult($offset)\n            ->setMaxResults($limit)\n            ->getQuery()\n            ->getResult();\n        return new Page($items, $total, $offset, $limit);\n    }\n\n    public function listByCustomerId(int $customerId): array\n    {\n        return $this->em->createQueryBuilder()\n            ->select('e')\n            ->from(Order::class, 'e')\n            ->where('e.customerId = :p0')\n            ->setParameter('p0', $customerId)\n            ->orderBy('e.id')\n            ->getQuery()\n            ->getResult();\n    }\n\n    public function insert(Order $entity): Order\n    {\n        $this->em->persist($entity);\n        $this->flush();\n        return $entity;\n    }\n\n    public function update(Order $entity): Order\n    {\n        $this->flush();\n        return $entity;\n    }\n\n    public function delete(Order $entity): void\n    {\n        $this->em->remove($entity);\n        $this->flush();\n    }\n\n    /**\n     * Stores the pending changes; a database refusal (a unique value, a row still pointed to) becomes a ConflictException.\n     * Doctrine closes the EntityManager when the database refuses a change: open another one to go on.\n     */\n    private function flush(): void\n    {\n        try {\n            $this->em->flush();\n        } catch (ConstraintViolationException $error) {\n            throw new ConflictException('Order', 'the database refused the change: ' . $error->getMessage());\n        }\n    }\n}\n",
+  "src/Repositories/SqlProductRepository.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Repositories;\n\nuse App\\Common\\Page;\nuse App\\Entities\\Product;\nuse App\\Errors\\ConflictException;\nuse Doctrine\\DBAL\\Exception\\ConstraintViolationException;\nuse Doctrine\\ORM\\EntityManagerInterface;\n\n/** Keeps products rows in the database, through Doctrine's EntityManager; every write is flushed at once. A write joins the transaction already open, or is committed at once. */\nfinal class SqlProductRepository implements ProductRepository\n{\n    public function __construct(private readonly EntityManagerInterface $em)\n    {\n    }\n\n    public function findById(int $id): ?Product\n    {\n        return $this->em->createQueryBuilder()\n            ->select('e')\n            ->from(Product::class, 'e')\n            ->where('e.id = :p0')\n            ->andWhere('e.deletedAt IS NULL')\n            ->setParameter('p0', $id)\n            ->getQuery()\n            ->getOneOrNullResult();\n    }\n\n    public function list(int $offset, int $limit): Page\n    {\n        $query = $this->em->createQueryBuilder()\n            ->select('e')\n            ->from(Product::class, 'e')\n            ->where('e.deletedAt IS NULL');\n        $total = (int) (clone $query)->select('COUNT(e.id)')->getQuery()->getSingleScalarResult();\n        $items = $query\n            ->orderBy('e.id')\n            ->setFirstResult($offset)\n            ->setMaxResults($limit)\n            ->getQuery()\n            ->getResult();\n        return new Page($items, $total, $offset, $limit);\n    }\n\n    public function listByCategoryId(int $categoryId): array\n    {\n        return $this->em->createQueryBuilder()\n            ->select('e')\n            ->from(Product::class, 'e')\n            ->where('e.categoryId = :p0')\n            ->andWhere('e.deletedAt IS NULL')\n            ->setParameter('p0', $categoryId)\n            ->orderBy('e.id')\n            ->getQuery()\n            ->getResult();\n    }\n\n    public function findAllByStatus(string $status): array\n    {\n        return $this->em->createQueryBuilder()\n            ->select('e')\n            ->from(Product::class, 'e')\n            ->where('e.status = :p0')\n            ->andWhere('e.deletedAt IS NULL')\n            ->setParameter('p0', $status)\n            ->orderBy('e.id')\n            ->getQuery()\n            ->getResult();\n    }\n\n    public function insert(Product $entity): Product\n    {\n        $this->em->persist($entity);\n        $this->flush();\n        return $entity;\n    }\n\n    public function update(Product $entity): Product\n    {\n        $this->flush();\n        return $entity;\n    }\n\n    public function delete(Product $entity): void\n    {\n        $this->em->remove($entity);\n        $this->flush();\n    }\n\n    /**\n     * Stores the pending changes; a database refusal (a unique value, a row still pointed to) becomes a ConflictException.\n     * Doctrine closes the EntityManager when the database refuses a change: open another one to go on.\n     */\n    private function flush(): void\n    {\n        try {\n            $this->em->flush();\n        } catch (ConstraintViolationException $error) {\n            throw new ConflictException('Product', 'the database refused the change: ' . $error->getMessage());\n        }\n    }\n}\n",
+  "src/Repositories/SqlProductTagRepository.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Repositories;\n\nuse App\\Common\\Page;\nuse App\\Entities\\ProductTag;\nuse App\\Errors\\ConflictException;\nuse Doctrine\\DBAL\\Exception\\ConstraintViolationException;\nuse Doctrine\\ORM\\EntityManagerInterface;\n\n/** Keeps product_tags rows in the database, through Doctrine's EntityManager; every write is flushed at once. A write joins the transaction already open, or is committed at once. */\nfinal class SqlProductTagRepository implements ProductTagRepository\n{\n    public function __construct(private readonly EntityManagerInterface $em)\n    {\n    }\n\n    public function findByProductIdAndTagId(int $productId, int $tagId): ?ProductTag\n    {\n        return $this->em->createQueryBuilder()\n            ->select('e')\n            ->from(ProductTag::class, 'e')\n            ->where('e.productId = :p0')\n            ->andWhere('e.tagId = :p1')\n            ->setParameter('p0', $productId)\n            ->setParameter('p1', $tagId)\n            ->getQuery()\n            ->getOneOrNullResult();\n    }\n\n    public function list(int $offset, int $limit): Page\n    {\n        $query = $this->em->createQueryBuilder()\n            ->select('e')\n            ->from(ProductTag::class, 'e');\n        $total = (int) (clone $query)->select('COUNT(e.productId)')->getQuery()->getSingleScalarResult();\n        $items = $query\n            ->orderBy('e.productId')\n            ->addOrderBy('e.tagId')\n            ->setFirstResult($offset)\n            ->setMaxResults($limit)\n            ->getQuery()\n            ->getResult();\n        return new Page($items, $total, $offset, $limit);\n    }\n\n    public function listByProductId(int $productId): array\n    {\n        return $this->em->createQueryBuilder()\n            ->select('e')\n            ->from(ProductTag::class, 'e')\n            ->where('e.productId = :p0')\n            ->setParameter('p0', $productId)\n            ->orderBy('e.productId')\n            ->addOrderBy('e.tagId')\n            ->getQuery()\n            ->getResult();\n    }\n\n    public function listByTagId(int $tagId): array\n    {\n        return $this->em->createQueryBuilder()\n            ->select('e')\n            ->from(ProductTag::class, 'e')\n            ->where('e.tagId = :p0')\n            ->setParameter('p0', $tagId)\n            ->orderBy('e.productId')\n            ->addOrderBy('e.tagId')\n            ->getQuery()\n            ->getResult();\n    }\n\n    public function insert(ProductTag $entity): ProductTag\n    {\n        $this->em->persist($entity);\n        $this->flush();\n        return $entity;\n    }\n\n    public function delete(ProductTag $entity): void\n    {\n        $this->em->remove($entity);\n        $this->flush();\n    }\n\n    /**\n     * Stores the pending changes; a database refusal (a unique value, a row still pointed to) becomes a ConflictException.\n     * Doctrine closes the EntityManager when the database refuses a change: open another one to go on.\n     */\n    private function flush(): void\n    {\n        try {\n            $this->em->flush();\n        } catch (ConstraintViolationException $error) {\n            throw new ConflictException('ProductTag', 'the database refused the change: ' . $error->getMessage());\n        }\n    }\n}\n",
+  "src/Repositories/SqlTagRepository.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Repositories;\n\nuse App\\Common\\Page;\nuse App\\Entities\\Tag;\nuse App\\Errors\\ConflictException;\nuse Doctrine\\DBAL\\Exception\\ConstraintViolationException;\nuse Doctrine\\ORM\\EntityManagerInterface;\n\n/** Keeps tags rows in the database, through Doctrine's EntityManager; every write is flushed at once. A write joins the transaction already open, or is committed at once. */\nfinal class SqlTagRepository implements TagRepository\n{\n    public function __construct(private readonly EntityManagerInterface $em)\n    {\n    }\n\n    public function findById(int $id): ?Tag\n    {\n        return $this->em->createQueryBuilder()\n            ->select('e')\n            ->from(Tag::class, 'e')\n            ->where('e.id = :p0')\n            ->setParameter('p0', $id)\n            ->getQuery()\n            ->getOneOrNullResult();\n    }\n\n    public function list(int $offset, int $limit): Page\n    {\n        $query = $this->em->createQueryBuilder()\n            ->select('e')\n            ->from(Tag::class, 'e');\n        $total = (int) (clone $query)->select('COUNT(e.id)')->getQuery()->getSingleScalarResult();\n        $items = $query\n            ->orderBy('e.id')\n            ->setFirstResult($offset)\n            ->setMaxResults($limit)\n            ->getQuery()\n            ->getResult();\n        return new Page($items, $total, $offset, $limit);\n    }\n\n    public function insert(Tag $entity): Tag\n    {\n        $this->em->persist($entity);\n        $this->flush();\n        return $entity;\n    }\n\n    public function update(Tag $entity): Tag\n    {\n        $this->flush();\n        return $entity;\n    }\n\n    public function delete(Tag $entity): void\n    {\n        $this->em->remove($entity);\n        $this->flush();\n    }\n\n    /**\n     * Stores the pending changes; a database refusal (a unique value, a row still pointed to) becomes a ConflictException.\n     * Doctrine closes the EntityManager when the database refuses a change: open another one to go on.\n     */\n    private function flush(): void\n    {\n        try {\n            $this->em->flush();\n        } catch (ConstraintViolationException $error) {\n            throw new ConflictException('Tag', 'the database refused the change: ' . $error->getMessage());\n        }\n    }\n}\n",
+  "src/Repositories/TagRepository.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App\\Repositories;\n\nuse App\\Common\\Page;\nuse App\\Entities\\Tag;\n\n/** Where tags rows are kept. Services depend only on this interface. */\ninterface TagRepository\n{\n    /** The row with this primary key, or null. */\n    public function findById(int $id): ?Tag;\n\n    /**\n     * At most $limit rows from $offset, by primary key, and how many there are.\n     *\n     * @return Page<Tag>\n     */\n    public function list(int $offset, int $limit): Page;\n\n    /** Stores a new row; the values the database fills are read back. */\n    public function insert(Tag $entity): Tag;\n\n    /** Stores the changes made to a row read from this repository. */\n    public function update(Tag $entity): Tag;\n\n    /** Removes a row read from this repository. */\n    public function delete(Tag $entity): void;\n}\n",
+  "src/SqlUnitOfWork.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App;\n\nuse App\\Repositories\\AuditLogRepository;\nuse App\\Repositories\\CategoryRepository;\nuse App\\Repositories\\CustomerRepository;\nuse App\\Repositories\\OrderLineRepository;\nuse App\\Repositories\\OrderRepository;\nuse App\\Repositories\\ProductRepository;\nuse App\\Repositories\\ProductTagRepository;\nuse App\\Repositories\\SqlAuditLogRepository;\nuse App\\Repositories\\SqlCategoryRepository;\nuse App\\Repositories\\SqlCustomerRepository;\nuse App\\Repositories\\SqlOrderLineRepository;\nuse App\\Repositories\\SqlOrderRepository;\nuse App\\Repositories\\SqlProductRepository;\nuse App\\Repositories\\SqlProductTagRepository;\nuse App\\Repositories\\SqlTagRepository;\nuse App\\Repositories\\TagRepository;\nuse Doctrine\\ORM\\EntityManagerInterface;\n\n/** The repositories over one EntityManager, and the transaction of its connection. */\nfinal class SqlUnitOfWork implements UnitOfWork\n{\n    public readonly CustomerRepository $customers;\n    public readonly CategoryRepository $categories;\n    public readonly ProductRepository $products;\n    public readonly OrderRepository $orders;\n    public readonly OrderLineRepository $orderLines;\n    public readonly TagRepository $tags;\n    public readonly ProductTagRepository $productTags;\n    public readonly AuditLogRepository $auditLog;\n\n    public function __construct(public readonly EntityManagerInterface $em)\n    {\n        $this->customers = new SqlCustomerRepository($em);\n        $this->categories = new SqlCategoryRepository($em);\n        $this->products = new SqlProductRepository($em);\n        $this->orders = new SqlOrderRepository($em);\n        $this->orderLines = new SqlOrderLineRepository($em);\n        $this->tags = new SqlTagRepository($em);\n        $this->productTags = new SqlProductTagRepository($em);\n        $this->auditLog = new SqlAuditLogRepository($em);\n    }\n\n    public function transaction(callable $work): mixed\n    {\n        $connection = $this->em->getConnection();\n        // Joins the transaction already open\n        if ($connection->isTransactionActive()) {\n            return $work($this);\n        }\n        $connection->beginTransaction();\n        try {\n            $result = $work($this);\n            $this->em->flush();\n            $connection->commit();\n            return $result;\n        } catch (\\Throwable $error) {\n            $connection->rollBack();\n            $this->em->clear();\n            throw $error;\n        }\n    }\n}\n",
+  "src/UnitOfWork.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace App;\n\nuse App\\Repositories\\AuditLogRepository;\nuse App\\Repositories\\CategoryRepository;\nuse App\\Repositories\\CustomerRepository;\nuse App\\Repositories\\OrderLineRepository;\nuse App\\Repositories\\OrderRepository;\nuse App\\Repositories\\ProductRepository;\nuse App\\Repositories\\ProductTagRepository;\nuse App\\Repositories\\TagRepository;\n\n/** What services depend on: a repository per table and a transaction. Each service operation runs in transaction(): committed when it ends, rolled back when it fails. */\ninterface UnitOfWork\n{\n    public CustomerRepository $customers { get; }\n    public CategoryRepository $categories { get; }\n    public ProductRepository $products { get; }\n    public OrderRepository $orders { get; }\n    public OrderLineRepository $orderLines { get; }\n    public TagRepository $tags { get; }\n    public ProductTagRepository $productTags { get; }\n    public AuditLogRepository $auditLog { get; }\n\n    /**\n     * Runs work with the repositories of the transaction; commits when it ends, rolls back when it throws.\n     *\n     * @template T\n     * @param callable(UnitOfWork): T $work\n     * @return T\n     */\n    public function transaction(callable $work): mixed;\n}\n",
+  "tests/CategoryRepositoryTest.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace Tests;\n\nuse App\\SqlUnitOfWork;\nuse PHPUnit\\Framework\\TestCase;\n\n/** The repository of the \"categories\" table, against the test database. */\nfinal class CategoryRepositoryTest extends TestCase\n{\n    /** The repositories over the test database, opened empty for every test */\n    private SqlUnitOfWork $uow;\n\n    protected function setUp(): void\n    {\n        $this->uow = TestDatabase::open();\n    }\n\n    protected function tearDown(): void\n    {\n        $this->uow->em->getConnection()->close();\n    }\n\n    public function testIsStoredAndReadBack(): void\n    {\n        $uow = $this->uow;\n        $stored = Factories::addCategory($uow, 1);\n        $uow->em->clear();\n        $found = $uow->categories->findById($stored->id);\n        self::assertNotNull($found);\n        self::assertEquals($stored->id, $found->id);\n        self::assertNotNull($uow->categories->findByName($stored->name));\n    }\n\n    public function testListsRowsByKey(): void\n    {\n        $uow = $this->uow;\n        Factories::addCategory($uow, 1);\n        Factories::addCategory($uow, 2);\n        $page = $uow->categories->list(0, 1);\n        self::assertSame(2, $page->total);\n        self::assertCount(1, $page->items);\n    }\n\n    public function testIsDeleted(): void\n    {\n        $uow = $this->uow;\n        $stored = Factories::addCategory($uow, 1);\n        $key0 = $stored->id;\n        $uow->categories->delete($stored);\n        self::assertNull($uow->categories->findById($key0));\n    }\n}\n",
+  "tests/CustomerRepositoryTest.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace Tests;\n\nuse App\\SqlUnitOfWork;\nuse PHPUnit\\Framework\\TestCase;\n\n/** The repository of the \"customers\" table, against the test database. */\nfinal class CustomerRepositoryTest extends TestCase\n{\n    /** The repositories over the test database, opened empty for every test */\n    private SqlUnitOfWork $uow;\n\n    protected function setUp(): void\n    {\n        $this->uow = TestDatabase::open();\n    }\n\n    protected function tearDown(): void\n    {\n        $this->uow->em->getConnection()->close();\n    }\n\n    public function testIsStoredAndReadBack(): void\n    {\n        $uow = $this->uow;\n        $stored = Factories::addCustomer($uow, 1);\n        $uow->em->clear();\n        $found = $uow->customers->findById($stored->id);\n        self::assertNotNull($found);\n        self::assertEquals($stored->id, $found->id);\n        self::assertNotNull($uow->customers->findByEmail($stored->email));\n    }\n\n    public function testListsRowsByKey(): void\n    {\n        $uow = $this->uow;\n        Factories::addCustomer($uow, 1);\n        Factories::addCustomer($uow, 2);\n        $page = $uow->customers->list(0, 1);\n        self::assertSame(2, $page->total);\n        self::assertCount(1, $page->items);\n    }\n\n    public function testIsDeleted(): void\n    {\n        $uow = $this->uow;\n        $stored = Factories::addCustomer($uow, 1);\n        $key0 = $stored->id;\n        $uow->customers->delete($stored);\n        self::assertNull($uow->customers->findById($key0));\n    }\n}\n",
+  "tests/DatabaseTest.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace Tests;\n\nuse PHPUnit\\Framework\\TestCase;\n\n/** The tests run on the database they were asked to. */\nfinal class DatabaseTest extends TestCase\n{\n    public function testIsSqlite(): void\n    {\n        $connection = TestDatabase::open()->em->getConnection();\n        self::assertStringStartsWith('3.', (string) $connection->fetchOne('SELECT sqlite_version()'));\n        $connection->close();\n    }\n}\n",
+  "tests/Factories.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace Tests;\n\nuse App\\Entities\\Category;\nuse App\\Entities\\Customer;\nuse App\\Entities\\Order;\nuse App\\Entities\\OrderLine;\nuse App\\Entities\\Product;\nuse App\\Entities\\ProductTag;\nuse App\\Entities\\Tag;\nuse App\\UnitOfWork;\n\n/** Rows for the tests: valid values for every column, and the rows they point to. */\nfinal class Factories\n{\n    /** A valid Customer that is not stored yet; $n makes its unique values differ. */\n    public static function newCustomer(int $n): Customer\n    {\n        $entity = new Customer();\n        $entity->email = \"email-{$n}\";\n        $entity->passwordHash = \"passwordhash-{$n}\";\n        return $entity;\n    }\n\n    /** A stored Customer. */\n    public static function addCustomer(UnitOfWork $uow, int $n): Customer\n    {\n        $entity = self::newCustomer($n);\n        return $uow->customers->insert($entity);\n    }\n\n    /** A valid Category that is not stored yet; $n makes its unique values differ. */\n    public static function newCategory(int $n): Category\n    {\n        $entity = new Category();\n        $entity->name = \"name-{$n}\";\n        return $entity;\n    }\n\n    /** A stored Category. */\n    public static function addCategory(UnitOfWork $uow, int $n): Category\n    {\n        $entity = self::newCategory($n);\n        return $uow->categories->insert($entity);\n    }\n\n    /** A valid Product that is not stored yet; $n makes its unique values differ. */\n    public static function newProduct(int $n): Product\n    {\n        $entity = new Product();\n        $entity->name = \"name-{$n}\";\n        $entity->price = ($n % 10000) . '.50';\n        $entity->status = \"status-{$n}\";\n        $entity->version = $n;\n        return $entity;\n    }\n\n    /** A stored Product, with the rows it points to. */\n    public static function addProduct(UnitOfWork $uow, int $n): Product\n    {\n        $parent0 = self::addCategory($uow, $n);\n        $entity = self::newProduct($n);\n        $entity->categoryId = $parent0->id;\n        return $uow->products->insert($entity);\n    }\n\n    /** A valid Order that is not stored yet; $n makes its unique values differ. */\n    public static function newOrder(int $n): Order\n    {\n        $entity = new Order();\n        return $entity;\n    }\n\n    /** A stored Order, with the rows it points to. */\n    public static function addOrder(UnitOfWork $uow, int $n): Order\n    {\n        $parent0 = self::addCustomer($uow, $n);\n        $entity = self::newOrder($n);\n        $entity->customerId = $parent0->id;\n        return $uow->orders->insert($entity);\n    }\n\n    /** A valid OrderLine that is not stored yet; $n makes its unique values differ. */\n    public static function newOrderLine(int $n): OrderLine\n    {\n        $entity = new OrderLine();\n        $entity->line = $n;\n        $entity->quantity = $n;\n        return $entity;\n    }\n\n    /** A stored OrderLine, with the rows it points to. */\n    public static function addOrderLine(UnitOfWork $uow, int $n): OrderLine\n    {\n        $parent0 = self::addOrder($uow, $n);\n        $parent1 = self::addProduct($uow, $n);\n        $entity = self::newOrderLine($n);\n        $entity->orderId = $parent0->id;\n        $entity->productId = $parent1->id;\n        return $uow->orderLines->insert($entity);\n    }\n\n    /** A valid Tag that is not stored yet; $n makes its unique values differ. */\n    public static function newTag(int $n): Tag\n    {\n        $entity = new Tag();\n        $entity->label = \"label-{$n}\";\n        return $entity;\n    }\n\n    /** A stored Tag. */\n    public static function addTag(UnitOfWork $uow, int $n): Tag\n    {\n        $entity = self::newTag($n);\n        return $uow->tags->insert($entity);\n    }\n\n    /** A valid ProductTag that is not stored yet; $n makes its unique values differ. */\n    public static function newProductTag(int $n): ProductTag\n    {\n        $entity = new ProductTag();\n        return $entity;\n    }\n\n    /** A stored ProductTag, with the rows it points to. */\n    public static function addProductTag(UnitOfWork $uow, int $n): ProductTag\n    {\n        $parent0 = self::addProduct($uow, $n);\n        $parent1 = self::addTag($uow, $n);\n        $entity = self::newProductTag($n);\n        $entity->productId = $parent0->id;\n        $entity->tagId = $parent1->id;\n        return $uow->productTags->insert($entity);\n    }\n}\n",
+  "tests/OrderLineRepositoryTest.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace Tests;\n\nuse App\\SqlUnitOfWork;\nuse PHPUnit\\Framework\\TestCase;\n\n/** The repository of the \"order_lines\" table, against the test database. */\nfinal class OrderLineRepositoryTest extends TestCase\n{\n    /** The repositories over the test database, opened empty for every test */\n    private SqlUnitOfWork $uow;\n\n    protected function setUp(): void\n    {\n        $this->uow = TestDatabase::open();\n    }\n\n    protected function tearDown(): void\n    {\n        $this->uow->em->getConnection()->close();\n    }\n\n    public function testIsStoredAndReadBack(): void\n    {\n        $uow = $this->uow;\n        $stored = Factories::addOrderLine($uow, 1);\n        $uow->em->clear();\n        $found = $uow->orderLines->findByOrderIdAndLine($stored->orderId, $stored->line);\n        self::assertNotNull($found);\n        self::assertEquals($stored->orderId, $found->orderId);\n        self::assertEquals($stored->line, $found->line);\n        self::assertCount(1, $uow->orderLines->listByOrderId($stored->orderId));\n        self::assertCount(1, $uow->orderLines->listByProductId($stored->productId));\n    }\n\n    public function testListsRowsByKey(): void\n    {\n        $uow = $this->uow;\n        Factories::addOrderLine($uow, 1);\n        Factories::addOrderLine($uow, 2);\n        $page = $uow->orderLines->list(0, 1);\n        self::assertSame(2, $page->total);\n        self::assertCount(1, $page->items);\n    }\n\n    public function testIsDeleted(): void\n    {\n        $uow = $this->uow;\n        $stored = Factories::addOrderLine($uow, 1);\n        $key0 = $stored->orderId;\n        $key1 = $stored->line;\n        $uow->orderLines->delete($stored);\n        self::assertNull($uow->orderLines->findByOrderIdAndLine($key0, $key1));\n    }\n}\n",
+  "tests/OrderRepositoryTest.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace Tests;\n\nuse App\\SqlUnitOfWork;\nuse PHPUnit\\Framework\\TestCase;\n\n/** The repository of the \"orders\" table, against the test database. */\nfinal class OrderRepositoryTest extends TestCase\n{\n    /** The repositories over the test database, opened empty for every test */\n    private SqlUnitOfWork $uow;\n\n    protected function setUp(): void\n    {\n        $this->uow = TestDatabase::open();\n    }\n\n    protected function tearDown(): void\n    {\n        $this->uow->em->getConnection()->close();\n    }\n\n    public function testIsStoredAndReadBack(): void\n    {\n        $uow = $this->uow;\n        $stored = Factories::addOrder($uow, 1);\n        $uow->em->clear();\n        $found = $uow->orders->findById($stored->id);\n        self::assertNotNull($found);\n        self::assertEquals($stored->id, $found->id);\n        self::assertCount(1, $uow->orders->listByCustomerId($stored->customerId));\n    }\n\n    public function testListsRowsByKey(): void\n    {\n        $uow = $this->uow;\n        Factories::addOrder($uow, 1);\n        Factories::addOrder($uow, 2);\n        $page = $uow->orders->list(0, 1);\n        self::assertSame(2, $page->total);\n        self::assertCount(1, $page->items);\n    }\n\n    public function testIsDeleted(): void\n    {\n        $uow = $this->uow;\n        $stored = Factories::addOrder($uow, 1);\n        $key0 = $stored->id;\n        $uow->orders->delete($stored);\n        self::assertNull($uow->orders->findById($key0));\n    }\n}\n",
+  "tests/ProductRepositoryTest.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace Tests;\n\nuse App\\SqlUnitOfWork;\nuse PHPUnit\\Framework\\TestCase;\n\n/** The repository of the \"products\" table, against the test database. */\nfinal class ProductRepositoryTest extends TestCase\n{\n    /** The repositories over the test database, opened empty for every test */\n    private SqlUnitOfWork $uow;\n\n    protected function setUp(): void\n    {\n        $this->uow = TestDatabase::open();\n    }\n\n    protected function tearDown(): void\n    {\n        $this->uow->em->getConnection()->close();\n    }\n\n    public function testIsStoredAndReadBack(): void\n    {\n        $uow = $this->uow;\n        $stored = Factories::addProduct($uow, 1);\n        $uow->em->clear();\n        $found = $uow->products->findById($stored->id);\n        self::assertNotNull($found);\n        self::assertEquals($stored->id, $found->id);\n        self::assertCount(1, $uow->products->listByCategoryId($stored->categoryId));\n    }\n\n    public function testListsRowsByKey(): void\n    {\n        $uow = $this->uow;\n        Factories::addProduct($uow, 1);\n        Factories::addProduct($uow, 2);\n        $page = $uow->products->list(0, 1);\n        self::assertSame(2, $page->total);\n        self::assertCount(1, $page->items);\n    }\n\n    public function testStoresTheChanges(): void\n    {\n        $uow = $this->uow;\n        $stored = Factories::addProduct($uow, 1);\n        $stored->name = 'changed';\n        $uow->products->update($stored);\n        $uow->em->clear();\n        self::assertSame('changed', $uow->products->findById($stored->id)->name);\n    }\n}\n",
+  "tests/ProductTagRepositoryTest.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace Tests;\n\nuse App\\SqlUnitOfWork;\nuse PHPUnit\\Framework\\TestCase;\n\n/** The repository of the \"product_tags\" table, against the test database. */\nfinal class ProductTagRepositoryTest extends TestCase\n{\n    /** The repositories over the test database, opened empty for every test */\n    private SqlUnitOfWork $uow;\n\n    protected function setUp(): void\n    {\n        $this->uow = TestDatabase::open();\n    }\n\n    protected function tearDown(): void\n    {\n        $this->uow->em->getConnection()->close();\n    }\n\n    public function testIsStoredAndReadBack(): void\n    {\n        $uow = $this->uow;\n        $stored = Factories::addProductTag($uow, 1);\n        $uow->em->clear();\n        $found = $uow->productTags->findByProductIdAndTagId($stored->productId, $stored->tagId);\n        self::assertNotNull($found);\n        self::assertEquals($stored->productId, $found->productId);\n        self::assertEquals($stored->tagId, $found->tagId);\n        self::assertCount(1, $uow->productTags->listByProductId($stored->productId));\n        self::assertCount(1, $uow->productTags->listByTagId($stored->tagId));\n    }\n\n    public function testListsRowsByKey(): void\n    {\n        $uow = $this->uow;\n        Factories::addProductTag($uow, 1);\n        Factories::addProductTag($uow, 2);\n        $page = $uow->productTags->list(0, 1);\n        self::assertSame(2, $page->total);\n        self::assertCount(1, $page->items);\n    }\n\n    public function testIsDeleted(): void\n    {\n        $uow = $this->uow;\n        $stored = Factories::addProductTag($uow, 1);\n        $key0 = $stored->productId;\n        $key1 = $stored->tagId;\n        $uow->productTags->delete($stored);\n        self::assertNull($uow->productTags->findByProductIdAndTagId($key0, $key1));\n    }\n}\n",
+  "tests/TagRepositoryTest.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace Tests;\n\nuse App\\SqlUnitOfWork;\nuse PHPUnit\\Framework\\TestCase;\n\n/** The repository of the \"tags\" table, against the test database. */\nfinal class TagRepositoryTest extends TestCase\n{\n    /** The repositories over the test database, opened empty for every test */\n    private SqlUnitOfWork $uow;\n\n    protected function setUp(): void\n    {\n        $this->uow = TestDatabase::open();\n    }\n\n    protected function tearDown(): void\n    {\n        $this->uow->em->getConnection()->close();\n    }\n\n    public function testIsStoredAndReadBack(): void\n    {\n        $uow = $this->uow;\n        $stored = Factories::addTag($uow, 1);\n        $uow->em->clear();\n        $found = $uow->tags->findById($stored->id);\n        self::assertNotNull($found);\n        self::assertEquals($stored->id, $found->id);\n    }\n\n    public function testListsRowsByKey(): void\n    {\n        $uow = $this->uow;\n        Factories::addTag($uow, 1);\n        Factories::addTag($uow, 2);\n        $page = $uow->tags->list(0, 1);\n        self::assertSame(2, $page->total);\n        self::assertCount(1, $page->items);\n    }\n\n    public function testStoresTheChanges(): void\n    {\n        $uow = $this->uow;\n        $stored = Factories::addTag($uow, 1);\n        $stored->label = 'changed';\n        $uow->tags->update($stored);\n        $uow->em->clear();\n        self::assertSame('changed', $uow->tags->findById($stored->id)->label);\n    }\n\n    public function testIsDeleted(): void\n    {\n        $uow = $this->uow;\n        $stored = Factories::addTag($uow, 1);\n        $key0 = $stored->id;\n        $uow->tags->delete($stored);\n        self::assertNull($uow->tags->findById($key0));\n    }\n}\n",
+  "tests/TestDatabase.php": "<?php\n\ndeclare(strict_types=1);\n\nnamespace Tests;\n\nuse App\\Database;\nuse App\\SqlUnitOfWork;\nuse Doctrine\\ORM\\Tools\\SchemaTool;\n\n/** The test database: TEST_DATABASE_URL, or SQLite in memory, created empty from the mapping for every test. */\nfinal class TestDatabase\n{\n    public static function url(): ?string\n    {\n        $url = getenv('TEST_DATABASE_URL');\n        return is_string($url) && $url !== '' ? $url : null;\n    }\n\n    /** The repositories over the test database, with every table dropped and created again. */\n    public static function open(): SqlUnitOfWork\n    {\n        $em = Database::open(self::url() ?? 'sqlite:///:memory:');\n        $connection = $em->getConnection();\n        $tool = new SchemaTool($em);\n        $tool->dropDatabase();\n        $schema = $tool->getSchemaFromMetadata($em->getMetadataFactory()->getAllMetadata());\n        // What the mapping does not say: the foreign keys, and the tables that have no primary key\n        $schema->getTable('products')->addForeignKeyConstraint('categories', ['category_id'], ['id'], [], 'fk_products_category');\n        $schema->getTable('orders')->addForeignKeyConstraint('customers', ['customer_id'], ['id'], []);\n        $schema->getTable('order_lines')->addForeignKeyConstraint('orders', ['order_id'], ['id'], ['onDelete' => 'CASCADE']);\n        $schema->getTable('order_lines')->addForeignKeyConstraint('products', ['product_id'], ['id'], ['onDelete' => 'RESTRICT']);\n        $schema->getTable('product_tags')->addForeignKeyConstraint('products', ['product_id'], ['id'], ['onDelete' => 'CASCADE']);\n        $schema->getTable('product_tags')->addForeignKeyConstraint('tags', ['tag_id'], ['id'], ['onDelete' => 'CASCADE']);\n        $schema->getTable('audit_log')->dropPrimaryKey();\n        foreach ($schema->toSql($connection->getDatabasePlatform()) as $sql) {\n            $connection->executeStatement($sql);\n        }\n        return new SqlUnitOfWork($em);\n    }\n}\n"
+ }
+}
