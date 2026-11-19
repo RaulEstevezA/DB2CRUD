@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Runs the generated Swift projects (Vapor) in a clean container: the Swift Package Manager builds them, fails on any
+# Runs the generated Swift projects (Fluent) in a clean container: the Swift Package Manager builds them, fails on any
 # warning of the project's own code, and runs their own tests. Packages and compiled dependencies are cached in a
 # Docker volume between runs, so each project only compiles its own code.
 #
@@ -9,13 +9,16 @@
 set -u
 
 IMAGE="swift:6.4.2-noble"
+# MySQLKit asks for TLS by default; the test databases have none
+TEST_URL="${TEST_DATABASE_NODE_URL:-}"
+case "$TEST_URL" in mysql://*) TEST_URL="$TEST_URL?ssl-mode=DISABLED" ;; esac
 status=0
 for folder in "$@"; do
   name="$(basename "$folder")"
   echo "== $name"
   if docker run --rm \
     ${DOCKER_NETWORK:+--network "$DOCKER_NETWORK"} \
-    ${TEST_DATABASE_NODE_URL:+-e TEST_DATABASE_URL="$TEST_DATABASE_NODE_URL"} \
+    ${TEST_URL:+-e TEST_DATABASE_URL="$TEST_URL"} \
     -v "$(cd "$folder" && pwd)":/project:ro \
     -v db2crud-swift-cache:/cache \
     "$IMAGE" bash -c '

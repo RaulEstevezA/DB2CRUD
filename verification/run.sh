@@ -19,6 +19,7 @@ runner_of() {
     doctrine-* | eloquent-*) echo ./runners/php.sh ;;
     exposed-*) echo ./runners/kotlin.sh ;;
     seaorm-*) echo ./runners/rust.sh ;;
+    fluent-*) echo ./runners/swift.sh ;;
   esac
 }
 

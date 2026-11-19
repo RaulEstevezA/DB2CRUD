@@ -389,4 +389,36 @@ export const SCENARIOS = [
     settings: { language: 'rust', orm: 'seaorm', database: 'sqlite', repositoryInterfaces: false, verbs: 'find', tests: 'services', entities: 'all', updates: 'full' },
   },
   { id: 'seaorm-sqlite-repositories-only', schema: 'shop', settings: { language: 'rust', orm: 'seaorm', database: 'sqlite', services: false } },
+  { id: 'fluent-sqlite-defaults', schema: 'shop', settings: { language: 'swift', orm: 'fluent', database: 'sqlite' } },
+  {
+    id: 'fluent-postgresql-dtos-patch',
+    schema: 'shop',
+    settings: { language: 'swift', orm: 'fluent', database: 'postgresql', serviceTypes: 'dtos', updates: 'patch' },
+    service: 'postgresql',
+  },
+  {
+    id: 'fluent-mysql-decided-cursor-by-table-optional',
+    schema: 'shop',
+    settings: { language: 'swift', orm: 'fluent', database: 'mysql', paging: 'cursor', architecture: 'table', updates: 'optional' },
+    decisions: OTHER_WAY,
+    service: 'mysql',
+  },
+  {
+    id: 'fluent-mariadb-caller-dtos-full',
+    schema: 'shop',
+    settings: { language: 'swift', orm: 'fluent', database: 'mariadb', transactions: 'caller', serviceTypes: 'dtos', paging: 'none', updates: 'full' },
+    service: 'mariadb',
+  },
+  {
+    id: 'fluent-postgresql-repository-commits',
+    schema: 'shop',
+    settings: { language: 'swift', orm: 'fluent', database: 'postgresql', transactions: 'repository', repositoryInterfaces: false, memoryRepositories: false, verbs: 'get' },
+    service: 'postgresql',
+  },
+  {
+    id: 'fluent-sqlite-no-interfaces-services-tests',
+    schema: 'shop',
+    settings: { language: 'swift', orm: 'fluent', database: 'sqlite', repositoryInterfaces: false, verbs: 'find', tests: 'services', entities: 'all', updates: 'full' },
+  },
+  { id: 'fluent-sqlite-repositories-only', schema: 'shop', settings: { language: 'swift', orm: 'fluent', database: 'sqlite', services: false } },
 ]
