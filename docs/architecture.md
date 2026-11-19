@@ -18,7 +18,7 @@ Application models ──► Importer ──► Model ───────┘  
 |---|---|---|---|
 | Model importing | Text in a supported format | `Model` | Works: `core/importers/`, `core/model/` |
 | Constraints and model facts | `Model` | Validations each field declares, entities, keys and references | Works: `core/analysis/` |
-| Database importing | Model2DB project, ORM code or SQL DDL | Physical schema (`db-schema`) | Model2DB projects work: `core/interop/model2db/`; ORM code and DDL to write |
+| Database importing | Model2DB project, ORM code or SQL DDL | Physical schema (`db-schema`) | Model2DB projects (`core/interop/model2db/`) and SQLAlchemy (`core/importers/orm/`) work; the other ORMs and DDL to write |
 | Analysis | Physical schema | Repository queries and pending decisions | Works: `core/schema/`, `core/crud/` |
 | Correspondences | Physical schema + `Model` (+ Mapper project) | Model ↔ entity and field ↔ column, with their confidence | To write |
 | CRUD design | Physical schema + user edits | Repositories, services and decisions | Works: `core/crud/` |
@@ -41,7 +41,8 @@ web/                        The web application (React + TypeScript + Vite)
     │   ├── importers/      One importer per format and the importer registry
     │   │   ├── code/       Python, TypeScript, JavaScript, Java, C#, Kotlin, Dart, Go, Rust, PHP, Swift, Scala
     │   │   ├── schema/     JSON Schema, OpenAPI, GraphQL, Protocol Buffers, Prisma, Smithy, model schema
-    │   │   └── data/       JSON, YAML, XML and CSV documents
+    │   │   ├── data/       JSON, YAML, XML and CSV documents
+    │   │   └── orm/        ORM code read into the physical schema, one reader per ORM and their registry
     │   ├── analysis/       Validations declared on each field, and facts about each model
     │   ├── decisions/      Proposals with their confidence and reasons
     │   ├── export/         Generated files as data, and the ZIP writer
@@ -64,13 +65,17 @@ desktop/                    The desktop version (Python + PySide6)
 ├── packaging/              PyInstaller spec, launcher, smoke test, .icns and .ico built from the icon
 └── tests/                  Desktop tests, including the shared cases
 shared/
-└── test-cases/calls/       Arguments and results of core functions both versions must give
+└── test-cases/
+    ├── calls/              Arguments and results of core functions both versions must give
+    ├── outputs/            The project of every verification scenario, file by file
+    └── orm/                ORM code (written by Model2DB, or by hand) and the schema read from it
+scripts/                    Copies of Model2DB's code, and the ORM code it writes for the fixtures
 verification/runners/       One Docker runner per language toolchain, and one to start a database
 ```
 
 ## Patterns
 
-- **Registry** for every variable case: importers (`importers/registry.ts`), and the generators when they are written. Adding a format or an ORM is a new module and one line in its registry.
+- **Registry** for every variable case: importers (`importers/registry.ts`), ORM readers (`importers/orm/registry.ts`), and the generators (`generators/registry.ts`). Adding a format or an ORM is a new module and one line in its registry.
 - **Strategy** for interchangeable algorithms inside a generator: the ORM or the plain driver, the database, the architecture.
 - **Composition over inheritance.** Generators of the same language share helpers by calling them, not by extending a base generator.
 - **Immutable values.** Edits return a new design; undo and redo keep the previous values.
