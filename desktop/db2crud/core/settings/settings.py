@@ -128,6 +128,19 @@ STACKS = [
         "dtoKinds": ["data", "class"],
         "updates": ["patch", "optional", "full"],
     },
+    {
+        "language": "rust",
+        "orm": "seaorm",
+        "label": "SeaORM 2",
+        "databases": ["postgresql", "mysql", "mariadb", "sqlite"],
+        # SeaORM is asynchronous only
+        "execution": ["async"],
+        # Rust has no exceptions: every operation returns a Result
+        "errors": ["results"],
+        "dtoKinds": ["struct"],
+        # Option<Option<T>> is Rust's way of telling a field not sent from a field emptied
+        "updates": ["patch", "optional", "full"],
+    },
 ]
 
 DEFAULT_SETTINGS = {
@@ -210,7 +223,10 @@ def normalize_settings(settings: dict) -> dict:
         "execution": _pick(settings.get("execution"), stack["execution"], stack["execution"][0]),
         "errors": _pick(settings.get("errors"), stack["errors"], stack["errors"][0]),
         "repositoryInterfaces": _bool(settings.get("repositoryInterfaces"), DEFAULT_SETTINGS["repositoryInterfaces"]),
-        "memoryRepositories": _bool(settings.get("memoryRepositories"), DEFAULT_SETTINGS["memoryRepositories"]),
+        # Rust has no inheritance: without the traits, nothing in memory can stand in for the database repositories
+        "memoryRepositories": False
+        if stack["language"] == "rust" and settings.get("repositoryInterfaces") is False
+        else _bool(settings.get("memoryRepositories"), DEFAULT_SETTINGS["memoryRepositories"]),
         "paging": _pick(settings.get("paging"), PAGING, DEFAULT_SETTINGS["paging"]),
         "architecture": _pick(settings.get("architecture"), ARCHITECTURES, DEFAULT_SETTINGS["architecture"]),
         "verbs": _pick(settings.get("verbs"), VERBS, DEFAULT_SETTINGS["verbs"]),

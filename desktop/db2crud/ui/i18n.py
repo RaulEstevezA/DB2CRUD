@@ -238,6 +238,7 @@ EN = SimpleNamespace(
         "csharp": "C#",
         "php": "PHP",
         "kotlin": "Kotlin",
+        "rust": "Rust",
     },
     database_label="Database",
     databases={
@@ -267,6 +268,7 @@ EN = SimpleNamespace(
         "record": "Records",
         "readonly": "Readonly classes",
         "data": "Data classes",
+        "struct": "Structs",
     },
     updates_label="Updates take",
     updates_modes={
@@ -394,6 +396,7 @@ ES = SimpleNamespace(
         "csharp": "C#",
         "php": "PHP",
         "kotlin": "Kotlin",
+        "rust": "Rust",
     },
     database_label="Base de datos",
     databases={
@@ -427,6 +430,7 @@ ES = SimpleNamespace(
         "record": "Records",
         "readonly": "Clases readonly",
         "data": "Data classes",
+        "struct": "Structs",
     },
     updates_label="Las actualizaciones reciben",
     updates_modes={
