@@ -1,0 +1,413 @@
+{
+ "format": "db-schema",
+ "version": 1,
+ "dialect": null,
+ "source": {
+  "kind": "orm",
+  "format": "django"
+ },
+ "tables": [
+  {
+   "name": "customers",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "models.BigIntegerField(primary_key=True)",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": {
+      "sql": "models.TextField()",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "email",
+     "type": {
+      "sql": "models.TextField()",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "password",
+     "type": {
+      "sql": "models.TextField()",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "phone",
+     "type": {
+      "sql": "models.TextField(null=True, blank=True)",
+      "kind": "text"
+     },
+     "nullable": true
+    },
+    {
+     "name": "created_at",
+     "type": {
+      "sql": "models.DateTimeField()",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": false
+    },
+    {
+     "name": "address_street",
+     "type": {
+      "sql": "models.TextField()",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "address_city",
+     "type": {
+      "sql": "models.TextField()",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "address_postal_code",
+     "type": {
+      "sql": "models.TextField()",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "address_country",
+     "type": {
+      "sql": "models.TextField()",
+      "kind": "text"
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [],
+   "uniques": [],
+   "indexes": [],
+   "checks": [],
+   "origin": {
+    "line": 13,
+    "column": 1
+   },
+   "entity": "Customer"
+  },
+  {
+   "name": "products",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "models.BigIntegerField(primary_key=True)",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false
+    },
+    {
+     "name": "sku",
+     "type": {
+      "sql": "models.TextField()",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": {
+      "sql": "models.TextField()",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "description",
+     "type": {
+      "sql": "models.TextField(null=True, blank=True)",
+      "kind": "text"
+     },
+     "nullable": true
+    },
+    {
+     "name": "price",
+     "type": {
+      "sql": "models.FloatField()",
+      "kind": "float",
+      "bits": 64
+     },
+     "nullable": false
+    },
+    {
+     "name": "stock",
+     "type": {
+      "sql": "models.IntegerField()",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false
+    },
+    {
+     "name": "active",
+     "type": {
+      "sql": "models.BooleanField()",
+      "kind": "boolean"
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [],
+   "uniques": [],
+   "indexes": [],
+   "checks": [],
+   "origin": {
+    "line": 29,
+    "column": 1
+   },
+   "entity": "Product"
+  },
+  {
+   "name": "order_lines",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "models.BigAutoField(primary_key=True)",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false,
+     "generated": "identity"
+    },
+    {
+     "name": "quantity",
+     "type": {
+      "sql": "models.IntegerField()",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false
+    },
+    {
+     "name": "unit_price",
+     "type": {
+      "sql": "models.FloatField()",
+      "kind": "float",
+      "bits": 64
+     },
+     "nullable": false
+    },
+    {
+     "name": "product_id",
+     "type": {
+      "sql": "models.BigIntegerField(primary_key=True)",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false
+    },
+    {
+     "name": "order_id",
+     "type": {
+      "sql": "models.BigIntegerField(primary_key=True)",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "product_id"
+     ],
+     "references": {
+      "table": "products",
+      "columns": [
+       "id"
+      ]
+     },
+     "attribute": "product"
+    },
+    {
+     "columns": [
+      "order_id"
+     ],
+     "references": {
+      "table": "orders",
+      "columns": [
+       "id"
+      ]
+     },
+     "onDelete": "cascade",
+     "attribute": "order",
+     "inverse": "lines"
+    }
+   ],
+   "uniques": [],
+   "indexes": [
+    {
+     "columns": [
+      "product_id"
+     ]
+    },
+    {
+     "columns": [
+      "order_id"
+     ]
+    }
+   ],
+   "checks": [],
+   "origin": {
+    "line": 42,
+    "column": 1
+   },
+   "entity": "OrderLine"
+  },
+  {
+   "name": "orders",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "models.BigIntegerField(primary_key=True)",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false
+    },
+    {
+     "name": "status",
+     "type": {
+      "sql": "models.CharField(max_length=20, choices=OrderStatus.choices)",
+      "kind": "text",
+      "length": 20
+     },
+     "nullable": false
+    },
+    {
+     "name": "total",
+     "type": {
+      "sql": "models.FloatField()",
+      "kind": "float",
+      "bits": 64
+     },
+     "nullable": false
+    },
+    {
+     "name": "notes",
+     "type": {
+      "sql": "models.TextField(null=True, blank=True)",
+      "kind": "text"
+     },
+     "nullable": true
+    },
+    {
+     "name": "created_at",
+     "type": {
+      "sql": "models.DateTimeField()",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": false
+    },
+    {
+     "name": "updated_at",
+     "type": {
+      "sql": "models.DateTimeField()",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": false
+    },
+    {
+     "name": "customer_id",
+     "type": {
+      "sql": "models.BigIntegerField(primary_key=True)",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "customer_id"
+     ],
+     "references": {
+      "table": "customers",
+      "columns": [
+       "id"
+      ]
+     },
+     "attribute": "customer"
+    }
+   ],
+   "uniques": [],
+   "indexes": [
+    {
+     "columns": [
+      "customer_id"
+     ]
+    }
+   ],
+   "checks": [
+    {
+     "name": "ck_orders_status",
+     "sql": "status IN ('pending', 'paid', 'shipped', 'cancelled')",
+     "parsed": {
+      "kind": "in",
+      "column": "status",
+      "values": [
+       "pending",
+       "paid",
+       "shipped",
+       "cancelled"
+      ]
+     }
+    }
+   ],
+   "origin": {
+    "line": 54,
+    "column": 1
+   },
+   "entity": "Order"
+  }
+ ],
+ "enums": [
+  {
+   "name": "order_status",
+   "values": [
+    "pending",
+    "paid",
+    "shipped",
+    "cancelled"
+   ],
+   "storage": "check"
+  }
+ ],
+ "notes": []
+}
