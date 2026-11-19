@@ -427,6 +427,38 @@ export const VERIFIED: readonly VerifiedStack[] = [
     scenarios: ['seaorm-sqlite-defaults', 'seaorm-sqlite-no-interfaces-services-tests', 'seaorm-sqlite-repositories-only'],
     date: '2026-11-19',
   },
+  {
+    language: 'swift',
+    orm: 'fluent',
+    database: 'postgresql',
+    execution: 'async',
+    scenarios: ['fluent-postgresql-dtos-patch', 'fluent-postgresql-repository-commits'],
+    date: '2026-11-19',
+  },
+  {
+    language: 'swift',
+    orm: 'fluent',
+    database: 'mysql',
+    execution: 'async',
+    scenarios: ['fluent-mysql-decided-cursor-by-table-optional'],
+    date: '2026-11-19',
+  },
+  {
+    language: 'swift',
+    orm: 'fluent',
+    database: 'mariadb',
+    execution: 'async',
+    scenarios: ['fluent-mariadb-caller-dtos-full'],
+    date: '2026-11-19',
+  },
+  {
+    language: 'swift',
+    orm: 'fluent',
+    database: 'sqlite',
+    execution: 'async',
+    scenarios: ['fluent-sqlite-defaults', 'fluent-sqlite-no-interfaces-services-tests', 'fluent-sqlite-repositories-only'],
+    date: '2026-11-19',
+  },
 ]
 
 /** Whether this stack has passed the verification. */
