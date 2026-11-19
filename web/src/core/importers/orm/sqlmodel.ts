@@ -30,6 +30,13 @@ function typeOfField(named: Record<string, Expr>, annotation: string): Expr | un
   return undefined
 }
 
+/** The value the application gives an attribute left out: `default` or `default_factory`. `default=None` only says
+ * the attribute may be left out. */
+function defaultOf(field: Call): Expr | undefined {
+  const value = field.named.default ?? field.named.default_factory
+  return value && !(value.kind === 'name' && value.path.join('.') === 'None') ? value : undefined
+}
+
 /** `Field(...)` as the `mapped_column(...)` that says the same. */
 function fieldAsColumn(field: Call, annotation: string): Call {
   const named = field.named
@@ -41,9 +48,8 @@ function fieldAsColumn(field: Call, annotation: string): Call {
     args.push(call('ForeignKey', [{ kind: 'string', value: reference }], named.ondelete ? { ondelete: named.ondelete } : {}))
   const column: Record<string, Expr> = {}
   for (const key of ['primary_key', 'nullable', 'unique', 'index']) if (named[key]) column[key] = named[key]
-  // default=None only says the attribute may be left out
-  const value = named.default ?? named.default_factory
-  if (value && !(value.kind === 'name' && value.path.join('.') === 'None')) column.default = value
+  const value = defaultOf(field)
+  if (value) column.default = value
   const extra = named.sa_column_kwargs
   if (extra?.kind === 'dict')
     for (const entry of extra.entries) {
@@ -63,8 +69,13 @@ const SQLMODEL: Flavour = {
     if (!annotation || isClassVar(annotation) || nameOf(value ?? undefined) === 'Relationship') return null
     if (value?.kind === 'call' && nameOf(value) === 'Field') {
       const column = value.named.sa_column
-      // A whole Column: SQLModel uses it as it is
-      if (column?.kind === 'call' && nameOf(column) === 'Column') return { call: column, classic: true, annotation: '' }
+      // A whole Column: SQLModel uses it as it is, with the default of the Field when it has none
+      if (column?.kind === 'call' && nameOf(column) === 'Column') {
+        const fieldDefault = defaultOf(value)
+        const withDefault =
+          fieldDefault && !column.named.default ? { ...column, named: { ...column.named, default: fieldDefault } } : column
+        return { call: withDefault, classic: true, annotation: '' }
+      }
       return { call: fieldAsColumn(value, annotation), classic: false, annotation }
     }
     const field = value === null ? call('Field') : call('Field', [], { default: value })
