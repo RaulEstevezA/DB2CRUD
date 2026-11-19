@@ -12,8 +12,7 @@ from dataclasses import dataclass
 from ...js import coalesce, is_number, js_string, number, number_text, trim
 from ...model.naming import to_snake_case
 from ...schema.checks import check_of
-from ..code.lexer import Cursor, tokenize
-from ..code.python import PYTHON_LEXER
+from ..code.lexer import Cursor
 from .expressions import (
     boolean_of,
     chain_of,
@@ -24,82 +23,8 @@ from .expressions import (
     string_of,
     text_of,
 )
+from .python import assignment_of, attributes_of, empty_table, is_now, is_uuid, read_modules
 from .types import OrmReader
-
-# Splitting a module into statements
-
-
-def _statements_of(tokens: list, source: str) -> list[dict]:
-    """The statements of a block: a new one starts on a line at the block's indentation, outside any bracket."""
-    if not tokens:
-        return []
-    indent = tokens[0].column
-    statements: list[dict] = []
-    current: list = []
-    depth = 0
-    for token in tokens:
-        if token.line_start and depth == 0 and token.column <= indent and current:
-            statements.append({"tokens": current, "source": source})
-            current = []
-        current.append(token)
-        if token.kind == "punct":
-            if token.value in ("(", "[", "{"):
-                depth += 1
-            elif token.value in (")", "]", "}"):
-                depth = max(0, depth - 1)
-    if current:
-        statements.append({"tokens": current, "source": source})
-    return statements
-
-
-def _class_of(statement: dict) -> dict | None:
-    """`class Name(Base, Mixin):` and the statements of its body."""
-    cursor = Cursor(statement["tokens"])
-    if not cursor.is_("class") or not cursor.is_ident(1):
-        return None
-    cursor.next()
-    name = cursor.next().value
-    bases: list[str] = []
-    # `table=True` in `class Book(SQLModel, table=True)`
-    keywords: dict = {}
-    if cursor.eat("("):
-        while not cursor.done and not cursor.is_(")"):
-            if cursor.is_ident() and cursor.is_("=", 1):
-                keyword = cursor.next().value
-                cursor.next()
-                keywords[keyword] = read_expression(cursor, statement["source"])
-            else:
-                text = text_of(read_expression(cursor, statement["source"]))
-                if text:
-                    bases.append(text)
-            if not cursor.eat(","):
-                break
-        cursor.eat(")")
-    cursor.eat(":")
-    return {
-        "name": name,
-        "bases": bases,
-        "keywords": keywords,
-        "body": _statements_of(statement["tokens"][cursor.index :], statement["source"]),
-        "line": statement["tokens"][0].line,
-    }
-
-
-def _assignment_of(statement: dict) -> dict | None:
-    """`name: Annotation = value` or `name = value`: the parts of an assignment."""
-    cursor = Cursor(statement["tokens"])
-    if not cursor.is_ident():
-        return None
-    name = cursor.next().value
-    annotation = ""
-    if cursor.eat(":"):
-        start = cursor.index
-        cursor.skip_until(["="])
-        annotation = cursor.text_between(statement["source"], start, cursor.index)
-    if not cursor.eat("="):
-        return {"name": name, "annotation": annotation, "value": None} if annotation else None
-    return {"name": name, "annotation": annotation, "value": read_expression(cursor, statement["source"])}
-
 
 # Flavours of declarations
 
@@ -349,32 +274,18 @@ def _foreign_key_of(expr: dict, column: str) -> dict | None:
     return _pending_key(string_of(expr["named"].get("name")), [column], expr["named"], [target])
 
 
-_NOW = ("now", "current_timestamp", "utcnow", "localtimestamp", "current_date", "today")
-
-
-def _is_now(expr: dict | None) -> bool:
-    return expr is not None and (name_of(expr) or "").lower() in _NOW
-
-
-def _is_uuid(expr: dict | None) -> bool:
-    return (
-        expr is not None
-        and re.fullmatch(r"uuid[147]|uuid_generate_v4|gen_random_uuid", name_of(expr) or "") is not None
-    )
-
-
 def _server_default(expr: dict, column: dict) -> None:
     """A default the database applies. A text is a value SQLAlchemy quotes (`server_default="0"`); `text("…")` is SQL
     as written; `func.now()` and `true()` are what they say."""
     is_call = expr["kind"] == "call"
     sql = string_of(expr["args"][0] if expr["args"] else None) if is_call and name_of(expr) == "text" else None
     call = (name_of(expr) or "").lower() if is_call and not expr["args"] else None
-    if _is_now(expr) or (
+    if is_now(expr) or (
         sql is not None and re.fullmatch(r"now\(\)|current_timestamp(\(\))?|localtimestamp(\(\))?", trim(sql), re.I)
     ):
         column["generated"] = "now"
         return
-    if _is_uuid(expr) or (
+    if is_uuid(expr) or (
         sql is not None and re.fullmatch(r"(gen_random_uuid|uuid_generate_v4|uuid)\(\)", trim(sql), re.I)
     ):
         column["generated"] = "uuid"
@@ -474,9 +385,9 @@ def _column_of(
     use = read.get("enum") if read else None
     value = named.get("default")
     if value is not None and not column.get("generated"):
-        if _is_uuid(value):
+        if is_uuid(value):
             column["generated"] = "uuid"
-        elif _is_now(value):
+        elif is_now(value):
             column["generated"] = "now"
         else:
             literal = literal_of(value)
@@ -486,7 +397,7 @@ def _column_of(
                 member = _enum_literal(value, use, enums)
                 if member is not None:
                     column["default"] = {"kind": "literal", "value": member}
-    if "onupdate" in named and _is_now(named["onupdate"]):
+    if "onupdate" in named and is_now(named["onupdate"]):
         column["generated"] = "onUpdateNow"
     comment = string_of(named.get("comment"))
     if comment:
@@ -571,19 +482,6 @@ def _table_arguments(items: list[dict], mapped: dict, attribute_column) -> None:
             mapped["keys"].append(_pending_key(name, columns, item["named"], targets))
 
 
-def _empty_table(name: str, line: int) -> dict:
-    return {
-        "name": name,
-        "columns": [],
-        "primaryKey": None,
-        "foreignKeys": [],
-        "uniques": [],
-        "indexes": [],
-        "checks": [],
-        "origin": {"line": line, "column": 1},
-    }
-
-
 def _mapped(table: dict, class_name: str | None = None) -> dict:
     """A table with what is needed to resolve it: the attribute name of each column, the keys waiting for their target
     and the navigations of its class."""
@@ -637,32 +535,9 @@ def _finish_key(table: dict, reads: list[dict]) -> None:
 def _table_name_of(definition: dict, flavour: Flavour) -> str | None:
     """The table a class maps, by its own `__tablename__` (a subclass of a table does not map it again)."""
     tablename = next(
-        (item for item in map(_assignment_of, definition["body"]) if item and item["name"] == "__tablename__"), None
+        (item for item in map(assignment_of, definition["body"]) if item and item["name"] == "__tablename__"), None
     )
     return flavour.table_of(definition, string_of(tablename["value"] if tablename else None))
-
-
-def _attributes_of(definition: dict, flavour: Flavour, classes: dict, seen: set | None = None) -> list[dict]:
-    """The attributes of a class and of the classes it inherits from in the files that map no table (mixins,
-    SQLModel's base models), those of the bases first; an attribute declared again keeps its place and takes the new
-    value. The columns of a base that is a table belong to that table."""
-    seen = set() if seen is None else seen
-    seen.add(definition["name"])
-    inherited: list[dict] = []
-    for base_name in definition["bases"]:
-        base = classes.get(base_name.split(".")[-1])
-        if base is not None and base["name"] not in seen and _table_name_of(base, flavour) is None:
-            inherited += _attributes_of(base, flavour, classes, seen)
-    result: list[dict] = []
-    for item in [*inherited, *map(_assignment_of, definition["body"])]:
-        if not item:
-            continue
-        index = next((position for position, other in enumerate(result) if other["name"] == item["name"]), -1)
-        if index >= 0:
-            result[index] = item
-        else:
-            result.append(item)
-    return result
 
 
 def _class_table(
@@ -671,8 +546,8 @@ def _class_table(
     name = _table_name_of(definition, flavour)
     if not name:
         return None
-    assignments = _attributes_of(definition, flavour, classes)
-    mapped = _mapped(_empty_table(name, definition["line"]), definition["name"])
+    assignments = attributes_of(definition, classes, lambda base: _table_name_of(base, flavour) is None)
+    mapped = _mapped(empty_table(name, definition["line"]), definition["name"])
     mapped["table"]["entity"] = definition["name"]
     reads: list[dict] = []
     table_args = None
@@ -726,7 +601,7 @@ def _module_table(call: dict, line: int, enums: dict, notes: list, enums_used: l
     name = string_of(call["args"][0] if call["args"] else None)
     if not name:
         return None
-    mapped = _mapped(_empty_table(name, line))
+    mapped = _mapped(empty_table(name, line))
     schema = string_of(call["named"].get("schema"))
     if schema:
         mapped["table"]["schema"] = schema
@@ -743,19 +618,6 @@ def _module_table(call: dict, line: int, enums: dict, notes: list, enums_used: l
     _table_arguments(constraints, mapped, lambda attribute: attribute)
     _finish_key(mapped["table"], reads)
     return mapped
-
-
-def _enum_class_of(definition: dict) -> dict | None:
-    """`class OrderStatus(enum.Enum):` and its members, {name, value} in order."""
-    if not any(re.search(r"(^|\.)(Enum|IntEnum|StrEnum)\Z", base) for base in definition["bases"]):
-        return None
-    members = []
-    for statement in definition["body"]:
-        item = _assignment_of(statement)
-        value = literal_of(item["value"]) if item else None
-        if item and not item["name"].startswith("_") and (isinstance(value, str) or is_number(value)):
-            members.append({"name": item["name"], "value": value})
-    return {"name": definition["name"], "members": members}
 
 
 # Resolving what refers to what
@@ -885,20 +747,7 @@ def _module_index(call: dict, tables: list[dict]) -> None:
 def read_declarative(files: list[dict], flavour: Flavour) -> dict:
     """The schema the models of these files declare, in this flavour of SQLAlchemy."""
     notes: list = []
-    enums: dict = {}
-    modules = [_statements_of(tokenize(file["text"], PYTHON_LEXER), file["text"]) for file in files]
-    # Enums first: a column may name one declared further down
-    classes: list[dict] = []
-    for statements in modules:
-        for statement in statements:
-            definition = _class_of(statement)
-            if not definition:
-                continue
-            enum_class = _enum_class_of(definition)
-            if enum_class:
-                enums[enum_class["name"]] = enum_class
-            else:
-                classes.append(definition)
+    modules, classes, enums = read_modules(files)
     tables: list[dict] = []
     enums_used: list[dict] = []
     by_name = {definition["name"]: definition for definition in classes}
@@ -912,7 +761,7 @@ def read_declarative(files: list[dict], flavour: Flavour) -> dict:
             first = statement["tokens"][0] if statement["tokens"] else None
             if first is not None and first.value == "class":
                 continue
-            assignment = _assignment_of(statement)
+            assignment = assignment_of(statement)
             value = assignment["value"] if assignment else None
             if value is None:
                 value = read_expression(Cursor(statement["tokens"]), statement["source"])
