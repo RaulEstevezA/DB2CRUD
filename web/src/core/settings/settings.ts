@@ -9,7 +9,7 @@
  */
 import type { Dialect } from '../schema/types.ts'
 
-export type LanguageId = 'python' | 'typescript' | 'java' | 'csharp' | 'php' | 'kotlin' | 'rust'
+export type LanguageId = 'python' | 'typescript' | 'java' | 'csharp' | 'php' | 'kotlin' | 'rust' | 'swift'
 export type OrmId =
   | 'sqlalchemy'
   | 'django'
@@ -23,6 +23,7 @@ export type OrmId =
   | 'eloquent'
   | 'exposed'
   | 'seaorm'
+  | 'fluent'
 
 /** Which ORM entities are written: only those the input lacks, all of them (replacing the input's), or none. */
 export type EntitiesMode = 'missing' | 'all' | 'none'
@@ -213,6 +214,18 @@ export const STACKS: readonly StackInfo[] = [
     errors: ['results'],
     dtoKinds: ['struct'],
     // Option<Option<T>> is Rust's way of telling a field not sent from a field emptied
+    updates: ['patch', 'optional', 'full'],
+  },
+  {
+    language: 'swift',
+    orm: 'fluent',
+    label: 'Fluent 1 (FluentKit)',
+    databases: ['postgresql', 'mysql', 'mariadb', 'sqlite'],
+    // Fluent's API is async/await
+    execution: ['async'],
+    errors: ['exceptions'],
+    dtoKinds: ['struct'],
+    // T?? is Swift's way of telling a field not sent from a field emptied
     updates: ['patch', 'optional', 'full'],
   },
 ]

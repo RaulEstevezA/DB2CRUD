@@ -250,3 +250,31 @@ describe('the Rust generator', () => {
     )
   })
 })
+
+describe('the Swift generator', () => {
+  const swift = { language: 'swift', orm: 'fluent' } as const
+
+  it('inserts only the values given, so the database fills the others', () => {
+    const repository = file('Sources/DataAccess/Repositories/CustomerRepository.swift', swift)
+    expect(repository).toContain('if let value = entity.email { values["email"] = .bind(value) }')
+    expect(repository).not.toContain('created_at"] = ')
+    expect(repository).toContain('insert.query.action = .create')
+  })
+
+  it('keys a model by every column of a composite key', () => {
+    const model = file('Sources/DataAccess/Entities/OrderLineModel.swift', swift)
+    expect(model).toContain('@CompositeID()\n    var id: IDValue?')
+    expect(model).toContain('@Field(key: "order_id")\n        var orderId: Int')
+  })
+
+  it('writes the in-memory repository as a subclass when there are no protocols', () => {
+    expect(file('Sources/DataAccess/Repositories/TagRepository.swift', { ...swift, repositoryInterfaces: false })).toContain(
+      'public final class MemoryTagRepository: SqlTagRepository, @unchecked Sendable {',
+    )
+  })
+
+  it('runs every test in one serialized suite', () => {
+    expect(file('Tests/DataAccessTests/TestDatabase.swift', swift)).toContain('@Suite(.serialized) struct DataTests {}')
+    expect(file('Tests/DataAccessTests/TagRepositoryTests.swift', swift)).toContain('extension DataTests {')
+  })
+})
