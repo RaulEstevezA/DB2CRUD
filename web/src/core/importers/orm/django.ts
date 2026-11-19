@@ -4,6 +4,8 @@
  * `unique_together`), foreign keys and one-to-one fields (a column `<name>_id` with an index), many-to-many fields
  * (a table of their own unless `through` names one) and `TextChoices`/`IntegerChoices` as enums. Django keeps
  * `on_delete` in the application; the reader takes it as what the database should do, as Model2DB writes it.
+ * A model with `managed = False` is a table Django never creates: it has only the indexes its `Meta` names, and a
+ * note says its key may exist only in the ORM.
  */
 import { toSnakeCase } from '../../model/naming.ts'
 import { checkOf } from '../../schema/checks.ts'
@@ -134,6 +136,8 @@ interface Model {
   manyToMany: ManyToMany[]
   /** `pk = models.CompositePrimaryKey("order", "line")`: fields, resolved once every column is known */
   compositeKey?: string[]
+  /** Foreign key columns Django indexes on its own */
+  keyIndexes: string[]
   meta: Map<string, Expr>
 }
 
@@ -268,8 +272,11 @@ function addField(model: Model, item: Assignment, enums: Map<string, EnumClass>,
   const unique = booleanOf(named.unique) === true || kind === 'OneToOneField'
   if (unique && !primaryKey) table.uniques.push({ columns: [name] })
   // Django indexes every foreign key unless told not to
-  const indexed = booleanOf(named.db_index) ?? relation
-  if (indexed && !unique && !primaryKey) table.indexes.push({ columns: [name] })
+  const indexed = booleanOf(named.db_index)
+  if (!unique && !primaryKey) {
+    if (indexed === true) table.indexes.push({ columns: [name] })
+    else if (indexed === undefined && relation) model.keyIndexes.push(name)
+  }
   if (INTEGERS[kind]?.positive) table.checks.push(checkOf(`${name} >= 0`))
   const choices = choicesOf(named.choices, enums, `${table.name}_${name}`)
   if (choices && !enumsUsed.some((item) => item.name === choices.name)) enumsUsed.push(choices)
@@ -361,6 +368,15 @@ function applyMeta(model: Model, notes: DbNote[]): void {
     const index: DbIndex = { ...(name ? { name } : {}), columns: fieldColumns(item.named.fields, model) }
     if (index.columns.length > 0) table.indexes.push(index)
   }
+  if (booleanOf(meta.get('managed')) === false) {
+    notes.push({ code: 'orm.unmanagedTable', params: { table: table.name } })
+    return
+  }
+  // The index of a foreign key, unless the key or another index already starts with its column
+  const leading = [table.primaryKey ?? [], ...table.uniques.map((item) => item.columns), ...table.indexes.map((item) => item.columns)].map(
+    (columns) => columns[0],
+  )
+  for (const column of model.keyIndexes) if (!leading.includes(column)) table.indexes.push({ columns: [column] })
 }
 
 function isModel(def: ClassDef, classes: Map<string, ClassDef>, seen = new Set<string>()): boolean {
@@ -387,7 +403,7 @@ function modelOf(
   const name = stringOf(meta.get('db_table')) ?? (app ? `${app}_${lower}` : lower)
   const table = emptyTable(name, def.line)
   table.entity = def.name
-  const model: Model = { def, table, columns: new Map(), keys: [], manyToMany: [], meta }
+  const model: Model = { def, table, columns: new Map(), keys: [], manyToMany: [], meta, keyIndexes: [] }
   // The fields of abstract models are inherited; a concrete parent keeps its own table
   for (const item of attributesOf(def, classes, isAbstract)) addField(model, item, enums, enumsUsed, notes)
   if (model.compositeKey) table.primaryKey = model.compositeKey.map((field) => model.columns.get(field) ?? field)

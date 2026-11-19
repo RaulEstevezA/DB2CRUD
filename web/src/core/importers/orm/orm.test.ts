@@ -130,16 +130,26 @@ describe('ORM code written by hand', () => {
 })
 
 describe('ORM code written by DB2CRUD', () => {
-  // The SQLAlchemy entities of every shared project map their tables exactly: they read back as the schema they came from
+  // The models of every shared project map their tables exactly: they read back as the schema they came from
   const outputs = resolve(process.cwd(), '../shared/test-cases/outputs')
-  for (const name of readdirSync(outputs).filter((item) => item.startsWith('sqlalchemy-')))
+  const models: Record<string, (text: string) => boolean> = {
+    sqlalchemy: (text) => text.includes('__tablename__'),
+    django: (text) => text.includes('models.Model'),
+  }
+  for (const name of readdirSync(outputs).filter((item) => models[item.split('-')[0]]))
     it(name, () => {
       const project = JSON.parse(readFileSync(join(outputs, name), 'utf8')) as { schema: DbSchema; files: Record<string, string> }
       const files = Object.entries(project.files)
-        .filter(([path, text]) => path.endsWith('.py') && text.includes('__tablename__'))
+        .filter(([path, text]) => path.endsWith('.py') && models[name.split('-')[0]](text))
         .map(([path, text]) => ({ name: path, text }))
       const read = readOrmCode(files)
       if (!read.ok) throw new Error(read.error)
+      // Django needs a key: DB2CRUD gives a table without one a key that lives only in an unmanaged model, and says so
+      for (const note of read.schema.notes.filter((item) => item.code === 'orm.unmanagedTable')) {
+        const table = read.schema.tables.find((item) => item.name === note.params?.table)!
+        expect(project.schema.tables.find((item) => item.name === table.name)?.primaryKey).toBeNull()
+        table.primaryKey = null
+      }
       expect(comparable(read.schema, project.schema)).toEqual(comparable(project.schema, read.schema))
     })
 })

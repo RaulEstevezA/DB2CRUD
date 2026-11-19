@@ -268,14 +268,14 @@
    ],
    "indexes": [
     {
+     "name": "ix_products_recent",
      "columns": [
+      "published_at",
       "category_code"
      ]
     },
     {
-     "name": "ix_products_recent",
      "columns": [
-      "published_at",
       "category_code"
      ]
     }
@@ -554,11 +554,6 @@
    ],
    "uniques": [],
    "indexes": [
-    {
-     "columns": [
-      "order_id"
-     ]
-    },
     {
      "columns": [
       "product_id"
