@@ -1,0 +1,296 @@
+"""The files around the Swift code: Package.swift (FluentKit with the driver of the database, swift-nio and swift-log
+for the connection, swift-testing for the tests), the README, an example environment, .gitignore and
+crud-contract.json for CRUD2Controller. Mirrors web/src/core/generators/swift/project.ts."""
+
+import json
+
+from ..types import lines
+from .context import file_of, operation_name, service_type, stored_type, uses_times, writes_entities
+from .dtos import create_columns, create_dto, read_columns, read_dto, update_columns, update_type
+from .support import default_url, driver_of
+
+VERSIONS = {
+    "fluentKit": "1.57.0",
+    "postgres": "2.14.1",
+    "mysql": "4.8.0",
+    "sqlite": "4.9.0",
+    "nio": "2.105.0",
+    "postgresNio": "1.33.3",
+    "log": "1.17.2",
+}
+
+PACKAGES = {
+    "FluentPostgresDriver": {"name": "fluent-postgres-driver", "version": VERSIONS["postgres"]},
+    "FluentMySQLDriver": {"name": "fluent-mysql-driver", "version": VERSIONS["mysql"]},
+    "FluentSQLiteDriver": {"name": "fluent-sqlite-driver", "version": VERSIONS["sqlite"]},
+}
+
+
+def _tests(context: dict) -> bool:
+    return context["settings"]["tests"] != "none" and writes_entities(context)
+
+
+def _product(name: str, package: str) -> str:
+    return f'.product(name: "{name}", package: "{package}")'
+
+
+def package_file(context: dict) -> dict:
+    driver = driver_of(context)["module"]
+    driver_package = PACKAGES[driver]
+    postgres_times = context["settings"]["database"] == "postgresql" and uses_times(context)
+    module = context["module"]
+    test_dependencies = ", ".join(
+        [
+            f'"{module}"',
+            _product("FluentKit", "fluent-kit"),
+            _product("FluentSQL", "fluent-kit"),
+            _product(driver, driver_package["name"]),
+        ]
+    )
+    return {
+        "path": "Package.swift",
+        "content": lines(
+            "// swift-tools-version:6.0",
+            "import PackageDescription",
+            "",
+            "let package = Package(",
+            f'    name: "{context["settings"]["name"]}",',
+            "    platforms: [.macOS(.v13)],",
+            f'    products: [.library(name: "{module}", targets: ["{module}"])],',
+            "    dependencies: [",
+            f'        .package(url: "https://github.com/vapor/fluent-kit.git", from: "{VERSIONS["fluentKit"]}"),',
+            f'        .package(url: "https://github.com/vapor/{driver_package["name"]}.git", from: "{driver_package["version"]}"),',
+            f'        .package(url: "https://github.com/apple/swift-nio.git", from: "{VERSIONS["nio"]}"),',
+            f'        .package(url: "https://github.com/apple/swift-log.git", from: "{VERSIONS["log"]}"),',
+            # TimeOfDay says how PostgreSQL keeps it
+            postgres_times
+            and f'        .package(url: "https://github.com/vapor/postgres-nio.git", from: "{VERSIONS["postgresNio"]}"),',
+            "    ],",
+            "    targets: [",
+            "        .target(",
+            f'            name: "{module}",',
+            "            dependencies: [",
+            f"                {_product('FluentKit', 'fluent-kit')},",
+            f"                {_product('FluentSQL', 'fluent-kit')},",
+            f"                {_product(driver, driver_package['name'])},",
+            f"                {_product('NIOCore', 'swift-nio')},",
+            f"                {_product('NIOPosix', 'swift-nio')},",
+            f"                {_product('Logging', 'swift-log')},",
+            postgres_times and f"                {_product('PostgresNIO', 'postgres-nio')},",
+            "            ]",
+            "        ),",
+            _tests(context)
+            and [
+                "        .testTarget(",
+                f'            name: "{module}Tests",',
+                f"            dependencies: [{test_dependencies}]",
+                "        ),",
+            ],
+            "    ]",
+            ")",
+            "",
+        ),
+    }
+
+
+def env_example_file(context: dict) -> dict:
+    sqlite = context["settings"]["database"] == "sqlite"
+    return {
+        "path": ".env.example",
+        "content": lines(
+            "# Where the database is, and who connects",
+            f"DATABASE_URL={default_url(context)}",
+            "# The tests use SQLite in memory unless this names another database (it is emptied by the tests)"
+            if sqlite
+            else "# The database the tests use (it is emptied by the tests): one of the same kind as DATABASE_URL",
+            "# TEST_DATABASE_URL=",
+            "",
+        ),
+    }
+
+
+def gitignore_file() -> dict:
+    return {"path": ".gitignore", "content": lines(".build/", ".swiftpm/", ".env", "*.db", "")}
+
+
+LABELS = {
+    "transactions": {
+        "operation": "one transaction per service operation, committed when it ends",
+        "caller": "the caller owns the transaction: nothing commits",
+        "repository": "every repository write is committed at once",
+    },
+    "paging": {
+        "none": "lists return every row",
+        "offset": "lists return pages by offset and limit",
+        "cursor": "lists return pages after a key (cursor)",
+    },
+    "updates": {
+        "patch": "updates take a Patch per field: .absent, or set to a value that may be nil",
+        "optional": "updates take a double optional per field: nil when not sent, .some(nil) to empty it",
+        "full": "updates take every field that can change",
+        "partial": "",
+    },
+}
+
+
+def readme_file(context: dict) -> dict:
+    settings = context["settings"]
+    sqlite = settings["database"] == "sqlite"
+    module = context["module"]
+    if settings["entities"] == "missing":
+        entities = "written for the tables the input had no type for"
+    elif settings["entities"] == "all":
+        entities = "written for every table"
+    else:
+        entities = f"imported from `{settings['entitiesModule']}`"
+    if settings["services"]:
+        takes = "DTOs" if settings["serviceTypes"] == "dtos" else "the entities"
+        services = f"take and return {takes}; {LABELS['updates'][settings['updates']]}"
+    else:
+        services = "not written"
+    return {
+        "path": "README.md",
+        "content": lines(
+            f"# {settings['name']}",
+            "",
+            f"Data access layer generated by [DB2CRUD](https://github.com/RaulEstevezA/DB2CRUD) for a database that already exists: entities and Fluent {VERSIONS['fluentKit']} models, repositories and services, in Swift with async/await. It does not create or migrate the database, and it depends on no web framework.",
+            "",
+            "## Settings",
+            "",
+            f"- Database: {settings['database']}.",
+            f"- Entities: {entities}.",
+            f"- Services: {services}.",
+            f"- Transactions: {LABELS['transactions'][settings['transactions']]}.",
+            f"- Lists: {LABELS['paging'][settings['paging']]}.",
+            "",
+            "## Layout",
+            "",
+            "```text",
+            f"Sources/{module}/AppDatabase.swift   the connection of DATABASE_URL",
+            f"Sources/{module}/UnitOfWork.swift    the repositories of every table, and the transaction of each operation",
+            f"Sources/{module}/Errors.swift        DomainError: notFound, conflict, validationFailed; no HTTP codes",
+            [
+                f"Sources/{module}/Entities/          one entity and one Fluent model per table",
+                f"Sources/{module}/Repositories/      the repositories of each table",
+                settings["services"] and f"Sources/{module}/Services/          one service per table",
+            ]
+            if settings["architecture"] == "layer"
+            else f"Sources/{module}/<Table>/           entity, model, repositories and service of each table",
+            _tests(context)
+            and f"Tests/{module}Tests/            repositories against a database, services on the in-memory repositories",
+            "crud-contract.json                     what was written, for CRUD2Controller",
+            "```",
+            "",
+            "## Running the tests",
+            "",
+            "```bash",
+            "swift test                                  # SQLite in memory" if sqlite else None,
+            f'TEST_DATABASE_URL="{default_url(context)}" swift test   # a real, disposable database: it is emptied',
+            "```",
+            "",
+            "Look for `TODO` in the code: each one marks a decision the input did not settle.",
+            "",
+        ),
+    }
+
+
+def _type_of(column: dict) -> dict:
+    column_type = column["column"]["type"]
+    result = {"kind": column_type["kind"], "swift": stored_type(column)}
+    if column_type["kind"] == "text" and column_type.get("length") is not None:
+        result["length"] = column_type["length"]
+    return result
+
+
+def _fields(columns: list[dict], optional: bool) -> list[dict]:
+    return [
+        {"name": column["key"], "type": _type_of(column), "nullable": optional or column["column"]["nullable"]}
+        for column in columns
+    ]
+
+
+ERRORS_OF = {"NotFound": "notFound", "Conflict": "conflict", "ValidationFailed": "validation"}
+
+
+def contract_file(context: dict) -> dict:
+    dtos = context["settings"]["serviceTypes"] == "dtos"
+    module = context["module"]
+    types = []
+    # A Swift package is one module: a type is told by its name and its file
+    for info in context["tables"]:
+        types.append(
+            {
+                "name": info["entity"],
+                "module": module,
+                "file": file_of(context, info, "entity", info["entity"]),
+                "kind": "entity",
+                "fields": _fields(info["columns"], True),
+            }
+        )
+        writes = info["role"] == "entity" and info["service"]
+        if dtos and writes:
+            types.append(
+                {
+                    "name": create_dto(info),
+                    "module": module,
+                    "file": file_of(context, info, "dtos", create_dto(info)),
+                    "kind": "create",
+                    "fields": _fields(create_columns(info), True),
+                }
+            )
+        if writes:
+            types.append(
+                {
+                    "name": update_type(context, info),
+                    "module": module,
+                    "file": file_of(context, info, "dtos" if dtos else "service", update_type(context, info)),
+                    "kind": "update",
+                    "updates": context["settings"]["updates"],
+                    "fields": _fields(update_columns(info), True),
+                }
+            )
+        if dtos and info["service"]:
+            types.append(
+                {
+                    "name": read_dto(info),
+                    "module": module,
+                    "file": file_of(context, info, "dtos", read_dto(info)),
+                    "kind": "read",
+                    "fields": _fields(read_columns(info), False),
+                }
+            )
+    services = []
+    for info in context["tables"]:
+        if not info["service"]:
+            continue
+        operations = []
+        for operation in info["operations"]:
+            item = {"name": operation_name(context, operation), "kind": operation["kind"]}
+            if operation["columns"]:
+                item["by"] = operation["columns"]
+            if operation.get("through"):
+                item["through"] = operation["through"]
+            item["errors"] = [ERRORS_OF[error] for error in operation["errors"]]
+            operations.append(item)
+        services.append({"name": service_type(info), "module": module, "operations": operations})
+    contract = {
+        "format": "crud-contract",
+        "version": 1,
+        "stack": {
+            "language": "swift",
+            "orm": "fluent",
+            "database": context["settings"]["database"],
+            "execution": "async",
+        },
+        "transactions": context["settings"]["transactions"],
+        "paging": context["settings"]["paging"],
+        "types": types,
+        "errors": [
+            {"kind": "notFound", "name": "DomainError.notFound", "module": module},
+            {"kind": "conflict", "name": "DomainError.conflict", "module": module},
+            {"kind": "validation", "name": "DomainError.validationFailed", "module": module},
+        ],
+        "common": module,
+        "services": services,
+    }
+    return {"path": "crud-contract.json", "content": json.dumps(contract, indent=2, ensure_ascii=False) + "\n"}

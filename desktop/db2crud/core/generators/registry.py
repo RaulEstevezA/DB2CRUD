@@ -11,6 +11,7 @@ from .python.common.generator import python_generator
 from .python.django.index import DJANGO_ORM
 from .python.sqlalchemy.index import SQLALCHEMY_ORM
 from .rust.generator import RUST_GENERATOR
+from .swift.generator import SWIFT_GENERATOR
 from .typescript.common.generator import typescript_generator
 from .typescript.drizzle.index import DRIZZLE_ORM
 from .typescript.prisma.index import PRISMA_ORM
@@ -30,6 +31,7 @@ GENERATORS = [
     php_generator(ELOQUENT_ORM),
     KOTLIN_GENERATOR,
     RUST_GENERATOR,
+    SWIFT_GENERATOR,
 ]
 
 

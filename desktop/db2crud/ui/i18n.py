@@ -239,6 +239,7 @@ EN = SimpleNamespace(
         "php": "PHP",
         "kotlin": "Kotlin",
         "rust": "Rust",
+        "swift": "Swift",
     },
     database_label="Database",
     databases={
@@ -397,6 +398,7 @@ ES = SimpleNamespace(
         "php": "PHP",
         "kotlin": "Kotlin",
         "rust": "Rust",
+        "swift": "Swift",
     },
     database_label="Base de datos",
     databases={

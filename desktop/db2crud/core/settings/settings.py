@@ -141,6 +141,18 @@ STACKS = [
         # Option<Option<T>> is Rust's way of telling a field not sent from a field emptied
         "updates": ["patch", "optional", "full"],
     },
+    {
+        "language": "swift",
+        "orm": "fluent",
+        "label": "Fluent 1 (FluentKit)",
+        "databases": ["postgresql", "mysql", "mariadb", "sqlite"],
+        # Fluent's API is async/await
+        "execution": ["async"],
+        "errors": ["exceptions"],
+        "dtoKinds": ["struct"],
+        # T?? is Swift's way of telling a field not sent from a field emptied
+        "updates": ["patch", "optional", "full"],
+    },
 ]
 
 DEFAULT_SETTINGS = {
