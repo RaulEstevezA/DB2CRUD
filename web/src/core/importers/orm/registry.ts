@@ -5,9 +5,10 @@
  */
 import type { DbSchema } from '../../schema/types.ts'
 import { sqlalchemyReader } from './sqlalchemy.ts'
+import { sqlmodelReader } from './sqlmodel.ts'
 import type { OrmReader, SourceFile } from './types.ts'
 
-export const ORM_READERS: OrmReader[] = [sqlalchemyReader]
+export const ORM_READERS: OrmReader[] = [sqlalchemyReader, sqlmodelReader]
 
 /** The reader for these files, or null when none recognises them. */
 export function detectOrm(files: SourceFile[]): OrmReader | null {

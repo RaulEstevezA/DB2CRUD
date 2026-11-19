@@ -1,0 +1,169 @@
+{
+ "format": "db-schema",
+ "version": 1,
+ "dialect": null,
+ "source": {
+  "kind": "orm",
+  "format": "sqlmodel"
+ },
+ "tables": [
+  {
+   "name": "categories",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "BigInteger().with_variant(Integer(), \"sqlite\")",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false,
+     "generated": "identity"
+    },
+    {
+     "name": "name",
+     "type": {
+      "sql": "String(80)",
+      "kind": "text",
+      "length": 80
+     },
+     "nullable": false
+    },
+    {
+     "name": "parent_id",
+     "type": {
+      "sql": "BigInteger",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "parent_id"
+     ],
+     "references": {
+      "table": "categories",
+      "columns": [
+       "id"
+      ]
+     },
+     "attribute": "parent"
+    }
+   ],
+   "uniques": [],
+   "indexes": [
+    {
+     "columns": [
+      "parent_id"
+     ]
+    }
+   ],
+   "checks": [],
+   "origin": {
+    "line": 10,
+    "column": 1
+   },
+   "entity": "Category"
+  },
+  {
+   "name": "items",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "BigInteger().with_variant(Integer(), \"sqlite\")",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false,
+     "generated": "identity"
+    },
+    {
+     "name": "name",
+     "type": {
+      "sql": "String(120)",
+      "kind": "text",
+      "length": 120
+     },
+     "nullable": false
+    },
+    {
+     "name": "price",
+     "type": {
+      "sql": "Numeric(18, 2)",
+      "kind": "decimal",
+      "precision": 18,
+      "scale": 2
+     },
+     "nullable": false
+    },
+    {
+     "name": "supplier_email",
+     "type": {
+      "sql": "String(255)",
+      "kind": "text",
+      "length": 255
+     },
+     "nullable": false
+    },
+    {
+     "name": "stock",
+     "type": {
+      "sql": "Integer",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false
+    },
+    {
+     "name": "category_id",
+     "type": {
+      "sql": "BigInteger",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "category_id"
+     ],
+     "references": {
+      "table": "categories",
+      "columns": [
+       "id"
+      ]
+     },
+     "attribute": "category"
+    }
+   ],
+   "uniques": [],
+   "indexes": [
+    {
+     "columns": [
+      "category_id"
+     ]
+    }
+   ],
+   "checks": [],
+   "origin": {
+    "line": 20,
+    "column": 1
+   },
+   "entity": "Item"
+  }
+ ],
+ "enums": [],
+ "notes": []
+}

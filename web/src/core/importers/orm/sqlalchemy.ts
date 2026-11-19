@@ -3,6 +3,7 @@
  * `Column`, typed `Mapped[...]` or not, `__table_args__`), association tables (`Table(...)`), indexes declared
  * after the classes, Python enums and relationships. It reads the code Model2DB writes and the usual hand-written
  * forms; anything else goes to the notes. The code says nothing about the engine: the dialect stays unknown.
+ * SQLModel is SQLAlchemy underneath: its reader (sqlmodel.ts) is this one with another flavour of declarations.
  */
 import { checkOf } from '../../schema/checks.ts'
 import type { DbColumn, DbEnum, DbForeignKey, DbNote, DbSchema, DbTable, DbType } from '../../schema/types.ts'
@@ -41,9 +42,11 @@ function statementsOf(tokens: Token[], source: string): Statement[] {
   return statements
 }
 
-interface ClassDef {
+export interface ClassDef {
   name: string
   bases: string[]
+  /** `table=True` in `class Book(SQLModel, table=True)` */
+  keywords: Record<string, Expr>
   body: Statement[]
   line: number
 }
@@ -55,21 +58,34 @@ function classOf(statement: Statement): ClassDef | null {
   cursor.next()
   const name = cursor.next().value
   const bases: string[] = []
+  const keywords: Record<string, Expr> = {}
   if (cursor.eat('(')) {
     while (!cursor.done && !cursor.is(')')) {
-      const base = readExpression(cursor, statement.source)
-      const text = textOf(base)
-      if (text) bases.push(text)
+      if (cursor.isIdent() && cursor.is('=', 1)) {
+        const keyword = cursor.next().value
+        cursor.next()
+        keywords[keyword] = readExpression(cursor, statement.source)
+      } else {
+        const text = textOf(readExpression(cursor, statement.source))
+        if (text) bases.push(text)
+      }
       if (!cursor.eat(',')) break
     }
     cursor.eat(')')
   }
   cursor.eat(':')
-  return { name, bases, body: statementsOf(statement.tokens.slice(cursor.index), statement.source), line: statement.tokens[0].line }
+  const body = statementsOf(statement.tokens.slice(cursor.index), statement.source)
+  return { name, bases, keywords, body, line: statement.tokens[0].line }
+}
+
+interface Assignment {
+  name: string
+  annotation: string
+  value: Expr | null
 }
 
 /** `name: Annotation = value` or `name = value`: the parts of an assignment. */
-function assignmentOf(statement: Statement): { name: string; annotation: string; value: Expr | null } | null {
+function assignmentOf(statement: Statement): Assignment | null {
   const cursor = new Cursor(statement.tokens)
   if (!cursor.isIdent()) return null
   const name = cursor.next().value
@@ -81,6 +97,40 @@ function assignmentOf(statement: Statement): { name: string; annotation: string;
   }
   if (!cursor.eat('=')) return annotation ? { name, annotation, value: null } : null
   return { name, annotation, value: readExpression(cursor, statement.source) }
+}
+
+// Flavours of declarations
+
+type Call = Expr & { kind: 'call' }
+
+/** How a flavour of SQLAlchemy declares its tables, columns and relationships. */
+export interface Flavour {
+  format: string
+  /** The table a class maps, or null when it maps none */
+  tableOf(def: ClassDef, tablename: string | undefined): string | null
+  /** A column as the arguments of `mapped_column(...)` (`classic`: of `Column(...)`), or null for anything else.
+   * `value` is null for an attribute with only its annotation. */
+  columnOf(value: Expr | null, annotation: string): { call: Call; classic: boolean; annotation: string } | null
+  /** A relationship to another class, with its `foreign_keys`; null for anything else or one through a table */
+  relationshipOf(value: Expr | null): { call: Call; foreignKeys?: Expr } | null
+}
+
+const MAPPED_COLUMN: Call = { kind: 'call', callee: { kind: 'name', path: ['mapped_column'] }, args: [], named: {} }
+
+const SQLALCHEMY: Flavour = {
+  format: 'sqlalchemy',
+  tableOf: (_def, tablename) => tablename ?? null,
+  columnOf(value, annotation) {
+    // `published_at: Mapped[datetime | None]` is a column with nothing more than its annotation
+    if (value === null) return /^\s*Mapped\[/.test(annotation) ? { call: MAPPED_COLUMN, classic: false, annotation } : null
+    const callee = nameOf(value)
+    if (value.kind !== 'call' || (callee !== 'mapped_column' && callee !== 'Column')) return null
+    return { call: value, classic: callee === 'Column', annotation }
+  },
+  relationshipOf(value) {
+    if (value?.kind !== 'call' || nameOf(value) !== 'relationship' || value.named.secondary) return null
+    return { call: value, ...(value.named.foreign_keys ? { foreignKeys: value.named.foreign_keys } : {}) }
+  },
 }
 
 // Types
@@ -553,36 +603,62 @@ function finishKey(table: DbTable, reads: ColumnRead[]): void {
   }
 }
 
-function classTable(def: ClassDef, enums: Map<string, EnumClass>, notes: DbNote[], enumsUsed: EnumUse[]): MappedTable | null {
-  const assignments = def.body.map(assignmentOf)
-  const tablename = assignments.find((item) => item?.name === '__tablename__')
-  const name = stringOf(tablename?.value ?? undefined)
+/** The table a class maps, by its own `__tablename__` (a subclass of a table does not map it again). */
+function tableNameOf(def: ClassDef, flavour: Flavour): string | null {
+  const tablename = def.body.map(assignmentOf).find((item) => item?.name === '__tablename__')
+  return flavour.tableOf(def, stringOf(tablename?.value ?? undefined))
+}
+
+/** The attributes of a class and of the classes it inherits from in the files that map no table (mixins,
+ * SQLModel's base models), those of the bases first; an attribute declared again keeps its place and takes the new
+ * value. The columns of a base that is a table belong to that table. */
+function attributesOf(def: ClassDef, flavour: Flavour, classes: Map<string, ClassDef>, seen = new Set<string>()): Assignment[] {
+  seen.add(def.name)
+  const inherited = def.bases
+    .map((base) => classes.get(base.split('.').at(-1)!))
+    .filter((base): base is ClassDef => base !== undefined && !seen.has(base.name) && tableNameOf(base, flavour) === null)
+    .flatMap((base) => attributesOf(base, flavour, classes, seen))
+  const result: Assignment[] = []
+  for (const item of [...inherited, ...def.body.map(assignmentOf)]) {
+    if (!item) continue
+    const index = result.findIndex((other) => other.name === item.name)
+    if (index >= 0) result[index] = item
+    else result.push(item)
+  }
+  return result
+}
+
+function classTable(
+  def: ClassDef,
+  flavour: Flavour,
+  classes: Map<string, ClassDef>,
+  enums: Map<string, EnumClass>,
+  notes: DbNote[],
+  enumsUsed: EnumUse[],
+): MappedTable | null {
+  const name = tableNameOf(def, flavour)
   if (!name) return null
+  const assignments = attributesOf(def, flavour, classes)
   const mapped: MappedTable = { table: emptyTable(name, def.line), className: def.name, attributes: new Map(), keys: [], navigations: [] }
   mapped.table.entity = def.name
   const reads: ColumnRead[] = []
   let args: Expr | undefined
   for (const item of assignments) {
-    if (!item || item.name.startsWith('__')) {
-      if (item?.name === '__table_args__') args = item.value ?? undefined
+    if (item.name.startsWith('__')) {
+      if (item.name === '__table_args__') args = item.value ?? undefined
       continue
     }
-    // `published_at: Mapped[datetime | None]` is a column with nothing more than its annotation
-    const value: Expr =
-      item.value ??
-      (/^\s*Mapped\[/.test(item.annotation)
-        ? { kind: 'call', callee: { kind: 'name', path: ['mapped_column'] }, args: [], named: {} }
-        : { kind: 'other', text: '' })
-    const callee = nameOf(value)
-    if (value.kind === 'call' && (callee === 'mapped_column' || callee === 'Column')) {
-      const read = columnOf(value, item.name, item.annotation, callee === 'Column', enums, notes, name)
+    const column = flavour.columnOf(item.value, item.annotation)
+    const relationship = column ? null : flavour.relationshipOf(item.value)
+    if (column) {
+      const read = columnOf(column.call, item.name, column.annotation, column.classic, enums, notes, name)
       reads.push(read)
       addColumn(mapped, read, item.name, enumsUsed)
-    } else if (value.kind === 'call' && callee === 'relationship' && !value.named.secondary) {
-      const foreignKeys = value.named.foreign_keys
+    } else if (relationship) {
+      const foreignKeys = relationship.foreignKeys
       mapped.navigations.push({
         name: item.name,
-        target: targetOfRelationship(item.annotation, value),
+        target: targetOfRelationship(item.annotation, relationship.call),
         ...(foreignKeys
           ? { foreignKeys: stringOf(foreignKeys) ?? (foreignKeys.kind === 'list' ? textOf(foreignKeys.items[0]) : textOf(foreignKeys)) }
           : {}),
@@ -598,7 +674,7 @@ function classTable(def: ClassDef, enums: Map<string, EnumClass>, notes: DbNote[
 function targetOfRelationship(annotation: string, call: Expr & { kind: 'call' }): string {
   const named = stringOf(call.args[0]) ?? (call.args[0]?.kind === 'name' ? call.args[0].path.at(-1) : undefined)
   if (named) return named
-  const inner = (/Mapped\[(.*)\]/s.exec(annotation)?.[1] ?? '').replace(/\b(Optional|list|List|set|Set)\[|["'\]]|\|\s*None/g, '')
+  const inner = (/Mapped\[(.*)\]/s.exec(annotation)?.[1] ?? annotation).replace(/\b(Optional|list|List|set|Set)\[|["'\]]|\|\s*None/g, '')
   return /[A-Za-z_][A-Za-z0-9_]*/.exec(inner)?.[0] ?? ''
 }
 
@@ -723,7 +799,8 @@ function moduleIndex(call: Expr & { kind: 'call' }, tables: MappedTable[]): void
   else owner.table.indexes.push(index)
 }
 
-function readSqlAlchemy(files: SourceFile[]): DbSchema {
+/** The schema the models of these files declare, in this flavour of SQLAlchemy. */
+export function readDeclarative(files: SourceFile[], flavour: Flavour): DbSchema {
   const notes: DbNote[] = []
   const enums = new Map<string, EnumClass>()
   const modules = files.map((file) => statementsOf(tokenize(file.text, PYTHON_LEXER), file.text))
@@ -739,8 +816,9 @@ function readSqlAlchemy(files: SourceFile[]): DbSchema {
     }
   const tables: MappedTable[] = []
   const enumsUsed: EnumUse[] = []
+  const byName = new Map(classes.map((def) => [def.name, def]))
   for (const def of classes) {
-    const mapped = classTable(def, enums, notes, enumsUsed)
+    const mapped = classTable(def, flavour, byName, enums, notes, enumsUsed)
     if (mapped) tables.push(mapped)
   }
   const indexes: (Expr & { kind: 'call' })[] = []
@@ -766,7 +844,7 @@ function readSqlAlchemy(files: SourceFile[]): DbSchema {
     format: 'db-schema',
     version: 1,
     dialect: null,
-    source: { kind: 'orm', format: 'sqlalchemy' },
+    source: { kind: 'orm', format: flavour.format },
     tables: tables.map((item) => item.table),
     enums: enumList,
     notes,
@@ -782,5 +860,5 @@ export const sqlalchemyReader: OrmReader = {
     if (!/\b(from|import)\s+sqlalchemy\b/.test(text) || /\bfrom\s+sqlmodel\b/.test(text)) return 0
     return /\b(mapped_column|Column)\s*\(/.test(text) ? 1 : 0.5
   },
-  read: readSqlAlchemy,
+  read: (files) => readDeclarative(files, SQLALCHEMY),
 }

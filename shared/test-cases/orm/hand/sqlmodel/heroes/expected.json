@@ -1,0 +1,329 @@
+{
+ "format": "db-schema",
+ "version": 1,
+ "dialect": null,
+ "source": {
+  "kind": "orm",
+  "format": "sqlmodel"
+ },
+ "tables": [
+  {
+   "name": "heroteamlink",
+   "columns": [
+    {
+     "name": "team_id",
+     "type": {
+      "sql": "Integer",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false
+    },
+    {
+     "name": "hero_id",
+     "type": {
+      "sql": "Integer",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": [
+    "team_id",
+    "hero_id"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "team_id"
+     ],
+     "references": {
+      "table": "team",
+      "columns": [
+       "id"
+      ]
+     },
+     "onDelete": "cascade"
+    },
+    {
+     "columns": [
+      "hero_id"
+     ],
+     "references": {
+      "table": "hero",
+      "columns": [
+       "id"
+      ]
+     },
+     "onDelete": "cascade"
+    }
+   ],
+   "uniques": [],
+   "indexes": [],
+   "checks": [],
+   "origin": {
+    "line": 25,
+    "column": 1
+   },
+   "entity": "HeroTeamLink"
+  },
+  {
+   "name": "team",
+   "columns": [
+    {
+     "name": "name",
+     "type": {
+      "sql": "String(60)",
+      "kind": "text",
+      "length": 60
+     },
+     "nullable": false
+    },
+    {
+     "name": "headquarters",
+     "type": {
+      "sql": "String",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "id",
+     "type": {
+      "sql": "Integer",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false,
+     "generated": "identity"
+    },
+    {
+     "name": "budget",
+     "type": {
+      "sql": "Numeric(12, 2)",
+      "kind": "decimal",
+      "precision": 12,
+      "scale": 2
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": 0
+     }
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [],
+   "uniques": [],
+   "indexes": [
+    {
+     "columns": [
+      "name"
+     ]
+    }
+   ],
+   "checks": [],
+   "origin": {
+    "line": 35,
+    "column": 1
+   },
+   "entity": "Team"
+  },
+  {
+   "name": "hero",
+   "columns": [
+    {
+     "name": "name",
+     "type": {
+      "sql": "String",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "secret_name",
+     "type": {
+      "sql": "String",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "age",
+     "type": {
+      "sql": "Integer",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": true
+    },
+    {
+     "name": "created_at",
+     "type": {
+      "sql": "DateTime",
+      "kind": "datetime",
+      "timezone": false
+     },
+     "nullable": false,
+     "generated": "now"
+    },
+    {
+     "name": "updated_at",
+     "type": {
+      "sql": "DateTime",
+      "kind": "datetime",
+      "timezone": false
+     },
+     "nullable": true,
+     "generated": "onUpdateNow"
+    },
+    {
+     "name": "id",
+     "type": {
+      "sql": "Integer",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false,
+     "generated": "identity"
+    },
+    {
+     "name": "code",
+     "type": {
+      "sql": "Uuid",
+      "kind": "uuid"
+     },
+     "nullable": false,
+     "generated": "uuid"
+    },
+    {
+     "name": "power",
+     "type": {
+      "sql": "Enum(Power)",
+      "kind": "enum",
+      "name": "power"
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": "STRENGTH"
+     }
+    },
+    {
+     "name": "rating",
+     "type": {
+      "sql": "Float",
+      "kind": "float",
+      "bits": 64
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": 0.5
+     }
+    },
+    {
+     "name": "profile",
+     "type": {
+      "sql": "JSON",
+      "kind": "json"
+     },
+     "nullable": false
+    },
+    {
+     "name": "mentor_id",
+     "type": {
+      "sql": "Integer",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": true
+    },
+    {
+     "name": "retired_at",
+     "type": {
+      "sql": "DateTime(timezone=True)",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": true
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "mentor_id"
+     ],
+     "references": {
+      "table": "hero",
+      "columns": [
+       "id"
+      ]
+     },
+     "onDelete": "set null",
+     "attribute": "mentor"
+    }
+   ],
+   "uniques": [
+    {
+     "columns": [
+      "code"
+     ]
+    },
+    {
+     "columns": [
+      "name",
+      "secret_name"
+     ]
+    }
+   ],
+   "indexes": [
+    {
+     "columns": [
+      "name"
+     ]
+    },
+    {
+     "columns": [
+      "age"
+     ]
+    }
+   ],
+   "checks": [
+    {
+     "name": "ck_hero_age",
+     "sql": "age >= 0",
+     "parsed": {
+      "kind": "compare",
+      "column": "age",
+      "op": ">=",
+      "value": 0
+     }
+    }
+   ],
+   "origin": {
+    "line": 48,
+    "column": 1
+   },
+   "entity": "Hero"
+  }
+ ],
+ "enums": [
+  {
+   "name": "power",
+   "values": [
+    "FLIGHT",
+    "STRENGTH",
+    "SPEED"
+   ],
+   "storage": "native"
+  }
+ ],
+ "notes": []
+}

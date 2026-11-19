@@ -25,7 +25,7 @@ const { generate, findOutput } = await import(
 const { EXAMPLES } = await import(join(root, "web/src/examples/index.ts"));
 
 /** The ORMs DB2CRUD reads, in the order of the roadmap. */
-const ORMS = ["sqlalchemy"];
+const ORMS = ["sqlalchemy", "sqlmodel"];
 
 const out = join(root, "shared/test-cases/orm/model2db");
 rmSync(out, { recursive: true, force: true });

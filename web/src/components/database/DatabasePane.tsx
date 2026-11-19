@@ -1,6 +1,6 @@
 /**
  * Database pane: the database the code is generated for, pasted, opened or dropped, read in the browser and
- * never uploaded. It reads Model2DB projects and ORM code (SQLAlchemy so far); SQL DDL comes next (ROADMAP).
+ * never uploaded. It reads Model2DB projects and ORM code (SQLAlchemy and SQLModel so far); SQL DDL comes next (ROADMAP).
  * The footer says what was read or why the input cannot be read.
  */
 import type { LanguageSupport } from '@codemirror/language'
