@@ -1,0 +1,44 @@
+// Prisma schema written by Model2DB from Book. Review it, then run `npx prisma migrate dev --name init`.
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Genre {
+  novel
+  essay
+  poetry
+  science
+  @@map("genre")
+}
+
+model Author {
+  id    String @id(map: "pk_authors") @db.Uuid
+  name  String @db.VarChar(120)
+  email String?
+  born  DateTime? @db.Date
+  books Book[] @relation("Book_author")
+
+  @@map("authors")
+}
+
+// TODO: does the application read "Book" by author, ordered by published desc? Accept the query in the design to index it.
+model Book {
+  id        String @id(map: "pk_books") @db.Uuid
+  title     String @db.VarChar(200)
+  isbn      String
+  genre     Genre
+  pages     Int
+  published DateTime? @db.Date
+  available Boolean @default(true)
+  authorId  String @map("author_id") @db.Uuid
+  author    Author @relation("Book_author", fields: [authorId], references: [id])
+
+  @@index([authorId], map: "ix_books_author_id")
+  @@map("books")
+}

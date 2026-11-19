@@ -5,12 +5,13 @@
  */
 import type { DbSchema } from '../../schema/types.ts'
 import { djangoReader } from './django.ts'
+import { prismaReader } from './prisma.ts'
 import { sqlalchemyReader } from './sqlalchemy.ts'
 import { sqlmodelReader } from './sqlmodel.ts'
 import { tortoiseReader } from './tortoise.ts'
 import type { OrmReader, SourceFile } from './types.ts'
 
-export const ORM_READERS: OrmReader[] = [sqlalchemyReader, sqlmodelReader, djangoReader, tortoiseReader]
+export const ORM_READERS: OrmReader[] = [sqlalchemyReader, sqlmodelReader, djangoReader, tortoiseReader, prismaReader]
 
 /** The reader for these files, or null when none recognises them. */
 export function detectOrm(files: SourceFile[]): OrmReader | null {

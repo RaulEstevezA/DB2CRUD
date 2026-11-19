@@ -28,7 +28,8 @@ function isNamedArgument(cursor: Cursor, syntax: ExpressionSyntax): boolean {
   return cursor.isIdent() && cursor.is(syntax.named, 1) && !cursor.is('==', 1)
 }
 
-function readArguments(cursor: Cursor, source: string, syntax: ExpressionSyntax, close: string) {
+/** The arguments of a call, after its opening bracket and up to the closing one, which it reads too. */
+export function readArguments(cursor: Cursor, source: string, syntax: ExpressionSyntax, close: string) {
   const args: Expr[] = []
   const named: Record<string, Expr> = {}
   while (!cursor.done && !cursor.is(close)) {

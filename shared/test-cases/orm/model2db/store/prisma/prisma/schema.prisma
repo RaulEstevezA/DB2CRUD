@@ -1,0 +1,77 @@
+// Prisma schema written by Model2DB from Order. Review it, then run `npx prisma migrate dev --name init`.
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum OrderStatus {
+  pending
+  paid
+  shipped
+  cancelled
+  @@map("order_status")
+}
+
+model Customer {
+  id                BigInt @id(map: "pk_customers")
+  name              String
+  email             String
+  password          String
+  phone             String?
+  createdAt         DateTime @map("created_at") @db.Timestamptz
+  addressStreet     String @map("address_street")
+  addressCity       String @map("address_city")
+  addressPostalCode String @map("address_postal_code")
+  addressCountry    String @map("address_country")
+  orders            Order[] @relation("Order_customer")
+
+  @@map("customers")
+}
+
+model Product {
+  id          BigInt @id(map: "pk_products")
+  sku         String
+  name        String
+  description String?
+  price       Float
+  stock       Int
+  active      Boolean
+  orderLines  OrderLine[] @relation("OrderLine_product")
+
+  @@map("products")
+}
+
+model OrderLine {
+  id        BigInt @id(map: "pk_order_lines") @default(autoincrement())
+  quantity  Int
+  unitPrice Float @map("unit_price")
+  productId BigInt @map("product_id")
+  orderId   BigInt @map("order_id")
+  product   Product @relation("OrderLine_product", fields: [productId], references: [id])
+  order     Order @relation("OrderLine_order", fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([productId], map: "ix_order_lines_product_id")
+  @@index([orderId], map: "ix_order_lines_order_id")
+  @@map("order_lines")
+}
+
+// TODO: does the application read "Order" by customer, ordered by createdAt desc? Accept the query in the design to index it.
+model Order {
+  id         BigInt @id(map: "pk_orders")
+  status     OrderStatus
+  total      Float
+  notes      String?
+  createdAt  DateTime @map("created_at") @db.Timestamptz
+  updatedAt  DateTime @map("updated_at") @db.Timestamptz
+  customerId BigInt @map("customer_id")
+  customer   Customer @relation("Order_customer", fields: [customerId], references: [id])
+  lines      OrderLine[] @relation("OrderLine_order")
+
+  @@index([customerId], map: "ix_orders_customer_id")
+  @@map("orders")
+}

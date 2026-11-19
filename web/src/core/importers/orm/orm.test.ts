@@ -2,8 +2,8 @@
  * The ORM readers against shared/test-cases/orm/:
  * - model2db/<example>/<orm>/ holds the code Model2DB writes for each example project (scripts/orm-fixtures.mts):
  *   what the reader finds must be what the project says. The code may say more than the project (a length on
- *   the text of an enum); names of constraints, the text of types, navigation names and the difference between
- *   RESTRICT and NO ACTION do not count.
+ *   the text of an enum); names of constraints, the text of types, navigation names, the difference between
+ *   RESTRICT and NO ACTION and whether an enum is a type of the database or a CHECK do not count.
  * - hand/<orm>/<case>/ holds code written by hand.
  * Each folder keeps the schema read from its code in expected.json, which the desktop version must read too.
  *
@@ -16,6 +16,7 @@ import { describe, expect, it } from 'vitest'
 import { EXAMPLES } from '../../../examples/index.ts'
 import { readModel2DBProject } from '../../interop/model2db/read.ts'
 import type { DbSchema, DbType } from '../../schema/types.ts'
+import { checkOf } from '../../schema/checks.ts'
 import { validateDbSchema } from '../../schema/validate.ts'
 import { ORM_READERS, detectOrm, readOrmCode } from './registry.ts'
 
@@ -42,7 +43,24 @@ function readOk(folder: string): DbSchema {
 }
 
 /** What both inputs have to agree on; `project` tells which side may say less. */
-function comparable(schema: DbSchema, project?: DbSchema) {
+/** The same schema with every native enum kept as text and a CHECK of its values: both say a column takes one of a
+ * few values, and some ORMs can only write one of the two (Prisma has no CHECK). */
+function enumsAsChecks(schema: DbSchema): DbSchema {
+  const copy = structuredClone(schema)
+  for (const item of copy.enums) item.storage = 'check'
+  for (const table of copy.tables)
+    for (const column of table.columns) {
+      if (column.type.kind !== 'enum') continue
+      const values = copy.enums.find((item) => item.name === (column.type as { name: string }).name)?.values ?? []
+      column.type = { sql: '', kind: 'text' }
+      table.checks.push(checkOf(`${column.name} IN (${values.map((value) => `'${value}'`).join(', ')})`))
+    }
+  return copy
+}
+
+function comparable(original: DbSchema, originalProject?: DbSchema) {
+  const schema = enumsAsChecks(original)
+  const project = originalProject && enumsAsChecks(originalProject)
   const type = (value: DbType, other?: DbType): unknown => {
     const { sql: _sql, ...rest } = value
     if (rest.kind === 'array') return { ...rest, items: type(rest.items, other?.kind === 'array' ? other.items : undefined) }
@@ -140,15 +158,15 @@ describe('ORM code written by hand', () => {
 describe('ORM code written by DB2CRUD', () => {
   // The models of every shared project map their tables exactly: they read back as the schema they came from
   const outputs = resolve(process.cwd(), '../shared/test-cases/outputs')
-  const models: Record<string, (text: string) => boolean> = {
-    sqlalchemy: (text) => text.includes('__tablename__'),
-    django: (text) => text.includes('models.Model'),
+  const models: Record<string, (path: string, text: string) => boolean> = {
+    sqlalchemy: (path, text) => path.endsWith('.py') && text.includes('__tablename__'),
+    django: (path, text) => path.endsWith('.py') && text.includes('models.Model'),
   }
   for (const name of readdirSync(outputs).filter((item) => models[item.split('-')[0]]))
     it(name, () => {
       const project = JSON.parse(readFileSync(join(outputs, name), 'utf8')) as { schema: DbSchema; files: Record<string, string> }
       const files = Object.entries(project.files)
-        .filter(([path, text]) => path.endsWith('.py') && models[name.split('-')[0]](text))
+        .filter(([path, text]) => models[name.split('-')[0]](path, text))
         .map(([path, text]) => ({ name: path, text }))
       const read = readOrmCode(files)
       if (!read.ok) throw new Error(read.error)

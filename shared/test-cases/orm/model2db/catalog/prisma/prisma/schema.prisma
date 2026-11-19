@@ -1,0 +1,35 @@
+// Prisma schema written by Model2DB from Item. Review it, then run `npx prisma migrate dev --name init`.
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Category {
+  id         BigInt @id @default(autoincrement())
+  name       String @db.VarChar(80)
+  parentId   BigInt @map("parent_id")
+  parent     Category @relation("Category_parent", fields: [parentId], references: [id])
+  categories Category[] @relation("Category_parent")
+  items      Item[] @relation("Item_category")
+
+  @@index([parentId], map: "ix_categories_parent_id")
+  @@map("categories")
+}
+
+model Item {
+  id            BigInt @id @default(autoincrement())
+  name          String @db.VarChar(120)
+  price         Decimal @db.Decimal(18, 2)
+  supplierEmail String @map("supplier_email") @db.VarChar(255)
+  stock         Int
+  categoryId    BigInt @map("category_id")
+  category      Category @relation("Item_category", fields: [categoryId], references: [id])
+
+  @@index([categoryId], map: "ix_items_category_id")
+  @@map("items")
+}
