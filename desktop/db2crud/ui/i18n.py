@@ -98,6 +98,8 @@ def _read_error_en(error: str, path: str | None = None) -> str:
         "unreadableInput": "The models inside the project cannot be read.",
         "noModels": "The project has no models.",
         "notRelational": "The project is for a database without tables (MongoDB, Redis, Cassandra…): not supported yet.",
+        "unknownInput": "It is neither a Model2DB project nor ORM code it can read (SQLAlchemy so far).",
+        "noTables": "The code declares no table: each class needs its __tablename__.",
     }[error]
 
 
@@ -110,6 +112,8 @@ def _read_error_es(error: str, path: str | None = None) -> str:
         "unreadableInput": "No se pueden leer los modelos del proyecto.",
         "noModels": "El proyecto no tiene modelos.",
         "notRelational": "El proyecto es para una base de datos sin tablas (MongoDB, Redis, Cassandra…): todavía no se admite.",
+        "unknownInput": "No es un proyecto de Model2DB ni código ORM que sepa leer (por ahora, SQLAlchemy).",
+        "noTables": "El código no declara ninguna tabla: cada clase necesita su __tablename__.",
     }[error]
 
 
@@ -180,20 +184,20 @@ EN = SimpleNamespace(
     },
     confirm_replace="Your current database and the decisions made on it will be replaced. Continue?",
     input_label="Database to read",
-    input_placeholder="Paste a Model2DB project (the .model2db.json file Model2DB saves) or drop it here…",
+    input_placeholder="Paste a Model2DB project (the .model2db.json file Model2DB saves) or SQLAlchemy models, or drop the file here…",
     editor_keys="Tab indents. To leave the editor with the keyboard, press Escape and then Tab.",
     open_file="Open",
     open_dialog="Open a Model2DB project",
-    project_files="Model2DB projects",
+    project_files="Model2DB projects and ORM code",
     all_files="All files",
     clear="Clear",
     file_too_large=lambda name: f"“{name}” is larger than 10 MB.",
     file_error=lambda name: f"“{name}” could not be read.",
-    input_empty="Open or paste a Model2DB project to start. SQL DDL and ORM code are coming.",
+    input_empty="Open or paste a Model2DB project or SQLAlchemy models to start. SQL DDL and the other ORMs are coming.",
     warnings_count=lambda count: f"{_en_number(count)} {_plural(count, 'note', 'notes')}",
     read_error=_read_error_en,
     database_summary=lambda source, dialect, tables, columns: (
-        f"Model2DB ({source}) · {dialect or '?'} · {_en_number(tables)} {_plural(tables, 'table', 'tables')} · "
+        f"{source} · {dialect or 'any database'} · {_en_number(tables)} {_plural(tables, 'table', 'tables')} · "
         f"{_en_number(columns)} {_plural(columns, 'column', 'columns')}"
     ),
     undo="Undo",
@@ -339,20 +343,20 @@ ES = SimpleNamespace(
     },
     confirm_replace="Se sustituirán tu base de datos actual y las decisiones tomadas sobre ella. ¿Continuar?",
     input_label="Base de datos que leer",
-    input_placeholder="Pega un proyecto de Model2DB (el archivo .model2db.json que guarda Model2DB) o suéltalo aquí…",
+    input_placeholder="Pega un proyecto de Model2DB (el archivo .model2db.json que guarda Model2DB) o modelos de SQLAlchemy, o suelta aquí el archivo…",
     editor_keys="Tab sangra. Para salir del editor con el teclado, pulsa Escape y después Tab.",
     open_file="Abrir",
     open_dialog="Abrir un proyecto de Model2DB",
-    project_files="Proyectos de Model2DB",
+    project_files="Proyectos de Model2DB y código ORM",
     all_files="Todos los archivos",
     clear="Limpiar",
     file_too_large=lambda name: f"«{name}» ocupa más de 10 MB.",
     file_error=lambda name: f"No se ha podido leer «{name}».",
-    input_empty="Abre o pega un proyecto de Model2DB para empezar. El DDL de SQL y el código ORM llegarán después.",
+    input_empty="Abre o pega un proyecto de Model2DB o modelos de SQLAlchemy para empezar. El DDL de SQL y los demás ORM llegarán después.",
     warnings_count=lambda count: f"{_es_number(count)} {_plural(count, 'nota', 'notas')}",
     read_error=_read_error_es,
     database_summary=lambda source, dialect, tables, columns: (
-        f"Model2DB ({source}) · {dialect or '?'} · {_es_number(tables)} {_plural(tables, 'tabla', 'tablas')} · "
+        f"{source} · {dialect or 'cualquier base de datos'} · {_es_number(tables)} {_plural(tables, 'tabla', 'tablas')} · "
         f"{_es_number(columns)} {_plural(columns, 'columna', 'columnas')}"
     ),
     undo="Deshacer",

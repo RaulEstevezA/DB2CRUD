@@ -13,7 +13,7 @@ from .lexer import Cursor, LexerConfig, StringRule
 from .raw import MISSING, TypeTable, parse_declarations, parse_literal, raw
 from .type_syntax import TypeSyntax, read_type
 
-_LEXER = LexerConfig(
+PYTHON_LEXER = LexerConfig(
     line_comments=("#",),
     strings=(
         StringRule('"""', '"""', True, True),
@@ -622,7 +622,7 @@ def _detect(text: str) -> float:
 
 def _parse(text: str, options: dict | None = None) -> dict:
     return parse_declarations(
-        text, _LEXER, lambda source, tokens: _Reader(source, tokens).run(), PYTHON_TYPES, "python", "python"
+        text, PYTHON_LEXER, lambda source, tokens: _Reader(source, tokens).run(), PYTHON_TYPES, "python", "python"
     )
 
 

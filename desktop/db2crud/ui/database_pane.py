@@ -1,5 +1,6 @@
 """The database the code is generated for: editor, open, clear and the reading status. Read on this computer and never
-sent anywhere. Today it reads Model2DB projects. Mirrors web/src/components/database/DatabasePane.tsx."""
+sent anywhere. It reads Model2DB projects and ORM code (SQLAlchemy so far). Mirrors
+web/src/components/database/DatabasePane.tsx."""
 
 from pathlib import Path
 
@@ -7,7 +8,7 @@ from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtWidgets import QFileDialog, QLabel, QPushButton
 
 from ..core.js import trim
-from ..workspace import column_count
+from ..workspace import column_count, input_language, source_label
 from .code_view import CodeView
 from .i18n import I18n
 from .pane import Pane
@@ -59,6 +60,7 @@ class DatabasePane(Pane):
             self.header.addWidget(button)
 
         self.editor = InputEditor("json")
+        self._language = "json"
         self.editor.file_dropped.connect(self.open_file)
         self.editor.textChanged.connect(self._typed)
         self.body.addWidget(self.editor, 1)
@@ -81,7 +83,9 @@ class DatabasePane(Pane):
 
     def choose_file(self) -> None:
         t = self._i18n.t
-        path, _ = QFileDialog.getOpenFileName(self, t.open_dialog, "", f"{t.project_files} (*.json);;{t.all_files} (*)")
+        path, _ = QFileDialog.getOpenFileName(
+            self, t.open_dialog, "", f"{t.project_files} (*.json *.py);;{t.all_files} (*)"
+        )
         if path:
             self.open_file(path)
 
@@ -138,6 +142,11 @@ class DatabasePane(Pane):
         self.editor.setPlaceholderText(t.input_placeholder)
         self.editor.setAccessibleName(t.input_label)
         self.editor.setAccessibleDescription(t.editor_keys)
+        # A Model2DB project is JSON; ORM code is in the language of its ORM
+        language = input_language(state)
+        if language != self._language:
+            self._language = language
+            self.editor.set_language(language)
         # Text being typed is not replaced: it reaches the session once typing pauses
         if self.editor.toPlainText() != state["text"] and not self._timer.isActive():
             self.editor.setPlainText(state["text"])
@@ -153,7 +162,7 @@ class DatabasePane(Pane):
         else:
             schema = read["schema"]
             text = t.database_summary(
-                schema["source"]["format"], schema["dialect"], len(schema["tables"]), column_count(schema)
+                source_label(schema), schema["dialect"], len(schema["tables"]), column_count(schema)
             )
             if schema["notes"]:
                 text += f" · {t.warnings_count(len(schema['notes']))}"
