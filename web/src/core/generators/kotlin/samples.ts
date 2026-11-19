@@ -72,6 +72,10 @@ export function sampleValue(column: ColumnInfo, checks: DbCheck[], enums: DbEnum
         imports.add('java.time.ZoneOffset')
         return 'OffsetDateTime.of(2026, 1, n % 28 + 1, 12, 0, 0, 0, ZoneOffset.UTC)'
       }
+      if (column.kt === 'Instant') {
+        imports.add('java.time.LocalDateTime', 'java.time.ZoneOffset')
+        return 'LocalDateTime.of(2026, 1, n % 28 + 1, 12, 0).toInstant(ZoneOffset.UTC)'
+      }
       return 'LocalDateTime.of(2026, 1, n % 28 + 1, 12, 0)'
     case 'uuid':
       return 'UUID.fromString("00000000-0000-4000-8000-%012d".format(n))'

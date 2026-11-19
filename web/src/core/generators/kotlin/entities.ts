@@ -52,7 +52,7 @@ export const usesEnumColumns = (context: Context) =>
 const quoteSql = (text: string) => `'${text.replace(/'/g, "''")}'`
 
 /** The Exposed call that registers a column, without its modifiers. */
-function columnCall(context: Context, info: TableInfo, column: ColumnInfo, imports: KtImports): string {
+function columnCall(context: Context, column: ColumnInfo, imports: KtImports): string {
   const db = column.column
   const name = ktString(db.name)
   const type: DbType = db.type
@@ -80,9 +80,11 @@ function columnCall(context: Context, info: TableInfo, column: ColumnInfo, impor
     case 'time':
       imports.add(`${JAVA_TIME}.time`)
       return `time(${name})`
-    case 'datetime':
-      imports.add(`${JAVA_TIME}.${type.timezone ? 'timestampWithTimeZone' : 'datetime'}`)
-      return `${type.timezone ? 'timestampWithTimeZone' : 'datetime'}(${name})`
+    case 'datetime': {
+      const call = !type.timezone ? 'datetime' : context.settings.database === 'mariadb' ? 'timestamp' : 'timestampWithTimeZone'
+      imports.add(`${JAVA_TIME}.${call}`)
+      return `${call}(${name})`
+    }
     case 'uuid':
       imports.add(`${EXPOSED}.java.javaUUID`)
       return `javaUUID(${name})`
@@ -124,6 +126,7 @@ export function ktLiteral(column: ColumnInfo, value: string | number | boolean):
     case 'LocalTime':
     case 'LocalDateTime':
     case 'OffsetDateTime':
+    case 'Instant':
       return `${column.kt}.parse(${ktString(text)})`
     case 'UUID':
       return `UUID.fromString(${ktString(text)})`
@@ -136,6 +139,7 @@ const NOW: Record<string, string> = {
   LocalDate: 'CurrentDate',
   LocalDateTime: 'CurrentDateTime',
   OffsetDateTime: 'CurrentTimestampWithTimeZone',
+  Instant: 'CurrentTimestamp',
 }
 
 /** The modifiers of a column: what the database fills, its default, null. */
@@ -185,7 +189,7 @@ export function tableObjectFile(context: Context, info: TableInfo): GeneratedFil
   const { table } = info
   const columnLines = info.columns.flatMap((column) => {
     const todo: string[] = []
-    const call = columnCall(context, info, column, imports)
+    const call = columnCall(context, column, imports)
     const mods = modifiers(context, info, column, imports, todo)
     return [...todo, `val ${column.prop} = ${call}${mods}`]
   })

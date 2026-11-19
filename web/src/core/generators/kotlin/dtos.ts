@@ -50,6 +50,8 @@ interface Field {
 
 /** A class whose fields are the parameters of its constructor. */
 function dataClass(name: string, doc: string, fields: Field[], data: boolean): string[] {
+  // A data class needs a field: without one (a table where nothing can change) it is a plain class
+  if (fields.length === 0) return [`/** ${doc} */`, `class ${name}`]
   return [
     `/** ${doc} */`,
     `${data ? 'data ' : ''}class ${name}(`,

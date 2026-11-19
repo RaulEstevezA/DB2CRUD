@@ -175,6 +175,7 @@ function exposedBody(context: Context, info: TableInfo, method: Method, imports:
         // After the key (a, b): a greater, or a the same and b greater
         imports.add(`${CORE}.greater`)
         if (info.key.length > 1) imports.add(`${CORE}.eq`, `${CORE}.or`)
+        for (const column of info.key) if (column.ktImport) imports.add(column.ktImport)
         const value = (column: ColumnInfo, index: number) => `(after[${index}] as ${column.kt})`
         const after = info.key
           .map((column, index) =>
@@ -273,7 +274,7 @@ function exposedHelpers(context: Context, info: TableInfo, imports: KtImports): 
 
 // In memory
 
-function memoryFill(info: TableInfo, column: ColumnInfo, imports: KtImports): string | null {
+function memoryFill(column: ColumnInfo, imports: KtImports): string | null {
   const db = column.column
   const target = `entity.${column.prop}`
   if (db.generated === 'identity') {
@@ -286,7 +287,7 @@ function memoryFill(info: TableInfo, column: ColumnInfo, imports: KtImports): st
   }
   if (db.generated === 'now' || db.generated === 'onUpdateNow') {
     if (column.ktImport) imports.add(column.ktImport)
-    return ['LocalDate', 'LocalTime', 'LocalDateTime', 'OffsetDateTime'].includes(column.kt)
+    return ['LocalDate', 'LocalTime', 'LocalDateTime', 'OffsetDateTime', 'Instant'].includes(column.kt)
       ? `${target} = ${target} ?: ${column.kt}.now()`
       : null
   }
@@ -390,7 +391,7 @@ export function repositoryFiles(context: Context, info: TableInfo): GeneratedFil
   if (context.settings.memoryRepositories) {
     const imports = new KtImports(pkg).add(entityClass)
     const methods = repositoryMethods(context, info, imports)
-    const fills = info.columns.map((column) => memoryFill(info, column, imports)).filter((line): line is string => line !== null)
+    const fills = info.columns.map((column) => memoryFill(column, imports)).filter((line): line is string => line !== null)
     const bodies = methods.flatMap((item) => {
       const body = memoryBody(context, info, item)
       return block(item, item.query.kind === 'insert' ? [...fills, ...body] : body, 'override ', false)

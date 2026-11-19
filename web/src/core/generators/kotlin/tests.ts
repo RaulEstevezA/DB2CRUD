@@ -409,13 +409,16 @@ function serviceTests(context: Context, info: TableInfo, imports: KtImports): st
         ]),
       )
       if (update && own.length === 1 && own.every((column) => !info.key.includes(column) && !column.generated)) {
+        // The value it already has; Optional.of takes it only as known to be set
+        const kept =
+          context.settings.updates === 'optional' && own[0].column.nullable ? `${member('created', own[0])}!!` : member('created', own[0])
         tests.push(
           test('keepsItsOwnUniqueValue', [
             ...open,
             ...parentsFirst,
             ...row('row', 1),
             `val created = service.${name}(${input('row')})`,
-            `val updated = service.${operationName(context, update)}(${keyOf('created')}, ${changes(own[0], `created.${own[0].prop}`, 'row')}${version('created')})`,
+            `val updated = service.${operationName(context, update)}(${keyOf('created')}, ${changes(own[0], kept, 'row')}${version('created')})`,
             `assertEquals(created.${own[0].prop}, updated.${own[0].prop})`,
           ]),
         )

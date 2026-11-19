@@ -202,3 +202,21 @@ describe('the C# generator', () => {
     )
   })
 })
+
+describe('the Kotlin generator', () => {
+  const kotlin = { language: 'kotlin', orm: 'exposed' } as const
+
+  it('keeps a timestamp with a time zone as an Instant on MariaDB, which Exposed gives no zone', () => {
+    expect(file('src/main/kotlin/app/entities/OrderTable.kt', { ...kotlin, database: 'mariadb' })).toContain('timestamp("placed_at")')
+    expect(file('src/main/kotlin/app/entities/Order.kt', { ...kotlin, database: 'mariadb' })).toContain('var placedAt: Instant? = null')
+    expect(file('src/main/kotlin/app/entities/Order.kt', { ...kotlin, database: 'postgresql' })).toContain(
+      'var placedAt: OffsetDateTime? = null',
+    )
+  })
+
+  it('imports the types of the key a cursor is read after', () => {
+    const repository = file('src/main/kotlin/app/repositories/SqlAuditLogRepository.kt', { ...kotlin, paging: 'cursor' })
+    expect(repository).toContain('(after[0] as OffsetDateTime)')
+    expect(repository).toContain('import java.time.OffsetDateTime')
+  })
+})

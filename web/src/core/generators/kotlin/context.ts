@@ -73,8 +73,11 @@ export interface Context {
   base: string
 }
 
-/** The Kotlin type of a database value, and what to import for it. */
-export function ktType(type: DbType): { kt: string; ktImport: string | null } {
+/**
+ * The Kotlin type of a database value, and what to import for it. Exposed has no timestamp with a time zone on
+ * MariaDB: there such a value is an Instant, the point in time it stands for.
+ */
+export function ktType(type: DbType, database: string): { kt: string; ktImport: string | null } {
   switch (type.kind) {
     case 'integer':
       return { kt: type.bits === 16 ? 'Short' : type.bits === 64 ? 'Long' : 'Int', ktImport: null }
@@ -89,6 +92,7 @@ export function ktType(type: DbType): { kt: string; ktImport: string | null } {
     case 'time':
       return { kt: 'LocalTime', ktImport: 'java.time.LocalTime' }
     case 'datetime':
+      if (type.timezone && database === 'mariadb') return { kt: 'Instant', ktImport: 'java.time.Instant' }
       return type.timezone
         ? { kt: 'OffsetDateTime', ktImport: 'java.time.OffsetDateTime' }
         : { kt: 'LocalDateTime', ktImport: 'java.time.LocalDateTime' }
@@ -118,13 +122,13 @@ function blockingLinks(schema: DbSchema, table: DbTable): ChildLink[] {
 
 const included = <T extends { include: { value: boolean } }>(items: T[]) => items.filter((item) => item.include.value)
 
-function columnInfo(column: DbColumn): ColumnInfo {
+function columnInfo(column: DbColumn, database: string): ColumnInfo {
   const generated = column.generated !== undefined && column.generated !== 'onUpdateNow'
   return {
     column,
     prop: memberName(column.name),
     key: toCamelCase(column.name) || 'value',
-    ...ktType(column.type),
+    ...ktType(column.type, database),
     generated,
     required: !column.nullable && column.default === undefined && !generated,
   }
@@ -135,7 +139,7 @@ function tableInfo(schema: DbSchema, design: CrudDesign, settings: ProjectSettin
   const repository = findRepository(design, table.name)!
   const service = settings.services ? (findService(design, table.name) ?? null) : null
   const entity = typeName(repository.entity)
-  const columns = table.columns.map(columnInfo)
+  const columns = table.columns.map((column) => columnInfo(column, settings.database))
   const byName = (name: string) => columns.find((info) => info.column.name === name)!
   // A table without a primary key is read only; its rows are told apart by all their columns
   const key = (table.primaryKey ?? table.columns.map((column) => column.name)).map(byName)
