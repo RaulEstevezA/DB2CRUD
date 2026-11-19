@@ -395,6 +395,38 @@ export const VERIFIED: readonly VerifiedStack[] = [
     scenarios: ['exposed-sqlite-defaults', 'exposed-sqlite-no-interfaces-services-tests', 'exposed-sqlite-repositories-only'],
     date: '2026-11-19',
   },
+  {
+    language: 'rust',
+    orm: 'seaorm',
+    database: 'postgresql',
+    execution: 'async',
+    scenarios: ['seaorm-postgresql-dtos-patch', 'seaorm-postgresql-repository-commits'],
+    date: '2026-11-19',
+  },
+  {
+    language: 'rust',
+    orm: 'seaorm',
+    database: 'mysql',
+    execution: 'async',
+    scenarios: ['seaorm-mysql-decided-cursor-by-table-optional'],
+    date: '2026-11-19',
+  },
+  {
+    language: 'rust',
+    orm: 'seaorm',
+    database: 'mariadb',
+    execution: 'async',
+    scenarios: ['seaorm-mariadb-caller-dtos-full'],
+    date: '2026-11-19',
+  },
+  {
+    language: 'rust',
+    orm: 'seaorm',
+    database: 'sqlite',
+    execution: 'async',
+    scenarios: ['seaorm-sqlite-defaults', 'seaorm-sqlite-no-interfaces-services-tests', 'seaorm-sqlite-repositories-only'],
+    date: '2026-11-19',
+  },
 ]
 
 /** Whether this stack has passed the verification. */
