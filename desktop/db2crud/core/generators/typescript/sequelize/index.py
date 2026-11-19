@@ -214,6 +214,8 @@ def _test_database(context: dict) -> list[dict]:
         "/** Drops every table of the test database. */",
         "async function empty(db: Db): Promise<void> {",
         *EMPTY[dialect],
+        # The other schemas too, with the rows of their tables
+        *(f"""  await db.sequelize.query('DROP SCHEMA IF EXISTS "{name}" CASCADE')""" for name in pg_schemas(context)),
         "}",
         "",
         "/** Opens the test database, empty, before every test of the file that calls it, and closes it after each; returns the unit of work of the running test. */",
