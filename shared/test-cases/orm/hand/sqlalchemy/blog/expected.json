@@ -1,0 +1,502 @@
+{
+ "format": "db-schema",
+ "version": 1,
+ "dialect": null,
+ "source": {
+  "kind": "orm",
+  "format": "sqlalchemy"
+ },
+ "tables": [
+  {
+   "name": "users",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "Integer",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false,
+     "generated": "identity"
+    },
+    {
+     "name": "email",
+     "type": {
+      "sql": "String(200)",
+      "kind": "text",
+      "length": 200
+     },
+     "nullable": false
+    },
+    {
+     "name": "nick",
+     "type": {
+      "sql": "String(30)",
+      "kind": "text",
+      "length": 30
+     },
+     "nullable": false,
+     "comment": "Shown next to posts",
+     "attribute": "nickname"
+    },
+    {
+     "name": "role",
+     "type": {
+      "sql": "sa.Enum(Role, name=\"user_role\")",
+      "kind": "enum",
+      "name": "user_role"
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": "READER"
+     }
+    },
+    {
+     "name": "created",
+     "type": {
+      "sql": "sa.DateTime(timezone=True)",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": false,
+     "generated": "now"
+    },
+    {
+     "name": "updated",
+     "type": {
+      "sql": "sa.DateTime(timezone=True)",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": true,
+     "generated": "onUpdateNow"
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [],
+   "uniques": [
+    {
+     "name": "uq_users_email",
+     "columns": [
+      "email"
+     ]
+    }
+   ],
+   "indexes": [],
+   "checks": [
+    {
+     "name": "ck_users_nickname",
+     "sql": "char_length(nick) >= 3",
+     "parsed": {
+      "kind": "length",
+      "column": "nick",
+      "op": ">=",
+      "value": 3
+     }
+    }
+   ],
+   "origin": {
+    "line": 55,
+    "column": 1
+   },
+   "entity": "User",
+   "schema": "blog",
+   "comment": "People who write or read"
+  },
+  {
+   "name": "tags",
+   "columns": [
+    {
+     "name": "name",
+     "type": {
+      "sql": "String(40)",
+      "kind": "text",
+      "length": 40
+     },
+     "nullable": false
+    },
+    {
+     "name": "color",
+     "type": {
+      "sql": "sa.CHAR(7)",
+      "kind": "text",
+      "length": 7,
+      "fixed": true
+     },
+     "nullable": true
+    }
+   ],
+   "primaryKey": [
+    "name"
+   ],
+   "foreignKeys": [],
+   "uniques": [],
+   "indexes": [],
+   "checks": [],
+   "origin": {
+    "line": 73,
+    "column": 1
+   },
+   "entity": "Tag",
+   "schema": "blog"
+  },
+  {
+   "name": "posts",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "UUID(as_uuid=True)",
+      "kind": "uuid"
+     },
+     "nullable": false,
+     "generated": "uuid"
+    },
+    {
+     "name": "author_id",
+     "type": {
+      "sql": "Integer",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": true
+    },
+    {
+     "name": "title",
+     "type": {
+      "sql": "String(160)",
+      "kind": "text",
+      "length": 160
+     },
+     "nullable": false
+    },
+    {
+     "name": "slug",
+     "type": {
+      "sql": "String(160)",
+      "kind": "text",
+      "length": 160
+     },
+     "nullable": false
+    },
+    {
+     "name": "body",
+     "type": {
+      "sql": "sa.Text",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "score",
+     "type": {
+      "sql": "Numeric(5, 2)",
+      "kind": "decimal",
+      "precision": 5,
+      "scale": 2
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": 0
+     }
+    },
+    {
+     "name": "visibility",
+     "type": {
+      "sql": "sa.Enum(Visibility, native_enum=False, create_constraint=True, length=10)",
+      "kind": "text",
+      "length": 10
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": "PUBLIC"
+     }
+    },
+    {
+     "name": "metadata",
+     "type": {
+      "sql": "JSONB",
+      "kind": "json"
+     },
+     "nullable": false,
+     "default": {
+      "kind": "expression",
+      "sql": "'{}'::jsonb"
+     },
+     "attribute": "metadata_"
+    },
+    {
+     "name": "published_at",
+     "type": {
+      "sql": "DateTime",
+      "kind": "datetime",
+      "timezone": false
+     },
+     "nullable": true
+    },
+    {
+     "name": "words",
+     "type": {
+      "sql": "Integer",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false,
+     "generated": {
+      "computed": "length(body) / 5"
+     }
+    },
+    {
+     "name": "pinned",
+     "type": {
+      "sql": "Boolean",
+      "kind": "boolean"
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": false
+     }
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "author_id"
+     ],
+     "references": {
+      "table": "users",
+      "schema": "blog",
+      "columns": [
+       "id"
+      ]
+     },
+     "onDelete": "set null",
+     "inverse": "posts",
+     "attribute": "author"
+    }
+   ],
+   "uniques": [
+    {
+     "columns": [
+      "slug"
+     ]
+    }
+   ],
+   "indexes": [
+    {
+     "name": "ix_posts_author_published",
+     "columns": [
+      "author_id",
+      "published_at"
+     ]
+    }
+   ],
+   "checks": [
+    {
+     "sql": "visibility IN ('PUBLIC', 'PRIVATE')",
+     "parsed": {
+      "kind": "in",
+      "column": "visibility",
+      "values": [
+       "PUBLIC",
+       "PRIVATE"
+      ]
+     }
+    },
+    {
+     "sql": "score >= 0",
+     "parsed": {
+      "kind": "compare",
+      "column": "score",
+      "op": ">=",
+      "value": 0
+     }
+    }
+   ],
+   "origin": {
+    "line": 81,
+    "column": 1
+   },
+   "entity": "Post",
+   "schema": "blog"
+  },
+  {
+   "name": "revisions",
+   "columns": [
+    {
+     "name": "post_id",
+     "type": {
+      "sql": "sa.Uuid",
+      "kind": "uuid"
+     },
+     "nullable": false
+    },
+    {
+     "name": "number",
+     "type": {
+      "sql": "sa.SmallInteger",
+      "kind": "integer",
+      "bits": 16
+     },
+     "nullable": false
+    },
+    {
+     "name": "body",
+     "type": {
+      "sql": "sa.Text",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "saved_at",
+     "type": {
+      "sql": "DateTime",
+      "kind": "datetime",
+      "timezone": false
+     },
+     "nullable": false,
+     "generated": "now"
+    },
+    {
+     "name": "tags",
+     "type": {
+      "sql": "sa.ARRAY(String(40))",
+      "kind": "array",
+      "items": {
+       "sql": "String(40)",
+       "kind": "text",
+       "length": 40
+      }
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": "{}"
+     }
+    }
+   ],
+   "primaryKey": [
+    "post_id",
+    "number"
+   ],
+   "foreignKeys": [
+    {
+     "name": "fk_revisions_post",
+     "columns": [
+      "post_id"
+     ],
+     "references": {
+      "table": "posts",
+      "schema": "blog",
+      "columns": [
+       "id"
+      ]
+     },
+     "onDelete": "cascade"
+    }
+   ],
+   "uniques": [],
+   "indexes": [],
+   "checks": [],
+   "origin": {
+    "line": 107,
+    "column": 1
+   },
+   "entity": "Revision",
+   "schema": "blog"
+  },
+  {
+   "name": "post_tags",
+   "columns": [
+    {
+     "name": "post_id",
+     "type": {
+      "sql": "UUID(as_uuid=True)",
+      "kind": "uuid"
+     },
+     "nullable": false
+    },
+    {
+     "name": "tag_name",
+     "type": {
+      "sql": "String(40)",
+      "kind": "text",
+      "length": 40
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": [
+    "post_id",
+    "tag_name"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "post_id"
+     ],
+     "references": {
+      "table": "posts",
+      "schema": "blog",
+      "columns": [
+       "id"
+      ]
+     },
+     "onDelete": "cascade"
+    },
+    {
+     "columns": [
+      "tag_name"
+     ],
+     "references": {
+      "table": "tags",
+      "schema": "blog",
+      "columns": [
+       "name"
+      ]
+     },
+     "onUpdate": "cascade"
+    }
+   ],
+   "uniques": [],
+   "indexes": [],
+   "checks": [],
+   "origin": {
+    "line": 46,
+    "column": 1
+   },
+   "schema": "blog"
+  }
+ ],
+ "enums": [
+  {
+   "name": "user_role",
+   "values": [
+    "READER",
+    "AUTHOR",
+    "ADMIN"
+   ],
+   "storage": "native"
+  },
+  {
+   "name": "visibility",
+   "values": [
+    "PUBLIC",
+    "PRIVATE"
+   ],
+   "storage": "check"
+  }
+ ],
+ "notes": []
+}

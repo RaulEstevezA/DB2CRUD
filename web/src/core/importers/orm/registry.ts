@@ -1,0 +1,35 @@
+/**
+ * The readers of ORM code, and the choice of one for the files given: each reader says how sure it is that the
+ * files are its ORM's, and the surest one reads them. A reader never fails on code it does not understand: it
+ * keeps what it can and leaves notes; only code with no table at all is refused.
+ */
+import type { DbSchema } from '../../schema/types.ts'
+import { sqlalchemyReader } from './sqlalchemy.ts'
+import type { OrmReader, SourceFile } from './types.ts'
+
+export const ORM_READERS: OrmReader[] = [sqlalchemyReader]
+
+/** The reader for these files, or null when none recognises them. */
+export function detectOrm(files: SourceFile[]): OrmReader | null {
+  let best: OrmReader | null = null
+  let score = 0
+  for (const reader of ORM_READERS) {
+    const found = reader.detect(files)
+    if (found > score) {
+      best = reader
+      score = found
+    }
+  }
+  return best
+}
+
+export type OrmReadResult = { ok: true; schema: DbSchema; reader: OrmReader } | { ok: false; error: 'unknownOrm' | 'noTables' }
+
+/** The schema the ORM code of these files declares. */
+export function readOrmCode(files: SourceFile[]): OrmReadResult {
+  const reader = detectOrm(files)
+  if (!reader) return { ok: false, error: 'unknownOrm' }
+  const schema = reader.read(files)
+  if (schema.tables.length === 0) return { ok: false, error: 'noTables' }
+  return { ok: true, schema, reader }
+}
