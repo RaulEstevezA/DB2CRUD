@@ -117,6 +117,17 @@ STACKS = [
         "dtoKinds": ["readonly", "class"],
         "updates": ["patch", "partial", "full"],
     },
+    {
+        "language": "kotlin",
+        "orm": "exposed",
+        "label": "Exposed 1.6",
+        "databases": ["postgresql", "mysql", "mariadb", "sqlite"],
+        # Exposed's JDBC transactions block
+        "execution": ["sync"],
+        "errors": ["exceptions"],
+        "dtoKinds": ["data", "class"],
+        "updates": ["patch", "optional", "full"],
+    },
 ]
 
 DEFAULT_SETTINGS = {

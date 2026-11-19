@@ -3,6 +3,7 @@
 from ..settings.settings import normalize_settings
 from .csharp.generator import CSHARP_GENERATOR
 from .java.generator import JAVA_GENERATOR
+from .kotlin.generator import KOTLIN_GENERATOR
 from .php.common.generator import php_generator
 from .php.doctrine.index import DOCTRINE_ORM
 from .php.eloquent.index import ELOQUENT_ORM
@@ -26,6 +27,7 @@ GENERATORS = [
     CSHARP_GENERATOR,
     php_generator(DOCTRINE_ORM),
     php_generator(ELOQUENT_ORM),
+    KOTLIN_GENERATOR,
 ]
 
 
