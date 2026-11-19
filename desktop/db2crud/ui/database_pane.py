@@ -1,5 +1,5 @@
 """The database the code is generated for: editor, open, clear and the reading status. Read on this computer and never
-sent anywhere. It reads Model2DB projects and ORM code (SQLAlchemy and SQLModel so far). Mirrors
+sent anywhere. It reads Model2DB projects and ORM code (SQLAlchemy, SQLModel and Django so far). Mirrors
 web/src/components/database/DatabasePane.tsx."""
 
 from pathlib import Path

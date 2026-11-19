@@ -5,11 +5,12 @@ web/src/core/importers/orm/registry.ts.
 
 A result is {"ok": True, "schema", "reader"} or {"ok": False, "error": "unknownOrm" | "noTables"}."""
 
+from .django import DJANGO_READER
 from .sqlalchemy import SQLALCHEMY_READER
 from .sqlmodel import SQLMODEL_READER
 from .types import OrmReader
 
-ORM_READERS: list[OrmReader] = [SQLALCHEMY_READER, SQLMODEL_READER]
+ORM_READERS: list[OrmReader] = [SQLALCHEMY_READER, SQLMODEL_READER, DJANGO_READER]
 
 
 def detect_orm(files: list[dict]) -> OrmReader | None:
