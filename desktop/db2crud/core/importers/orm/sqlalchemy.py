@@ -1,10 +1,13 @@
 """Reads SQLAlchemy models into the physical schema: declarative classes (`__tablename__`, `mapped_column` or
 `Column`, typed `Mapped[...]` or not, `__table_args__`), association tables (`Table(...)`), indexes declared after
 the classes, Python enums and relationships. It reads the code Model2DB writes and the usual hand-written forms;
-anything else goes to the notes. The code says nothing about the engine: the dialect stays unknown. Mirrors
+anything else goes to the notes. The code says nothing about the engine: the dialect stays unknown. SQLModel is
+SQLAlchemy underneath: its reader (sqlmodel.py) is this one with another flavour of declarations. Mirrors
 web/src/core/importers/orm/sqlalchemy.ts."""
 
 import re
+from collections.abc import Callable
+from dataclasses import dataclass
 
 from ...js import coalesce, is_number, js_string, number, number_text, trim
 from ...model.naming import to_snake_case
@@ -57,11 +60,18 @@ def _class_of(statement: dict) -> dict | None:
     cursor.next()
     name = cursor.next().value
     bases: list[str] = []
+    # `table=True` in `class Book(SQLModel, table=True)`
+    keywords: dict = {}
     if cursor.eat("("):
         while not cursor.done and not cursor.is_(")"):
-            text = text_of(read_expression(cursor, statement["source"]))
-            if text:
-                bases.append(text)
+            if cursor.is_ident() and cursor.is_("=", 1):
+                keyword = cursor.next().value
+                cursor.next()
+                keywords[keyword] = read_expression(cursor, statement["source"])
+            else:
+                text = text_of(read_expression(cursor, statement["source"]))
+                if text:
+                    bases.append(text)
             if not cursor.eat(","):
                 break
         cursor.eat(")")
@@ -69,6 +79,7 @@ def _class_of(statement: dict) -> dict | None:
     return {
         "name": name,
         "bases": bases,
+        "keywords": keywords,
         "body": _statements_of(statement["tokens"][cursor.index :], statement["source"]),
         "line": statement["tokens"][0].line,
     }
@@ -89,6 +100,54 @@ def _assignment_of(statement: dict) -> dict | None:
         return {"name": name, "annotation": annotation, "value": None} if annotation else None
     return {"name": name, "annotation": annotation, "value": read_expression(cursor, statement["source"])}
 
+
+# Flavours of declarations
+
+
+@dataclass(frozen=True)
+class Flavour:
+    """How a flavour of SQLAlchemy declares its tables, columns and relationships."""
+
+    format: str
+    # The table a class maps (given the class and its __tablename__), or None when it maps none
+    table_of: Callable[[dict, str | None], str | None]
+    # A column as the arguments of `mapped_column(...)`: {call, classic (of `Column(...)`), annotation}, or None for
+    # anything else. The value is None for an attribute with only its annotation.
+    column_of: Callable[[dict | None, str], dict | None]
+    # A relationship to another class: {call, foreignKeys?}; None for anything else or one through a table
+    relationship_of: Callable[[dict | None], dict | None]
+
+
+_MAPPED_COLUMN = {"kind": "call", "callee": {"kind": "name", "path": ["mapped_column"]}, "args": [], "named": {}}
+
+
+def _sqlalchemy_column(value: dict | None, annotation: str) -> dict | None:
+    # `published_at: Mapped[datetime | None]` is a column with nothing more than its annotation
+    if value is None:
+        return (
+            {"call": _MAPPED_COLUMN, "classic": False, "annotation": annotation}
+            if re.match(r"\s*Mapped\[", annotation)
+            else None
+        )
+    callee = name_of(value)
+    if value["kind"] != "call" or callee not in ("mapped_column", "Column"):
+        return None
+    return {"call": value, "classic": callee == "Column", "annotation": annotation}
+
+
+def _sqlalchemy_relationship(value: dict | None) -> dict | None:
+    if value is None or value["kind"] != "call" or name_of(value) != "relationship" or "secondary" in value["named"]:
+        return None
+    foreign_keys = value["named"].get("foreign_keys")
+    return {"call": value, **({"foreignKeys": foreign_keys} if foreign_keys is not None else {})}
+
+
+_SQLALCHEMY = Flavour(
+    format="sqlalchemy",
+    table_of=lambda _definition, tablename: tablename,
+    column_of=_sqlalchemy_column,
+    relationship_of=_sqlalchemy_relationship,
+)
 
 # Types
 
@@ -575,36 +634,65 @@ def _finish_key(table: dict, reads: list[dict]) -> None:
             column["generated"] = "identity"
 
 
-_MAPPED_COLUMN = {"kind": "call", "callee": {"kind": "name", "path": ["mapped_column"]}, "args": [], "named": {}}
+def _table_name_of(definition: dict, flavour: Flavour) -> str | None:
+    """The table a class maps, by its own `__tablename__` (a subclass of a table does not map it again)."""
+    tablename = next(
+        (item for item in map(_assignment_of, definition["body"]) if item and item["name"] == "__tablename__"), None
+    )
+    return flavour.table_of(definition, string_of(tablename["value"] if tablename else None))
 
 
-def _class_table(definition: dict, enums: dict, notes: list, enums_used: list) -> dict | None:
-    assignments = [_assignment_of(statement) for statement in definition["body"]]
-    tablename = next((item for item in assignments if item and item["name"] == "__tablename__"), None)
-    name = string_of(tablename["value"] if tablename else None)
+def _attributes_of(definition: dict, flavour: Flavour, classes: dict, seen: set | None = None) -> list[dict]:
+    """The attributes of a class and of the classes it inherits from in the files that map no table (mixins,
+    SQLModel's base models), those of the bases first; an attribute declared again keeps its place and takes the new
+    value. The columns of a base that is a table belong to that table."""
+    seen = set() if seen is None else seen
+    seen.add(definition["name"])
+    inherited: list[dict] = []
+    for base_name in definition["bases"]:
+        base = classes.get(base_name.split(".")[-1])
+        if base is not None and base["name"] not in seen and _table_name_of(base, flavour) is None:
+            inherited += _attributes_of(base, flavour, classes, seen)
+    result: list[dict] = []
+    for item in [*inherited, *map(_assignment_of, definition["body"])]:
+        if not item:
+            continue
+        index = next((position for position, other in enumerate(result) if other["name"] == item["name"]), -1)
+        if index >= 0:
+            result[index] = item
+        else:
+            result.append(item)
+    return result
+
+
+def _class_table(
+    definition: dict, flavour: Flavour, classes: dict, enums: dict, notes: list, enums_used: list
+) -> dict | None:
+    name = _table_name_of(definition, flavour)
     if not name:
         return None
+    assignments = _attributes_of(definition, flavour, classes)
     mapped = _mapped(_empty_table(name, definition["line"]), definition["name"])
     mapped["table"]["entity"] = definition["name"]
     reads: list[dict] = []
     table_args = None
     for item in assignments:
-        if not item or item["name"].startswith("__"):
-            if item and item["name"] == "__table_args__":
+        if item["name"].startswith("__"):
+            if item["name"] == "__table_args__":
                 table_args = item["value"]
             continue
-        # `published_at: Mapped[datetime | None]` is a column with nothing more than its annotation
-        value = item["value"]
-        if value is None:
-            value = _MAPPED_COLUMN if re.match(r"\s*Mapped\[", item["annotation"]) else {"kind": "other", "text": ""}
-        callee = name_of(value)
-        if value["kind"] == "call" and callee in ("mapped_column", "Column"):
-            read = _column_of(value, item["name"], item["annotation"], callee == "Column", enums, notes, name)
+        column = flavour.column_of(item["value"], item["annotation"])
+        relationship = None if column else flavour.relationship_of(item["value"])
+        if column:
+            read = _column_of(column["call"], item["name"], column["annotation"], column["classic"], enums, notes, name)
             reads.append(read)
             _add_column(mapped, read, item["name"], enums_used)
-        elif value["kind"] == "call" and callee == "relationship" and "secondary" not in value["named"]:
-            foreign_keys = value["named"].get("foreign_keys")
-            navigation = {"name": item["name"], "target": _target_of_relationship(item["annotation"], value)}
+        elif relationship:
+            foreign_keys = relationship.get("foreignKeys")
+            navigation = {
+                "name": item["name"],
+                "target": _target_of_relationship(item["annotation"], relationship["call"]),
+            }
             if foreign_keys is not None:
                 navigation["foreignKeys"] = coalesce(
                     string_of(foreign_keys),
@@ -628,7 +716,7 @@ def _target_of_relationship(annotation: str, call: dict) -> str:
     if named:
         return named
     match = re.search(r"Mapped\[(.*)\]", annotation, re.S)
-    inner = re.sub(r"\b(Optional|list|List|set|Set)\[|[\"'\]]|\|\s*None", "", match.group(1) if match else "")
+    inner = re.sub(r"\b(Optional|list|List|set|Set)\[|[\"'\]]|\|\s*None", "", match.group(1) if match else annotation)
     found = re.search(r"[A-Za-z_][A-Za-z0-9_]*", inner)
     return found.group(0) if found else ""
 
@@ -794,7 +882,8 @@ def _module_index(call: dict, tables: list[dict]) -> None:
         owner["table"]["indexes"].append(index)
 
 
-def _read_sqlalchemy(files: list[dict]) -> dict:
+def read_declarative(files: list[dict], flavour: Flavour) -> dict:
+    """The schema the models of these files declare, in this flavour of SQLAlchemy."""
     notes: list = []
     enums: dict = {}
     modules = [_statements_of(tokenize(file["text"], PYTHON_LEXER), file["text"]) for file in files]
@@ -812,8 +901,9 @@ def _read_sqlalchemy(files: list[dict]) -> dict:
                 classes.append(definition)
     tables: list[dict] = []
     enums_used: list[dict] = []
+    by_name = {definition["name"]: definition for definition in classes}
     for definition in classes:
-        mapped = _class_table(definition, enums, notes, enums_used)
+        mapped = _class_table(definition, flavour, by_name, enums, notes, enums_used)
         if mapped:
             tables.append(mapped)
     indexes: list[dict] = []
@@ -851,7 +941,7 @@ def _read_sqlalchemy(files: list[dict]) -> dict:
         "format": "db-schema",
         "version": 1,
         "dialect": None,
-        "source": {"kind": "orm", "format": "sqlalchemy"},
+        "source": {"kind": "orm", "format": flavour.format},
         "tables": [mapped["table"] for mapped in tables],
         "enums": enum_list,
         "notes": notes,
@@ -866,5 +956,9 @@ def _detect(files: list[dict]) -> float:
 
 
 SQLALCHEMY_READER = OrmReader(
-    id="sqlalchemy", label="SQLAlchemy", language="python", detect=_detect, read=_read_sqlalchemy
+    id="sqlalchemy",
+    label="SQLAlchemy",
+    language="python",
+    detect=_detect,
+    read=lambda files: read_declarative(files, _SQLALCHEMY),
 )
