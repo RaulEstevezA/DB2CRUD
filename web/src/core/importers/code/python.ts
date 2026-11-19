@@ -19,7 +19,7 @@ import {
 } from './raw.ts'
 import { readType, type TypeSyntax } from './typeSyntax.ts'
 
-const LEXER: LexerConfig = {
+export const PYTHON_LEXER: LexerConfig = {
   lineComments: ['#'],
   blockComments: [],
   strings: [
@@ -548,7 +548,7 @@ export const pythonParser: InputParser = {
     if (text.trim() === '') return failure('empty')
     let tokens: Token[]
     try {
-      tokens = tokenize(text, LEXER)
+      tokens = tokenize(text, PYTHON_LEXER)
     } catch (error) {
       if (error instanceof LexError) return failure(error.code, positionAt(text, error.index))
       throw error
