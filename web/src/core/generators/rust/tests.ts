@@ -601,13 +601,14 @@ export function testFiles(context: Context): GeneratedFile[] {
       })
     }
     if ((tests === 'all' || tests === 'services') && info.service !== null) {
-      const uses = new RsUses().add('std::sync::Arc', 'super::factories')
-      uses.add(memory ? `${UNIT_OF_WORK(context)}::MemoryUnitOfWork` : 'super::database')
+      const uses = new RsUses().add('std::sync::Arc')
+      if (memory) uses.add(`${UNIT_OF_WORK(context)}::MemoryUnitOfWork`)
       const blocks = serviceTests(context, info, uses)
       if (blocks.length === 0) continue
       const all = blocks.flat().join('\n')
-      // The factories are named only when a test makes rows
-      if (!/factories::/.test(all)) uses.add('super::database')
+      // The factories and the test database, when the tests name them
+      if (all.includes('factories::')) uses.add('super::factories')
+      if (all.includes('database::')) uses.add('super::database')
       const dtosHelper = context.settings.serviceTypes === 'dtos' && /create_of\(/.test(all)
       if (dtosHelper) uses.add(entityPath)
       const helper = dtosHelper ? createOfHelper(context, info, uses) : []
