@@ -8,7 +8,7 @@
 import type { WorkspacePart } from '../app/workspaceParts.ts'
 import type { Confidence, Reason } from '../core/decisions/decision.ts'
 import type { ChildrenPolicy, OperationCheck, OperationDesign, PolicyDecisionKind, QueryKind, TableRole } from '../core/crud/types.ts'
-import type { Model2DBReadError } from '../core/interop/model2db/read.ts'
+import type { DatabaseReadError } from '../app/workspace.ts'
 import type { Dialect } from '../core/schema/types.ts'
 import type {
   Architecture,
@@ -72,15 +72,15 @@ const en = {
   confirmReplace: 'Your current database and the decisions made on it will be replaced. Continue?',
 
   inputLabel: 'Database to read',
-  inputPlaceholder: 'Paste a Model2DB project (the .model2db.json file Model2DB saves) or drop it here…',
+  inputPlaceholder: 'Paste a Model2DB project (the .model2db.json file Model2DB saves) or SQLAlchemy models, or drop the file here…',
   openFile: 'Open',
   clear: 'Clear',
   dropFile: 'Drop the file to open it',
   fileTooLarge: (name: string) => `“${name}” is larger than 10 MB.`,
   fileError: (name: string) => `“${name}” could not be read.`,
-  inputEmpty: 'Paste or open a Model2DB project to start. SQL DDL and ORM code are coming.',
+  inputEmpty: 'Paste or open a Model2DB project or SQLAlchemy models to start. SQL DDL and the other ORMs are coming.',
   warningsCount: (count: number) => `${en$(count)} ${plural(count, 'note', 'notes')}`,
-  readError: (error: Model2DBReadError, path?: string): string =>
+  readError: (error: DatabaseReadError, path?: string): string =>
     ({
       notJson: 'It is not JSON: paste the .model2db.json file Model2DB saves.',
       notProject: 'It is not a Model2DB project.',
@@ -89,9 +89,11 @@ const en = {
       unreadableInput: 'The models inside the project cannot be read.',
       noModels: 'The project has no models.',
       notRelational: 'The project is for a database without tables (MongoDB, Redis, Cassandra…): not supported yet.',
+      unknownInput: 'It is neither a Model2DB project nor ORM code it can read (SQLAlchemy so far).',
+      noTables: 'The code declares no table: each class needs its __tablename__.',
     })[error],
   databaseSummary: (source: string, dialect: string | null, tables: number, columns: number) =>
-    `Model2DB (${source}) · ${dialect ?? '?'} · ${en$(tables)} ${plural(tables, 'table', 'tables')} · ${en$(columns)} ${plural(columns, 'column', 'columns')}`,
+    `${source} · ${dialect ?? 'any database'} · ${en$(tables)} ${plural(tables, 'table', 'tables')} · ${en$(columns)} ${plural(columns, 'column', 'columns')}`,
   // Design pane
   undo: 'Undo',
   redo: 'Redo',
@@ -317,13 +319,14 @@ const es: Messages = {
   confirmReplace: 'Se sustituirán tu base de datos actual y las decisiones tomadas sobre ella. ¿Continuar?',
 
   inputLabel: 'Base de datos que leer',
-  inputPlaceholder: 'Pega un proyecto de Model2DB (el archivo .model2db.json que guarda Model2DB) o suéltalo aquí…',
+  inputPlaceholder:
+    'Pega un proyecto de Model2DB (el archivo .model2db.json que guarda Model2DB) o modelos de SQLAlchemy, o suelta aquí el archivo…',
   openFile: 'Abrir',
   clear: 'Limpiar',
   dropFile: 'Suelta el archivo para abrirlo',
   fileTooLarge: (name) => `«${name}» ocupa más de 10 MB.`,
   fileError: (name) => `No se ha podido leer «${name}».`,
-  inputEmpty: 'Pega o abre un proyecto de Model2DB para empezar. El DDL de SQL y el código ORM llegarán después.',
+  inputEmpty: 'Pega o abre un proyecto de Model2DB o modelos de SQLAlchemy para empezar. El DDL de SQL y los demás ORM llegarán después.',
   warningsCount: (count) => `${es$(count)} ${plural(count, 'nota', 'notas')}`,
   readError: (error, path) =>
     ({
@@ -334,9 +337,11 @@ const es: Messages = {
       unreadableInput: 'No se pueden leer los modelos del proyecto.',
       noModels: 'El proyecto no tiene modelos.',
       notRelational: 'El proyecto es para una base de datos sin tablas (MongoDB, Redis, Cassandra…): todavía no se admite.',
+      unknownInput: 'No es un proyecto de Model2DB ni código ORM que sepa leer (por ahora, SQLAlchemy).',
+      noTables: 'El código no declara ninguna tabla: cada clase necesita su __tablename__.',
     })[error],
   databaseSummary: (source, dialect, tables, columns) =>
-    `Model2DB (${source}) · ${dialect ?? '?'} · ${es$(tables)} ${plural(tables, 'tabla', 'tablas')} · ${es$(columns)} ${plural(columns, 'columna', 'columnas')}`,
+    `${source} · ${dialect ?? 'cualquier base de datos'} · ${es$(tables)} ${plural(tables, 'tabla', 'tablas')} · ${es$(columns)} ${plural(columns, 'columna', 'columnas')}`,
   undo: 'Deshacer',
   redo: 'Rehacer',
   reset: 'Restablecer',

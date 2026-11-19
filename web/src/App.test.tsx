@@ -85,7 +85,7 @@ describe('App', () => {
     renderApp()
     fireEvent.click(screen.getByRole('button', { name: 'Online shop' }))
     fireEvent.click(screen.getByRole('button', { name: 'Clear' }))
-    expect(screen.getByText(/Paste or open a Model2DB project to start/)).toBeTruthy()
+    expect(screen.getByText(/Paste or open a Model2DB project or SQLAlchemy models to start/)).toBeTruthy()
   })
 
   it('changes the language of the page and stores it for the whole site', () => {
