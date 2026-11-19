@@ -9,6 +9,7 @@ import { normalizeSettings, type ProjectSettings } from '../settings/settings.ts
 import { csharpGenerator } from './csharp/generator.ts'
 import { javaGenerator } from './java/generator.ts'
 import { kotlinGenerator } from './kotlin/generator.ts'
+import { rustGenerator } from './rust/generator.ts'
 import { phpGenerator } from './php/common/generator.ts'
 import { doctrineOrm } from './php/doctrine/index.ts'
 import { eloquentOrm } from './php/eloquent/index.ts'
@@ -34,6 +35,7 @@ export const GENERATORS: readonly Generator[] = [
   phpGenerator(doctrineOrm),
   phpGenerator(eloquentOrm),
   kotlinGenerator,
+  rustGenerator,
 ]
 
 export function findGenerator(settings: Pick<ProjectSettings, 'language' | 'orm'>): Generator | undefined {

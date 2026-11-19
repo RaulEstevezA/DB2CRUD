@@ -150,10 +150,15 @@ const en = {
   // Project pane
   projectName: 'Project name',
   stackLabel: 'Language and ORM',
-  languages: { python: 'Python', typescript: 'TypeScript', java: 'Java', csharp: 'C#', php: 'PHP', kotlin: 'Kotlin' } satisfies Record<
-    LanguageId,
-    string
-  >,
+  languages: {
+    python: 'Python',
+    typescript: 'TypeScript',
+    java: 'Java',
+    csharp: 'C#',
+    php: 'PHP',
+    kotlin: 'Kotlin',
+    rust: 'Rust',
+  } satisfies Record<LanguageId, string>,
   databaseLabel: 'Database',
   databases: {
     postgresql: 'PostgreSQL',
@@ -185,6 +190,7 @@ const en = {
     record: 'Records',
     readonly: 'Readonly classes',
     data: 'Data classes',
+    struct: 'Structs',
   } satisfies Record<DtoKind, string>,
   updatesLabel: 'Updates take',
   updatesModes: {
@@ -386,7 +392,7 @@ const es: Messages = {
   },
   projectName: 'Nombre del proyecto',
   stackLabel: 'Lenguaje y ORM',
-  languages: { python: 'Python', typescript: 'TypeScript', java: 'Java', csharp: 'C#', php: 'PHP', kotlin: 'Kotlin' },
+  languages: { python: 'Python', typescript: 'TypeScript', java: 'Java', csharp: 'C#', php: 'PHP', kotlin: 'Kotlin', rust: 'Rust' },
   databaseLabel: 'Base de datos',
   databases: { postgresql: 'PostgreSQL', mysql: 'MySQL', mariadb: 'MariaDB', sqlite: 'SQLite', sqlserver: 'SQL Server', oracle: 'Oracle' },
   executionLabel: 'Código',
@@ -408,6 +414,7 @@ const es: Messages = {
     record: 'Records',
     readonly: 'Clases readonly',
     data: 'Data classes',
+    struct: 'Structs',
   },
   updatesLabel: 'Las actualizaciones reciben',
   updatesModes: {

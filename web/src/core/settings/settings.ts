@@ -9,9 +9,20 @@
  */
 import type { Dialect } from '../schema/types.ts'
 
-export type LanguageId = 'python' | 'typescript' | 'java' | 'csharp' | 'php' | 'kotlin'
+export type LanguageId = 'python' | 'typescript' | 'java' | 'csharp' | 'php' | 'kotlin' | 'rust'
 export type OrmId =
-  'sqlalchemy' | 'django' | 'typeorm' | 'prisma' | 'drizzle' | 'sequelize' | 'jpa' | 'efcore' | 'doctrine' | 'eloquent' | 'exposed'
+  | 'sqlalchemy'
+  | 'django'
+  | 'typeorm'
+  | 'prisma'
+  | 'drizzle'
+  | 'sequelize'
+  | 'jpa'
+  | 'efcore'
+  | 'doctrine'
+  | 'eloquent'
+  | 'exposed'
+  | 'seaorm'
 
 /** Which ORM entities are written: only those the input lacks, all of them (replacing the input's), or none. */
 export type EntitiesMode = 'missing' | 'all' | 'none'
@@ -29,7 +40,7 @@ export type Architecture = 'layer' | 'table'
 export type Verbs = 'getFind' | 'get' | 'find'
 export type Tests = 'all' | 'services' | 'repositories' | 'none'
 /** The kind of class DTOs are written as, per language. */
-export type DtoKind = 'pydantic' | 'dataclass' | 'interface' | 'class' | 'record' | 'readonly' | 'data'
+export type DtoKind = 'pydantic' | 'dataclass' | 'interface' | 'class' | 'record' | 'readonly' | 'data' | 'struct'
 /** How a service takes the changes of an update: the language's partial object (TypeScript, Python; in PHP an array
  * of the changed fields), or, in typed languages, a Patch<T> per field (absent, null or a value), Optional<T> (null
  * when not sent), or every field. */
@@ -191,6 +202,19 @@ export const STACKS: readonly StackInfo[] = [
     dtoKinds: ['data', 'class'],
     updates: ['patch', 'optional', 'full'],
   },
+  {
+    language: 'rust',
+    orm: 'seaorm',
+    label: 'SeaORM 2',
+    databases: ['postgresql', 'mysql', 'mariadb', 'sqlite'],
+    // SeaORM is asynchronous only
+    execution: ['async'],
+    // Rust has no exceptions: every operation returns a Result
+    errors: ['results'],
+    dtoKinds: ['struct'],
+    // Option<Option<T>> is Rust's way of telling a field not sent from a field emptied
+    updates: ['patch', 'optional', 'full'],
+  },
 ]
 
 export const DEFAULT_SETTINGS: ProjectSettings = {
@@ -268,8 +292,13 @@ export function normalizeSettings(settings: Partial<ProjectSettings>): ProjectSe
     errors: pick(settings.errors, stack.errors, stack.errors[0]),
     repositoryInterfaces:
       typeof settings.repositoryInterfaces === 'boolean' ? settings.repositoryInterfaces : DEFAULT_SETTINGS.repositoryInterfaces,
+    // Rust has no inheritance: without the traits, nothing in memory can stand in for the database repositories
     memoryRepositories:
-      typeof settings.memoryRepositories === 'boolean' ? settings.memoryRepositories : DEFAULT_SETTINGS.memoryRepositories,
+      stack.language === 'rust' && settings.repositoryInterfaces === false
+        ? false
+        : typeof settings.memoryRepositories === 'boolean'
+          ? settings.memoryRepositories
+          : DEFAULT_SETTINGS.memoryRepositories,
     paging: pick(settings.paging, PAGING, DEFAULT_SETTINGS.paging),
     architecture: pick(settings.architecture, ARCHITECTURES, DEFAULT_SETTINGS.architecture),
     verbs: pick(settings.verbs, VERBS, DEFAULT_SETTINGS.verbs),

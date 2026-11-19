@@ -220,3 +220,33 @@ describe('the Kotlin generator', () => {
     expect(repository).toContain('import java.time.OffsetDateTime')
   })
 })
+
+describe('the Rust generator', () => {
+  const rust = { language: 'rust', orm: 'seaorm' } as const
+
+  it('returns Result values, from asynchronous code', () => {
+    expect(normalizeSettings({ ...rust, errors: 'exceptions', execution: 'sync' })).toMatchObject({ errors: 'results', execution: 'async' })
+  })
+
+  it('writes no in-memory repositories without repository traits, which nothing else can stand in for', () => {
+    expect(normalizeSettings({ ...rust, repositoryInterfaces: false, memoryRepositories: true }).memoryRepositories).toBe(false)
+    // The services are then tested on the database
+    expect(file('tests/data/customer_service.rs', { ...rust, repositoryInterfaces: false })).toContain('database::open().await')
+    expect(file('src/unit_of_work.rs', { ...rust, repositoryInterfaces: false })).toContain(
+      "fn customers(&self) -> SqlCustomerRepository<'_>;",
+    )
+  })
+
+  it('keys a table without a primary key by the columns a database can index', () => {
+    const table = file('src/entities/audit_log_table.rs', rust)
+    expect(table).toContain('#[sea_orm(primary_key, auto_increment = false)]\n    pub at: chrono::DateTime<chrono::FixedOffset>,')
+    expect(table).toContain('#[sea_orm(column_type = "Text")]\n    pub message: String,')
+  })
+
+  it('declares every module it writes', () => {
+    expect(file('src/lib.rs', rust)).toContain('pub mod entities;\npub mod errors;')
+    expect(file('src/customers/mod.rs', { ...rust, architecture: 'table' })).toContain(
+      'pub mod entity;\npub mod repository;\npub mod service;\npub mod table;',
+    )
+  })
+})
