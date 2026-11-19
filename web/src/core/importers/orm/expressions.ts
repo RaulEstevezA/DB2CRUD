@@ -157,9 +157,6 @@ export function literalOf(expr: Expr | undefined): string | number | boolean | u
   return stringOf(expr) ?? numberOf(expr) ?? booleanOf(expr)
 }
 
-/** The text of a name: `sa.String` for a dotted name. */
-export const pathText = (expr: Expr | undefined): string | undefined => (expr?.kind === 'name' ? expr.path.join('.') : undefined)
-
 /** The expression as code, for the `sql` of a type and for notes. */
 export function textOf(expr: Expr): string {
   switch (expr.kind) {

@@ -3,7 +3,8 @@
  * - model2db/<example>/<orm>/ holds the code Model2DB writes for each example project (scripts/orm-fixtures.mts):
  *   what the reader finds must be what the project says. The code may say more than the project (a length on
  *   the text of an enum); names of constraints, the text of types and navigation names do not count.
- * - hand/<orm>/<case>/ holds code written by hand, with the schema read from it in expected.json.
+ * - hand/<orm>/<case>/ holds code written by hand.
+ * Each folder keeps the schema read from its code in expected.json, which the desktop version must read too.
  *
  * `UPDATE_SHARED=1 npx vitest run src/core/importers/orm/orm.test.ts` writes the expected.json files again from what
  * the web version reads now; the desktop version then has to match them.
@@ -84,6 +85,13 @@ function comparable(schema: DbSchema, project?: DbSchema) {
   }
 }
 
+/** The schema is the one kept in expected.json (written again with UPDATE_SHARED=1). */
+function matchesExpected(folder: string, schema: DbSchema) {
+  const path = join(folder, EXPECTED)
+  if (UPDATE) return writeFileSync(path, `${JSON.stringify(schema, null, 1)}\n`)
+  expect(schema).toEqual(JSON.parse(readFileSync(path, 'utf8')))
+}
+
 const folders = (path: string) =>
   existsSync(path)
     ? readdirSync(path)
@@ -102,6 +110,7 @@ describe('ORM code written by Model2DB', () => {
         const schema = readOk(folder)
         expect(schema.notes).toEqual([])
         expect(comparable(schema, expected.schema)).toEqual(comparable(expected.schema, schema))
+        matchesExpected(folder, schema)
       })
 
   it('has the code of every reader', () => {
@@ -116,11 +125,23 @@ describe('ORM code written by hand', () => {
       it(`${orm}: ${name}`, () => {
         const folder = join(FOLDER, 'hand', orm, name)
         expect(detectOrm(filesOf(folder))?.id).toBe(orm)
-        const schema = readOk(folder)
-        const path = join(folder, EXPECTED)
-        if (UPDATE) return writeFileSync(path, `${JSON.stringify(schema, null, 1)}\n`)
-        expect(schema).toEqual(JSON.parse(readFileSync(path, 'utf8')))
+        matchesExpected(folder, readOk(folder))
       })
+})
+
+describe('ORM code written by DB2CRUD', () => {
+  // The SQLAlchemy entities of every shared project map their tables exactly: they read back as the schema they came from
+  const outputs = resolve(process.cwd(), '../shared/test-cases/outputs')
+  for (const name of readdirSync(outputs).filter((item) => item.startsWith('sqlalchemy-')))
+    it(name, () => {
+      const project = JSON.parse(readFileSync(join(outputs, name), 'utf8')) as { schema: DbSchema; files: Record<string, string> }
+      const files = Object.entries(project.files)
+        .filter(([path, text]) => path.endsWith('.py') && text.includes('__tablename__'))
+        .map(([path, text]) => ({ name: path, text }))
+      const read = readOrmCode(files)
+      if (!read.ok) throw new Error(read.error)
+      expect(comparable(read.schema, project.schema)).toEqual(comparable(project.schema, read.schema))
+    })
 })
 
 describe('ORM detection', () => {

@@ -1,7 +1,8 @@
 /**
  * Writes the ORM code Model2DB generates for each example project into shared/test-cases/orm/model2db/<example>/<orm>/,
  * so the ORM readers of both versions can be checked against the schema of the same project. The files are never
- * edited by hand: run this again when Model2DB's generators change.
+ * edited by hand: run this again when Model2DB's generators change, then write their expected.json with
+ * `UPDATE_SHARED=1 npx vitest run src/core/importers/orm/orm.test.ts` from web/.
  *
  * Usage: node scripts/orm-fixtures.mts [path to the Model2DB repository]   (default: ../Model2DB)
  */
