@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Runs the generated Rust projects (Axum) in a clean container: Cargo compiles them, with every compiler warning
+# Runs the generated Rust projects (SeaORM) in a clean container: Cargo compiles them, with every compiler warning
 # treated as an error, and runs their own tests. The Cargo registry and the compiled dependencies are cached in
 # Docker volumes between runs, so each project only compiles its own code.
 #
@@ -9,13 +9,16 @@
 set -u
 
 IMAGE="rust:1.99.1"
+# SeaORM knows PostgreSQL by the postgres:// scheme only
+TEST_URL="${TEST_DATABASE_NODE_URL:-}"
+TEST_URL="${TEST_URL/#postgresql:/postgres:}"
 status=0
 for folder in "$@"; do
   name="$(basename "$folder")"
   echo "== $name"
   if docker run --rm \
     ${DOCKER_NETWORK:+--network "$DOCKER_NETWORK"} \
-    ${TEST_DATABASE_NODE_URL:+-e TEST_DATABASE_URL="$TEST_DATABASE_NODE_URL"} \
+    ${TEST_URL:+-e TEST_DATABASE_URL="$TEST_URL"} \
     -e CARGO_HOME=/cargo-home \
     -e CARGO_TARGET_DIR=/cargo-target \
     -e RUSTFLAGS="-D warnings" \

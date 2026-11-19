@@ -357,4 +357,36 @@ export const SCENARIOS = [
     settings: { language: 'kotlin', orm: 'exposed', database: 'sqlite', repositoryInterfaces: false, verbs: 'find', tests: 'services', entities: 'all', updates: 'full' },
   },
   { id: 'exposed-sqlite-repositories-only', schema: 'shop', settings: { language: 'kotlin', orm: 'exposed', database: 'sqlite', services: false } },
+  { id: 'seaorm-sqlite-defaults', schema: 'shop', settings: { language: 'rust', orm: 'seaorm', database: 'sqlite' } },
+  {
+    id: 'seaorm-postgresql-dtos-patch',
+    schema: 'shop',
+    settings: { language: 'rust', orm: 'seaorm', database: 'postgresql', serviceTypes: 'dtos', updates: 'patch' },
+    service: 'postgresql',
+  },
+  {
+    id: 'seaorm-mysql-decided-cursor-by-table-optional',
+    schema: 'shop',
+    settings: { language: 'rust', orm: 'seaorm', database: 'mysql', paging: 'cursor', architecture: 'table', updates: 'optional' },
+    decisions: OTHER_WAY,
+    service: 'mysql',
+  },
+  {
+    id: 'seaorm-mariadb-caller-dtos-full',
+    schema: 'shop',
+    settings: { language: 'rust', orm: 'seaorm', database: 'mariadb', transactions: 'caller', serviceTypes: 'dtos', paging: 'none', updates: 'full' },
+    service: 'mariadb',
+  },
+  {
+    id: 'seaorm-postgresql-repository-commits',
+    schema: 'shop',
+    settings: { language: 'rust', orm: 'seaorm', database: 'postgresql', transactions: 'repository', repositoryInterfaces: false, memoryRepositories: false, verbs: 'get' },
+    service: 'postgresql',
+  },
+  {
+    id: 'seaorm-sqlite-no-interfaces-services-tests',
+    schema: 'shop',
+    settings: { language: 'rust', orm: 'seaorm', database: 'sqlite', repositoryInterfaces: false, verbs: 'find', tests: 'services', entities: 'all', updates: 'full' },
+  },
+  { id: 'seaorm-sqlite-repositories-only', schema: 'shop', settings: { language: 'rust', orm: 'seaorm', database: 'sqlite', services: false } },
 ]

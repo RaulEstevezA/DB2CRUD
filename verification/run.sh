@@ -18,6 +18,7 @@ runner_of() {
     efcore-*) echo ./runners/dotnet.sh ;;
     doctrine-* | eloquent-*) echo ./runners/php.sh ;;
     exposed-*) echo ./runners/kotlin.sh ;;
+    seaorm-*) echo ./runners/rust.sh ;;
   esac
 }
 
