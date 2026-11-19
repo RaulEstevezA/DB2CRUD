@@ -363,6 +363,38 @@ export const VERIFIED: readonly VerifiedStack[] = [
     scenarios: ['eloquent-sqlite-defaults', 'eloquent-sqlite-no-interfaces-services-tests', 'eloquent-sqlite-repositories-only'],
     date: '2026-11-18',
   },
+  {
+    language: 'kotlin',
+    orm: 'exposed',
+    database: 'postgresql',
+    execution: 'sync',
+    scenarios: ['exposed-postgresql-data-dtos-patch', 'exposed-postgresql-repository-commits'],
+    date: '2026-11-19',
+  },
+  {
+    language: 'kotlin',
+    orm: 'exposed',
+    database: 'mysql',
+    execution: 'sync',
+    scenarios: ['exposed-mysql-decided-cursor-by-table-optional'],
+    date: '2026-11-19',
+  },
+  {
+    language: 'kotlin',
+    orm: 'exposed',
+    database: 'mariadb',
+    execution: 'sync',
+    scenarios: ['exposed-mariadb-caller-class-dtos-full'],
+    date: '2026-11-19',
+  },
+  {
+    language: 'kotlin',
+    orm: 'exposed',
+    database: 'sqlite',
+    execution: 'sync',
+    scenarios: ['exposed-sqlite-defaults', 'exposed-sqlite-no-interfaces-services-tests', 'exposed-sqlite-repositories-only'],
+    date: '2026-11-19',
+  },
 ]
 
 /** Whether this stack has passed the verification. */
