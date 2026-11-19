@@ -183,7 +183,8 @@ def _field_line(context: dict, info: dict, column: dict, imports: Imports) -> li
         field = "ForeignKey"
         on_delete = ON_DELETE[foreign["key"].get("onDelete") or "no action"]
         args += [js_json(foreign["target"]["entity"]), f"on_delete=models.{on_delete}", 'related_name="+"']
-        args.append(f"db_column={js_json(db['name'])}")
+        # The indexes of the table are those of the database, in Meta: Django would add one of its own to the key
+        args += [f"db_column={js_json(db['name'])}", "db_index=False"]
     else:
         relation = next((key for key in info["table"]["foreignKeys"] if db["name"] in key["columns"]), None)
         if relation:

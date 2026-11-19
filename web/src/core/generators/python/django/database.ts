@@ -178,7 +178,8 @@ function fieldLine(context: Context, info: TableInfo, column: ColumnInfo, import
       `on_delete=models.${ON_DELETE[foreign.key.onDelete ?? 'no action']}`,
       'related_name="+"',
     )
-    args.push(`db_column=${JSON.stringify(db.name)}`)
+    // The indexes of the table are those of the database, in Meta: Django would add one of its own to the key
+    args.push(`db_column=${JSON.stringify(db.name)}`, 'db_index=False')
   } else {
     const relation = info.table.foreignKeys.find((key) => key.columns.includes(db.name))
     if (relation)
