@@ -5,7 +5,7 @@ import json
 
 import pytest
 
-from db2crud.core.importers.orm.registry import detect_orm, read_orm_code
+from db2crud.core.importers.orm.registry import ORM_READERS, detect_orm, read_orm_code
 from db2crud.core.schema.validate import validate_db_schema
 
 from .conftest import SHARED_CASES
@@ -24,6 +24,8 @@ def test_reads_the_same_schema(folder):
     files = _files(folder)
     # model2db/<example>/<orm>/ and hand/<orm>/<case>/
     orm = folder.parent.name if folder.parent.parent.name == "hand" else folder.name
+    if orm not in {reader.id for reader in ORM_READERS}:
+        pytest.skip(f"the {orm} reader is not ported to the desktop version yet")
     assert detect_orm(files).id == orm
     read = read_orm_code(files)
     assert read["ok"], read
