@@ -6,7 +6,7 @@
  *
  * Usage: node scripts/orm-fixtures.mts [path to the Model2DB repository]   (default: ../Model2DB)
  */
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 
 const root = resolve(import.meta.dirname, "..");
@@ -25,10 +25,19 @@ const { generate, findOutput } = await import(
 const { EXAMPLES } = await import(join(root, "web/src/examples/index.ts"));
 
 /** The ORMs DB2CRUD reads, in the order of the roadmap. */
-const ORMS = ["sqlalchemy", "sqlmodel", "django"];
+const ORMS = ["sqlalchemy", "sqlmodel", "django", "tortoise"];
 
 const out = join(root, "shared/test-cases/orm/model2db");
-rmSync(out, { recursive: true, force: true });
+// The code is written again; the schema read from it (expected.json) stays until the tests write it again
+const clean = (folder: string): void => {
+  if (!existsSync(folder)) return;
+  for (const entry of readdirSync(folder, { withFileTypes: true })) {
+    const path = join(folder, entry.name);
+    if (entry.isDirectory()) clean(path);
+    else if (entry.name !== "expected.json") rmSync(path);
+  }
+};
+clean(out);
 for (const example of EXAMPLES) {
   const project = readProject(example.text);
   if (!project.ok) throw new Error(`${example.id}: ${project.error}`);

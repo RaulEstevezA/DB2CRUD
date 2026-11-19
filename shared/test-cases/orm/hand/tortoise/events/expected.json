@@ -1,0 +1,505 @@
+{
+ "format": "db-schema",
+ "version": 1,
+ "dialect": null,
+ "source": {
+  "kind": "orm",
+  "format": "tortoise"
+ },
+ "tables": [
+  {
+   "name": "tournament",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "fields.IntField(primary_key=True)",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false,
+     "generated": "identity"
+    },
+    {
+     "name": "created_at",
+     "type": {
+      "sql": "fields.DatetimeField(auto_now_add=True)",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": false,
+     "generated": "now"
+    },
+    {
+     "name": "modified_at",
+     "type": {
+      "sql": "fields.DatetimeField(auto_now=True)",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": false,
+     "generated": "onUpdateNow"
+    },
+    {
+     "name": "name",
+     "type": {
+      "sql": "fields.CharField(max_length=255, unique=True)",
+      "kind": "text",
+      "length": 255
+     },
+     "nullable": false
+    },
+    {
+     "name": "description",
+     "type": {
+      "sql": "fields.TextField(null=True, description=\"What it is about\")",
+      "kind": "text"
+     },
+     "nullable": true,
+     "comment": "What it is about"
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [],
+   "uniques": [
+    {
+     "columns": [
+      "name"
+     ]
+    }
+   ],
+   "indexes": [],
+   "checks": [],
+   "origin": {
+    "line": 30,
+    "column": 1
+   },
+   "entity": "Tournament",
+   "comment": "Tournaments people take part in"
+  },
+  {
+   "name": "event",
+   "columns": [
+    {
+     "name": "created_at",
+     "type": {
+      "sql": "fields.DatetimeField(auto_now_add=True)",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": false,
+     "generated": "now"
+    },
+    {
+     "name": "modified_at",
+     "type": {
+      "sql": "fields.DatetimeField(auto_now=True)",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": false,
+     "generated": "onUpdateNow"
+    },
+    {
+     "name": "event_id",
+     "type": {
+      "sql": "fields.BigIntField(pk=True)",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false,
+     "generated": "identity"
+    },
+    {
+     "name": "name",
+     "type": {
+      "sql": "fields.CharField(max_length=120, index=True)",
+      "kind": "text",
+      "length": 120
+     },
+     "nullable": false
+    },
+    {
+     "name": "tournament_id",
+     "type": {
+      "sql": "fields.IntField(primary_key=True)",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false
+    },
+    {
+     "name": "status",
+     "type": {
+      "sql": "fields.CharEnumField(Status, default=Status.DRAFT)",
+      "kind": "text",
+      "length": 6
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": "draft"
+     }
+    },
+    {
+     "name": "priority",
+     "type": {
+      "sql": "fields.IntEnumField(Priority, default=Priority.LOW)",
+      "kind": "integer",
+      "bits": 16
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": 1
+     }
+    },
+    {
+     "name": "prize",
+     "type": {
+      "sql": "fields.DecimalField(max_digits=10, decimal_places=2, null=True)",
+      "kind": "decimal",
+      "precision": 10,
+      "scale": 2
+     },
+     "nullable": true
+    }
+   ],
+   "primaryKey": [
+    "event_id"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "tournament_id"
+     ],
+     "references": {
+      "table": "tournament",
+      "columns": [
+       "id"
+      ]
+     },
+     "onDelete": "cascade",
+     "attribute": "tournament",
+     "inverse": "events"
+    }
+   ],
+   "uniques": [
+    {
+     "columns": [
+      "name",
+      "tournament_id"
+     ]
+    }
+   ],
+   "indexes": [
+    {
+     "columns": [
+      "name"
+     ]
+    }
+   ],
+   "checks": [
+    {
+     "sql": "status IN ('draft', 'open', 'closed')",
+     "parsed": {
+      "kind": "in",
+      "column": "status",
+      "values": [
+       "draft",
+       "open",
+       "closed"
+      ]
+     }
+    },
+    {
+     "sql": "priority IN (1, 2)",
+     "parsed": {
+      "kind": "in",
+      "column": "priority",
+      "values": [
+       1,
+       2
+      ]
+     }
+    }
+   ],
+   "origin": {
+    "line": 38,
+    "column": 1
+   },
+   "entity": "Event"
+  },
+  {
+   "name": "team",
+   "columns": [
+    {
+     "name": "code",
+     "type": {
+      "sql": "fields.CharField(max_length=8, pk=True)",
+      "kind": "text",
+      "length": 8
+     },
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": {
+      "sql": "fields.TextField()",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "captain_id",
+     "type": {
+      "sql": "fields.IntField(pk=True, generated=False)",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": true
+    }
+   ],
+   "primaryKey": [
+    "code"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "captain_id"
+     ],
+     "references": {
+      "table": "player",
+      "columns": [
+       "number"
+      ]
+     },
+     "onDelete": "set null",
+     "attribute": "captain",
+     "inverse": "captain_of"
+    }
+   ],
+   "uniques": [
+    {
+     "columns": [
+      "captain_id"
+     ]
+    }
+   ],
+   "indexes": [],
+   "checks": [],
+   "origin": {
+    "line": 53,
+    "column": 1
+   },
+   "entity": "Team"
+  },
+  {
+   "name": "player",
+   "columns": [
+    {
+     "name": "number",
+     "type": {
+      "sql": "fields.IntField(pk=True, generated=False)",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false
+    },
+    {
+     "name": "nickname",
+     "type": {
+      "sql": "fields.CharField(max_length=40, source_field=\"nickname\")",
+      "kind": "text",
+      "length": 40
+     },
+     "nullable": false,
+     "attribute": "nick"
+    },
+    {
+     "name": "mentor_id",
+     "type": {
+      "sql": "fields.IntField(pk=True, generated=False)",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": true
+    }
+   ],
+   "primaryKey": [
+    "number"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "mentor_id"
+     ],
+     "references": {
+      "table": "player",
+      "columns": [
+       "number"
+      ]
+     },
+     "onDelete": "no action",
+     "attribute": "mentor"
+    }
+   ],
+   "uniques": [],
+   "indexes": [
+    {
+     "columns": [
+      "mentor_id"
+     ]
+    }
+   ],
+   "checks": [],
+   "origin": {
+    "line": 60,
+    "column": 1
+   },
+   "entity": "Player"
+  },
+  {
+   "name": "event_team",
+   "columns": [
+    {
+     "name": "event_id",
+     "type": {
+      "sql": "fields.BigIntField(pk=True)",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false
+    },
+    {
+     "name": "team_id",
+     "type": {
+      "sql": "fields.CharField(max_length=8, pk=True)",
+      "kind": "text",
+      "length": 8
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": [
+    "event_id",
+    "team_id"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "event_id"
+     ],
+     "references": {
+      "table": "event",
+      "columns": [
+       "event_id"
+      ]
+     },
+     "onDelete": "cascade"
+    },
+    {
+     "columns": [
+      "team_id"
+     ],
+     "references": {
+      "table": "team",
+      "columns": [
+       "code"
+      ]
+     },
+     "onDelete": "cascade"
+    }
+   ],
+   "uniques": [],
+   "indexes": [],
+   "checks": [],
+   "origin": {
+    "line": 38,
+    "column": 1
+   }
+  },
+  {
+   "name": "team_player",
+   "columns": [
+    {
+     "name": "team_id",
+     "type": {
+      "sql": "fields.CharField(max_length=8, pk=True)",
+      "kind": "text",
+      "length": 8
+     },
+     "nullable": false
+    },
+    {
+     "name": "player_id",
+     "type": {
+      "sql": "fields.IntField(pk=True, generated=False)",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": [
+    "team_id",
+    "player_id"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "team_id"
+     ],
+     "references": {
+      "table": "team",
+      "columns": [
+       "code"
+      ]
+     },
+     "onDelete": "cascade"
+    },
+    {
+     "columns": [
+      "player_id"
+     ],
+     "references": {
+      "table": "player",
+      "columns": [
+       "number"
+      ]
+     },
+     "onDelete": "cascade"
+    }
+   ],
+   "uniques": [],
+   "indexes": [],
+   "checks": [],
+   "origin": {
+    "line": 53,
+    "column": 1
+   }
+  }
+ ],
+ "enums": [
+  {
+   "name": "status",
+   "values": [
+    "draft",
+    "open",
+    "closed"
+   ],
+   "storage": "check"
+  },
+  {
+   "name": "priority",
+   "values": [
+    "1",
+    "2"
+   ],
+   "storage": "check"
+  }
+ ],
+ "notes": []
+}

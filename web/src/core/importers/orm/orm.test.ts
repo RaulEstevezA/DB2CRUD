@@ -2,7 +2,8 @@
  * The ORM readers against shared/test-cases/orm/:
  * - model2db/<example>/<orm>/ holds the code Model2DB writes for each example project (scripts/orm-fixtures.mts):
  *   what the reader finds must be what the project says. The code may say more than the project (a length on
- *   the text of an enum); names of constraints, the text of types and navigation names do not count.
+ *   the text of an enum); names of constraints, the text of types, navigation names and the difference between
+ *   RESTRICT and NO ACTION do not count.
  * - hand/<orm>/<case>/ holds code written by hand.
  * Each folder keeps the schema read from its code in expected.json, which the desktop version must read too.
  *
@@ -75,7 +76,14 @@ function comparable(schema: DbSchema, project?: DbSchema) {
           }
         }),
         foreignKeys: table.foreignKeys
-          .map((key) => ({ columns: key.columns, references: key.references, onDelete: key.onDelete, onUpdate: key.onUpdate }))
+          // RESTRICT and NO ACTION (the default) both refuse to delete a row others point to; only when they check differs.
+          // Tortoise deletes with the row unless told otherwise, so Model2DB writes RESTRICT for the default
+          .map((key) => ({
+            columns: key.columns,
+            references: key.references,
+            onDelete: key.onDelete === 'restrict' || key.onDelete === 'no action' ? undefined : key.onDelete,
+            onUpdate: key.onUpdate === 'restrict' || key.onUpdate === 'no action' ? undefined : key.onUpdate,
+          }))
           .sort((a, b) => columns(a.columns).localeCompare(columns(b.columns))),
         uniques: table.uniques.map((item) => columns(item.columns)).sort(),
         indexes: table.indexes.map((item) => columns(item.columns)).sort(),
