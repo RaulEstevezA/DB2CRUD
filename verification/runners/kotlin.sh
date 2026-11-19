@@ -23,7 +23,11 @@ for folder in "$@"; do
     "$IMAGE" sh -c '
       set -e
       cp -r /project /work && cd /work
-      gradle test --no-daemon --quiet --console=plain
+      # Gradle only names the report: on failure, show what each failing test said
+      gradle test --no-daemon --quiet --console=plain || {
+        grep -h -A1 "<failure" build/test-results/test/*.xml 2>/dev/null | grep -v "^--" | cut -c1-400 | head -80
+        exit 1
+      }
       # How many tests ran, so a run without tests does not look like a pass
       grep -ho "tests=.[0-9]*" build/test-results/test/*.xml | tr -dc "0-9\n" | awk "{ total += \$1 } END { print \"tests: \" total }"
     '; then
