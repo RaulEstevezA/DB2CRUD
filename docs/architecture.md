@@ -22,7 +22,7 @@ Application models ──► Importer ──► Model ───────┘  
 | Analysis | Physical schema | Repository queries and pending decisions | Works: `core/schema/`, `core/crud/` |
 | Correspondences | Physical schema + `Model` (+ Mapper project) | Model ↔ entity and field ↔ column, with their confidence | To write |
 | CRUD design | Physical schema + user edits | Repositories, services and decisions | Works: `core/crud/` |
-| Generation | CRUD design + settings | Project files | Python (SQLAlchemy 2, Django 5.2), TypeScript (TypeORM 0.3, Prisma 7, Drizzle 0.45, Sequelize 6), Java (JPA, Hibernate 7), C# (EF Core 9), PHP (Doctrine ORM 3, Eloquent 12), Kotlin (Exposed 1.6) and Rust (SeaORM 2) work: `core/generators/`; other stacks to write |
+| Generation | CRUD design + settings | Project files | Python (SQLAlchemy 2, Django 5.2), TypeScript (TypeORM 0.3, Prisma 7, Drizzle 0.45, Sequelize 6), Java (JPA, Hibernate 7), C# (EF Core 9), PHP (Doctrine ORM 3, Eloquent 12), Kotlin (Exposed 1.6), Rust (SeaORM 2) and Swift (Fluent) work: `core/generators/`; other stacks to write |
 | Export | Project files | ZIP, single file | Works: `core/export/` |
 
 Decisions and their confidence (`core/decisions/`) are shared by every stage that proposes something.
