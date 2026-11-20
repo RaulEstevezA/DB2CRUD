@@ -95,14 +95,22 @@ def _read_primary(cursor: Cursor, source: str, named_by: str) -> dict:
     if cursor.is_("{"):
         cursor.next()
         entries: list = []
+        bare: list = []
         while not cursor.done and not cursor.is_("}"):
             key = read_expression(cursor, source, named_by)
             if cursor.eat(":") or cursor.eat("=>"):
                 entries.append({"key": key, "value": read_expression(cursor, source, named_by)})
+            else:
+                bare.append(key)
             if not cursor.eat(","):
                 break
         cursor.eat("}")
-        return {"kind": "dict", "entries": entries}
+        # Braces with no keys are a list: a Java array (`{ "a", "b" }`) or a Python set
+        return {"kind": "list", "items": bare} if not entries and bare else {"kind": "dict", "entries": entries}
+    if cursor.is_("@") and cursor.is_ident(1):
+        # An annotation inside another (`indexes = { @Index(columnList = "a") }`) reads as a call
+        cursor.next()
+        return _read_primary(cursor, source, named_by)
     if token.kind == "ident":
         path = [cursor.next().value]
         while cursor.is_(".") and cursor.is_ident(1):

@@ -99,13 +99,21 @@ function readPrimary(cursor: Cursor, source: string, syntax: ExpressionSyntax): 
   if (cursor.is('{')) {
     cursor.next()
     const entries: { key: Expr; value: Expr }[] = []
+    const items: Expr[] = []
     while (!cursor.done && !cursor.is('}')) {
       const key = readExpression(cursor, source, syntax)
       if (cursor.eat(':') || cursor.eat('=>')) entries.push({ key, value: readExpression(cursor, source, syntax) })
+      else items.push(key)
       if (!cursor.eat(',')) break
     }
     cursor.eat('}')
-    return { kind: 'dict', entries }
+    // Braces with no keys are a list: a Java array (`{ "a", "b" }`) or a Python set
+    return entries.length === 0 && items.length > 0 ? { kind: 'list', items } : { kind: 'dict', entries }
+  }
+  if (cursor.is('@') && cursor.isIdent(1)) {
+    // An annotation inside another (`indexes = { @Index(columnList = "a") }`) reads as a call
+    cursor.next()
+    return readPrimary(cursor, source, syntax)
   }
   if (token.kind === 'ident') {
     const path = [cursor.next().value]
