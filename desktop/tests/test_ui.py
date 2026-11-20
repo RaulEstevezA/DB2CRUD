@@ -58,3 +58,31 @@ def test_the_language_changes_every_pane(window):
     assert window.design_pane.title.text() == "Diseño"
     assert window.project_pane.title.text() == "Proyecto"
     assert window.project_pane.zip_button.text().startswith("Guardar .zip")
+
+
+def test_a_project_folder_is_opened_with_its_files(window):
+    from .conftest import SHARED_CASES
+
+    pane = window.database_pane
+    pane.open_paths([str(SHARED_CASES / "orm" / "hand" / "eloquent" / "blog")])
+    session = window.session
+    names = [file["name"] for file in session.input["files"]]
+    assert "database/migrations/0001_01_01_000000_create_users_table.php" in names
+    assert session.read["ok"]
+    assert session.read["schema"]["source"]["format"] == "eloquent"
+    assert pane.file_list.count() == len(names)
+    assert session.design is not None
+    # Choosing a file shows it; editing it changes that file only
+    row = names.index("app/Models/Tag.php")
+    pane.file_list.setCurrentRow(row)
+    assert pane.editor.toPlainText() == session.input["files"][row]["text"]
+    pane.set_text(pane.editor.toPlainText() + "\n// edited\n")
+    assert session.input["files"][row]["text"].endswith("// edited\n")
+    assert session.input["selected"] == row
+    assert session.read["ok"]
+
+
+def test_a_folder_with_nothing_to_read_says_so(window, tmp_path):
+    (tmp_path / "notes.txt").write_text("nothing", encoding="utf-8")
+    window.database_pane.open_paths([str(tmp_path)])
+    assert window.database_pane.status.text() == EN.no_readable_files

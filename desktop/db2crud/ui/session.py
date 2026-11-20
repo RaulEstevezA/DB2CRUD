@@ -59,13 +59,13 @@ class Session(QObject):
         return read["schema"] if read and read["ok"] else None
 
     def has_work(self) -> bool:
-        return trim(self.input["text"]) != ""
+        return trim(self.input["text"]) != "" or bool(self.input.get("files"))
 
     def set_input(self, state: dict) -> None:
         if state == self.input:
             return
         # Clearing the input starts over: the decisions made on the previous database are discarded too
-        if trim(state["text"]) == "":
+        if trim(state["text"]) == "" and not state.get("files"):
             self._restart()
         self.input = state
         self.read = read_database(state)
