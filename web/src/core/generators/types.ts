@@ -3,6 +3,7 @@
  * design and the project settings, and returns the files of a project. Generators never see the interface,
  * the browser or the input text.
  */
+import type { ApplicationModels } from '../conversions/plan.ts'
 import type { CrudDesign } from '../crud/types.ts'
 import type { GeneratedFile } from '../export/files.ts'
 import type { DbSchema } from '../schema/types.ts'
@@ -12,6 +13,8 @@ export interface GeneratorInput {
   schema: DbSchema
   design: CrudDesign
   settings: ProjectSettings
+  /** The application models, when there are: the generator writes the conversions of `design.matching` with them */
+  models?: ApplicationModels | null
 }
 
 export interface Generator {

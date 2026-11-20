@@ -103,6 +103,17 @@ describe('App', () => {
     expect((within(design).getByRole('combobox', { name: 'customers.phone: application model' }) as HTMLSelectElement).value).toBe(before)
   })
 
+  it('says why models in another language get no conversions', async () => {
+    const { container } = renderApp()
+    fireEvent.click(screen.getByRole('button', { name: 'Online shop' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'Application models' }))
+    const file = new File(['export interface Customer {\n  id: number\n  email: string\n}\n'], 'models.ts', { type: 'text/plain' })
+    fireEvent.change(container.querySelector('input[type="file"]')!, { target: { files: [file] } })
+    await vi.waitFor(() => expect(screen.getByText(/TypeScript · 1 model/)).toBeTruthy())
+    const project = screen.getByRole('region', { name: 'Project' })
+    expect(within(project).getByRole('status').textContent).toMatch(/written in TypeScript and the project in Python/)
+  })
+
   it('says why the input cannot be read', () => {
     renderApp()
     fireEvent.click(screen.getByRole('button', { name: 'Online shop' }))

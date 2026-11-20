@@ -12,6 +12,7 @@ import { IntroPanel } from './components/layout/IntroPanel.tsx'
 import { LinksPanel } from './components/layout/LinksPanel.tsx'
 import { Workspace } from './components/layout/Workspace.tsx'
 import { ProjectPane } from './components/project/ProjectPane.tsx'
+import { conversionsAvailable } from './core/conversions/plan.ts'
 import { pendingDecisions } from './core/crud/edit.ts'
 import { generateProject } from './core/generators/registry.ts'
 import { DEFAULT_SETTINGS, normalizeSettings, type ProjectSettings } from './core/settings/settings.ts'
@@ -42,7 +43,19 @@ function App() {
   const designState = useCrudDesign(schema, modelsRead?.ok ? modelsRead.schema : null, modelsRead?.ok ? (modelsRead.project ?? null) : null)
   const { design } = designState
   useUndoShortcuts(designState.history)
-  const files = useMemo(() => (schema && design ? generateProject(schema, design, settings) : []), [schema, design, settings])
+  // The application models, when they are read: their conversions are written when they are in the project's language
+  const applicationModels = useMemo(
+    () => (modelsRead?.ok ? { schema: modelsRead.schema, project: modelsRead.project ?? null } : null),
+    [modelsRead],
+  )
+  const conversions = useMemo(
+    () => (applicationModels ? conversionsAvailable(applicationModels, settings.language) : null),
+    [applicationModels, settings.language],
+  )
+  const files = useMemo(
+    () => (schema && design ? generateProject(schema, design, settings, applicationModels) : []),
+    [schema, design, settings, applicationModels],
+  )
   const pending = design ? pendingDecisions(design).length : 0
   const hasWork = input.text.trim() !== ''
 
@@ -92,7 +105,7 @@ function App() {
               />
             ),
             design: <DesignPane state={designState} />,
-            project: <ProjectPane settings={settings} files={files} onSettingsChange={changeSettings} />,
+            project: <ProjectPane settings={settings} files={files} onSettingsChange={changeSettings} conversions={conversions} />,
           }}
         />
         <LinksPanel />

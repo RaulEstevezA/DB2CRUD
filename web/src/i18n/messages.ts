@@ -19,6 +19,7 @@ import type {
   ErrorStyle,
   Execution,
   LanguageId,
+  ModelsSource,
   Paging,
   ServiceTypes,
   Tests,
@@ -185,6 +186,11 @@ const en = {
     string
   >,
   entitiesModuleLabel: 'Module of the entities',
+  modelsSourceLabel: 'Application model classes',
+  modelsSources: { copy: 'Copied into the project', import: 'Imported from your module' } satisfies Record<ModelsSource, string>,
+  modelsModuleLabel: 'Module of the models',
+  conversionsLanguage: (models: string, project: string) =>
+    `The application models are written in ${models} and the project in ${project}: the services keep their DTOs and no conversions are written. Choose ${models} as the language of the project to get them.`,
   servicesLabel: 'Services',
   yes: 'Yes',
   no: 'No',
@@ -489,6 +495,11 @@ const es: Messages = {
   entitiesLabel: 'Entidades',
   entitiesModes: { missing: 'Solo las que faltan', all: 'Todas, escritas de nuevo', none: 'Ninguna: se importan' },
   entitiesModuleLabel: 'Módulo de las entidades',
+  modelsSourceLabel: 'Clases de los modelos de aplicación',
+  modelsSources: { copy: 'Copiadas en el proyecto', import: 'Importadas de tu módulo' },
+  modelsModuleLabel: 'Módulo de los modelos',
+  conversionsLanguage: (models, project) =>
+    `Los modelos de aplicación están escritos en ${models} y el proyecto en ${project}: los servicios siguen con sus DTO y no se escriben conversiones. Elige ${models} como lenguaje del proyecto para tenerlas.`,
   servicesLabel: 'Servicios',
   yes: 'Sí',
   no: 'No',

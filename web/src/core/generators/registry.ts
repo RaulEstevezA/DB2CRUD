@@ -2,6 +2,7 @@
  * Registry of the generators (Registry pattern). To support a new stack, write its generator (types.ts), add
  * it to `GENERATORS` and describe its options in settings/settings.ts.
  */
+import { conversionsAvailable, type ApplicationModels } from '../conversions/plan.ts'
 import type { CrudDesign } from '../crud/types.ts'
 import type { GeneratedFile } from '../export/files.ts'
 import type { DbSchema } from '../schema/types.ts'
@@ -45,9 +46,21 @@ export function findGenerator(settings: Pick<ProjectSettings, 'language' | 'orm'
 }
 
 /** The files of the project, sorted by path, for settings made consistent first. */
-export function generateProject(schema: DbSchema, design: CrudDesign, settings: Partial<ProjectSettings>): GeneratedFile[] {
+/**
+ * The files of the project. With application models, their conversions are written only when the models are in the
+ * project's language, or in none (`conversionsAvailable`); otherwise the project is the one without models.
+ */
+export function generateProject(
+  schema: DbSchema,
+  design: CrudDesign,
+  settings: Partial<ProjectSettings>,
+  models: ApplicationModels | null = null,
+): GeneratedFile[] {
   const normalized = normalizeSettings(settings)
   const generator = findGenerator(normalized)
   if (!generator) return []
-  return generator.generate({ schema, design, settings: normalized }).sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0))
+  const usable = models && conversionsAvailable(models, normalized.language).ok ? models : null
+  return generator
+    .generate({ schema, design, settings: normalized, models: usable })
+    .sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0))
 }

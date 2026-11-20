@@ -7,9 +7,10 @@
 import type { LanguageSupport } from '@codemirror/language'
 import { useEffect, useState, type ReactNode } from 'react'
 import { downloadBlob } from '../../app/download.ts'
+import type { ConversionsAvailability } from '../../core/conversions/plan.ts'
 import type { GeneratedFile } from '../../core/export/files.ts'
 import { createZip } from '../../core/export/zip.ts'
-import { findStack, STACKS, type ProjectSettings } from '../../core/settings/settings.ts'
+import { findStack, STACKS, type LanguageId, type ProjectSettings } from '../../core/settings/settings.ts'
 import { isVerified } from '../../core/settings/verified.ts'
 import { useCopy } from '../../hooks/useCopy.ts'
 import { useI18n } from '../../i18n/useI18n.ts'
@@ -24,9 +25,11 @@ export interface ProjectPaneProps {
   settings: ProjectSettings
   files: GeneratedFile[]
   onSettingsChange: (change: Partial<ProjectSettings>) => void
+  /** With application models: whether their conversions can be written for the chosen language */
+  conversions?: ConversionsAvailability | null
 }
 
-export function ProjectPane({ settings, files, onSettingsChange }: ProjectPaneProps) {
+export function ProjectPane({ settings, files, onSettingsChange, conversions = null }: ProjectPaneProps) {
   const { t } = useI18n()
   const [chosen, setChosen] = useState<string | null>(null)
   const [language, setLanguage] = useState<LanguageSupport | null>(null)
@@ -143,6 +146,23 @@ export function ProjectPane({ settings, files, onSettingsChange }: ProjectPanePr
                 value={settings.entitiesModule}
                 spellCheck={false}
                 onCommit={(entitiesModule) => onSettingsChange({ entitiesModule })}
+              />
+            </label>
+          )}
+          {conversions && !conversions.ok && (
+            <p className="project__notice" role="status">
+              {t.conversionsLanguage(t.languages[conversions.models as LanguageId] ?? conversions.models, t.languages[conversions.project])}
+            </p>
+          )}
+          {conversions?.ok && choice('modelsSource', t.modelsSourceLabel, ['copy', 'import'], (value) => t.modelsSources[value])}
+          {conversions?.ok && settings.modelsSource === 'import' && (
+            <label className="field">
+              <span>{t.modelsModuleLabel}</span>
+              <CommitInput
+                className="input input--mono"
+                value={settings.modelsModule}
+                spellCheck={false}
+                onCommit={(modelsModule) => onSettingsChange({ modelsModule })}
               />
             </label>
           )}

@@ -25,6 +25,8 @@ export type OrmId =
   | 'seaorm'
   | 'fluent'
 
+/** Where the application model classes come from: a copy written into the project, or the user's module. */
+export type ModelsSource = 'copy' | 'import'
 /** Which ORM entities are written: only those the input lacks, all of them (replacing the input's), or none. */
 export type EntitiesMode = 'missing' | 'all' | 'none'
 /** What services take and return: the entities, or DTOs written per table (create, update, read). */
@@ -56,6 +58,10 @@ export interface ProjectSettings {
   entities: EntitiesMode
   /** Python module the entities are imported from when none are written */
   entitiesModule: string
+  /** With application models: whether their classes are copied into the project or imported from `modelsModule` */
+  modelsSource: ModelsSource
+  /** The module (package, namespace) of the application models when they are imported */
+  modelsModule: string
   services: boolean
   serviceTypes: ServiceTypes
   dtoKind: DtoKind
@@ -237,6 +243,8 @@ export const DEFAULT_SETTINGS: ProjectSettings = {
   database: 'postgresql',
   entities: 'missing',
   entitiesModule: 'app.entities',
+  modelsSource: 'copy',
+  modelsModule: 'app.models',
   services: true,
   serviceTypes: 'entities',
   dtoKind: 'pydantic',
@@ -253,6 +261,7 @@ export const DEFAULT_SETTINGS: ProjectSettings = {
 }
 
 const ENTITIES: readonly EntitiesMode[] = ['missing', 'all', 'none']
+const MODELS_SOURCES: readonly ModelsSource[] = ['copy', 'import']
 const SERVICE_TYPES: readonly ServiceTypes[] = ['entities', 'dtos']
 const TRANSACTIONS: readonly Transactions[] = ['operation', 'caller', 'repository']
 const PAGING: readonly Paging[] = ['none', 'offset', 'cursor']
@@ -278,10 +287,8 @@ export function slug(name: string): string {
 }
 
 /** A dotted module path of valid identifiers (`app.entities`), or the default. */
-function modulePath(value: unknown): string {
-  return typeof value === 'string' && /^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$/.test(value)
-    ? value
-    : DEFAULT_SETTINGS.entitiesModule
+function modulePath(value: unknown, fallback: string): string {
+  return typeof value === 'string' && /^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$/.test(value) ? value : fallback
 }
 
 /** Settings the chosen stack supports: unknown values and options it cannot honour fall back to its first one. */
@@ -295,7 +302,9 @@ export function normalizeSettings(settings: Partial<ProjectSettings>): ProjectSe
     orm: stack.orm,
     database: pick(settings.database, stack.databases, stack.databases[0]),
     entities: pick(settings.entities, ENTITIES, DEFAULT_SETTINGS.entities),
-    entitiesModule: modulePath(settings.entitiesModule),
+    entitiesModule: modulePath(settings.entitiesModule, DEFAULT_SETTINGS.entitiesModule),
+    modelsSource: pick(settings.modelsSource, MODELS_SOURCES, DEFAULT_SETTINGS.modelsSource),
+    modelsModule: modulePath(settings.modelsModule, DEFAULT_SETTINGS.modelsModule),
     services,
     serviceTypes: pick(settings.serviceTypes, SERVICE_TYPES, DEFAULT_SETTINGS.serviceTypes),
     dtoKind: pick(settings.dtoKind, stack.dtoKinds, stack.dtoKinds[0]),
