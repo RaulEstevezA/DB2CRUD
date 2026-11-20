@@ -1,6 +1,6 @@
 """The database the code is generated for: editor, open, clear and the reading status. Read on this computer and never
-sent anywhere. It reads Model2DB projects and ORM code (SQLAlchemy, SQLModel, Django and Tortoise so far). Mirrors
-web/src/components/database/DatabasePane.tsx."""
+sent anywhere. It reads Model2DB projects and ORM code (SQLAlchemy, SQLModel, Django, Tortoise and Prisma so far).
+Mirrors web/src/components/database/DatabasePane.tsx."""
 
 from pathlib import Path
 
@@ -84,7 +84,7 @@ class DatabasePane(Pane):
     def choose_file(self) -> None:
         t = self._i18n.t
         path, _ = QFileDialog.getOpenFileName(
-            self, t.open_dialog, "", f"{t.project_files} (*.json *.py);;{t.all_files} (*)"
+            self, t.open_dialog, "", f"{t.project_files} (*.json *.py *.prisma);;{t.all_files} (*)"
         )
         if path:
             self.open_file(path)

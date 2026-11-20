@@ -1,6 +1,6 @@
 /**
  * Database pane: the database the code is generated for, pasted, opened or dropped, read in the browser and
- * never uploaded. It reads Model2DB projects and ORM code (SQLAlchemy, SQLModel, Django and Tortoise so far); SQL DDL comes next (ROADMAP).
+ * never uploaded. It reads Model2DB projects and ORM code (SQLAlchemy, SQLModel, Django, Tortoise and Prisma so far); SQL DDL comes next (ROADMAP).
  * The footer says what was read or why the input cannot be read.
  */
 import type { LanguageSupport } from '@codemirror/language'
@@ -116,7 +116,7 @@ export function DatabasePane({ input, read, onChange }: DatabasePaneProps) {
             <input
               ref={fileInput}
               type="file"
-              accept=".json,.model2db.json,.py"
+              accept=".json,.model2db.json,.py,.prisma"
               hidden
               onChange={(event) => {
                 const file = event.target.files?.[0]
