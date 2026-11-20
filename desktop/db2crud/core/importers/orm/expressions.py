@@ -46,6 +46,19 @@ def read_arguments(cursor: Cursor, source: str, named_by: str, close: str) -> tu
     return args, named
 
 
+def _is_arrow(cursor: Cursor) -> bool:
+    """Whether the group at the cursor is the parameters of an arrow function: `=>` follows it, maybe after a
+    type."""
+    start = cursor.index
+    cursor.skip_group()
+    arrow = cursor.is_("=>")
+    if cursor.is_(":"):
+        cursor.skip_until(["=>", ",", ";"])
+        arrow = cursor.is_("=>")
+    cursor.index = start
+    return arrow
+
+
 def _read_primary(cursor: Cursor, source: str, named_by: str) -> dict:
     token = cursor.peek()
     if token is None:
@@ -63,6 +76,11 @@ def _read_primary(cursor: Cursor, source: str, named_by: str) -> dict:
         cursor.next()
         value = to_number(cursor.next().value.replace("_", ""))
         return {"kind": "number", "value": -value if value is not None else None}
+    if cursor.is_("(") and _is_arrow(cursor):
+        # An arrow function (`() => Order`, `(): AnyPgColumn => orders.id`) is kept as text
+        start = cursor.index
+        cursor.skip_until([",", ";"])
+        return {"kind": "other", "text": cursor.text_between(source, start, cursor.index)}
     if cursor.is_("[") or cursor.is_("("):
         close = "]" if cursor.is_("[") else ")"
         cursor.next()
@@ -107,6 +125,19 @@ def read_expression(cursor: Cursor, source: str, named_by: str = "=") -> dict:
         elif cursor.is_(".") and cursor.is_ident(1):
             cursor.next()
             expr = {"kind": "attribute", "target": expr, "name": cursor.next().value}
+        elif (
+            cursor.peek() is not None
+            and cursor.peek().kind == "string"
+            and source[cursor.peek().start : cursor.peek().start + 1] == "`"
+            and expr["kind"] in ("name", "attribute")
+        ):
+            # A tagged template (sql`now()`) is a call with its text
+            expr = {
+                "kind": "call",
+                "callee": expr,
+                "args": [{"kind": "string", "value": cursor.next().value}],
+                "named": {},
+            }
         elif cursor.is_("["):
             # Subscripts (Mapped[int]) are kept as text
             cursor.skip_group()
