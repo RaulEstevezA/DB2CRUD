@@ -8,6 +8,7 @@ import { djangoReader } from './django.ts'
 import { doctrineReader } from './doctrine.ts'
 import { drizzleReader } from './drizzle.ts'
 import { efcoreReader } from './efcore.ts'
+import { eloquentReader } from './eloquent.ts'
 import { jpaReader } from './jpa.ts'
 import { prismaReader } from './prisma.ts'
 import { sequelizeReader } from './sequelize.ts'
@@ -29,6 +30,7 @@ export const ORM_READERS: OrmReader[] = [
   jpaReader,
   efcoreReader,
   doctrineReader,
+  eloquentReader,
 ]
 
 /** The reader for these files, or null when none recognises them. */
