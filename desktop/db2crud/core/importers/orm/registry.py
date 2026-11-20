@@ -9,6 +9,7 @@ from .django import DJANGO_READER
 from .doctrine import DOCTRINE_READER
 from .drizzle import DRIZZLE_READER
 from .efcore import EFCORE_READER
+from .eloquent import ELOQUENT_READER
 from .jpa import JPA_READER
 from .prisma import PRISMA_READER
 from .sequelize import SEQUELIZE_READER
@@ -30,6 +31,7 @@ ORM_READERS: list[OrmReader] = [
     JPA_READER,
     EFCORE_READER,
     DOCTRINE_READER,
+    ELOQUENT_READER,
 ]
 
 
