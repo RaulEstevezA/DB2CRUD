@@ -18,7 +18,7 @@ Application models ──► Importer ──► Model ───────┘  
 |---|---|---|---|
 | Model importing | Text in a supported format | `Model` | Works: `core/importers/`, `core/model/` |
 | Constraints and model facts | `Model` | Validations each field declares, entities, keys and references | Works: `core/analysis/` |
-| Database importing | Model2DB project, ORM code or SQL DDL | Physical schema (`db-schema`) | Model2DB projects (`core/interop/model2db/`) and the Python ORMs SQLAlchemy, SQLModel, Django and Tortoise, Prisma, TypeORM, Sequelize, Drizzle, JPA/Hibernate and EF Core (`core/importers/orm/`) work; the other ORMs and DDL to write |
+| Database importing | Model2DB project, ORM code or SQL DDL | Physical schema (`db-schema`) | Model2DB projects (`core/interop/model2db/`) and the Python ORMs SQLAlchemy, SQLModel, Django and Tortoise, Prisma, TypeORM, Sequelize, Drizzle, JPA/Hibernate, EF Core and Doctrine (`core/importers/orm/`) work; the other ORMs and DDL to write |
 | Analysis | Physical schema | Repository queries and pending decisions | Works: `core/schema/`, `core/crud/` |
 | Correspondences | Physical schema + `Model` (+ Mapper project) | Model ↔ entity and field ↔ column, with their confidence | To write |
 | CRUD design | Physical schema + user edits | Repositories, services and decisions | Works: `core/crud/` |
