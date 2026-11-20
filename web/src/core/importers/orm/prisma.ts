@@ -10,7 +10,8 @@
  */
 import { checkOf } from '../../schema/checks.ts'
 import type { DbCheck, DbColumn, DbEnum, DbForeignKey, DbNote, DbSchema, DbTable, DbType, Dialect } from '../../schema/types.ts'
-import { C_LIKE, Cursor, tokenize, type LexerConfig, type Token } from '../code/lexer.ts'
+import { C_LIKE, Cursor, tokenize, type Token } from '../code/lexer.ts'
+import { readDdl } from '../ddl/ddl.ts'
 import { literalOf, nameOf, numberOf, readArguments, readExpression, stringOf, textOf, type Expr } from './expressions.ts'
 import type { OrmReader, SourceFile } from './types.ts'
 
@@ -135,66 +136,12 @@ function readBlocks(files: SourceFile[]): Block[] {
 
 const isSql = (file: SourceFile) => file.name.toLowerCase().endsWith('.sql')
 
-const SQL: LexerConfig = {
-  lineComments: ['--'],
-  blockComments: [['/*', '*/']],
-  strings: [
-    { open: "'", close: "'", escapes: false, multiline: true },
-    { open: '"', close: '"', escapes: false, multiline: false },
-    { open: '`', close: '`', escapes: false, multiline: false },
-    { open: '[', close: ']', escapes: false, multiline: false },
-  ],
-}
-
-/** The CHECK constraints the SQL creates, by table: in `CREATE TABLE` (of a column or of the table) and in
- * `ALTER TABLE … ADD [CONSTRAINT name] CHECK (…)`. A constraint dropped later is left out. */
-function migrationChecks(files: SourceFile[]): Map<string, DbCheck[]> {
-  const checks = new Map<string, DbCheck[]>()
-  const word = (token: Token | undefined, value: string) => token?.kind === 'ident' && token.value.toUpperCase() === value
-  for (const file of files) {
-    let tokens: Token[]
-    try {
-      tokens = tokenize(file.text, SQL)
-    } catch {
-      continue
-    }
-    let table: string | undefined
-    let depth = 0
-    for (let index = 0; index < tokens.length; index++) {
-      const token = tokens[index]
-      if (token.kind === 'punct' && token.value === ';') table = undefined
-      if (token.kind === 'punct' && token.value === '(') depth++
-      if (token.kind === 'punct' && token.value === ')') depth--
-      if (depth === 0 && word(token, 'TABLE') && (word(tokens[index - 1], 'CREATE') || word(tokens[index - 1], 'ALTER'))) {
-        // CREATE TABLE IF NOT EXISTS "schema"."name"
-        let at = index + 1
-        while (word(tokens[at], 'IF') || word(tokens[at], 'NOT') || word(tokens[at], 'EXISTS') || word(tokens[at], 'ONLY')) at++
-        while (tokens[at + 1]?.value === '.' && tokens[at + 2]) at += 2
-        table = tokens[at]?.value
-        continue
-      }
-      if (!table) continue
-      if (word(token, 'DROP') && word(tokens[index + 1], 'CONSTRAINT')) {
-        const name = tokens[index + 2]?.value
-        checks.set(
-          table,
-          (checks.get(table) ?? []).filter((item) => item.name !== name),
-        )
-        continue
-      }
-      if (!word(token, 'CHECK') || tokens[index + 1]?.value !== '(') continue
-      let end = index + 2
-      for (let open = 1; end < tokens.length; end++) {
-        if (tokens[end].kind === 'punct' && tokens[end].value === '(') open++
-        if (tokens[end].kind === 'punct' && tokens[end].value === ')' && --open === 0) break
-      }
-      const name = word(tokens[index - 2], 'CONSTRAINT') ? tokens[index - 1].value : undefined
-      const sql = file.text.slice(tokens[index + 1].end, tokens[end].start).trim()
-      checks.set(table, [...(checks.get(table) ?? []), checkOf(sql, name)])
-      index = end
-    }
-  }
-  return checks
+/** The CHECK constraints of each table, as the SQL of the migrations leaves them: read in the order of their names
+ * (`prisma/migrations/<timestamp>_<name>/migration.sql`), as Prisma applies them. */
+function migrationChecks(files: SourceFile[], dialect: Dialect | null): Map<string, DbCheck[]> {
+  const sorted = [...files].sort((a, b) => a.name.localeCompare(b.name))
+  const schema = readDdl(sorted.map((file) => file.text).join(';\n'), dialect)
+  return new Map(schema.tables.map((table) => [table.name, table.checks]))
 }
 
 // Types
@@ -389,7 +336,7 @@ function readPrisma(files: SourceFile[]): DbSchema {
   }
   const sqlFiles = files.filter(isSql)
   if (sqlFiles.length > 0) {
-    const checks = migrationChecks(sqlFiles)
+    const checks = migrationChecks(sqlFiles, dialect)
     for (const model of models.values()) model.table.checks.push(...(checks.get(model.table.name) ?? []))
   } else if (models.size > 0) notes.push({ code: 'orm.checksNotKept' })
   const joins: DbTable[] = []
