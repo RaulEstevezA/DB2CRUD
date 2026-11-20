@@ -1,0 +1,17 @@
+CREATE TABLE teams (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(80) NOT NULL
+) ENGINE=InnoDB;
+CREATE TABLE users (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  user_name VARCHAR(50) NOT NULL,
+  age INT NOT NULL,
+  role ENUM('reader', 'writer') NOT NULL,
+  team_id INT,
+  joined DATE NOT NULL,
+  CONSTRAINT fk_users_team FOREIGN KEY (team_id) REFERENCES teams (id)
+) ENGINE=InnoDB;
+CREATE TABLE audit (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  happened DATETIME NOT NULL
+) ENGINE=InnoDB;
