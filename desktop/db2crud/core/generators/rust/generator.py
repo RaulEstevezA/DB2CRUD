@@ -74,7 +74,7 @@ def _module_files(context: dict, files: list[dict]) -> list[dict]:
     return result
 
 
-def _generate(schema: dict, design: dict, settings: dict) -> list[dict]:
+def _generate(schema: dict, design: dict, settings: dict, models: dict | None = None) -> list[dict]:
     context = create_context(schema, design, settings)
     files = _code(context)
     return [

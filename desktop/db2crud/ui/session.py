@@ -10,6 +10,7 @@ import json
 
 from PySide6.QtCore import QObject, QSettings, Signal
 
+from ..core.conversions.plan import conversions_available
 from ..core.crud.edit import pending_decisions
 from ..core.crud.propose import propose_crud
 from ..core.generators.registry import generate_project
@@ -90,6 +91,18 @@ class Session(QObject):
         return models["schema"] if models and models["ok"] else None
 
     @property
+    def application_models(self) -> dict | None:
+        """The application models read, as the generators take them: {schema, project}."""
+        schema = self.model_schema
+        return {"schema": schema, "project": self.mapper_project} if schema else None
+
+    @property
+    def conversions(self) -> dict | None:
+        """With application models: whether their conversions can be written for the chosen language."""
+        models = self.application_models
+        return conversions_available(models, self.settings["language"]) if models else None
+
+    @property
     def mapper_project(self) -> dict | None:
         """The Mapper project the models come from, whose relations the matching follows."""
         models = self.models_read
@@ -158,7 +171,8 @@ class Session(QObject):
 
     def _generate(self) -> None:
         schema = self.schema
-        self.files = generate_project(schema, self.design, self.settings) if schema and self.design else []
+        models = self.application_models
+        self.files = generate_project(schema, self.design, self.settings, models) if schema and self.design else []
         self.output_changed.emit()
 
     # Settings

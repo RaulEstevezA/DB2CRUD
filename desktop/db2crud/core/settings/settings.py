@@ -162,6 +162,8 @@ DEFAULT_SETTINGS = {
     "database": "postgresql",
     "entities": "missing",
     "entitiesModule": "app.entities",
+    "modelsSource": "copy",
+    "modelsModule": "app.models",
     "services": True,
     "serviceTypes": "entities",
     "dtoKind": "pydantic",
@@ -205,9 +207,9 @@ def slug(name: str) -> str:
     return "-".join(words) if words else DEFAULT_SETTINGS["name"]
 
 
-def _module_path(value) -> str:
+def _module_path(value, fallback: str) -> str:
     valid = isinstance(value, str) and re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*", value)
-    return value if valid else DEFAULT_SETTINGS["entitiesModule"]
+    return value if valid else fallback
 
 
 def normalize_settings(settings: dict) -> dict:
@@ -226,7 +228,9 @@ def normalize_settings(settings: dict) -> dict:
         "orm": stack["orm"],
         "database": _pick(settings.get("database"), stack["databases"], stack["databases"][0]),
         "entities": _pick(settings.get("entities"), ENTITIES, DEFAULT_SETTINGS["entities"]),
-        "entitiesModule": _module_path(settings.get("entitiesModule")),
+        "entitiesModule": _module_path(settings.get("entitiesModule"), DEFAULT_SETTINGS["entitiesModule"]),
+        "modelsSource": _pick(settings.get("modelsSource"), ("copy", "import"), DEFAULT_SETTINGS["modelsSource"]),
+        "modelsModule": _module_path(settings.get("modelsModule"), DEFAULT_SETTINGS["modelsModule"]),
         "services": services,
         "serviceTypes": _pick(settings.get("serviceTypes"), SERVICE_TYPES, DEFAULT_SETTINGS["serviceTypes"]),
         "dtoKind": _pick(settings.get("dtoKind"), stack["dtoKinds"], stack["dtoKinds"][0]),

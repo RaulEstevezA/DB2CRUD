@@ -30,7 +30,7 @@ def _code(context: dict) -> list[dict]:
     return [file for file in files if file is not None]
 
 
-def _generate(schema: dict, design: dict, settings: dict) -> list[dict]:
+def _generate(schema: dict, design: dict, settings: dict, models: dict | None = None) -> list[dict]:
     context = create_context(schema, design, settings)
     return [
         readme_file(context),

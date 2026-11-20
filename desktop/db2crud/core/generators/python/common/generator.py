@@ -35,7 +35,7 @@ def _code(context: dict) -> list[dict]:
 
 
 def python_generator(orm: dict) -> dict:
-    def generate(schema: dict, design: dict, settings: dict) -> list[dict]:
+    def generate(schema: dict, design: dict, settings: dict, models: dict | None = None) -> list[dict]:
         context = create_context(orm, schema, design, settings)
         app = _code(context)
         return [

@@ -112,3 +112,14 @@ def test_the_application_models_are_matched_with_the_tables(window):
     # The database tab keeps its own text
     pane.source_tabs.setCurrentIndex(0)
     assert pane.editor.toPlainText() == session.input["text"]
+
+
+def test_models_in_another_language_say_why_they_get_no_conversions(window):
+    from PySide6.QtWidgets import QLabel
+
+    window.load_example("store")
+    window.session.set_models({"text": "export interface Customer {\n  id: number\n}\n", "fileName": "models.ts"})
+    notice = window.project_pane.findChild(QLabel, "conversionsNotice")
+    assert notice is not None and "written in TypeScript and the project in Python" in notice.text()
+    window.session.set_settings(language="typescript", orm="typeorm")
+    assert window.session.conversions == {"ok": True}

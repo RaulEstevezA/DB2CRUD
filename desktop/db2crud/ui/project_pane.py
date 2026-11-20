@@ -245,6 +245,22 @@ class ProjectPane(Pane):
         if settings["entities"] != "all":
             module = CommitLine(settings["entitiesModule"], lambda text: self._set(entitiesModule=text))
             cells.append((t.entities_module_label, module))
+        conversions = self._session.conversions
+        notice = None
+        if conversions and not conversions["ok"]:
+            # Why the application models get no conversions: below the settings, across the grid
+            models = t.languages.get(conversions["models"], conversions["models"])
+            notice = QLabel(t.conversions_language(models, t.languages[conversions["project"]]))
+            notice.setWordWrap(True)
+            notice.setObjectName("conversionsNotice")
+            set_role(notice, "muted")
+        if conversions and conversions["ok"]:
+            choice(
+                "modelsSource", t.models_source_label, [(t.models_sources[item], item) for item in ("copy", "import")]
+            )
+            if settings["modelsSource"] == "import":
+                module = CommitLine(settings["modelsModule"], lambda text: self._set(modelsModule=text))
+                cells.append((t.models_module_label, module))
         choice("services", t.services_label, yes_no)
         if settings["services"]:
             choice(
@@ -276,6 +292,9 @@ class ProjectPane(Pane):
             widget.setAccessibleName(label)
             self._grid.addWidget(text, row * 2, column)
             self._grid.addWidget(widget, row * 2 + 1, column)
+        if notice is not None:
+            rows = (len(cells) + COLUMNS - 1) // COLUMNS
+            self._grid.addWidget(notice, rows * 2, 0, 1, COLUMNS)
         for column in range(COLUMNS):
             self._grid.setColumnStretch(column, 1)
         for label, widget in cells:

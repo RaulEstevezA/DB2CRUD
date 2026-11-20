@@ -24,7 +24,7 @@ def _code(context: dict) -> list[dict]:
 
 
 def typescript_generator(orm: dict) -> dict:
-    def generate(schema: dict, design: dict, settings: dict) -> list[dict]:
+    def generate(schema: dict, design: dict, settings: dict, models: dict | None = None) -> list[dict]:
         context = create_context(orm, schema, design, settings)
         return [
             readme_file(context),

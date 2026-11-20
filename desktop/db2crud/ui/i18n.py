@@ -355,6 +355,13 @@ EN = SimpleNamespace(
     entities_label="Entities",
     entities_modes={"missing": "Only the missing ones", "all": "All, written again", "none": "None: import them"},
     entities_module_label="Module of the entities",
+    models_source_label="Application model classes",
+    models_sources={"copy": "Copied into the project", "import": "Imported from your module"},
+    models_module_label="Module of the models",
+    conversions_language=lambda models, project: (
+        f"The application models are written in {models} and the project in {project}: the services keep their DTOs"
+        f" and no conversions are written. Choose {models} as the language of the project to get them."
+    ),
     services_label="Services",
     yes="Yes",
     no="No",
@@ -565,6 +572,13 @@ ES = SimpleNamespace(
         "none": "Ninguna: se importan",
     },
     entities_module_label="Módulo de las entidades",
+    models_source_label="Clases de los modelos de aplicación",
+    models_sources={"copy": "Copiadas en el proyecto", "import": "Importadas de tu módulo"},
+    models_module_label="Módulo de los modelos",
+    conversions_language=lambda models, project: (
+        f"Los modelos de aplicación están escritos en {models} y el proyecto en {project}: los servicios siguen con"
+        f" sus DTO y no se escriben conversiones. Elige {models} como lenguaje del proyecto para tenerlas."
+    ),
     services_label="Servicios",
     yes="Sí",
     no="No",

@@ -30,7 +30,7 @@ def _code(context: dict) -> list[dict]:
 
 
 def php_generator(orm: dict) -> dict:
-    def generate(schema: dict, design: dict, settings: dict) -> list[dict]:
+    def generate(schema: dict, design: dict, settings: dict, models: dict | None = None) -> list[dict]:
         context = create_context(orm, schema, design, settings)
         files = [
             readme_file(context),

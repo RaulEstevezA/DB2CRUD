@@ -1,5 +1,6 @@
 """Registry of the generators (Registry pattern). Mirrors web/src/core/generators/registry.ts."""
 
+from ..conversions.plan import conversions_available
 from ..settings.settings import normalize_settings
 from .csharp.generator import CSHARP_GENERATOR
 from .java.generator import JAVA_GENERATOR
@@ -42,10 +43,13 @@ def find_generator(settings: dict) -> dict | None:
     )
 
 
-def generate_project(schema: dict, design: dict, settings: dict) -> list[dict]:
-    """The files of the project, sorted by path, for settings made consistent first."""
+def generate_project(schema: dict, design: dict, settings: dict, models: dict | None = None) -> list[dict]:
+    """The files of the project, sorted by path, for settings made consistent first. With application models, their
+    conversions are written only when the models are in the project's language, or in none (`conversions_available`);
+    otherwise the project is the one without models."""
     normalized = normalize_settings(settings)
     generator = find_generator(normalized)
     if not generator:
         return []
-    return sorted(generator["generate"](schema, design, normalized), key=lambda file: file["path"])
+    usable = models if models and conversions_available(models, normalized["language"])["ok"] else None
+    return sorted(generator["generate"](schema, design, normalized, usable), key=lambda file: file["path"])
