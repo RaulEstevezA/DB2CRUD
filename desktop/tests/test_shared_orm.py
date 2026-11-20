@@ -22,8 +22,8 @@ def _files(folder) -> list[dict]:
 @pytest.mark.parametrize("folder", FOLDERS, ids=lambda folder: folder.relative_to(SHARED_CASES / "orm").as_posix())
 def test_reads_the_same_schema(folder):
     files = _files(folder)
-    # model2db/<example>/<orm>/ and hand/<orm>/<case>/
-    orm = folder.parent.name if folder.parent.parent.name == "hand" else folder.name
+    # model2db/<example>/<orm>/ (or <orm>.<variant>/, read by the same reader) and hand/<orm>/<case>/
+    orm = folder.parent.name if folder.parent.parent.name == "hand" else folder.name.split(".")[0]
     if orm not in {reader.id for reader in ORM_READERS}:
         pytest.skip(f"the {orm} reader is not ported to the desktop version yet")
     assert detect_orm(files).id == orm
