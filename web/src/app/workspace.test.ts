@@ -28,6 +28,19 @@ describe('readDatabase', () => {
     expect(inputLanguage({ text: EXAMPLES[0].text })).toBe('json')
   })
 
+  it('reads SQL DDL when the input is neither a project nor ORM code', () => {
+    const text = 'CREATE TABLE users (\n  id SERIAL PRIMARY KEY,\n  email VARCHAR(120) NOT NULL UNIQUE\n);\n'
+    const read = readDatabase({ text })
+    expect(read?.ok).toBe(true)
+    if (read?.ok) {
+      expect(sourceLabel(read.schema)).toBe('SQL DDL')
+      expect(read.schema.dialect).toBe('postgresql')
+      expect(read.schema.tables.map((table) => table.name)).toEqual(['users'])
+    }
+    expect(inputLanguage({ text })).toBe('sql')
+    expect(readDatabase({ text: 'CREATE TABLE AS SELECT 1;' })).toEqual({ ok: false, error: 'noTables' })
+  })
+
   it('says why an input cannot be read', () => {
     expect(readDatabase({ text: '{ "a": ' })).toEqual({ ok: false, error: 'notJson' })
     expect(readDatabase({ text: 'export interface User { id: number }' })).toEqual({ ok: false, error: 'unknownInput' })

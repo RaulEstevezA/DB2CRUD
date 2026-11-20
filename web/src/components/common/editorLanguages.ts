@@ -29,6 +29,7 @@ const LOADERS: Record<string, () => Promise<LanguageSupport>> = {
   prisma: async () => legacy((await import('@codemirror/legacy-modes/mode/clike')).kotlin),
   markdown: async () => (await import('@codemirror/lang-markdown')).markdown(),
   toml: async () => legacy((await import('@codemirror/legacy-modes/mode/toml')).toml),
+  sql: async () => legacy((await import('@codemirror/legacy-modes/mode/sql')).standardSQL),
   properties: async () => legacy((await import('@codemirror/legacy-modes/mode/properties')).properties),
   text: async () => new LanguageSupport(StreamLanguage.define({ token: (stream) => (stream.skipToEnd(), null) })),
 }
@@ -65,6 +66,7 @@ export function languageOfFile(path: string): string {
     md: 'markdown',
     toml: 'toml',
     prisma: 'prisma',
+    sql: 'sql',
   }
   return byExtension[extension] ?? 'text'
 }

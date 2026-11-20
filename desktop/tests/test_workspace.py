@@ -28,6 +28,17 @@ def test_reads_orm_code_when_the_input_is_not_json():
     assert input_language({"text": EXAMPLES[0]["text"]}) == "json"
 
 
+def test_reads_sql_ddl_when_the_input_is_neither_a_project_nor_orm_code():
+    text = "CREATE TABLE users (\n  id SERIAL PRIMARY KEY,\n  email VARCHAR(120) NOT NULL UNIQUE\n);\n"
+    read = read_database({"text": text})
+    assert read["ok"]
+    assert source_label(read["schema"]) == "SQL DDL"
+    assert read["schema"]["dialect"] == "postgresql"
+    assert [table["name"] for table in read["schema"]["tables"]] == ["users"]
+    assert input_language({"text": text}) == "sql"
+    assert read_database({"text": "CREATE TABLE AS SELECT 1;"}) == {"ok": False, "error": "noTables"}
+
+
 def test_says_why_an_input_cannot_be_read():
     assert read_database({"text": '{ "a": '}) == {"ok": False, "error": "notJson"}
     assert read_database({"text": "export interface User { id: number }"}) == {"ok": False, "error": "unknownInput"}
