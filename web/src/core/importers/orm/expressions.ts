@@ -48,6 +48,19 @@ export function readArguments(cursor: Cursor, source: string, syntax: Expression
   return { args, named }
 }
 
+/** Whether the group at the cursor is the parameters of an arrow function: `=>` follows it, maybe after a type. */
+function isArrow(cursor: Cursor): boolean {
+  const start = cursor.index
+  cursor.skipGroup()
+  let arrow = cursor.is('=>')
+  if (cursor.is(':')) {
+    cursor.skipUntil(['=>', ',', ';'])
+    arrow = cursor.is('=>')
+  }
+  cursor.index = start
+  return arrow
+}
+
 function readPrimary(cursor: Cursor, source: string, syntax: ExpressionSyntax): Expr {
   const token = cursor.peek()
   if (!token) return { kind: 'other', text: '' }
@@ -64,6 +77,12 @@ function readPrimary(cursor: Cursor, source: string, syntax: ExpressionSyntax): 
   if (cursor.is('-') && cursor.peek(1)?.kind === 'number') {
     cursor.next()
     return { kind: 'number', value: -Number(cursor.next().value.replace(/_/g, '')) }
+  }
+  if (cursor.is('(') && isArrow(cursor)) {
+    // An arrow function (`() => Order`, `(): AnyPgColumn => orders.id`) is kept as text
+    const start = cursor.index
+    cursor.skipUntil([',', ';'])
+    return { kind: 'other', text: cursor.textBetween(source, start, cursor.index) }
   }
   if (cursor.is('[') || cursor.is('(')) {
     const close = cursor.is('[') ? ']' : ')'
@@ -111,6 +130,13 @@ export function readExpression(cursor: Cursor, source: string, syntax: Expressio
     } else if (cursor.is('.') && cursor.isIdent(1)) {
       cursor.next()
       expr = { kind: 'attribute', target: expr, name: cursor.next().value }
+    } else if (
+      cursor.peek()?.kind === 'string' &&
+      source[cursor.peek()!.start] === '`' &&
+      (expr.kind === 'name' || expr.kind === 'attribute')
+    ) {
+      // A tagged template (sql`now()`) is a call with its text
+      expr = { kind: 'call', callee: expr, args: [{ kind: 'string', value: cursor.next().value }], named: {} }
     } else if (cursor.is('[')) {
       // Subscripts (Mapped[int]) are kept as text
       cursor.skipGroup()
