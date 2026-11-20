@@ -333,4 +333,4 @@ A JSON file in the generated project that describes what was written, so CRUD2Co
 }
 ```
 
-It is documented in `docs/interoperability.md` once it is written (phase 15); CRUD2Controller reads this file, not this page.
+The example above is the first sketch: the format as DB2CRUD writes it is documented in [`interoperability.md`](./interoperability.md), which is what CRUD2Controller follows.
