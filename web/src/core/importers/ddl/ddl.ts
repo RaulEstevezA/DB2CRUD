@@ -1,8 +1,8 @@
 /**
  * Reads SQL DDL into the physical schema: `CREATE TABLE` (columns with their types, `NOT NULL`, defaults, identity
  * and computed columns, comments, and the constraints of a column or of the table), `CREATE INDEX`, `CREATE TYPE … AS
- * ENUM`, `ALTER TABLE` (constraints, columns, defaults and identities added or dropped) and `COMMENT ON`, as
- * PostgreSQL, MySQL, MariaDB and SQLite write them, also in the dumps of `pg_dump --schema-only` and
+ * ENUM`, `ALTER TABLE` (constraints, columns, defaults and identities added or dropped, renames), `DROP TABLE` and
+ * `COMMENT ON`, as PostgreSQL, MySQL, MariaDB and SQLite write them, also in the dumps of `pg_dump --schema-only` and
  * `mysqldump --no-data`. Anything else (functions, triggers, views, grants, settings) is left out. The engine is the
  * one the text is written for, when it shows (`SERIAL`, `AUTO_INCREMENT`, `AUTOINCREMENT`…), or the one given.
  */
@@ -653,6 +653,9 @@ function alterTable(reader: Reader, builder: Builder): void {
         const name = action.next()?.value
         table.columns = table.columns.filter((entry) => entry.name !== name)
       }
+    } else if (action.eat('RENAME', 'TO')) {
+      const parts = action.qualifiedName()
+      if (parts.length > 0) table.name = parts.at(-1)!
     } else if (action.eat('MODIFY') || action.eat('CHANGE')) {
       // MySQL: the column again, whole (CHANGE names it twice)
       action.eat('COLUMN')
@@ -710,6 +713,10 @@ export function readDdl(text: string, dialect?: Dialect | null): DbSchema {
           builder.enums.set(parts.at(-1)!, { name: parts.at(-1)!, values, storage: 'native' })
         }
       }
+    } else if (reader.eat('DROP', 'TABLE')) {
+      reader.eat('IF', 'EXISTS')
+      const parts = reader.qualifiedName()
+      builder.tables = builder.tables.filter((table) => table.name !== parts.at(-1))
     } else if (reader.eat('ALTER', 'TABLE')) alterTable(reader, builder)
     else if (reader.eat('COMMENT', 'ON')) commentOn(reader, builder)
   }

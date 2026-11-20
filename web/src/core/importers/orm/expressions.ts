@@ -146,7 +146,8 @@ export function readExpression(cursor: Cursor, source: string, syntax: Expressio
       cursor.next()
       const { args, named } = readArguments(cursor, source, syntax, ')')
       expr = { kind: 'call', callee: expr, args, named }
-    } else if (cursor.is('.') && cursor.isIdent(1)) {
+    } else if ((cursor.is('.') || cursor.is('->')) && cursor.isIdent(1)) {
+      // `a.b`, and PHP's `$this->belongsTo`
       cursor.next()
       expr = { kind: 'attribute', target: expr, name: cursor.next().value }
     } else if (

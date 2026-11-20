@@ -145,7 +145,8 @@ def read_expression(cursor: Cursor, source: str, named_by: str = "=") -> dict:
             cursor.next()
             args, named = read_arguments(cursor, source, named_by, ")")
             expr = {"kind": "call", "callee": expr, "args": args, "named": named}
-        elif cursor.is_(".") and cursor.is_ident(1):
+        elif (cursor.is_(".") or cursor.is_("->")) and cursor.is_ident(1):
+            # `a.b`, and PHP's `$this->belongsTo`
             cursor.next()
             expr = {"kind": "attribute", "target": expr, "name": cursor.next().value}
         elif (

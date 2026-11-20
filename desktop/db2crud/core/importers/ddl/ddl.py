@@ -1,9 +1,10 @@
 """Reads SQL DDL into the physical schema: `CREATE TABLE` (columns with their types, `NOT NULL`, defaults, identity and
 computed columns, comments, and the constraints of a column or of the table), `CREATE INDEX`, `CREATE TYPE … AS
-ENUM`, `ALTER TABLE` (constraints, columns, defaults and identities added or dropped) and `COMMENT ON`, as PostgreSQL,
-MySQL, MariaDB and SQLite write them, also in the dumps of `pg_dump --schema-only` and `mysqldump --no-data`. Anything
-else (functions, triggers, views, grants, settings) is left out. The engine is the one the text is written for, when
-it shows (`SERIAL`, `AUTO_INCREMENT`, `AUTOINCREMENT`…), or the one given. Mirrors web/src/core/importers/ddl/ddl.ts."""
+ENUM`, `ALTER TABLE` (constraints, columns, defaults and identities added or dropped, renames), `DROP TABLE` and
+`COMMENT ON`, as PostgreSQL, MySQL, MariaDB and SQLite write them, also in the dumps of `pg_dump --schema-only` and
+`mysqldump --no-data`. Anything else (functions, triggers, views, grants, settings) is left out. The engine is the one
+the text is written for, when it shows (`SERIAL`, `AUTO_INCREMENT`, `AUTOINCREMENT`…), or the one given. Mirrors
+web/src/core/importers/ddl/ddl.ts."""
 
 import re
 
@@ -788,6 +789,10 @@ def _alter_table(reader: _Reader, builder: dict) -> None:
                 token = action.next()
                 name = token.value if token is not None else None
                 table["columns"] = [entry for entry in table["columns"] if entry["name"] != name]
+        elif action.eat("RENAME", "TO"):
+            parts = action.qualified_name()
+            if parts:
+                table["name"] = parts[-1]
         elif action.eat("MODIFY") or action.eat("CHANGE"):
             # MySQL: the column again, whole (CHANGE names it twice)
             action.eat("COLUMN")
@@ -856,6 +861,11 @@ def read_ddl(text: str, dialect: str | None = None) -> dict:
                 if reader.eat("AS", "ENUM") and parts:
                     values = [token.value for token in reader.group() if _is_text(token, reader.source)]
                     builder["enums"][parts[-1]] = {"name": parts[-1], "values": values, "storage": "native"}
+        elif reader.eat("DROP", "TABLE"):
+            reader.eat("IF", "EXISTS")
+            parts = reader.qualified_name()
+            dropped = parts[-1] if parts else None
+            builder["tables"] = [table for table in builder["tables"] if table["name"] != dropped]
         elif reader.eat("ALTER", "TABLE"):
             _alter_table(reader, builder)
         elif reader.eat("COMMENT", "ON"):
