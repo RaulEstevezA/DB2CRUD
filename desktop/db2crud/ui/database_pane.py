@@ -1,6 +1,6 @@
 """The database the code is generated for: editor, open, clear and the reading status. Read on this computer and never
 sent anywhere. It reads Model2DB projects and ORM code (SQLAlchemy, SQLModel, Django, Tortoise, Prisma,
-TypeORM, Sequelize, Drizzle, JPA and EF Core so far). Mirrors web/src/components/database/DatabasePane.tsx."""
+TypeORM, Sequelize, Drizzle, JPA, EF Core and Doctrine so far). Mirrors web/src/components/database/DatabasePane.tsx."""
 
 from pathlib import Path
 
@@ -87,7 +87,7 @@ class DatabasePane(Pane):
             self,
             t.open_dialog,
             "",
-            f"{t.project_files} (*.json *.py *.prisma *.ts *.js *.java *.cs);;{t.all_files} (*)",
+            f"{t.project_files} (*.json *.py *.prisma *.ts *.js *.java *.cs *.php);;{t.all_files} (*)",
         )
         if path:
             self.open_file(path)
