@@ -87,10 +87,13 @@ const word = (token: Token | undefined) => (token?.kind === 'ident' ? token.valu
 /** A cursor over the tokens of one statement. */
 class Reader {
   index = 0
-  constructor(
-    readonly tokens: Token[],
-    readonly source: string,
-  ) {}
+  readonly tokens: Token[]
+  readonly source: string
+
+  constructor(tokens: Token[], source: string) {
+    this.tokens = tokens
+    this.source = source
+  }
 
   get done() {
     return this.index >= this.tokens.length
