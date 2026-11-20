@@ -1,0 +1,520 @@
+{
+ "format": "db-schema",
+ "version": 1,
+ "dialect": "postgresql",
+ "source": {
+  "kind": "orm",
+  "format": "jpa"
+ },
+ "tables": [
+  {
+   "name": "students",
+   "columns": [
+    {
+     "name": "created_at",
+     "type": {
+      "sql": "Instant",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": false,
+     "generated": "now",
+     "attribute": "createdAt"
+    },
+    {
+     "name": "updated_at",
+     "type": {
+      "sql": "Instant",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": true,
+     "generated": "onUpdateNow",
+     "attribute": "updatedAt"
+    },
+    {
+     "name": "version",
+     "type": {
+      "sql": "long",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false
+    },
+    {
+     "name": "id",
+     "type": {
+      "sql": "UUID",
+      "kind": "uuid"
+     },
+     "nullable": false,
+     "generated": "uuid"
+    },
+    {
+     "name": "email",
+     "type": {
+      "sql": "String",
+      "kind": "text",
+      "length": 255
+     },
+     "nullable": false
+    },
+    {
+     "name": "biography",
+     "type": {
+      "sql": "String",
+      "kind": "text"
+     },
+     "nullable": true
+    },
+    {
+     "name": "level",
+     "type": {
+      "sql": "Level",
+      "kind": "text",
+      "length": 10
+     },
+     "nullable": true,
+     "default": {
+      "kind": "literal",
+      "value": "BASIC"
+     }
+    },
+    {
+     "name": "ordinal",
+     "type": {
+      "sql": "Level",
+      "kind": "integer",
+      "bits": 16
+     },
+     "nullable": true
+    },
+    {
+     "name": "preferences",
+     "type": {
+      "sql": "json",
+      "kind": "json"
+     },
+     "nullable": true
+    },
+    {
+     "name": "home_street",
+     "type": {
+      "sql": "String",
+      "kind": "text",
+      "length": 255
+     },
+     "nullable": true,
+     "attribute": "address.street"
+    },
+    {
+     "name": "city",
+     "type": {
+      "sql": "String",
+      "kind": "text",
+      "length": 60
+     },
+     "nullable": true,
+     "attribute": "address.city"
+    },
+    {
+     "name": "credits",
+     "type": {
+      "sql": "int",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [],
+   "uniques": [
+    {
+     "name": "uq_students_email",
+     "columns": [
+      "email"
+     ]
+    }
+   ],
+   "indexes": [],
+   "checks": [
+    {
+     "sql": "level IN ('BASIC', 'MIDDLE', 'HIGH')",
+     "parsed": {
+      "kind": "in",
+      "column": "level",
+      "values": [
+       "BASIC",
+       "MIDDLE",
+       "HIGH"
+      ]
+     }
+    },
+    {
+     "sql": "ordinal IN (0, 1, 2)",
+     "parsed": {
+      "kind": "in",
+      "column": "ordinal",
+      "values": [
+       0,
+       1,
+       2
+      ]
+     }
+    }
+   ],
+   "entity": "Student",
+   "origin": {
+    "line": 35,
+    "column": 1
+   },
+   "schema": "academic",
+   "comment": "People who study"
+  },
+  {
+   "name": "Course",
+   "columns": [
+    {
+     "name": "code",
+     "type": {
+      "sql": "String",
+      "kind": "text",
+      "length": 8
+     },
+     "nullable": false
+    },
+    {
+     "name": "title",
+     "type": {
+      "sql": "varchar(120) not null",
+      "kind": "text",
+      "length": 120
+     },
+     "nullable": false
+    },
+    {
+     "name": "fee",
+     "type": {
+      "sql": "BigDecimal",
+      "kind": "decimal",
+      "precision": 8,
+      "scale": 2
+     },
+     "nullable": true,
+     "default": {
+      "kind": "literal",
+      "value": 0
+     }
+    },
+    {
+     "name": "starts",
+     "type": {
+      "sql": "LocalDate",
+      "kind": "date"
+     },
+     "nullable": true,
+     "comment": "First day"
+    },
+    {
+     "name": "teacher_id",
+     "type": {
+      "sql": "Long",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": true
+    }
+   ],
+   "primaryKey": [
+    "code"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "teacher_id"
+     ],
+     "references": {
+      "table": "Teacher",
+      "columns": [
+       "id"
+      ]
+     },
+     "onDelete": "set null",
+     "attribute": "teacher",
+     "inverse": "courses"
+    }
+   ],
+   "uniques": [],
+   "indexes": [],
+   "checks": [
+    {
+     "name": "ck_course_fee",
+     "sql": "fee >= 0",
+     "parsed": {
+      "kind": "compare",
+      "column": "fee",
+      "op": ">=",
+      "value": 0
+     }
+    }
+   ],
+   "entity": "Course",
+   "origin": {
+    "line": 79,
+    "column": 1
+   }
+  },
+  {
+   "name": "Teacher",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "Long",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false,
+     "generated": "identity"
+    },
+    {
+     "name": "name",
+     "type": {
+      "sql": "String",
+      "kind": "text",
+      "length": 255
+     },
+     "nullable": true
+    },
+    {
+     "name": "room",
+     "type": {
+      "sql": "Short",
+      "kind": "integer",
+      "bits": 16
+     },
+     "nullable": true
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [],
+   "uniques": [
+    {
+     "columns": [
+      "room"
+     ]
+    }
+   ],
+   "indexes": [
+    {
+     "name": "ix_teacher_name",
+     "columns": [
+      "name",
+      "room"
+     ]
+    }
+   ],
+   "checks": [],
+   "entity": "Teacher",
+   "origin": {
+    "line": 104,
+    "column": 1
+   }
+  },
+  {
+   "name": "lockers",
+   "columns": [
+    {
+     "name": "number",
+     "type": {
+      "sql": "Integer",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false
+    },
+    {
+     "name": "student_id",
+     "type": {
+      "sql": "UUID",
+      "kind": "uuid"
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": [
+    "number"
+   ],
+   "foreignKeys": [
+    {
+     "name": "fk_lockers_student",
+     "columns": [
+      "student_id"
+     ],
+     "references": {
+      "table": "students",
+      "schema": "academic",
+      "columns": [
+       "id"
+      ]
+     },
+     "attribute": "student",
+     "inverse": "locker"
+    }
+   ],
+   "uniques": [
+    {
+     "columns": [
+      "student_id"
+     ]
+    }
+   ],
+   "indexes": [],
+   "checks": [],
+   "entity": "Locker",
+   "origin": {
+    "line": 119,
+    "column": 1
+   }
+  },
+  {
+   "name": "enrollments",
+   "columns": [
+    {
+     "name": "student_id",
+     "type": {
+      "sql": "UUID",
+      "kind": "uuid"
+     },
+     "nullable": false,
+     "attribute": "id.studentId"
+    },
+    {
+     "name": "course_code",
+     "type": {
+      "sql": "String",
+      "kind": "text",
+      "length": 8
+     },
+     "nullable": false,
+     "attribute": "id.courseCode"
+    },
+    {
+     "name": "grade",
+     "type": {
+      "sql": "Double",
+      "kind": "float",
+      "bits": 64
+     },
+     "nullable": true
+    }
+   ],
+   "primaryKey": [
+    "student_id",
+    "course_code"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "student_id"
+     ],
+     "references": {
+      "table": "students",
+      "schema": "academic",
+      "columns": [
+       "id"
+      ]
+     },
+     "attribute": "student"
+    }
+   ],
+   "uniques": [],
+   "indexes": [],
+   "checks": [
+    {
+     "sql": "grade between 0 and 10"
+    }
+   ],
+   "entity": "Enrollment",
+   "origin": {
+    "line": 130,
+    "column": 1
+   }
+  },
+  {
+   "name": "students_Course",
+   "columns": [
+    {
+     "name": "students_id",
+     "type": {
+      "sql": "UUID",
+      "kind": "uuid"
+     },
+     "nullable": false
+    },
+    {
+     "name": "courses_code",
+     "type": {
+      "sql": "String",
+      "kind": "text",
+      "length": 8
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": [
+    "students_id",
+    "courses_code"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "students_id"
+     ],
+     "references": {
+      "table": "students",
+      "schema": "academic",
+      "columns": [
+       "id"
+      ]
+     }
+    },
+    {
+     "columns": [
+      "courses_code"
+     ],
+     "references": {
+      "table": "Course",
+      "columns": [
+       "code"
+      ]
+     }
+    }
+   ],
+   "uniques": [],
+   "indexes": [],
+   "checks": [],
+   "origin": {
+    "line": 65,
+    "column": 1
+   }
+  }
+ ],
+ "enums": [
+  {
+   "name": "level",
+   "values": [
+    "BASIC",
+    "MIDDLE",
+    "HIGH"
+   ],
+   "storage": "check"
+  }
+ ],
+ "notes": []
+}

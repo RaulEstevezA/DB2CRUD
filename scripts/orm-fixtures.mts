@@ -24,8 +24,21 @@ const { generate, findOutput } = await import(
 );
 const { EXAMPLES } = await import(join(root, "web/src/examples/index.ts"));
 
-/** The ORMs DB2CRUD reads, in the order of the roadmap. */
-const ORMS = ["sqlalchemy", "sqlmodel", "django", "tortoise", "prisma", "typeorm", "sequelize", "drizzle"];
+/** The ORMs DB2CRUD reads, in the order of the roadmap: the Model2DB generator and the folder of its code. A variant
+ * read by the same reader goes in `<reader>.<variant>` (one reader reads JPA, Hibernate and Spring Data JPA). */
+const ORMS: [string, string][] = [
+  ["sqlalchemy", "sqlalchemy"],
+  ["sqlmodel", "sqlmodel"],
+  ["django", "django"],
+  ["tortoise", "tortoise"],
+  ["prisma", "prisma"],
+  ["typeorm", "typeorm"],
+  ["sequelize", "sequelize"],
+  ["drizzle", "drizzle"],
+  ["jpa", "jpa"],
+  ["hibernate", "jpa.hibernate"],
+  ["spring-data-jpa", "jpa.spring"],
+];
 
 const out = join(root, "shared/test-cases/orm/model2db");
 // The code is written again; the schema read from it (expected.json) stays until the tests write it again
@@ -52,7 +65,7 @@ for (const example of EXAMPLES) {
     parsed.schema,
     "relational",
   );
-  for (const orm of ORMS) {
+  for (const [orm, folder] of ORMS) {
     const generator = findOutput(orm);
     const options = {
       naming: output.naming.relational,
@@ -62,7 +75,7 @@ for (const example of EXAMPLES) {
     };
     for (const file of generate(parsed.schema, design, generator, options)
       .files) {
-      const path = join(out, example.id, orm, file.name);
+      const path = join(out, example.id, folder, file.name);
       mkdirSync(dirname(path), { recursive: true });
       writeFileSync(path, file.content);
     }

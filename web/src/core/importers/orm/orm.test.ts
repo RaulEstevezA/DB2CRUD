@@ -125,12 +125,15 @@ const folders = (path: string) =>
         .sort()
     : []
 
+// A folder `<reader>.<variant>` holds the code of a variant the same reader reads (jpa.hibernate)
+const readerOf = (folder: string) => folder.split('.')[0]
+
 describe('ORM code written by Model2DB', () => {
   for (const example of EXAMPLES)
     for (const orm of folders(join(FOLDER, 'model2db', example.id)))
       it(`${example.id} in ${orm}`, () => {
         const folder = join(FOLDER, 'model2db', example.id, orm)
-        expect(detectOrm(filesOf(folder))?.id).toBe(orm)
+        expect(detectOrm(filesOf(folder))?.id).toBe(readerOf(orm))
         const expected = readModel2DBProject(example.text)
         if (!expected.ok) throw new Error(expected.error)
         const schema = readOk(folder)
@@ -142,7 +145,9 @@ describe('ORM code written by Model2DB', () => {
 
   it('has the code of every reader', () => {
     for (const example of EXAMPLES)
-      expect(folders(join(FOLDER, 'model2db', example.id))).toEqual(ORM_READERS.map((reader) => reader.id).sort())
+      expect([...new Set(folders(join(FOLDER, 'model2db', example.id)).map(readerOf))]).toEqual(
+        ORM_READERS.map((reader) => reader.id).sort(),
+      )
   })
 })
 
@@ -164,6 +169,7 @@ describe('ORM code written by DB2CRUD', () => {
     django: (path, text) => path.endsWith('.py') && text.includes('models.Model'),
     prisma: (path) => path.endsWith('.prisma'),
     typeorm: (path, text) => path.endsWith('.ts') && text.includes('@Entity('),
+    jpa: (path, text) => path.endsWith('.java') && (text.includes('@Entity') || text.includes('jdbc:')),
     drizzle: (path, text) => path.endsWith('.ts') && !path.startsWith('test') && text.includes("from 'drizzle-orm/"),
     sequelize: (path, text) => path.endsWith('.ts') && !path.startsWith('test') && text.includes("from 'sequelize'"),
   }
@@ -181,6 +187,24 @@ describe('ORM code written by DB2CRUD', () => {
         expect(project.schema.tables.find((item) => item.name === table.name)?.primaryKey).toBeNull()
         table.primaryKey = null
       }
+      // JPA needs a key on every entity: DB2CRUD gives a table without one a key of all its columns, which the code
+      // cannot tell from a real one
+      if (name.startsWith('jpa-'))
+        for (const table of read.schema.tables)
+          if (
+            project.schema.tables.find((item) => item.name === table.name)?.primaryKey === null &&
+            table.primaryKey?.length === table.columns.length
+          )
+            table.primaryKey = null
+      // JPA needs a key on every entity: DB2CRUD gives a table without one a key of all its columns, which the code
+      // cannot tell from a real one
+      if (name.startsWith('jpa-'))
+        for (const table of read.schema.tables)
+          if (
+            project.schema.tables.find((item) => item.name === table.name)?.primaryKey === null &&
+            table.primaryKey?.length === table.columns.length
+          )
+            table.primaryKey = null
       // Prisma keeps no CHECK constraints (DB2CRUD leaves them in a comment), and without migrations they are not read
       const expected = structuredClone(project.schema)
       if (read.schema.notes.some((note) => note.code === 'orm.checksNotKept')) for (const table of expected.tables) table.checks = []
