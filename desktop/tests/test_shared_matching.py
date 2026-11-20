@@ -1,10 +1,12 @@
 """The matching of application models with tables in shared/test-cases/matching/: the desktop version must give the
-matching the web version gives (web/src/core/matching/test/matching.test.ts writes it in expected.json)."""
+matching and the conversion plans the web version gives (web/src/core/matching/test/matching.test.ts writes them in
+expected.json, web/src/core/conversions/test/plan.test.ts in plan.json)."""
 
 import json
 
 import pytest
 
+from db2crud.core.conversions.plan import conversions_available, plan_conversions
 from db2crud.core.crud.edit import accept, choose_model, choose_source, find_decision, pending_decisions
 from db2crud.core.crud.propose import propose_crud
 from db2crud.core.importers.ddl.ddl import read_ddl
@@ -36,6 +38,22 @@ def test_matches_like_the_web_version(folder):
     database, models, project = read_case(folder)
     matching = match_models(database, models, None, project)
     assert matching == json.loads((folder / "expected.json").read_text(encoding="utf-8"))
+
+
+@pytest.mark.parametrize("folder", CASES, ids=lambda folder: folder.name)
+def test_plans_the_conversions_like_the_web_version(folder):
+    database, models, project = read_case(folder)
+    design = propose_crud(database, None, models, project)
+    plans = plan_conversions(database, design, {"schema": models, "project": project})
+    assert plans == json.loads((folder / "plan.json").read_text(encoding="utf-8"))
+
+
+def test_conversions_are_written_only_for_models_in_the_language_of_the_project_or_in_none():
+    _, models, _ = read_case(SHARED_CASES / "matching" / "shop-typescript")
+    assert conversions_available({"schema": models}, "typescript") == {"ok": True}
+    expected = {"ok": False, "reason": "language", "models": "typescript", "project": "python"}
+    assert conversions_available({"schema": models}, "python") == expected
+    assert conversions_available({"schema": {**models, "origin": {"format": "json"}}}, "python") == {"ok": True}
 
 
 # The matching as decisions of the design (mirrors web/src/core/crud/edit.test.ts)
