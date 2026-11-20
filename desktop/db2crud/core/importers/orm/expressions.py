@@ -25,7 +25,8 @@ def _is_named_argument(cursor: Cursor, named: str) -> bool:
     return cursor.is_ident() and cursor.is_(named, 1) and not cursor.is_("==", 1)
 
 
-def _read_arguments(cursor: Cursor, source: str, named_by: str, close: str) -> tuple[list, dict]:
+def read_arguments(cursor: Cursor, source: str, named_by: str, close: str) -> tuple[list, dict]:
+    """The arguments of a call, after its opening bracket and up to the closing one, which it reads too."""
     args: list = []
     named: dict = {}
     while not cursor.done and not cursor.is_(close):
@@ -101,7 +102,7 @@ def read_expression(cursor: Cursor, source: str, named_by: str = "=") -> dict:
     while True:
         if cursor.is_("("):
             cursor.next()
-            args, named = _read_arguments(cursor, source, named_by, ")")
+            args, named = read_arguments(cursor, source, named_by, ")")
             expr = {"kind": "call", "callee": expr, "args": args, "named": named}
         elif cursor.is_(".") and cursor.is_ident(1):
             cursor.next()
