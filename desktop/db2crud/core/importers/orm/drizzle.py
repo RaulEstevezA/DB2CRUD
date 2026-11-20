@@ -12,6 +12,7 @@ from ...schema.checks import check_of
 from ..code.lexer import Cursor, LexError, tokenize
 from ..code.typescript import TYPESCRIPT_LEXER
 from .expressions import boolean_of, chain_of, literal_of, name_of, number_of, read_expression, string_of, text_of
+from .sql_types import sql_type_of
 from .types import OrmReader
 from .typescript import NAMED
 
@@ -161,64 +162,6 @@ def _entries_of(expr: dict | None) -> dict:
     return entries
 
 
-_SQL_TYPE = re.compile(r"([a-z ]+?)\s*(?:\(\s*(\d+)\s*(?:,\s*(\d+)\s*)?\))?", re.IGNORECASE)
-
-
-def _sql_type_of(text: str, dialect: str) -> dict | None:
-    """The database type of a type written in SQL (`datetime`, `varchar(20)`), for the columns of a `customType`."""
-    sql = text.strip()
-    match = _SQL_TYPE.fullmatch(sql)
-    if not match:
-        return None
-    name = match.group(1).lower()
-    size = int(match.group(2)) if match.group(2) is not None else None
-    scale = int(match.group(3)) if match.group(3) is not None else None
-    if name in ("smallint", "int2", "tinyint"):
-        return {"sql": sql, "kind": "integer", "bits": 16}
-    if name in ("int", "integer", "int4", "mediumint"):
-        return {"sql": sql, "kind": "integer", "bits": 64 if dialect == "sqlite" else 32}
-    if name in ("bigint", "int8"):
-        return {"sql": sql, "kind": "integer", "bits": 64}
-    if name in ("real", "float4", "float"):
-        return {"sql": sql, "kind": "float", "bits": 64 if dialect == "sqlite" else 32}
-    if name in ("double", "double precision", "float8"):
-        return {"sql": sql, "kind": "float", "bits": 64}
-    if name in ("decimal", "numeric"):
-        return {
-            "sql": sql,
-            "kind": "decimal",
-            **({"precision": size} if size is not None else {}),
-            **({"scale": scale} if scale is not None else {}),
-        }
-    if name in ("varchar", "character varying", "nvarchar"):
-        return {"sql": sql, "kind": "text", "length": size} if size is not None else {"sql": sql, "kind": "text"}
-    if name in ("char", "character", "nchar"):
-        if size is not None:
-            return {"sql": sql, "kind": "text", "length": size, "fixed": True}
-        return {"sql": sql, "kind": "text", "fixed": True}
-    if name in ("text", "tinytext", "mediumtext", "longtext", "citext", "clob"):
-        return {"sql": sql, "kind": "text"}
-    if name in ("boolean", "bool"):
-        return {"sql": sql, "kind": "boolean"}
-    if name == "date":
-        return {"sql": sql, "kind": "date"}
-    if name in ("time", "time without time zone"):
-        return {"sql": sql, "kind": "time", "timezone": False}
-    if name in ("timetz", "time with time zone"):
-        return {"sql": sql, "kind": "time", "timezone": True}
-    if name in ("datetime", "timestamp", "timestamp without time zone"):
-        return {"sql": sql, "kind": "datetime", "timezone": False}
-    if name in ("timestamptz", "timestamp with time zone"):
-        return {"sql": sql, "kind": "datetime", "timezone": True}
-    if name in ("uuid", "uniqueidentifier"):
-        return {"sql": sql, "kind": "uuid"}
-    if name in ("json", "jsonb"):
-        return {"sql": sql, "kind": "json"}
-    if name in ("bytea", "blob", "binary", "varbinary", "longblob"):
-        return {"sql": sql, "kind": "binary", "length": size} if size is not None else {"sql": sql, "kind": "binary"}
-    return None
-
-
 def _type_of(builder: dict, dialect: str, enums: dict, custom_types: dict) -> dict | None:
     """The type a column builder declares: `varchar('name', { length: 120 })`. The result is {type, identity?,
     values?, enumName?}."""
@@ -250,7 +193,7 @@ def _type_of(builder: dict, dialect: str, enums: dict, custom_types: dict) -> di
         return {"type": {"sql": sql, "kind": "text"}, "values": items, "enumName": ""}
     custom = custom_types.get(name)
     if custom is not None:
-        found = _sql_type_of(custom, dialect)
+        found = sql_type_of(custom, dialect)
         return {"type": {**found, "sql": custom}} if found else None
     if name in ("smallint", "int2", "tinyint"):
         return {"type": {"sql": sql, "kind": "integer", "bits": 16}}

@@ -18,7 +18,7 @@ import {
 } from './raw.ts'
 import { readType, type TypeSyntax } from './typeSyntax.ts'
 
-const LEXER: LexerConfig = {
+export const JAVA_LEXER: LexerConfig = {
   ...C_LIKE,
   // Text blocks (Java 15)
   strings: [{ open: '"""', close: '"""', escapes: true, multiline: true }, ...C_LIKE.strings],
@@ -402,7 +402,7 @@ export const javaParser: InputParser = {
     if (text.trim() === '') return failure('empty')
     let tokens: Token[]
     try {
-      tokens = tokenize(text, LEXER)
+      tokens = tokenize(text, JAVA_LEXER)
     } catch (error) {
       if (error instanceof LexError) return failure(error.code, positionAt(text, error.index))
       throw error

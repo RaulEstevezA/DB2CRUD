@@ -11,7 +11,7 @@ from .raw import MISSING, TypeTable, parse_declarations, parse_literal, raw
 from .type_syntax import TypeSyntax, read_type
 
 # Text blocks (Java 15)
-_LEXER = LexerConfig(
+JAVA_LEXER = LexerConfig(
     line_comments=C_LIKE.line_comments,
     block_comments=C_LIKE.block_comments,
     strings=(StringRule('"""', '"""', True, True), *C_LIKE.strings),
@@ -427,7 +427,7 @@ def _detect(text: str) -> float:
 
 def _parse(text: str, options: dict | None = None) -> dict:
     return parse_declarations(
-        text, _LEXER, lambda source, tokens: _Reader(source, tokens).run(), JAVA_TYPES, "java", "java"
+        text, JAVA_LEXER, lambda source, tokens: _Reader(source, tokens).run(), JAVA_TYPES, "java", "java"
     )
 
 
