@@ -163,6 +163,7 @@ describe('ORM code written by DB2CRUD', () => {
     sqlalchemy: (path, text) => path.endsWith('.py') && text.includes('__tablename__'),
     django: (path, text) => path.endsWith('.py') && text.includes('models.Model'),
     prisma: (path) => path.endsWith('.prisma'),
+    typeorm: (path, text) => path.endsWith('.ts') && text.includes('@Entity('),
   }
   for (const name of readdirSync(outputs).filter((item) => models[item.split('-')[0]]))
     it(name, () => {
@@ -182,7 +183,8 @@ describe('ORM code written by DB2CRUD', () => {
       const expected = structuredClone(project.schema)
       if (read.schema.notes.some((note) => note.code === 'orm.checksNotKept')) for (const table of expected.tables) table.checks = []
       // Code for another engine than the project's has the types of that engine: only the structure has to agree
-      const sameEngine = !read.schema.dialect || read.schema.dialect === expected.dialect
+      // (the engine of the code is the second word of the name of the output: typeorm-mysql-…)
+      const sameEngine = name.split('-')[1] === expected.dialect
       const shape = (schema: ReturnType<typeof comparable>) =>
         sameEngine
           ? schema

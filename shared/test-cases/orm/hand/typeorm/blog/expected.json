@@ -1,0 +1,665 @@
+{
+ "format": "db-schema",
+ "version": 1,
+ "dialect": "postgresql",
+ "source": {
+  "kind": "orm",
+  "format": "typeorm"
+ },
+ "tables": [
+  {
+   "name": "author",
+   "columns": [
+    {
+     "name": "created_at",
+     "type": {
+      "sql": "timestamptz",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": false,
+     "generated": "now",
+     "attribute": "createdAt"
+    },
+    {
+     "name": "updated_at",
+     "type": {
+      "sql": "timestamptz",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": false,
+     "generated": "onUpdateNow",
+     "attribute": "updatedAt"
+    },
+    {
+     "name": "deleted_at",
+     "type": {
+      "sql": "timestamp",
+      "kind": "datetime",
+      "timezone": false
+     },
+     "nullable": true,
+     "attribute": "deletedAt"
+    },
+    {
+     "name": "version",
+     "type": {
+      "sql": "int",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false
+    },
+    {
+     "name": "id",
+     "type": {
+      "sql": "uuid",
+      "kind": "uuid"
+     },
+     "nullable": false,
+     "generated": "uuid"
+    },
+    {
+     "name": "handle",
+     "type": {
+      "sql": "varchar(40)",
+      "kind": "text",
+      "length": 40
+     },
+     "nullable": false
+    },
+    {
+     "name": "role",
+     "type": {
+      "sql": "enum",
+      "kind": "enum",
+      "name": "author_role"
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": "reader"
+     }
+    },
+    {
+     "name": "aliases",
+     "type": {
+      "sql": "text[]",
+      "kind": "array",
+      "items": {
+       "sql": "text",
+       "kind": "text"
+      }
+     },
+     "nullable": false,
+     "default": {
+      "kind": "expression",
+      "sql": "'{}'"
+     }
+    },
+    {
+     "name": "bio",
+     "type": {
+      "sql": "varchar",
+      "kind": "text"
+     },
+     "nullable": true,
+     "comment": "Shown under the name"
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [],
+   "uniques": [
+    {
+     "name": "uq_author_handle",
+     "columns": [
+      "handle"
+     ]
+    }
+   ],
+   "indexes": [],
+   "checks": [],
+   "entity": "Author",
+   "origin": {
+    "line": 38,
+    "column": 1
+   },
+   "schema": "blog",
+   "comment": "People who write"
+  },
+  {
+   "name": "profiles",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "bigint",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false,
+     "generated": "identity"
+    },
+    {
+     "name": "settings",
+     "type": {
+      "sql": "jsonb",
+      "kind": "json"
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": "{}"
+     }
+    },
+    {
+     "name": "authorId",
+     "type": {
+      "sql": "uuid",
+      "kind": "uuid"
+     },
+     "nullable": true
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "authorId"
+     ],
+     "references": {
+      "table": "author",
+      "schema": "blog",
+      "columns": [
+       "id"
+      ]
+     },
+     "onDelete": "cascade",
+     "attribute": "author"
+    }
+   ],
+   "uniques": [
+    {
+     "columns": [
+      "authorId"
+     ]
+    }
+   ],
+   "indexes": [],
+   "checks": [],
+   "entity": "Profile",
+   "origin": {
+    "line": 66,
+    "column": 1
+   }
+  },
+  {
+   "name": "post",
+   "columns": [
+    {
+     "name": "created_at",
+     "type": {
+      "sql": "timestamptz",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": false,
+     "generated": "now",
+     "attribute": "createdAt"
+    },
+    {
+     "name": "updated_at",
+     "type": {
+      "sql": "timestamptz",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": false,
+     "generated": "onUpdateNow",
+     "attribute": "updatedAt"
+    },
+    {
+     "name": "deleted_at",
+     "type": {
+      "sql": "timestamp",
+      "kind": "datetime",
+      "timezone": false
+     },
+     "nullable": true,
+     "attribute": "deletedAt"
+    },
+    {
+     "name": "version",
+     "type": {
+      "sql": "int",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false
+    },
+    {
+     "name": "id",
+     "type": {
+      "sql": "int",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false,
+     "generated": "identity"
+    },
+    {
+     "name": "author_id",
+     "type": {
+      "sql": "uuid",
+      "kind": "uuid"
+     },
+     "nullable": false,
+     "attribute": "authorId"
+    },
+    {
+     "name": "slug",
+     "type": {
+      "sql": "varchar(200)",
+      "kind": "text",
+      "length": 200
+     },
+     "nullable": false
+    },
+    {
+     "name": "rating",
+     "type": {
+      "sql": "decimal",
+      "kind": "decimal",
+      "precision": 6,
+      "scale": 1
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": 0
+     }
+    },
+    {
+     "name": "state",
+     "type": {
+      "sql": "simple-enum",
+      "kind": "text"
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": "draft"
+     }
+    },
+    {
+     "name": "priority",
+     "type": {
+      "sql": "smallint",
+      "kind": "integer",
+      "bits": 16
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": 2
+     }
+    },
+    {
+     "name": "published_at",
+     "type": {
+      "sql": "timestamp",
+      "kind": "datetime",
+      "timezone": false
+     },
+     "nullable": true,
+     "attribute": "publishedAt"
+    },
+    {
+     "name": "words",
+     "type": {
+      "sql": "int",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": 0
+     }
+    },
+    {
+     "name": "minutes",
+     "type": {
+      "sql": "int",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false,
+     "generated": {
+      "computed": "words / 200"
+     }
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [
+    {
+     "name": "fk_posts_author",
+     "columns": [
+      "author_id"
+     ],
+     "references": {
+      "table": "author",
+      "schema": "blog",
+      "columns": [
+       "id"
+      ]
+     },
+     "onDelete": "restrict",
+     "onUpdate": "cascade",
+     "attribute": "author",
+     "inverse": "posts"
+    }
+   ],
+   "uniques": [
+    {
+     "columns": [
+      "slug"
+     ]
+    }
+   ],
+   "indexes": [
+    {
+     "columns": [
+      "author_id",
+      "published_at"
+     ]
+    }
+   ],
+   "checks": [
+    {
+     "sql": "state IN ('draft', 'live')",
+     "parsed": {
+      "kind": "in",
+      "column": "state",
+      "values": [
+       "draft",
+       "live"
+      ]
+     }
+    },
+    {
+     "name": "ck_post_words",
+     "sql": "words >= 0",
+     "parsed": {
+      "kind": "compare",
+      "column": "words",
+      "op": ">=",
+      "value": 0
+     }
+    }
+   ],
+   "entity": "Post",
+   "origin": {
+    "line": 81,
+    "column": 1
+   }
+  },
+  {
+   "name": "comment",
+   "columns": [
+    {
+     "name": "post_id",
+     "type": {
+      "sql": "int",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false,
+     "attribute": "postId"
+    },
+    {
+     "name": "line",
+     "type": {
+      "sql": "int",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false
+    },
+    {
+     "name": "body",
+     "type": {
+      "sql": "text",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "attachment",
+     "type": {
+      "sql": "bytea",
+      "kind": "binary"
+     },
+     "nullable": true
+    },
+    {
+     "name": "parent_post_id",
+     "type": {
+      "sql": "int",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": true
+    },
+    {
+     "name": "parent_line",
+     "type": {
+      "sql": "int",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": true
+    },
+    {
+     "name": "reviewerId",
+     "type": {
+      "sql": "uuid",
+      "kind": "uuid"
+     },
+     "nullable": true
+    }
+   ],
+   "primaryKey": [
+    "post_id",
+    "line"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "post_id"
+     ],
+     "references": {
+      "table": "post",
+      "columns": [
+       "id"
+      ]
+     },
+     "onDelete": "cascade",
+     "attribute": "post",
+     "inverse": "comments"
+    },
+    {
+     "columns": [
+      "parent_post_id",
+      "parent_line"
+     ],
+     "references": {
+      "table": "comment",
+      "columns": [
+       "post_id",
+       "line"
+      ]
+     },
+     "onDelete": "set null",
+     "attribute": "parent"
+    },
+    {
+     "columns": [
+      "reviewerId"
+     ],
+     "references": {
+      "table": "author",
+      "schema": "blog",
+      "columns": [
+       "id"
+      ]
+     },
+     "attribute": "reviewer"
+    }
+   ],
+   "uniques": [],
+   "indexes": [],
+   "checks": [],
+   "entity": "Comment",
+   "origin": {
+    "line": 123,
+    "column": 1
+   }
+  },
+  {
+   "name": "tag",
+   "columns": [
+    {
+     "name": "name",
+     "type": {
+      "sql": "varchar(30)",
+      "kind": "text",
+      "length": 30
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": [
+    "name"
+   ],
+   "foreignKeys": [],
+   "uniques": [],
+   "indexes": [],
+   "checks": [],
+   "entity": "Tag",
+   "origin": {
+    "line": 152,
+    "column": 1
+   }
+  },
+  {
+   "name": "post_tags_tag",
+   "columns": [
+    {
+     "name": "postId",
+     "type": {
+      "sql": "int",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false
+    },
+    {
+     "name": "tagName",
+     "type": {
+      "sql": "varchar(30)",
+      "kind": "text",
+      "length": 30
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": [
+    "postId",
+    "tagName"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "postId"
+     ],
+     "references": {
+      "table": "post",
+      "columns": [
+       "id"
+      ]
+     },
+     "onDelete": "cascade",
+     "onUpdate": "cascade"
+    },
+    {
+     "columns": [
+      "tagName"
+     ],
+     "references": {
+      "table": "tag",
+      "columns": [
+       "name"
+      ]
+     },
+     "onDelete": "cascade",
+     "onUpdate": "cascade"
+    }
+   ],
+   "uniques": [],
+   "indexes": [
+    {
+     "columns": [
+      "postId"
+     ]
+    },
+    {
+     "columns": [
+      "tagName"
+     ]
+    }
+   ],
+   "checks": [],
+   "origin": {
+    "line": 116,
+    "column": 1
+   }
+  }
+ ],
+ "enums": [
+  {
+   "name": "author_role",
+   "values": [
+    "reader",
+    "writer",
+    "editor"
+   ],
+   "storage": "native"
+  },
+  {
+   "name": "post_state_enum",
+   "values": [
+    "draft",
+    "live"
+   ],
+   "storage": "check"
+  }
+ ],
+ "notes": [
+  {
+   "code": "orm.unknownType",
+   "params": {
+    "table": "author",
+    "column": "address",
+    "type": "() => Address"
+   }
+  }
+ ]
+}

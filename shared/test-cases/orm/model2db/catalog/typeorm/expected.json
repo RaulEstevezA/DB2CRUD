@@ -1,0 +1,174 @@
+{
+ "format": "db-schema",
+ "version": 1,
+ "dialect": null,
+ "source": {
+  "kind": "orm",
+  "format": "typeorm"
+ },
+ "tables": [
+  {
+   "name": "categories",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "bigint",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false,
+     "generated": "identity"
+    },
+    {
+     "name": "name",
+     "type": {
+      "sql": "varchar(80)",
+      "kind": "text",
+      "length": 80
+     },
+     "nullable": false
+    },
+    {
+     "name": "parent_id",
+     "type": {
+      "sql": "bigint",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false,
+     "attribute": "parentId"
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "parent_id"
+     ],
+     "references": {
+      "table": "categories",
+      "columns": [
+       "id"
+      ]
+     },
+     "attribute": "parent"
+    }
+   ],
+   "uniques": [],
+   "indexes": [
+    {
+     "name": "ix_categories_parent_id",
+     "columns": [
+      "parent_id"
+     ]
+    }
+   ],
+   "checks": [],
+   "entity": "Category",
+   "origin": {
+    "line": 6,
+    "column": 1
+   }
+  },
+  {
+   "name": "items",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "bigint",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false,
+     "generated": "identity"
+    },
+    {
+     "name": "name",
+     "type": {
+      "sql": "varchar(120)",
+      "kind": "text",
+      "length": 120
+     },
+     "nullable": false
+    },
+    {
+     "name": "price",
+     "type": {
+      "sql": "decimal",
+      "kind": "decimal",
+      "precision": 18,
+      "scale": 2
+     },
+     "nullable": false
+    },
+    {
+     "name": "supplier_email",
+     "type": {
+      "sql": "varchar(255)",
+      "kind": "text",
+      "length": 255
+     },
+     "nullable": false,
+     "attribute": "supplierEmail"
+    },
+    {
+     "name": "stock",
+     "type": {
+      "sql": "int",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false
+    },
+    {
+     "name": "category_id",
+     "type": {
+      "sql": "bigint",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false,
+     "attribute": "categoryId"
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "category_id"
+     ],
+     "references": {
+      "table": "categories",
+      "columns": [
+       "id"
+      ]
+     },
+     "attribute": "category"
+    }
+   ],
+   "uniques": [],
+   "indexes": [
+    {
+     "name": "ix_items_category_id",
+     "columns": [
+      "category_id"
+     ]
+    }
+   ],
+   "checks": [],
+   "entity": "Item",
+   "origin": {
+    "line": 23,
+    "column": 1
+   }
+  }
+ ],
+ "enums": [],
+ "notes": []
+}

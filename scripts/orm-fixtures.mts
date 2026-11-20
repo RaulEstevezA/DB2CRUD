@@ -25,7 +25,7 @@ const { generate, findOutput } = await import(
 const { EXAMPLES } = await import(join(root, "web/src/examples/index.ts"));
 
 /** The ORMs DB2CRUD reads, in the order of the roadmap. */
-const ORMS = ["sqlalchemy", "sqlmodel", "django", "tortoise", "prisma"];
+const ORMS = ["sqlalchemy", "sqlmodel", "django", "tortoise", "prisma", "typeorm"];
 
 const out = join(root, "shared/test-cases/orm/model2db");
 // The code is written again; the schema read from it (expected.json) stays until the tests write it again
