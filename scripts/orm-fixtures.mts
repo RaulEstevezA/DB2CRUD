@@ -38,6 +38,7 @@ const ORMS: [string, string][] = [
   ["jpa", "jpa"],
   ["hibernate", "jpa.hibernate"],
   ["spring-data-jpa", "jpa.spring"],
+  ["efcore", "efcore"],
 ];
 
 const out = join(root, "shared/test-cases/orm/model2db");

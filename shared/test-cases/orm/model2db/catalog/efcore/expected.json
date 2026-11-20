@@ -1,0 +1,184 @@
+{
+ "format": "db-schema",
+ "version": 1,
+ "dialect": "mysql",
+ "source": {
+  "kind": "orm",
+  "format": "efcore"
+ },
+ "tables": [
+  {
+   "name": "categories",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "BIGINT",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false,
+     "generated": "identity",
+     "attribute": "Id"
+    },
+    {
+     "name": "name",
+     "type": {
+      "sql": "VARCHAR(80)",
+      "kind": "text",
+      "length": 80
+     },
+     "nullable": false,
+     "attribute": "Name"
+    },
+    {
+     "name": "parent_id",
+     "type": {
+      "sql": "BIGINT",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false,
+     "attribute": "ParentId"
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [
+    {
+     "name": "fk_categories_parent_id",
+     "columns": [
+      "parent_id"
+     ],
+     "references": {
+      "table": "categories",
+      "columns": [
+       "id"
+      ]
+     },
+     "onDelete": "restrict",
+     "attribute": "Parent"
+    }
+   ],
+   "uniques": [],
+   "indexes": [
+    {
+     "name": "ix_categories_parent_id",
+     "columns": [
+      "parent_id"
+     ]
+    }
+   ],
+   "checks": [],
+   "entity": "Category",
+   "origin": {
+    "line": 7,
+    "column": 1
+   }
+  },
+  {
+   "name": "items",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "BIGINT",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false,
+     "generated": "identity",
+     "attribute": "Id"
+    },
+    {
+     "name": "name",
+     "type": {
+      "sql": "VARCHAR(120)",
+      "kind": "text",
+      "length": 120
+     },
+     "nullable": false,
+     "attribute": "Name"
+    },
+    {
+     "name": "price",
+     "type": {
+      "sql": "DECIMAL(18, 2)",
+      "kind": "decimal",
+      "precision": 18,
+      "scale": 2
+     },
+     "nullable": false,
+     "attribute": "Price"
+    },
+    {
+     "name": "supplier_email",
+     "type": {
+      "sql": "VARCHAR(255)",
+      "kind": "text",
+      "length": 255
+     },
+     "nullable": false,
+     "attribute": "SupplierEmail"
+    },
+    {
+     "name": "stock",
+     "type": {
+      "sql": "INT",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false,
+     "attribute": "Stock"
+    },
+    {
+     "name": "category_id",
+     "type": {
+      "sql": "BIGINT",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false,
+     "attribute": "CategoryId"
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [
+    {
+     "name": "fk_items_category_id",
+     "columns": [
+      "category_id"
+     ],
+     "references": {
+      "table": "categories",
+      "columns": [
+       "id"
+      ]
+     },
+     "onDelete": "restrict",
+     "attribute": "Category"
+    }
+   ],
+   "uniques": [],
+   "indexes": [
+    {
+     "name": "ix_items_category_id",
+     "columns": [
+      "category_id"
+     ]
+    }
+   ],
+   "checks": [],
+   "entity": "Item",
+   "origin": {
+    "line": 15,
+    "column": 1
+   }
+  }
+ ],
+ "enums": [],
+ "notes": []
+}

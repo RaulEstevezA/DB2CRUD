@@ -1,0 +1,489 @@
+{
+ "format": "db-schema",
+ "version": 1,
+ "dialect": "sqlserver",
+ "source": {
+  "kind": "orm",
+  "format": "efcore"
+ },
+ "tables": [
+  {
+   "name": "Blogs",
+   "columns": [
+    {
+     "name": "CreatedAt",
+     "type": {
+      "sql": "DateTime",
+      "kind": "datetime",
+      "timezone": false
+     },
+     "nullable": false,
+     "generated": "now"
+    },
+    {
+     "name": "Id",
+     "type": {
+      "sql": "int",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false,
+     "generated": "identity"
+    },
+    {
+     "name": "Url",
+     "type": {
+      "sql": "string",
+      "kind": "text",
+      "length": 200
+     },
+     "nullable": false
+    },
+    {
+     "name": "Title",
+     "type": {
+      "sql": "string?",
+      "kind": "text"
+     },
+     "nullable": true
+    },
+    {
+     "name": "rating",
+     "type": {
+      "sql": "decimal(3, 1)",
+      "kind": "decimal",
+      "precision": 3,
+      "scale": 1
+     },
+     "nullable": true,
+     "attribute": "Rating"
+    }
+   ],
+   "primaryKey": [
+    "Id"
+   ],
+   "foreignKeys": [],
+   "uniques": [
+    {
+     "name": "ix_blogs_url",
+     "columns": [
+      "Url"
+     ]
+    }
+   ],
+   "indexes": [],
+   "checks": [],
+   "entity": "Blog",
+   "origin": {
+    "line": 16,
+    "column": 1
+   }
+  },
+  {
+   "name": "post_entries",
+   "columns": [
+    {
+     "name": "Key",
+     "type": {
+      "sql": "Guid",
+      "kind": "uuid"
+     },
+     "nullable": false,
+     "generated": "uuid"
+    },
+    {
+     "name": "Heading",
+     "type": {
+      "sql": "string",
+      "kind": "text",
+      "length": 120
+     },
+     "nullable": false
+    },
+    {
+     "name": "State",
+     "type": {
+      "sql": "PostState",
+      "kind": "text",
+      "length": 12
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": "Draft"
+     }
+    },
+    {
+     "name": "Previous",
+     "type": {
+      "sql": "PostState?",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": true
+    },
+    {
+     "name": "Number",
+     "type": {
+      "sql": "long",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false
+    },
+    {
+     "name": "BlogId",
+     "type": {
+      "sql": "int",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false
+    },
+    {
+     "name": "Words",
+     "type": {
+      "sql": "int",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false
+    },
+    {
+     "name": "Minutes",
+     "type": {
+      "sql": "int",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false,
+     "generated": {
+      "computed": "[Words] / 200"
+     }
+    },
+    {
+     "name": "AuthorAuthorId",
+     "type": {
+      "sql": "int",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": true
+    }
+   ],
+   "primaryKey": [
+    "Key"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "BlogId"
+     ],
+     "references": {
+      "table": "Blogs",
+      "columns": [
+       "Id"
+      ]
+     },
+     "onDelete": "cascade",
+     "attribute": "Blog",
+     "inverse": "Posts"
+    },
+    {
+     "columns": [
+      "AuthorAuthorId"
+     ],
+     "references": {
+      "table": "Authors",
+      "columns": [
+       "AuthorId"
+      ]
+     },
+     "attribute": "Author"
+    }
+   ],
+   "uniques": [],
+   "indexes": [
+    {
+     "name": "ix_posts_blog_heading",
+     "columns": [
+      "BlogId",
+      "Heading"
+     ]
+    }
+   ],
+   "checks": [
+    {
+     "name": "CK_Words",
+     "sql": "[Words] >= 0",
+     "parsed": {
+      "kind": "compare",
+      "column": "Words",
+      "op": ">=",
+      "value": 0
+     }
+    },
+    {
+     "sql": "State IN ('Draft', 'Published', 'Archived')",
+     "parsed": {
+      "kind": "in",
+      "column": "State",
+      "values": [
+       "Draft",
+       "Published",
+       "Archived"
+      ]
+     }
+    },
+    {
+     "sql": "Previous IN (0, 5, 6)",
+     "parsed": {
+      "kind": "in",
+      "column": "Previous",
+      "values": [
+       0,
+       5,
+       6
+      ]
+     }
+    }
+   ],
+   "entity": "Post",
+   "origin": {
+    "line": 38,
+    "column": 1
+   },
+   "schema": "content"
+  },
+  {
+   "name": "BlogImages",
+   "columns": [
+    {
+     "name": "Id",
+     "type": {
+      "sql": "int",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false,
+     "generated": "identity"
+    },
+    {
+     "name": "Data",
+     "type": {
+      "sql": "byte[]",
+      "kind": "binary"
+     },
+     "nullable": false
+    },
+    {
+     "name": "BlogForeignKey",
+     "type": {
+      "sql": "int",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": [
+    "Id"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "BlogForeignKey"
+     ],
+     "references": {
+      "table": "Blogs",
+      "columns": [
+       "Id"
+      ]
+     },
+     "onDelete": "cascade",
+     "inverse": "Image"
+    }
+   ],
+   "uniques": [
+    {
+     "columns": [
+      "BlogForeignKey"
+     ]
+    }
+   ],
+   "indexes": [],
+   "checks": [],
+   "entity": "BlogImage",
+   "origin": {
+    "line": 63,
+    "column": 1
+   },
+   "comment": "Pictures"
+  },
+  {
+   "name": "Tags",
+   "columns": [
+    {
+     "name": "TagId",
+     "type": {
+      "sql": "string",
+      "kind": "text"
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": [
+    "TagId"
+   ],
+   "foreignKeys": [],
+   "uniques": [],
+   "indexes": [],
+   "checks": [],
+   "entity": "Tag",
+   "origin": {
+    "line": 70,
+    "column": 1
+   }
+  },
+  {
+   "name": "Authors",
+   "columns": [
+    {
+     "name": "AuthorId",
+     "type": {
+      "sql": "int",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false,
+     "generated": "identity"
+    },
+    {
+     "name": "Name",
+     "type": {
+      "sql": "string",
+      "kind": "text"
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": [
+    "AuthorId"
+   ],
+   "foreignKeys": [],
+   "uniques": [],
+   "indexes": [],
+   "checks": [],
+   "entity": "Author",
+   "origin": {
+    "line": 76,
+    "column": 1
+   }
+  },
+  {
+   "name": "PageViews",
+   "columns": [
+    {
+     "name": "Path",
+     "type": {
+      "sql": "string",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "At",
+     "type": {
+      "sql": "DateTimeOffset",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": null,
+   "foreignKeys": [],
+   "uniques": [],
+   "indexes": [],
+   "checks": [],
+   "entity": "PageView",
+   "origin": {
+    "line": 83,
+    "column": 1
+   }
+  },
+  {
+   "name": "post_tags",
+   "columns": [
+    {
+     "name": "PostsKey",
+     "type": {
+      "sql": "Guid",
+      "kind": "uuid"
+     },
+     "nullable": false
+    },
+    {
+     "name": "TagsTagId",
+     "type": {
+      "sql": "string",
+      "kind": "text"
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": [
+    "PostsKey",
+    "TagsTagId"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "PostsKey"
+     ],
+     "references": {
+      "table": "post_entries",
+      "schema": "content",
+      "columns": [
+       "Key"
+      ]
+     },
+     "onDelete": "cascade"
+    },
+    {
+     "columns": [
+      "TagsTagId"
+     ],
+     "references": {
+      "table": "Tags",
+      "columns": [
+       "TagId"
+      ]
+     },
+     "onDelete": "cascade"
+    }
+   ],
+   "uniques": [],
+   "indexes": [
+    {
+     "columns": [
+      "TagsTagId"
+     ]
+    }
+   ],
+   "checks": []
+  }
+ ],
+ "enums": [
+  {
+   "name": "post_state",
+   "values": [
+    "Draft",
+    "Published",
+    "Archived"
+   ],
+   "storage": "check"
+  }
+ ],
+ "notes": []
+}
