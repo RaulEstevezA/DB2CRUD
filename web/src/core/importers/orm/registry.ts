@@ -6,13 +6,22 @@
 import type { DbSchema } from '../../schema/types.ts'
 import { djangoReader } from './django.ts'
 import { prismaReader } from './prisma.ts'
+import { sequelizeReader } from './sequelize.ts'
 import { sqlalchemyReader } from './sqlalchemy.ts'
 import { sqlmodelReader } from './sqlmodel.ts'
 import { tortoiseReader } from './tortoise.ts'
 import { typeormReader } from './typeorm.ts'
 import type { OrmReader, SourceFile } from './types.ts'
 
-export const ORM_READERS: OrmReader[] = [sqlalchemyReader, sqlmodelReader, djangoReader, tortoiseReader, prismaReader, typeormReader]
+export const ORM_READERS: OrmReader[] = [
+  sqlalchemyReader,
+  sqlmodelReader,
+  djangoReader,
+  tortoiseReader,
+  prismaReader,
+  typeormReader,
+  sequelizeReader,
+]
 
 /** The reader for these files, or null when none recognises them. */
 export function detectOrm(files: SourceFile[]): OrmReader | null {
