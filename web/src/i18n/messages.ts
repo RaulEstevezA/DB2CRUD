@@ -73,7 +73,7 @@ const en = {
 
   inputLabel: 'Database to read',
   inputPlaceholder:
-    'Paste a Model2DB project (the .model2db.json file Model2DB saves) or ORM models (SQLAlchemy, SQLModel, Django, Tortoise, a Prisma schema), or drop the file here…',
+    'Paste a Model2DB project (the .model2db.json file Model2DB saves) or ORM models (SQLAlchemy, SQLModel, Django, Tortoise, a Prisma schema, TypeORM entities), or drop the file here…',
   openFile: 'Open',
   clear: 'Clear',
   dropFile: 'Drop the file to open it',
@@ -90,9 +90,10 @@ const en = {
       unreadableInput: 'The models inside the project cannot be read.',
       noModels: 'The project has no models.',
       notRelational: 'The project is for a database without tables (MongoDB, Redis, Cassandra…): not supported yet.',
-      unknownInput: 'It is neither a Model2DB project nor ORM code it can read (SQLAlchemy, SQLModel, Django, Tortoise and Prisma so far).',
+      unknownInput:
+        'It is neither a Model2DB project nor ORM code it can read (SQLAlchemy, SQLModel, Django, Tortoise, Prisma and TypeORM so far).',
       noTables:
-        'The code declares no table: a SQLAlchemy class needs its __tablename__, a SQLModel one table=True, a Django or Tortoise one Model, and a Prisma schema a model block.',
+        'The code declares no table: a SQLAlchemy class needs its __tablename__, a SQLModel one table=True, a Django or Tortoise one Model, a Prisma schema a model block, and a TypeORM class @Entity().',
     })[error],
   databaseSummary: (source: string, dialect: string | null, tables: number, columns: number) =>
     `${source} · ${dialect ?? 'any database'} · ${en$(tables)} ${plural(tables, 'table', 'tables')} · ${en$(columns)} ${plural(columns, 'column', 'columns')}`,
@@ -322,7 +323,7 @@ const es: Messages = {
 
   inputLabel: 'Base de datos que leer',
   inputPlaceholder:
-    'Pega un proyecto de Model2DB (el archivo .model2db.json que guarda Model2DB) o modelos de un ORM (SQLAlchemy, SQLModel, Django, Tortoise, un schema de Prisma), o suelta aquí el archivo…',
+    'Pega un proyecto de Model2DB (el archivo .model2db.json que guarda Model2DB) o modelos de un ORM (SQLAlchemy, SQLModel, Django, Tortoise, un schema de Prisma, entidades de TypeORM), o suelta aquí el archivo…',
   openFile: 'Abrir',
   clear: 'Limpiar',
   dropFile: 'Suelta el archivo para abrirlo',
@@ -341,9 +342,9 @@ const es: Messages = {
       noModels: 'El proyecto no tiene modelos.',
       notRelational: 'El proyecto es para una base de datos sin tablas (MongoDB, Redis, Cassandra…): todavía no se admite.',
       unknownInput:
-        'No es un proyecto de Model2DB ni código ORM que sepa leer (por ahora, SQLAlchemy, SQLModel, Django, Tortoise y Prisma).',
+        'No es un proyecto de Model2DB ni código ORM que sepa leer (por ahora, SQLAlchemy, SQLModel, Django, Tortoise, Prisma y TypeORM).',
       noTables:
-        'El código no declara ninguna tabla: una clase de SQLAlchemy necesita su __tablename__; una de SQLModel, table=True, una de Django o Tortoise, Model, y un schema de Prisma, un bloque model.',
+        'El código no declara ninguna tabla: una clase de SQLAlchemy necesita su __tablename__; una de SQLModel, table=True, una de Django o Tortoise, Model; un schema de Prisma, un bloque model, y una clase de TypeORM, @Entity().',
     })[error],
   databaseSummary: (source, dialect, tables, columns) =>
     `${source} · ${dialect ?? 'cualquier base de datos'} · ${es$(tables)} ${plural(tables, 'tabla', 'tablas')} · ${es$(columns)} ${plural(columns, 'columna', 'columnas')}`,
