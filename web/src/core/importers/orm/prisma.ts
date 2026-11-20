@@ -3,10 +3,14 @@
  * are tables (`@@map`, `@@schema`), scalar fields are columns (`@map`, the native type of `@db.*`), relation fields
  * with `fields` and `references` are foreign keys, and a list on both sides with no fields is an implicit
  * many-to-many table (`_AToB`, with columns `A` and `B`). Enums are native types where the engine has them.
+ *
+ * Prisma keeps no CHECK constraints: they are read from the SQL of the migrations (`prisma/migrations/…/migration.sql`)
+ * when those come with the schema, and a note says so when they do not. A model with no key needs a unique set of
+ * fields in Prisma; a `@@unique` of all its fields is taken as that, not as a constraint of the database.
  */
 import { checkOf } from '../../schema/checks.ts'
-import type { DbColumn, DbEnum, DbForeignKey, DbNote, DbSchema, DbTable, DbType, Dialect } from '../../schema/types.ts'
-import { C_LIKE, Cursor, tokenize, type Token } from '../code/lexer.ts'
+import type { DbCheck, DbColumn, DbEnum, DbForeignKey, DbNote, DbSchema, DbTable, DbType, Dialect } from '../../schema/types.ts'
+import { C_LIKE, Cursor, tokenize, type LexerConfig, type Token } from '../code/lexer.ts'
 import { literalOf, nameOf, numberOf, readArguments, readExpression, stringOf, textOf, type Expr } from './expressions.ts'
 import type { OrmReader, SourceFile } from './types.ts'
 
@@ -112,7 +116,7 @@ function readBlock(keyword: string, name: string, cursor: Cursor, source: string
 
 function readBlocks(files: SourceFile[]): Block[] {
   const blocks: Block[] = []
-  for (const file of files) {
+  for (const file of files.filter((item) => !isSql(item))) {
     const cursor = new Cursor(tokenize(file.text, C_LIKE))
     while (!cursor.done) {
       const keyword = cursor.value()
@@ -125,6 +129,72 @@ function readBlocks(files: SourceFile[]): Block[] {
     }
   }
   return blocks
+}
+
+// The CHECK constraints of the migrations
+
+const isSql = (file: SourceFile) => file.name.toLowerCase().endsWith('.sql')
+
+const SQL: LexerConfig = {
+  lineComments: ['--'],
+  blockComments: [['/*', '*/']],
+  strings: [
+    { open: "'", close: "'", escapes: false, multiline: true },
+    { open: '"', close: '"', escapes: false, multiline: false },
+    { open: '`', close: '`', escapes: false, multiline: false },
+    { open: '[', close: ']', escapes: false, multiline: false },
+  ],
+}
+
+/** The CHECK constraints the SQL creates, by table: in `CREATE TABLE` (of a column or of the table) and in
+ * `ALTER TABLE … ADD [CONSTRAINT name] CHECK (…)`. A constraint dropped later is left out. */
+function migrationChecks(files: SourceFile[]): Map<string, DbCheck[]> {
+  const checks = new Map<string, DbCheck[]>()
+  const word = (token: Token | undefined, value: string) => token?.kind === 'ident' && token.value.toUpperCase() === value
+  for (const file of files) {
+    let tokens: Token[]
+    try {
+      tokens = tokenize(file.text, SQL)
+    } catch {
+      continue
+    }
+    let table: string | undefined
+    let depth = 0
+    for (let index = 0; index < tokens.length; index++) {
+      const token = tokens[index]
+      if (token.kind === 'punct' && token.value === ';') table = undefined
+      if (token.kind === 'punct' && token.value === '(') depth++
+      if (token.kind === 'punct' && token.value === ')') depth--
+      if (depth === 0 && word(token, 'TABLE') && (word(tokens[index - 1], 'CREATE') || word(tokens[index - 1], 'ALTER'))) {
+        // CREATE TABLE IF NOT EXISTS "schema"."name"
+        let at = index + 1
+        while (word(tokens[at], 'IF') || word(tokens[at], 'NOT') || word(tokens[at], 'EXISTS') || word(tokens[at], 'ONLY')) at++
+        while (tokens[at + 1]?.value === '.' && tokens[at + 2]) at += 2
+        table = tokens[at]?.value
+        continue
+      }
+      if (!table) continue
+      if (word(token, 'DROP') && word(tokens[index + 1], 'CONSTRAINT')) {
+        const name = tokens[index + 2]?.value
+        checks.set(
+          table,
+          (checks.get(table) ?? []).filter((item) => item.name !== name),
+        )
+        continue
+      }
+      if (!word(token, 'CHECK') || tokens[index + 1]?.value !== '(') continue
+      let end = index + 2
+      for (let open = 1; end < tokens.length; end++) {
+        if (tokens[end].kind === 'punct' && tokens[end].value === '(') open++
+        if (tokens[end].kind === 'punct' && tokens[end].value === ')' && --open === 0) break
+      }
+      const name = word(tokens[index - 2], 'CONSTRAINT') ? tokens[index - 1].value : undefined
+      const sql = file.text.slice(tokens[index + 1].end, tokens[end].start).trim()
+      checks.set(table, [...(checks.get(table) ?? []), checkOf(sql, name)])
+      index = end
+    }
+  }
+  return checks
 }
 
 // Types
@@ -307,6 +377,21 @@ function readPrisma(files: SourceFile[]): DbSchema {
       else if (attribute.name === 'index') table.indexes.push({ ...(map ? { name: map } : {}), columns: columnsOf(model, fields) })
     }
   }
+  for (const model of models.values()) {
+    const { table } = model
+    // Prisma needs a unique set of fields on a table with no key: one of all its fields is only that
+    const all = [...model.columns.values()].sort().join(',')
+    const ormOnly = table.primaryKey ? -1 : table.uniques.findIndex((item) => [...item.columns].sort().join(',') === all)
+    if (ormOnly >= 0) {
+      table.uniques.splice(ormOnly, 1)
+      notes.push({ code: 'orm.ormOnlyUnique', params: { table: table.name } })
+    }
+  }
+  const sqlFiles = files.filter(isSql)
+  if (sqlFiles.length > 0) {
+    const checks = migrationChecks(sqlFiles)
+    for (const model of models.values()) model.table.checks.push(...(checks.get(model.table.name) ?? []))
+  } else if (models.size > 0) notes.push({ code: 'orm.checksNotKept' })
   const joins: DbTable[] = []
   for (const model of models.values()) {
     for (const field of model.block.fields) {
