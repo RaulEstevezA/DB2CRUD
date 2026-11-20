@@ -43,6 +43,9 @@ const ORMS: [string, string][] = [
 ];
 
 const out = join(root, "shared/test-cases/orm/model2db");
+/** The SQL DDL Model2DB writes for each engine DB2CRUD verifies: shared/test-cases/ddl/model2db/<example>/<engine>/. */
+const DIALECTS = ["postgresql", "mysql", "mariadb", "sqlite"];
+const ddlOut = join(root, "shared/test-cases/ddl/model2db");
 // The code is written again; the schema read from it (expected.json) stays until the tests write it again
 const clean = (folder: string): void => {
   if (!existsSync(folder)) return;
@@ -53,6 +56,7 @@ const clean = (folder: string): void => {
   }
 };
 clean(out);
+clean(ddlOut);
 for (const example of EXAMPLES) {
   const project = readProject(example.text);
   if (!project.ok) throw new Error(`${example.id}: ${project.error}`);
@@ -83,5 +87,17 @@ for (const example of EXAMPLES) {
       writeFileSync(path, file.content);
     }
   }
+  for (const dialect of DIALECTS) {
+    const options = {
+      naming: output.naming.relational,
+      strings: output.strings,
+      engine: output.engine,
+    };
+    const [file] = generate(parsed.schema, design, findOutput(dialect), options)
+      .files;
+    const path = join(ddlOut, example.id, dialect, "schema.sql");
+    mkdirSync(dirname(path), { recursive: true });
+    writeFileSync(path, file.content);
+  }
 }
-console.log(`ORM fixtures written to ${out}`);
+console.log(`ORM and DDL fixtures written to ${out} and ${ddlOut}`);

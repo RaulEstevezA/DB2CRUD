@@ -1,0 +1,327 @@
+{
+ "format": "db-schema",
+ "version": 1,
+ "dialect": "postgresql",
+ "source": {
+  "kind": "ddl",
+  "format": "postgresql-ddl"
+ },
+ "tables": [
+  {
+   "name": "customers",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "bigint",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false,
+     "generated": "identity"
+    },
+    {
+     "name": "email",
+     "type": {
+      "sql": "character varying(120)",
+      "kind": "text",
+      "length": 120
+     },
+     "nullable": false,
+     "comment": "Where receipts go"
+    },
+    {
+     "name": "name",
+     "type": {
+      "sql": "text",
+      "kind": "text"
+     },
+     "nullable": true
+    },
+    {
+     "name": "created_at",
+     "type": {
+      "sql": "timestamp with time zone",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": false,
+     "generated": "now"
+    },
+    {
+     "name": "updated_at",
+     "type": {
+      "sql": "timestamp(3) without time zone",
+      "kind": "datetime",
+      "timezone": false
+     },
+     "nullable": false,
+     "generated": "now"
+    },
+    {
+     "name": "tags",
+     "type": {
+      "sql": "text[]",
+      "kind": "array",
+      "items": {
+       "sql": "text",
+       "kind": "text"
+      }
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": "{}"
+     }
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [],
+   "uniques": [
+    {
+     "name": "customers_email_key",
+     "columns": [
+      "email"
+     ]
+    }
+   ],
+   "indexes": [],
+   "checks": [
+    {
+     "name": "customers_email_check",
+     "sql": "(length((email)::text) > 3)"
+    }
+   ],
+   "origin": {
+    "line": 39,
+    "column": 1
+   },
+   "comment": "People who buy"
+  },
+  {
+   "name": "orders",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "integer",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false,
+     "generated": "identity"
+    },
+    {
+     "name": "customer_id",
+     "type": {
+      "sql": "bigint",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false
+    },
+    {
+     "name": "status",
+     "type": {
+      "sql": "public.order_status",
+      "kind": "enum",
+      "name": "order_status"
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": "pending"
+     }
+    },
+    {
+     "name": "total",
+     "type": {
+      "sql": "numeric(10,2)",
+      "kind": "decimal",
+      "precision": 10,
+      "scale": 2
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": 0
+     }
+    },
+    {
+     "name": "code",
+     "type": {
+      "sql": "uuid",
+      "kind": "uuid"
+     },
+     "nullable": false,
+     "generated": "uuid"
+    },
+    {
+     "name": "note",
+     "type": {
+      "sql": "text",
+      "kind": "text"
+     },
+     "nullable": true,
+     "default": {
+      "kind": "literal",
+      "value": "none"
+     }
+    },
+    {
+     "name": "items",
+     "type": {
+      "sql": "integer",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": true,
+     "generated": {
+      "computed": "(total * (100)::numeric)"
+     }
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [
+    {
+     "name": "orders_customer_id_fkey",
+     "columns": [
+      "customer_id"
+     ],
+     "references": {
+      "table": "customers",
+      "columns": [
+       "id"
+      ]
+     },
+     "onDelete": "cascade"
+    }
+   ],
+   "uniques": [
+    {
+     "name": "orders_code_key",
+     "columns": [
+      "code"
+     ]
+    }
+   ],
+   "indexes": [
+    {
+     "name": "orders_customer_id_idx",
+     "columns": [
+      "customer_id"
+     ]
+    }
+   ],
+   "checks": [
+    {
+     "name": "orders_total_check",
+     "sql": "(total >= (0)::numeric)"
+    }
+   ],
+   "origin": {
+    "line": 62,
+    "column": 1
+   }
+  },
+  {
+   "name": "invoices",
+   "schema": "billing",
+   "columns": [
+    {
+     "name": "order_id",
+     "type": {
+      "sql": "integer",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false
+    },
+    {
+     "name": "number",
+     "type": {
+      "sql": "smallint",
+      "kind": "integer",
+      "bits": 16
+     },
+     "nullable": false
+    },
+    {
+     "name": "issued",
+     "type": {
+      "sql": "date",
+      "kind": "date"
+     },
+     "nullable": false
+    },
+    {
+     "name": "payload",
+     "type": {
+      "sql": "jsonb",
+      "kind": "json"
+     },
+     "nullable": true
+    },
+    {
+     "name": "file",
+     "type": {
+      "sql": "bytea",
+      "kind": "binary"
+     },
+     "nullable": true
+    }
+   ],
+   "primaryKey": [
+    "order_id",
+    "number"
+   ],
+   "foreignKeys": [
+    {
+     "name": "invoices_order_id_fkey",
+     "columns": [
+      "order_id"
+     ],
+     "references": {
+      "table": "orders",
+      "columns": [
+       "id"
+      ]
+     },
+     "onUpdate": "cascade",
+     "onDelete": "restrict"
+    }
+   ],
+   "uniques": [],
+   "indexes": [],
+   "checks": [],
+   "origin": {
+    "line": 83,
+    "column": 1
+   }
+  }
+ ],
+ "enums": [
+  {
+   "name": "order_status",
+   "values": [
+    "pending",
+    "paid",
+    "cancelled"
+   ],
+   "storage": "native"
+  }
+ ],
+ "notes": [
+  {
+   "code": "ddl.expressionIndex",
+   "params": {
+    "table": "customers",
+    "index": "customers_lower_name_idx"
+   }
+  }
+ ]
+}

@@ -1,0 +1,335 @@
+{
+ "format": "db-schema",
+ "version": 1,
+ "dialect": "mysql",
+ "source": {
+  "kind": "ddl",
+  "format": "mysql-ddl"
+ },
+ "tables": [
+  {
+   "name": "categories",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "int unsigned",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false,
+     "generated": "identity"
+    },
+    {
+     "name": "name",
+     "type": {
+      "sql": "varchar(60)",
+      "kind": "text",
+      "length": 60
+     },
+     "nullable": false
+    },
+    {
+     "name": "parent_id",
+     "type": {
+      "sql": "int unsigned",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": true,
+     "default": {
+      "kind": "literal",
+      "value": null
+     }
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [
+    {
+     "name": "fk_categories_parent",
+     "columns": [
+      "parent_id"
+     ],
+     "references": {
+      "table": "categories",
+      "columns": [
+       "id"
+      ]
+     },
+     "onDelete": "set null"
+    }
+   ],
+   "uniques": [
+    {
+     "name": "uq_categories_name",
+     "columns": [
+      "name"
+     ]
+    }
+   ],
+   "indexes": [
+    {
+     "name": "fk_categories_parent",
+     "columns": [
+      "parent_id"
+     ]
+    }
+   ],
+   "checks": [],
+   "origin": {
+    "line": 18,
+    "column": 1
+   },
+   "comment": "Groups of products"
+  },
+  {
+   "name": "products",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "bigint",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false,
+     "generated": "identity"
+    },
+    {
+     "name": "category_id",
+     "type": {
+      "sql": "int unsigned",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false
+    },
+    {
+     "name": "sku",
+     "type": {
+      "sql": "char(12)",
+      "kind": "text",
+      "length": 12,
+      "fixed": true
+     },
+     "nullable": false
+    },
+    {
+     "name": "title",
+     "type": {
+      "sql": "varchar(200)",
+      "kind": "text",
+      "length": 200
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": ""
+     }
+    },
+    {
+     "name": "price",
+     "type": {
+      "sql": "decimal(10,2)",
+      "kind": "decimal",
+      "precision": 10,
+      "scale": 2
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": 0
+     }
+    },
+    {
+     "name": "active",
+     "type": {
+      "sql": "tinyint(1)",
+      "kind": "boolean"
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": true
+     }
+    },
+    {
+     "name": "kind",
+     "type": {
+      "sql": "enum('physical','digital')",
+      "kind": "enum",
+      "name": "products_kind"
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": "physical"
+     }
+    },
+    {
+     "name": "colors",
+     "type": {
+      "sql": "set('red','blue')",
+      "kind": "text"
+     },
+     "nullable": true,
+     "default": {
+      "kind": "literal",
+      "value": null
+     }
+    },
+    {
+     "name": "details",
+     "type": {
+      "sql": "json",
+      "kind": "json"
+     },
+     "nullable": true,
+     "default": {
+      "kind": "literal",
+      "value": null
+     }
+    },
+    {
+     "name": "picture",
+     "type": {
+      "sql": "longblob",
+      "kind": "binary"
+     },
+     "nullable": true
+    },
+    {
+     "name": "rating",
+     "type": {
+      "sql": "float",
+      "kind": "float",
+      "bits": 32
+     },
+     "nullable": true,
+     "default": {
+      "kind": "literal",
+      "value": null
+     }
+    },
+    {
+     "name": "weight",
+     "type": {
+      "sql": "double",
+      "kind": "float",
+      "bits": 64
+     },
+     "nullable": false
+    },
+    {
+     "name": "released",
+     "type": {
+      "sql": "year",
+      "kind": "integer",
+      "bits": 16
+     },
+     "nullable": true,
+     "default": {
+      "kind": "literal",
+      "value": null
+     }
+    },
+    {
+     "name": "created_at",
+     "type": {
+      "sql": "datetime(6)",
+      "kind": "datetime",
+      "timezone": false
+     },
+     "nullable": false,
+     "generated": "now"
+    },
+    {
+     "name": "updated_at",
+     "type": {
+      "sql": "timestamp",
+      "kind": "datetime",
+      "timezone": false
+     },
+     "nullable": false,
+     "generated": "onUpdateNow",
+     "comment": "Last change"
+    },
+    {
+     "name": "slug",
+     "type": {
+      "sql": "varchar(220)",
+      "kind": "text",
+      "length": 220
+     },
+     "nullable": true,
+     "generated": {
+      "computed": "lower(`title`)"
+     }
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [
+    {
+     "name": "fk_products_category",
+     "columns": [
+      "category_id"
+     ],
+     "references": {
+      "table": "categories",
+      "columns": [
+       "id"
+      ]
+     }
+    }
+   ],
+   "uniques": [
+    {
+     "name": "uq_products_sku",
+     "columns": [
+      "sku"
+     ]
+    }
+   ],
+   "indexes": [
+    {
+     "name": "ix_products_category_title",
+     "columns": [
+      "category_id",
+      "title"
+     ]
+    }
+   ],
+   "checks": [
+    {
+     "name": "ck_products_price",
+     "sql": "(`price` >= 0)",
+     "parsed": {
+      "kind": "compare",
+      "column": "price",
+      "op": ">=",
+      "value": 0
+     }
+    }
+   ],
+   "origin": {
+    "line": 34,
+    "column": 1
+   }
+  }
+ ],
+ "enums": [
+  {
+   "name": "products_kind",
+   "values": [
+    "physical",
+    "digital"
+   ],
+   "storage": "native"
+  }
+ ],
+ "notes": []
+}

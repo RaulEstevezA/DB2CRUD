@@ -1,0 +1,315 @@
+{
+ "format": "db-schema",
+ "version": 1,
+ "dialect": "sqlite",
+ "source": {
+  "kind": "ddl",
+  "format": "sqlite-ddl"
+ },
+ "tables": [
+  {
+   "name": "authors",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "INTEGER",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false,
+     "generated": "identity"
+    },
+    {
+     "name": "name",
+     "type": {
+      "sql": "TEXT",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "email",
+     "type": {
+      "sql": "TEXT",
+      "kind": "text"
+     },
+     "nullable": true
+    },
+    {
+     "name": "born",
+     "type": {
+      "sql": "DATE",
+      "kind": "date"
+     },
+     "nullable": true
+    },
+    {
+     "name": "score",
+     "type": {
+      "sql": "REAL",
+      "kind": "float",
+      "bits": 64
+     },
+     "nullable": true,
+     "default": {
+      "kind": "literal",
+      "value": 0.5
+     }
+    },
+    {
+     "name": "active",
+     "type": {
+      "sql": "BOOLEAN",
+      "kind": "boolean"
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": true
+     }
+    },
+    {
+     "name": "joined",
+     "type": {
+      "sql": "TEXT",
+      "kind": "text"
+     },
+     "nullable": false,
+     "generated": "now"
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [],
+   "uniques": [
+    {
+     "columns": [
+      "email"
+     ]
+    }
+   ],
+   "indexes": [],
+   "checks": [],
+   "origin": {
+    "line": 3,
+    "column": 1
+   }
+  },
+  {
+   "name": "books",
+   "columns": [
+    {
+     "name": "isbn",
+     "type": {
+      "sql": "TEXT",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "author_id",
+     "type": {
+      "sql": "INTEGER",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false
+    },
+    {
+     "name": "title",
+     "type": {
+      "sql": "VARCHAR(200)",
+      "kind": "text",
+      "length": 200
+     },
+     "nullable": false
+    },
+    {
+     "name": "pages",
+     "type": {
+      "sql": "INTEGER",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": true
+    },
+    {
+     "name": "cover",
+     "type": {
+      "sql": "BLOB",
+      "kind": "binary"
+     },
+     "nullable": true
+    },
+    {
+     "name": "status",
+     "type": {
+      "sql": "TEXT",
+      "kind": "text"
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": "draft"
+     }
+    },
+    {
+     "name": "words",
+     "type": {
+      "sql": "INTEGER",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": true
+    },
+    {
+     "name": "minutes",
+     "type": {
+      "sql": "INTEGER",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": true,
+     "generated": {
+      "computed": "words / 200"
+     }
+    }
+   ],
+   "primaryKey": [
+    "isbn"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "author_id"
+     ],
+     "references": {
+      "table": "authors",
+      "columns": [
+       "id"
+      ]
+     },
+     "onDelete": "cascade"
+    }
+   ],
+   "uniques": [],
+   "indexes": [
+    {
+     "name": "ix_books_author",
+     "columns": [
+      "author_id"
+     ]
+    }
+   ],
+   "checks": [
+    {
+     "sql": "length(title) > 0",
+     "parsed": {
+      "kind": "length",
+      "column": "title",
+      "op": ">",
+      "value": 0
+     }
+    },
+    {
+     "name": "ck_books_pages",
+     "sql": "pages > 0",
+     "parsed": {
+      "kind": "compare",
+      "column": "pages",
+      "op": ">",
+      "value": 0
+     }
+    },
+    {
+     "sql": "status IN ('draft', 'live')",
+     "parsed": {
+      "kind": "in",
+      "column": "status",
+      "values": [
+       "draft",
+       "live"
+      ]
+     }
+    }
+   ],
+   "origin": {
+    "line": 13,
+    "column": 1
+   }
+  },
+  {
+   "name": "loans",
+   "columns": [
+    {
+     "name": "book_isbn",
+     "type": {
+      "sql": "TEXT",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "reader",
+     "type": {
+      "sql": "TEXT",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "since",
+     "type": {
+      "sql": "TEXT",
+      "kind": "text"
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": [
+    "book_isbn",
+    "reader"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "book_isbn"
+     ],
+     "references": {
+      "table": "books",
+      "columns": [
+       "isbn"
+      ]
+     }
+    }
+   ],
+   "uniques": [
+    {
+     "name": "ux_loans_since",
+     "columns": [
+      "book_isbn",
+      "since"
+     ]
+    }
+   ],
+   "indexes": [],
+   "checks": [],
+   "origin": {
+    "line": 24,
+    "column": 1
+   }
+  }
+ ],
+ "enums": [],
+ "notes": [
+  {
+   "code": "ddl.expressionIndex",
+   "params": {
+    "table": "books",
+    "index": "ix_books_lower"
+   }
+  }
+ ]
+}

@@ -1,0 +1,412 @@
+{
+ "format": "db-schema",
+ "version": 1,
+ "dialect": "mysql",
+ "source": {
+  "kind": "ddl",
+  "format": "mysql-ddl"
+ },
+ "tables": [
+  {
+   "name": "customers",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "BIGINT",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": {
+      "sql": "VARCHAR(255)",
+      "kind": "text",
+      "length": 255
+     },
+     "nullable": false
+    },
+    {
+     "name": "email",
+     "type": {
+      "sql": "VARCHAR(255)",
+      "kind": "text",
+      "length": 255
+     },
+     "nullable": false
+    },
+    {
+     "name": "password",
+     "type": {
+      "sql": "VARCHAR(255)",
+      "kind": "text",
+      "length": 255
+     },
+     "nullable": false
+    },
+    {
+     "name": "phone",
+     "type": {
+      "sql": "VARCHAR(255)",
+      "kind": "text",
+      "length": 255
+     },
+     "nullable": true
+    },
+    {
+     "name": "created_at",
+     "type": {
+      "sql": "DATETIME(6)",
+      "kind": "datetime",
+      "timezone": false
+     },
+     "nullable": false
+    },
+    {
+     "name": "address_street",
+     "type": {
+      "sql": "VARCHAR(255)",
+      "kind": "text",
+      "length": 255
+     },
+     "nullable": false
+    },
+    {
+     "name": "address_city",
+     "type": {
+      "sql": "VARCHAR(255)",
+      "kind": "text",
+      "length": 255
+     },
+     "nullable": false
+    },
+    {
+     "name": "address_postal_code",
+     "type": {
+      "sql": "VARCHAR(255)",
+      "kind": "text",
+      "length": 255
+     },
+     "nullable": false
+    },
+    {
+     "name": "address_country",
+     "type": {
+      "sql": "VARCHAR(255)",
+      "kind": "text",
+      "length": 255
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [],
+   "uniques": [],
+   "indexes": [],
+   "checks": [],
+   "origin": {
+    "line": 4,
+    "column": 1
+   }
+  },
+  {
+   "name": "products",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "BIGINT",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false
+    },
+    {
+     "name": "sku",
+     "type": {
+      "sql": "VARCHAR(255)",
+      "kind": "text",
+      "length": 255
+     },
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": {
+      "sql": "VARCHAR(255)",
+      "kind": "text",
+      "length": 255
+     },
+     "nullable": false
+    },
+    {
+     "name": "description",
+     "type": {
+      "sql": "VARCHAR(255)",
+      "kind": "text",
+      "length": 255
+     },
+     "nullable": true
+    },
+    {
+     "name": "price",
+     "type": {
+      "sql": "DOUBLE",
+      "kind": "float",
+      "bits": 64
+     },
+     "nullable": false
+    },
+    {
+     "name": "stock",
+     "type": {
+      "sql": "INT",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false
+    },
+    {
+     "name": "active",
+     "type": {
+      "sql": "BOOLEAN",
+      "kind": "boolean"
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [],
+   "uniques": [],
+   "indexes": [],
+   "checks": [],
+   "origin": {
+    "line": 18,
+    "column": 1
+   }
+  },
+  {
+   "name": "orders",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "BIGINT",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false
+    },
+    {
+     "name": "status",
+     "type": {
+      "sql": "VARCHAR(20)",
+      "kind": "text",
+      "length": 20
+     },
+     "nullable": false
+    },
+    {
+     "name": "total",
+     "type": {
+      "sql": "DOUBLE",
+      "kind": "float",
+      "bits": 64
+     },
+     "nullable": false
+    },
+    {
+     "name": "notes",
+     "type": {
+      "sql": "VARCHAR(255)",
+      "kind": "text",
+      "length": 255
+     },
+     "nullable": true
+    },
+    {
+     "name": "created_at",
+     "type": {
+      "sql": "DATETIME(6)",
+      "kind": "datetime",
+      "timezone": false
+     },
+     "nullable": false
+    },
+    {
+     "name": "updated_at",
+     "type": {
+      "sql": "DATETIME(6)",
+      "kind": "datetime",
+      "timezone": false
+     },
+     "nullable": false
+    },
+    {
+     "name": "customer_id",
+     "type": {
+      "sql": "BIGINT",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [
+    {
+     "name": "fk_orders_customer_id",
+     "columns": [
+      "customer_id"
+     ],
+     "references": {
+      "table": "customers",
+      "columns": [
+       "id"
+      ]
+     }
+    }
+   ],
+   "uniques": [],
+   "indexes": [
+    {
+     "name": "ix_orders_customer_id",
+     "columns": [
+      "customer_id"
+     ]
+    }
+   ],
+   "checks": [
+    {
+     "name": "ck_orders_status",
+     "sql": "status IN ('pending', 'paid', 'shipped', 'cancelled')",
+     "parsed": {
+      "kind": "in",
+      "column": "status",
+      "values": [
+       "pending",
+       "paid",
+       "shipped",
+       "cancelled"
+      ]
+     }
+    }
+   ],
+   "origin": {
+    "line": 30,
+    "column": 1
+   }
+  },
+  {
+   "name": "order_lines",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "BIGINT",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false,
+     "generated": "identity"
+    },
+    {
+     "name": "quantity",
+     "type": {
+      "sql": "INT",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false
+    },
+    {
+     "name": "unit_price",
+     "type": {
+      "sql": "DOUBLE",
+      "kind": "float",
+      "bits": 64
+     },
+     "nullable": false
+    },
+    {
+     "name": "product_id",
+     "type": {
+      "sql": "BIGINT",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false
+    },
+    {
+     "name": "order_id",
+     "type": {
+      "sql": "BIGINT",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [
+    {
+     "name": "fk_order_lines_product_id",
+     "columns": [
+      "product_id"
+     ],
+     "references": {
+      "table": "products",
+      "columns": [
+       "id"
+      ]
+     }
+    },
+    {
+     "name": "fk_order_lines_order_id",
+     "columns": [
+      "order_id"
+     ],
+     "references": {
+      "table": "orders",
+      "columns": [
+       "id"
+      ]
+     },
+     "onDelete": "cascade"
+    }
+   ],
+   "uniques": [],
+   "indexes": [
+    {
+     "name": "ix_order_lines_product_id",
+     "columns": [
+      "product_id"
+     ]
+    },
+    {
+     "name": "ix_order_lines_order_id",
+     "columns": [
+      "order_id"
+     ]
+    }
+   ],
+   "checks": [],
+   "origin": {
+    "line": 44,
+    "column": 1
+   }
+  }
+ ],
+ "enums": [],
+ "notes": []
+}

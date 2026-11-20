@@ -1,0 +1,23 @@
+-- MariaDB schema written by Model2DB from Item.
+-- Review it before running it: nothing here has been run.
+
+CREATE TABLE categories (
+  id BIGINT AUTO_INCREMENT NOT NULL,
+  name VARCHAR(80) NOT NULL,
+  parent_id BIGINT NOT NULL,
+  CONSTRAINT pk_categories PRIMARY KEY (id),
+  CONSTRAINT fk_categories_parent_id FOREIGN KEY (parent_id) REFERENCES categories (id)
+);
+CREATE INDEX ix_categories_parent_id ON categories (parent_id);
+
+CREATE TABLE items (
+  id BIGINT AUTO_INCREMENT NOT NULL,
+  name VARCHAR(120) NOT NULL,
+  price DECIMAL(18, 2) NOT NULL,
+  supplier_email VARCHAR(255) NOT NULL,
+  stock INT NOT NULL,
+  category_id BIGINT NOT NULL,
+  CONSTRAINT pk_items PRIMARY KEY (id),
+  CONSTRAINT fk_items_category_id FOREIGN KEY (category_id) REFERENCES categories (id)
+);
+CREATE INDEX ix_items_category_id ON items (category_id);
