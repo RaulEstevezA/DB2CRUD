@@ -12,7 +12,7 @@ from .raw import MISSING, TypeTable, parse_declarations, parse_literal
 from .type_syntax import TypeSyntax, read_type
 
 # Raw string literals (C# 11), verbatim and interpolated strings
-_LEXER = LexerConfig(
+CSHARP_LEXER = LexerConfig(
     line_comments=C_LIKE.line_comments,
     block_comments=C_LIKE.block_comments,
     strings=(StringRule('"""', '"""', False, True), *C_LIKE.strings),
@@ -427,7 +427,7 @@ def _detect(text: str) -> float:
 
 def _parse(text: str, options: dict | None = None) -> dict:
     return parse_declarations(
-        text, _LEXER, lambda source, tokens: _Reader(source, tokens).run(), CSHARP_TYPES, "csharp", "csharp"
+        text, CSHARP_LEXER, lambda source, tokens: _Reader(source, tokens).run(), CSHARP_TYPES, "csharp", "csharp"
     )
 
 
