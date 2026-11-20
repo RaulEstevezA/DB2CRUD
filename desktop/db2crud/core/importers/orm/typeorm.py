@@ -5,209 +5,16 @@ columns), the constraints of the class (`@Unique`, `@Index`, `@Check`), relation
 nobody gave follow TypeORM's default naming strategy. The engine is the one the `DataSource` names, when it names
 only one. Mirrors web/src/core/importers/orm/typeorm.ts.
 
-A decorator is {name, args}; a member {name, type, decorators, line}; a class {name, base, decorators, members,
-line}; an enum the value of each of its members, by name."""
+The classes and enums come from typescript.py."""
 
 import math
 import re
 
 from ...js import is_number, json_string, number_text, to_number
 from ...schema.checks import check_of
-from ..code.lexer import Cursor, LexError, Token, tokenize
-from ..code.typescript import TYPESCRIPT_LEXER
-from .expressions import boolean_of, literal_of, name_of, number_of, read_arguments, read_expression, string_of, text_of
+from .expressions import boolean_of, literal_of, name_of, number_of, string_of, text_of
 from .types import OrmReader
-
-_NAMED = "="
-
-# Reading the declarations
-
-
-def _read_decorator(cursor: Cursor, source: str) -> dict:
-    parts = [cursor.next().value]
-    while cursor.is_(".") and cursor.is_ident(1):
-        cursor.next()
-        parts.append(cursor.next().value)
-    if not cursor.is_("("):
-        return {"name": parts[-1], "args": []}
-    cursor.next()
-    return {"name": parts[-1], "args": read_arguments(cursor, source, _NAMED, ")")[0]}
-
-
-def _is_open(token: Token) -> bool:
-    return token.kind == "punct" and token.value in ("(", "[", "{")
-
-
-def _skip_statement(cursor: Cursor) -> None:
-    """Moves past the rest of a statement: up to a `;`, a new line or the `}` that closes its block."""
-    start = cursor.index
-    while not cursor.done:
-        token = cursor.peek()
-        if cursor.index > start and token.line_start:
-            return
-        if token.kind == "punct" and token.value == "}":
-            return
-        if token.kind == "punct" and token.value == ";":
-            cursor.next()
-            return
-        if _is_open(token):
-            cursor.skip_group()
-        else:
-            cursor.next()
-
-
-_MODIFIERS = {
-    "public",
-    "private",
-    "protected",
-    "readonly",
-    "declare",
-    "static",
-    "abstract",
-    "override",
-    "accessor",
-    "get",
-    "set",
-    "async",
-}
-
-
-def _is_string(cursor: Cursor, offset: int = 0) -> bool:
-    token = cursor.peek(offset)
-    return token is not None and token.kind == "string"
-
-
-def _read_class_body(cursor: Cursor, source: str) -> list[dict]:
-    members: list[dict] = []
-    decorators: list[dict] = []
-    cursor.next()
-    while not cursor.done and not cursor.is_("}"):
-        if cursor.is_("@") and cursor.is_ident(1):
-            cursor.next()
-            decorators.append(_read_decorator(cursor, source))
-            continue
-        if cursor.is_(";") or cursor.is_(","):
-            cursor.next()
-            continue
-        while cursor.value() in _MODIFIERS and cursor.is_ident() and (cursor.is_ident(1) or _is_string(cursor, 1)):
-            cursor.next()
-        if not cursor.is_ident() and not _is_string(cursor):
-            if cursor.is_("(") or cursor.is_("[") or cursor.is_("{"):
-                cursor.skip_group()
-            else:
-                cursor.next()
-            decorators = []
-            continue
-        name = cursor.next()
-        cursor.eat("!")
-        cursor.eat("?")
-        # `name?: Type` reads `?:` as one token
-        typed = cursor.eat(":") or cursor.eat("?:")
-        if not typed and (cursor.is_("(") or cursor.is_("<")):
-            # A method: its parameters, its return type and its body
-            while not cursor.done and not cursor.is_("("):
-                cursor.next()
-            cursor.skip_group()
-            while not cursor.done and not cursor.is_("{") and not cursor.is_(";") and not cursor.is_("}"):
-                cursor.next()
-            if cursor.is_("{"):
-                cursor.skip_group()
-            decorators = []
-            continue
-        member_type = ""
-        if typed:
-            start = cursor.index
-            while not cursor.done:
-                token = cursor.peek()
-                if cursor.index > start and token.line_start:
-                    break
-                if token.kind == "punct" and token.value in (";", "=", "}"):
-                    break
-                if _is_open(token):
-                    cursor.skip_group()
-                else:
-                    cursor.next()
-            member_type = cursor.text_between(source, start, cursor.index)
-        if cursor.eat("="):
-            _skip_statement(cursor)
-        members.append({"name": name.value, "type": member_type, "decorators": decorators, "line": name.line})
-        decorators = []
-    cursor.eat("}")
-    return members
-
-
-def _read_enum(cursor: Cursor, source: str) -> dict:
-    """The value of each member of a TypeScript enum: a text, or a number counted on from the last one."""
-    members: dict = {}
-    following = 0
-    cursor.next()
-    while not cursor.done and not cursor.is_("}"):
-        if not cursor.is_ident() and not _is_string(cursor):
-            cursor.next()
-            continue
-        name = cursor.next().value
-        if cursor.eat("="):
-            value = literal_of(read_expression(cursor, source, _NAMED))
-            if is_number(value):
-                following = value
-            members[name] = value if isinstance(value, str) else following
-        else:
-            members[name] = following
-        following += 1
-        cursor.eat(",")
-    cursor.eat("}")
-    return members
-
-
-def _read_files(files: list[dict]) -> tuple[dict, dict, list]:
-    classes: dict[str, dict] = {}
-    enums: dict[str, dict] = {}
-    order: list[dict] = []
-    for file in files:
-        try:
-            tokens = tokenize(file["text"], TYPESCRIPT_LEXER)
-        except LexError:
-            continue
-        cursor = Cursor(tokens)
-        pending: list[dict] = []
-        while not cursor.done:
-            if cursor.is_("@") and cursor.is_ident(1):
-                cursor.next()
-                pending.append(_read_decorator(cursor, file["text"]))
-            elif cursor.is_("enum") and cursor.is_ident(1) and cursor.is_("{", 2):
-                cursor.next()
-                name = cursor.next().value
-                enums[name] = _read_enum(cursor, file["text"])
-                pending = []
-            elif cursor.is_("class") and cursor.is_ident(1):
-                line = cursor.next().line
-                definition = {
-                    "name": cursor.next().value,
-                    "base": None,
-                    "decorators": pending,
-                    "members": [],
-                    "line": line,
-                }
-                while not cursor.done and not cursor.is_("{"):
-                    if cursor.is_("extends") and cursor.is_ident(1):
-                        cursor.next()
-                        definition["base"] = cursor.next().value
-                    else:
-                        cursor.next()
-                definition["members"] = _read_class_body(cursor, file["text"])
-                classes[definition["name"]] = definition
-                order.append(definition)
-                pending = []
-            elif cursor.value() in ("export", "default", "abstract", "declare", "const") and cursor.is_ident():
-                cursor.next()
-            else:
-                pending = []
-                if cursor.is_("(") or cursor.is_("[") or cursor.is_("{"):
-                    cursor.skip_group()
-                else:
-                    cursor.next()
-    return classes, enums, order
-
+from .typescript import plain_type, read_typescript
 
 # TypeORM's default naming strategy
 
@@ -399,16 +206,9 @@ def _type_of_name(name: str, options: dict, dialect: str | None) -> dict | None:
     return {"sql": sql, "kind": simple} if simple else None
 
 
-_NULLABLE = re.compile(r"\|\s*(null|undefined)\b")
-
-
-def _plain_type(member: dict) -> str:
-    return _NULLABLE.sub("", member["type"]).strip()
-
-
 def _type_of_property(member: dict, options: dict, dialect: str | None) -> dict | None:
     """The type TypeORM gives a column from its TypeScript type, when the decorator names none."""
-    plain = _plain_type(member)
+    plain = plain_type(member)
     by_type = {"string": "varchar", "number": "int", "boolean": "boolean", "Date": "timestamp"}
     if plain in by_type:
         return _type_of_name(by_type[plain], options, dialect)
@@ -515,7 +315,7 @@ _DATA_SOURCE = re.compile(
 
 def _read_typeorm(files: list[dict]) -> dict:
     notes: list[dict] = []
-    classes, enums, order = _read_files(files)
+    classes, enums, order = read_typescript(files)
     # The engine, when the data sources name only one
     drivers: list[str] = []
     for file in files:
@@ -621,7 +421,7 @@ def _read_typeorm(files: list[dict]) -> dict:
             else:
                 column_type = _type_of_property(member, column_options, dialect)
             # A property typed with a TypeScript enum keeps its values in a text column: an enum checked by a CHECK
-            ts_enum = _plain_type(member)
+            ts_enum = plain_type(member)
             if enum_option is None and column_type is not None and column_type["kind"] == "text" and ts_enum in enums:
                 values = list(enums[ts_enum].values())
                 add_enum(_snake_case(ts_enum), values, "check")
