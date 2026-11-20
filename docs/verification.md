@@ -27,7 +27,8 @@ Projects that need a database run with one: `runners/with-database.sh` starts Po
 
 The tests are generated with the project and are the same the developer keeps:
 
-- **Services**, with in-memory repositories: conversions between application models and entities, lookups, validation from the constraints, and domain errors.
+- **Services**, with in-memory repositories: validation from the constraints, and domain errors.
+- **Conversions**, when the project has application models: a row stored by the factories is read as the model, and a model that goes both ways and leaves nothing to the user is written back, giving the same values (lookups and Mapper's lossless transformations included). With the models imported from the user's module, the tests use a copy when that module is missing.
 - **Repositories**, against a real database created from the entities: every query the schema allows, unique and foreign key checks, and generated columns.
 - **The database itself**: one test fails when the tests did not run on the database `TEST_DATABASE_URL` names, so a green run proves which one it was.
 
@@ -35,6 +36,6 @@ The test database is created empty for every test. Most ORMs create it from thei
 
 ## Scenarios
 
-`verification/scenarios/index.mjs` lists the scenarios: an example schema, the settings that differ from the defaults and, for some, the decisions of the review taken the other way. Together they cover every option of every setting, on every database. `verification/run.sh [prefix]` writes their projects (`generate.mjs`, with the same core the web version runs) to `verification/.work/` and runs each one with its runner, with a database when it needs one.
+`verification/scenarios/index.mjs` lists the scenarios: an example schema (or a shared case of the matching with its application models, `case`), the settings that differ from the defaults and, for some, the decisions of the review taken the other way. Together they cover every option of every setting, on every database. `verification/run.sh [prefix]` writes their projects (`generate.mjs`, with the same core the web version runs) to `verification/.work/` and runs each one with its runner, with a database when it needs one.
 
 The same scenarios are the shared outputs in `shared/test-cases/outputs/`: the desktop version must write exactly the same files.
