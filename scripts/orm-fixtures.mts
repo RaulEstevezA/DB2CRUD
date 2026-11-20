@@ -40,6 +40,7 @@ const ORMS: [string, string][] = [
   ["spring-data-jpa", "jpa.spring"],
   ["efcore", "efcore"],
   ["doctrine", "doctrine"],
+  ["eloquent", "eloquent"],
 ];
 
 const out = join(root, "shared/test-cases/orm/model2db");
