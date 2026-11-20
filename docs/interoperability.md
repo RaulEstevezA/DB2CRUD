@@ -6,9 +6,24 @@ What DB2CRUD reads from the other apps of the suite and what it leaves for them.
 |---|---|---|---|---|
 | In | `*.model2db.json` | `model2db-project` | Model2DB | DB2CRUD (`core/interop/model2db/`) |
 | In | ORM code or SQL DDL | as each ORM or engine writes it | Model2DB, the user's project, `pg_dump`, `mysqldump` | DB2CRUD (`core/importers/orm/`, `core/importers/ddl/`) |
+| In (application models) | `*.mapper.json` | `mapper-project` | Mapper | DB2CRUD (`core/interop/mapper/`) |
 | Out | `crud-contract.json` | `crud-contract` | DB2CRUD, in every generated project | CRUD2Controller |
 
 Whatever the input, DB2CRUD reads it into one physical schema (`db-schema`, `core/schema/types.ts`); see `design.md` for that format.
+
+## `mapper-project` (version 1)
+
+A saved Mapper project, opened in the application models tab. DB2CRUD reads, and checks, only what it uses: both sides (`source`, `target`: input format, chosen model and their `model-schema`) and the mapping (`root` and `mappings`, each `Source->Target` with one entry per target field: `sources` as paths, `transform`, `status`, plus `ignoredSources`). The texts and the output settings are left alone. A project from a newer version is refused, and a damaged one is rejected with the path of the first problem.
+
+For each table, the model mapping whose target (or source) is named like the table relates it with the model on the other side, for both directions (`core/matching/mapper.ts`):
+
+- Table as **target** (`CustomerForm->Customer`): each column is filled as Mapper fills the field of the same name.
+- Table as **source** (`Order->OrderSummary`): each column is read into the field Mapper fills from it.
+- When both models are named like the table, the side whose fields name more columns is the table; the target on a tie.
+- A relation whose transformation can be undone without loss (`direct`, `epoch`, `arithmetic` by a number other than 0, `enum` with one-to-one pairs and no fallback) serves both directions and is `exact`. The others (`concat`, `split`, `expression`, `constant`, `boolean`, `object`, `collection`) serve one direction and are left for review: the other is a `TODO`. A relation still pending in Mapper is left for review too.
+- A column Mapper says nothing of follows the rules of a column with no field. The sources the user ignored in Mapper are not reported as unused.
+
+Every match stays a decision the user can change, as with any other models.
 
 ## `crud-contract`
 
