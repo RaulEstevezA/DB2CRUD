@@ -11,7 +11,8 @@ web/src/core/importers/orm/prisma.ts."""
 import re
 
 from ...schema.checks import check_of
-from ..code.lexer import C_LIKE, Cursor, LexerConfig, LexError, StringRule, Token, tokenize
+from ..code.lexer import C_LIKE, Cursor, Token, tokenize
+from ..ddl.ddl import read_ddl
 from .expressions import literal_of, name_of, number_of, read_arguments, read_expression, string_of, text_of
 from .types import OrmReader
 
@@ -124,88 +125,12 @@ def _is_sql(file: dict) -> bool:
     return file["name"].lower().endswith(".sql")
 
 
-_SQL = LexerConfig(
-    line_comments=("--",),
-    block_comments=(("/*", "*/"),),
-    strings=(
-        StringRule("'", "'", False, True),
-        StringRule('"', '"', False, False),
-        StringRule("`", "`", False, False),
-        StringRule("[", "]", False, False),
-    ),
-)
-
-
-def _word(token: Token | None, value: str) -> bool:
-    return token is not None and token.kind == "ident" and token.value.upper() == value
-
-
-def _migration_checks(files: list[dict]) -> dict[str, list[dict]]:
-    """The CHECK constraints the SQL creates, by table: in `CREATE TABLE` (of a column or of the table) and in
-    `ALTER TABLE … ADD [CONSTRAINT name] CHECK (…)`. A constraint dropped later is left out."""
-    checks: dict[str, list[dict]] = {}
-    for file in files:
-        try:
-            tokens = tokenize(file["text"], _SQL)
-        except LexError:
-            continue
-
-        def at(position: int, tokens: list[Token] = tokens) -> Token | None:
-            return tokens[position] if 0 <= position < len(tokens) else None
-
-        table = None
-        depth = 0
-        index = 0
-        while index < len(tokens):
-            token = tokens[index]
-            if token.kind == "punct" and token.value == ";":
-                table = None
-            if token.kind == "punct" and token.value == "(":
-                depth += 1
-            if token.kind == "punct" and token.value == ")":
-                depth -= 1
-            if (
-                depth == 0
-                and _word(token, "TABLE")
-                and (_word(at(index - 1), "CREATE") or _word(at(index - 1), "ALTER"))
-            ):
-                # CREATE TABLE IF NOT EXISTS "schema"."name"
-                position = index + 1
-                while any(_word(at(position), word) for word in ("IF", "NOT", "EXISTS", "ONLY")):
-                    position += 1
-                while at(position + 1) is not None and at(position + 1).value == "." and at(position + 2) is not None:
-                    position += 2
-                table = at(position).value if at(position) is not None else None
-                index += 1
-                continue
-            if table is None:
-                index += 1
-                continue
-            if _word(token, "DROP") and _word(at(index + 1), "CONSTRAINT"):
-                name = at(index + 2).value if at(index + 2) is not None else None
-                checks[table] = [item for item in checks.get(table, []) if item.get("name") != name]
-                index += 1
-                continue
-            following = at(index + 1)
-            if not _word(token, "CHECK") or following is None or following.value != "(":
-                index += 1
-                continue
-            end = index + 2
-            opened = 1
-            while end < len(tokens):
-                if tokens[end].kind == "punct" and tokens[end].value == "(":
-                    opened += 1
-                if tokens[end].kind == "punct" and tokens[end].value == ")":
-                    opened -= 1
-                    if opened == 0:
-                        break
-                end += 1
-            name = at(index - 1).value if _word(at(index - 2), "CONSTRAINT") else None
-            closing = at(end)
-            sql = file["text"][following.end : closing.start if closing is not None else len(file["text"])].strip()
-            checks[table] = [*checks.get(table, []), check_of(sql, name)]
-            index = end + 1
-    return checks
+def _migration_checks(files: list[dict], dialect: str | None) -> dict[str, list[dict]]:
+    """The CHECK constraints of each table, as the SQL of the migrations leaves them: read in the order of their names
+    (`prisma/migrations/<timestamp>_<name>/migration.sql`), as Prisma applies them."""
+    ordered = sorted(files, key=lambda file: file["name"])
+    schema = read_ddl(";\n".join(file["text"] for file in ordered), dialect)
+    return {table["name"]: table["checks"] for table in schema["tables"]}
 
 
 # Types
@@ -467,7 +392,7 @@ def _read_prisma(files: list[dict]) -> dict:
             notes.append({"code": "orm.ormOnlyUnique", "params": {"table": table["name"]}})
     sql_files = [file for file in files if _is_sql(file)]
     if sql_files:
-        checks = _migration_checks(sql_files)
+        checks = _migration_checks(sql_files, dialect)
         for model in models.values():
             model["table"]["checks"].extend(checks.get(model["table"]["name"], []))
     elif models:
