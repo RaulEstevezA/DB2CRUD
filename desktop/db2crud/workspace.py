@@ -12,6 +12,7 @@ from pathlib import Path
 
 from .core.importers.ddl.ddl import detect_ddl, read_ddl
 from .core.importers.orm.registry import ORM_READERS, detect_orm, read_orm_code
+from .core.importers.registry import accepted_extensions, detect_format, find_parser, parse_input
 from .core.interop.model2db.read import read_model2db_project
 from .core.js import coalesce, trim, trim_start
 
@@ -102,6 +103,39 @@ def source_label(schema: dict) -> str:
 def column_count(schema: dict) -> int:
     """Count of columns in every table."""
     return sum(len(table["columns"]) for table in schema["tables"])
+
+
+# Application models
+
+
+def read_models(state: dict) -> dict | None:
+    """The application models of their input (classes, DTOs, JSON, schemas…), or why they cannot be read: {"ok": True,
+    "schema", "format"} or {"ok": False, "error"}; None while it is empty. They are optional: without them the services
+    work with the entities."""
+    if trim(state["text"]) == "":
+        return None
+    format_id = detect_format(state["text"], state.get("fileName"))
+    if not format_id:
+        return {"ok": False, "error": "unknownFormat"}
+    read = parse_input(state["text"], format_id, {"rootName": "Root"})
+    if not read["ok"]:
+        return {"ok": False, "error": read["error"]["code"]}
+    if not read["schema"]["models"]:
+        return {"ok": False, "error": "noModels"}
+    parser = find_parser(format_id)
+    return {"ok": True, "schema": read["schema"], "format": parser.label if parser else format_id}
+
+
+def models_language(state: dict) -> str:
+    """The highlighting of the models input: the language of their format."""
+    format_id = detect_format(state["text"], state.get("fileName")) if trim(state["text"]) != "" else None
+    parser = find_parser(format_id) if format_id else None
+    return parser.editor_language if parser else "text"
+
+
+def model_extensions() -> list[str]:
+    """The extensions the models input opens."""
+    return accepted_extensions()
 
 
 # Gathering the files of a project

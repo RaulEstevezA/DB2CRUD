@@ -194,6 +194,10 @@ class DesignPane(Pane):
             grid.setColumnStretch(column, 1)
         layout.addLayout(grid)
 
+        match = next((item for item in (session.matching or {}).get("tables", []) if item["table"] == table), None)
+        if match is not None:
+            self._model_match(layout, match)
+
         if repository:
             layout.addWidget(field_label(t.queries_title))
             for query in repository["queries"]:
@@ -217,6 +221,67 @@ class DesignPane(Pane):
                     )
                 )
         return card
+
+    def _model_match(self, layout: QVBoxLayout, match: dict) -> None:
+        """The model of a table and where each column comes from, with the conflicts between both."""
+        t = self._i18n.t
+        model = match["model"]
+        title = QHBoxLayout()
+        title.addWidget(field_label(t.model_title))
+        title.addWidget(mono(model["value"] if model["value"] is not None else t.no_model, "type"))
+        if model["confidence"] != "none":
+            badge = confidence_badge(t, model["confidence"])
+            badge.setToolTip(" ".join(t.reason(reason) for reason in model["reasons"]))
+            title.addWidget(badge)
+        title.addStretch()
+        layout.addLayout(title)
+        if model["value"] is None:
+            return
+
+        def describe(source: dict | None) -> str:
+            if source is None:
+                return t.source_none
+            if source["kind"] == "field":
+                return t.source_field(source["field"])
+            if source["kind"] == "lookup":
+                return t.source_lookup(source["field"], source["table"], source["by"])
+            return t.source_database
+
+        def conflict_text(conflict: dict) -> str:
+            if conflict["kind"] == "length":
+                return t.conflict_length(conflict["model"], conflict["column"])
+            if conflict["kind"] == "nullable":
+                return t.conflict_nullable
+            if conflict["kind"] == "type":
+                return t.conflict_type(conflict["model"], conflict["column"])
+            return t.conflict_values(conflict["missing"])
+
+        rows = [
+            (column["column"], describe(column["source"]["value"]), column["source"], column["conflicts"])
+            for column in match["columns"]
+        ]
+        rows += [
+            (child["field"], t.source_children(child["table"]["value"]), child["table"], [])
+            for child in match["children"]
+        ]
+        for name, description, decision, conflicts in rows:
+            row = QWidget()
+            row_layout = QHBoxLayout(row)
+            row_layout.setContentsMargins(0, 0, 0, 0)
+            row_layout.setSpacing(8)
+            row_layout.addWidget(mono(name))
+            row_layout.addWidget(muted(description), 1)
+            for conflict in conflicts:
+                label = QLabel(conflict_text(conflict))
+                set_role(label, "error")
+                row_layout.addWidget(label)
+            if decision["confidence"] not in ("exact", "none"):
+                badge = confidence_badge(t, decision["confidence"])
+                badge.setToolTip(" ".join(t.reason(reason) for reason in decision["reasons"]))
+                row_layout.addWidget(badge)
+            layout.addWidget(row)
+        if match["unused"]:
+            layout.addWidget(muted(t.unused_fields(match["unused"])))
 
     def _item(self, ref: dict, item: dict, description: str, toggle) -> QWidget:
         """A query or an operation, on or off, with its confidence when it is not exact."""

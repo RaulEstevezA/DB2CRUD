@@ -210,6 +210,36 @@ EN = SimpleNamespace(
     input_label="Database to read",
     input_placeholder="Paste a Model2DB project (the .model2db.json file Model2DB saves) or ORM models (SQLAlchemy, SQLModel, Django, Tortoise, a Prisma schema, TypeORM entities, Sequelize models, a Drizzle schema, JPA entities, an EF Core model, Doctrine entities, Laravel migrations and Eloquent models) or SQL DDL (CREATE TABLE…), or drop the files or the folder of a project here…",
     editor_keys="Tab indents. To leave the editor with the keyboard, press Escape and then Tab.",
+    input_sources_label="What to read",
+    input_sources={"database": "Database schema", "models": "Application models"},
+    models_label="Application models",
+    models_dialog="Open the application models",
+    models_placeholder="Optional: paste or open the models of your application (classes, DTOs, records… in "
+    "TypeScript, Python, Java, C#, Kotlin, Dart, Go, Rust, PHP, Swift, Scala; JSON, JSON Schema, OpenAPI, "
+    "GraphQL…). The services will take and return them.",
+    models_empty="No application models: the services take and return the entities.",
+    models_error=lambda code: (
+        "The format of these models is not one DB2CRUD reads."
+        if code == "unknownFormat"
+        else "There is no model in this text."
+        if code == "noModels"
+        else f"These models cannot be read ({code})."
+    ),
+    models_summary=lambda form, count: f"{form} · {_en_number(count)} {_plural(count, 'model', 'models')}",
+    model_title="Application model",
+    no_model="none",
+    source_none="no field",
+    source_field=lambda field: f"← {field}",
+    source_lookup=lambda field, table, by: f"← {field}, looked up in {table}.{by}",
+    source_database="filled by the database",
+    source_children=lambda table: f"rows of {table}" if table else "no table",
+    unused_fields=lambda fields: f"Not saved: {', '.join(fields)}",
+    conflict_length=lambda model, column: (
+        f"the model allows {_en_number(model)} characters, the column {_en_number(column)}"
+    ),
+    conflict_nullable="optional in the model, required in the column",
+    conflict_type=lambda model, column: f"{model} in the model, {column} in the column",
+    conflict_values=lambda missing: f"the column does not accept {', '.join(missing)}",
     open_file="Open files",
     open_folder="Open folder",
     open_dialog="Open the database: a Model2DB project, ORM code or SQL DDL",
@@ -375,6 +405,36 @@ ES = SimpleNamespace(
     input_label="Base de datos que leer",
     input_placeholder="Pega un proyecto de Model2DB (el archivo .model2db.json que guarda Model2DB) o modelos de un ORM (SQLAlchemy, SQLModel, Django, Tortoise, un schema de Prisma, entidades de TypeORM, modelos de Sequelize, un schema de Drizzle, entidades JPA, un modelo de EF Core, entidades de Doctrine, migraciones de Laravel y modelos de Eloquent) o DDL de SQL (CREATE TABLE…), o suelta aquí los archivos o la carpeta de un proyecto…",
     editor_keys="Tab sangra. Para salir del editor con el teclado, pulsa Escape y después Tab.",
+    input_sources_label="Qué leer",
+    input_sources={"database": "Esquema de la base de datos", "models": "Modelos de aplicación"},
+    models_label="Modelos de aplicación",
+    models_dialog="Abrir los modelos de aplicación",
+    models_placeholder="Opcional: pega o abre los modelos de tu aplicación (clases, DTOs, records… en TypeScript, "
+    "Python, Java, C#, Kotlin, Dart, Go, Rust, PHP, Swift, Scala; JSON, JSON Schema, OpenAPI, GraphQL…). Los "
+    "servicios los recibirán y devolverán.",
+    models_empty="Sin modelos de aplicación: los servicios reciben y devuelven las entidades.",
+    models_error=lambda code: (
+        "DB2CRUD no lee el formato de estos modelos."
+        if code == "unknownFormat"
+        else "Este texto no tiene ningún modelo."
+        if code == "noModels"
+        else f"No se pueden leer estos modelos ({code})."
+    ),
+    models_summary=lambda form, count: f"{form} · {_es_number(count)} {_plural(count, 'modelo', 'modelos')}",
+    model_title="Modelo de aplicación",
+    no_model="ninguno",
+    source_none="sin campo",
+    source_field=lambda field: f"← {field}",
+    source_lookup=lambda field, table, by: f"← {field}, buscado en {table}.{by}",
+    source_database="la rellena la base de datos",
+    source_children=lambda table: f"filas de {table}" if table else "ninguna tabla",
+    unused_fields=lambda fields: f"No se guardan: {', '.join(fields)}",
+    conflict_length=lambda model, column: (
+        f"el modelo admite {_es_number(model)} caracteres; la columna, {_es_number(column)}"
+    ),
+    conflict_nullable="opcional en el modelo, obligatoria en la columna",
+    conflict_type=lambda model, column: f"{model} en el modelo, {column} en la columna",
+    conflict_values=lambda missing: f"la columna no admite {', '.join(missing)}",
     open_file="Abrir archivos",
     open_folder="Abrir carpeta",
     open_dialog="Abrir la base de datos: un proyecto de Model2DB, código ORM o DDL de SQL",

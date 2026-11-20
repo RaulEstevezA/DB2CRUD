@@ -14,9 +14,10 @@ from ..core.crud.edit import pending_decisions
 from ..core.crud.propose import propose_crud
 from ..core.generators.registry import generate_project
 from ..core.js import trim
+from ..core.matching.matching import match_models
 from ..core.settings.settings import DEFAULT_SETTINGS, normalize_settings
 from ..examples import find_example
-from ..workspace import EMPTY_INPUT, read_database
+from ..workspace import EMPTY_INPUT, read_database, read_models
 
 # Enough to undo a long review without keeping every change of a big design forever
 HISTORY_LIMIT = 100
@@ -41,6 +42,10 @@ class Session(QObject):
         self._settings = settings
         self.input = dict(EMPTY_INPUT)
         self.read = read_database(self.input)
+        # The application models are optional: each table gets the model it corresponds to
+        self.models = dict(EMPTY_INPUT)
+        self.models_read = read_models(self.models)
+        self.matching: dict | None = None
         self._schema_key = ""
         # The design as the user left it; what the panes show is this design proposed again on the current schema
         self._present: dict | None = None
@@ -71,6 +76,19 @@ class Session(QObject):
         self.read = read_database(state)
         self.input_changed.emit()
         self._schema_changed()
+
+    def set_models(self, state: dict) -> None:
+        if state == self.models:
+            return
+        self.models = state
+        self.models_read = read_models(state)
+        self.input_changed.emit()
+        self._match()
+        self.design_changed.emit()
+
+    def _match(self) -> None:
+        models = self.models_read
+        self.matching = match_models(self.schema, models["schema"]) if self.schema and models and models["ok"] else None
 
     def _schema_changed(self) -> None:
         """The design follows the schema only when what was read changes, not on every keystroke."""
@@ -128,6 +146,7 @@ class Session(QObject):
 
     def _update(self) -> None:
         schema = self.schema
+        self._match()
         self.design = propose_crud(schema, self._present) if schema else None
         self.pending = pending_decisions(self.design) if self.design else []
         self.design_changed.emit()

@@ -86,3 +86,22 @@ def test_a_folder_with_nothing_to_read_says_so(window, tmp_path):
     (tmp_path / "notes.txt").write_text("nothing", encoding="utf-8")
     window.database_pane.open_paths([str(tmp_path)])
     assert window.database_pane.status.text() == EN.no_readable_files
+
+
+def test_the_application_models_are_matched_with_the_tables(window):
+    from PySide6.QtWidgets import QLabel
+
+    window.load_example("store")
+    pane = window.database_pane
+    pane.source_tabs.setCurrentIndex(1)
+    pane.set_text("export interface Customer {\n  id: number\n  email: string\n  phone?: string\n}\n")
+    session = window.session
+    assert session.models_read["ok"]
+    assert pane.status.text() == EN.models_summary("TypeScript", 1)
+    match = next(item for item in session.matching["tables"] if item["table"] == "customers")
+    assert match["model"]["value"] == "Customer"
+    texts = [label.text() for label in window.design_pane.findChildren(QLabel)]
+    assert "← email" in texts
+    # The database tab keeps its own text
+    pane.source_tabs.setCurrentIndex(0)
+    assert pane.editor.toPlainText() == session.input["text"]

@@ -7,10 +7,18 @@ folder at once, listed above the editor (the web version reads one text)."""
 from pathlib import Path
 
 from PySide6.QtCore import Qt, QTimer, Signal
-from PySide6.QtWidgets import QFileDialog, QLabel, QListWidget, QPushButton
+from PySide6.QtWidgets import QFileDialog, QLabel, QListWidget, QPushButton, QTabBar
 
 from ..core.js import trim
-from ..workspace import TooManyFiles, column_count, gather_files, input_language, source_label
+from ..workspace import (
+    TooManyFiles,
+    column_count,
+    gather_files,
+    input_language,
+    model_extensions,
+    models_language,
+    source_label,
+)
 from .code_view import CodeView
 from .i18n import I18n
 from .pane import Pane
@@ -63,6 +71,15 @@ class DatabasePane(Pane):
         for button in (self.open_button, self.folder_button, self.clear_button):
             self.header.addWidget(button)
 
+        # What the pane reads: the database, or the application models (optional)
+        self._source = "database"
+        self.source_tabs = QTabBar()
+        self.source_tabs.addTab("")
+        self.source_tabs.addTab("")
+        self.source_tabs.setExpanding(True)
+        self.source_tabs.currentChanged.connect(self._select_source)
+        self.body.addWidget(self.source_tabs)
+
         # The files of the input, when it has several: the one selected is in the editor
         self.file_list = QListWidget()
         self.file_list.setMaximumHeight(140)
@@ -91,8 +108,22 @@ class DatabasePane(Pane):
 
     # Actions
 
+    def _select_source(self, index: int) -> None:
+        self._commit_text()
+        self._source = "models" if index == 1 else "database"
+        self._file_error = None
+        self.refresh()
+
     def choose_file(self) -> None:
         t = self._i18n.t
+        if self._source == "models":
+            patterns = " ".join(f"*{extension}" for extension in model_extensions())
+            path, _ = QFileDialog.getOpenFileName(
+                self, t.models_dialog, "", f"{t.models_label} ({patterns});;{t.all_files} (*)"
+            )
+            if path:
+                self.open_file(path)
+            return
         paths, _ = QFileDialog.getOpenFileNames(
             self,
             t.open_dialog,
@@ -145,7 +176,10 @@ class DatabasePane(Pane):
             self._show_file_error(t.file_error(file.name))
             return
         self._file_error = None
-        self._session.set_input({"text": text, "fileName": file.name})
+        if self._source == "models":
+            self._session.set_models({"text": text, "fileName": file.name})
+        else:
+            self._session.set_input({"text": text, "fileName": file.name})
 
     def set_text(self, text: str) -> None:
         self.editor.setPlainText(text)
@@ -157,7 +191,10 @@ class DatabasePane(Pane):
 
     def _clear(self) -> None:
         self._file_error = None
-        self._session.set_input({"text": ""})
+        if self._source == "models":
+            self._session.set_models({"text": ""})
+        else:
+            self._session.set_input({"text": ""})
 
     def _typed(self) -> None:
         if not self._updating:
@@ -167,6 +204,10 @@ class DatabasePane(Pane):
     def _commit_text(self) -> None:
         self._timer.stop()
         text = self.editor.toPlainText()
+        if self._source == "models":
+            if text != self._session.models["text"]:
+                self._session.set_models({"text": text})
+            return
         state = self._session.input
         if text == state["text"]:
             return
@@ -184,14 +225,19 @@ class DatabasePane(Pane):
     def refresh(self) -> None:
         t = self._i18n.t
         session = self._session
-        state = session.input
-        read = session.read
+        models = self._source == "models"
+        state = session.models if models else session.input
         self._updating = True
         self.title.setText(t.workspace_parts["database"])
+        self.source_tabs.setTabText(0, t.input_sources["database"])
+        count = len(session.models_read["schema"]["models"]) if session.models_read and session.models_read["ok"] else 0
+        self.source_tabs.setTabText(1, f"{t.input_sources['models']} ({count})" if count else t.input_sources["models"])
+        self.source_tabs.setAccessibleName(t.input_sources_label)
         self.open_button.setText(t.open_file)
         self.folder_button.setText(t.open_folder)
+        self.folder_button.setVisible(not models)
         self.clear_button.setText(t.clear)
-        files = state.get("files") or []
+        files = (state.get("files") or []) if not models else []
         self.clear_button.setEnabled(state["text"] != "" or bool(files))
         names = [file["name"] for file in files]
         if [self.file_list.item(row).text() for row in range(self.file_list.count())] != names:
@@ -201,11 +247,11 @@ class DatabasePane(Pane):
             self.file_list.setCurrentRow(state.get("selected", 0))
         self.file_list.setVisible(len(files) > 1)
         self.file_list.setAccessibleName(t.files_label)
-        self.editor.setPlaceholderText(t.input_placeholder)
-        self.editor.setAccessibleName(t.input_label)
+        self.editor.setPlaceholderText(t.models_placeholder if models else t.input_placeholder)
+        self.editor.setAccessibleName(t.models_label if models else t.input_label)
         self.editor.setAccessibleDescription(t.editor_keys)
-        # A Model2DB project is JSON; ORM code is in the language of its ORM
-        language = input_language(state)
+        # A Model2DB project is JSON; ORM code is in the language of its ORM; models in that of their format
+        language = models_language(state) if models else input_language(state)
         if language != self._language:
             self._language = language
             self.editor.set_language(language)
@@ -213,24 +259,33 @@ class DatabasePane(Pane):
         if self.editor.toPlainText() != state["text"] and not self._timer.isActive():
             self.editor.setPlainText(state["text"])
 
-        error_line = None
         tooltip = ""
         if self._file_error:
             text, role = self._file_error, "error"
-        elif trim(state["text"]) == "" or read is None:
-            text, role = t.input_empty, "muted"
-        elif not read["ok"]:
-            text, role = t.read_error(read["error"], read.get("path")), "error"
+        elif models:
+            read = session.models_read
+            if read is None:
+                text, role = t.models_empty, "muted"
+            elif not read["ok"]:
+                text, role = t.models_error(read["error"]), "error"
+            else:
+                text, role = t.models_summary(read["format"], len(read["schema"]["models"])), "success"
         else:
-            schema = read["schema"]
-            text = t.database_summary(
-                source_label(schema), schema["dialect"], len(schema["tables"]), column_count(schema)
-            )
-            if schema["notes"]:
-                text += f" · {t.warnings_count(len(schema['notes']))}"
-            tooltip = "\n".join(note["code"] for note in schema["notes"])
-            role = "success"
-        self.editor.highlight_error_line(error_line)
+            read = session.read
+            if trim(state["text"]) == "" or read is None:
+                text, role = t.input_empty, "muted"
+            elif not read["ok"]:
+                text, role = t.read_error(read["error"], read.get("path")), "error"
+            else:
+                schema = read["schema"]
+                text = t.database_summary(
+                    source_label(schema), schema["dialect"], len(schema["tables"]), column_count(schema)
+                )
+                if schema["notes"]:
+                    text += f" · {t.warnings_count(len(schema['notes']))}"
+                tooltip = "\n".join(note["code"] for note in schema["notes"])
+                role = "success"
+        self.editor.highlight_error_line(None)
         self.status.setText(text)
         self.status.setToolTip(tooltip)
         self.status.setProperty("role", role)
