@@ -7,6 +7,7 @@ A result is {"ok": True, "schema", "reader"} or {"ok": False, "error": "unknownO
 
 from .django import DJANGO_READER
 from .prisma import PRISMA_READER
+from .sequelize import SEQUELIZE_READER
 from .sqlalchemy import SQLALCHEMY_READER
 from .sqlmodel import SQLMODEL_READER
 from .tortoise import TORTOISE_READER
@@ -20,6 +21,7 @@ ORM_READERS: list[OrmReader] = [
     TORTOISE_READER,
     PRISMA_READER,
     TYPEORM_READER,
+    SEQUELIZE_READER,
 ]
 
 
