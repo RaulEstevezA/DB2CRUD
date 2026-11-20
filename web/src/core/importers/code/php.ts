@@ -17,7 +17,7 @@ import {
 } from './raw.ts'
 import { readType, type TypeSyntax } from './typeSyntax.ts'
 
-const LEXER: LexerConfig = {
+export const PHP_LEXER: LexerConfig = {
   lineComments: ['//', '#'],
   blockComments: [['/*', '*/']],
   strings: C_LIKE.strings,
@@ -68,7 +68,7 @@ function docType(docRaw: string | undefined, pattern: RegExp): RawType | null {
   const match = docRaw ? pattern.exec(docRaw) : null
   if (!match) return null
   try {
-    const type = readType(new Cursor(tokenize(match[1], LEXER)), DOC_SYNTAX)
+    const type = readType(new Cursor(tokenize(match[1], PHP_LEXER)), DOC_SYNTAX)
     if (!type) return null
     // array<int, Item> and Collection<int, Item>: the last argument is the item
     if (
@@ -331,7 +331,7 @@ export const phpParser: InputParser = {
     try {
       tokens = tokenize(
         text.replace(/^\s*<\?php/, (match) => ' '.repeat(match.length)),
-        LEXER,
+        PHP_LEXER,
       )
     } catch (error) {
       if (error instanceof LexError) return failure(error.code, positionAt(text, error.index))

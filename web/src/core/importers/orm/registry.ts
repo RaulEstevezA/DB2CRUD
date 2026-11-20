@@ -5,6 +5,7 @@
  */
 import type { DbSchema } from '../../schema/types.ts'
 import { djangoReader } from './django.ts'
+import { doctrineReader } from './doctrine.ts'
 import { drizzleReader } from './drizzle.ts'
 import { efcoreReader } from './efcore.ts'
 import { jpaReader } from './jpa.ts'
@@ -27,6 +28,7 @@ export const ORM_READERS: OrmReader[] = [
   drizzleReader,
   jpaReader,
   efcoreReader,
+  doctrineReader,
 ]
 
 /** The reader for these files, or null when none recognises them. */
