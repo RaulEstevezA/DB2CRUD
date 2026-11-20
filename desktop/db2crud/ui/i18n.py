@@ -149,6 +149,19 @@ def _reason_en(reason: dict) -> str:
         "noField": "No field fills the column: it keeps its default or null.",
         "childRows": f"{_p(params, 'field')} lists the rows of {_p(params, 'table')}.",
         "childTables": f"{_p(params, 'field')} may list the rows of several tables ({_p(params, 'tables')}): choose one.",
+        "mapperModel": f"The Mapper project relates this table with the model ({_p(params, 'mapping')}).",
+        "mapperField": (
+            f"Mapper relates the column with {_p(params, 'fields')} ({_p(params, 'transform')}), a relation that also"
+            " works the other way."
+        ),
+        "mapperOneWay": (
+            f"Mapper relates the column with {_p(params, 'fields')} ({_p(params, 'transform')}) in one direction only:"
+            " the other one is left as a TODO."
+        ),
+        "mapperPending": (
+            f"Mapper suggests {_p(params, 'fields')} ({_p(params, 'transform')}), but it was not confirmed there:"
+            " check it."
+        ),
         "manual": "You chose it.",
     }.get(reason["code"], reason["code"])
 
@@ -187,6 +200,18 @@ def _reason_es(reason: dict) -> str:
         "noField": "Ningún campo rellena la columna: se queda con su valor por defecto o nulo.",
         "childRows": f"{_p(params, 'field')} enumera las filas de {_p(params, 'table')}.",
         "childTables": f"{_p(params, 'field')} puede enumerar las filas de varias tablas ({_p(params, 'tables')}): elige una.",
+        "mapperModel": f"El proyecto de Mapper relaciona esta tabla con el modelo ({_p(params, 'mapping')}).",
+        "mapperField": (
+            f"Mapper relaciona la columna con {_p(params, 'fields')} ({_p(params, 'transform')}), una relación que"
+            " también sirve en el otro sentido."
+        ),
+        "mapperOneWay": (
+            f"Mapper relaciona la columna con {_p(params, 'fields')} ({_p(params, 'transform')}) en un solo sentido:"
+            " el otro queda como TODO."
+        ),
+        "mapperPending": (
+            f"Mapper propone {_p(params, 'fields')} ({_p(params, 'transform')}), pero no se confirmó allí: revísalo."
+        ),
         "manual": "Lo has elegido tú.",
     }.get(reason["code"], reason["code"])
 
@@ -226,6 +251,10 @@ EN = SimpleNamespace(
         else f"These models cannot be read ({code})."
     ),
     models_summary=lambda form, count: f"{form} · {_en_number(count)} {_plural(count, 'model', 'models')}",
+    mapper_summary=lambda source, target: f"Mapper project · {source} → {target}",
+    source_mapper=lambda fields, transform, output: (
+        f"{'→' if output else '←'} {' + '.join(fields) or '—'} (Mapper: {transform})"
+    ),
     model_titles={"both": "Application model", "input": "Model written", "output": "Model read"},
     no_model="none",
     source_none="no field",
@@ -428,6 +457,10 @@ ES = SimpleNamespace(
         else f"No se pueden leer estos modelos ({code})."
     ),
     models_summary=lambda form, count: f"{form} · {_es_number(count)} {_plural(count, 'modelo', 'modelos')}",
+    mapper_summary=lambda source, target: f"Proyecto de Mapper · {source} → {target}",
+    source_mapper=lambda fields, transform, output: (
+        f"{'→' if output else '←'} {' + '.join(fields) or '—'} (Mapper: {transform})"
+    ),
     model_titles={"both": "Modelo de aplicación", "input": "Modelo que se escribe", "output": "Modelo que se lee"},
     no_model="ninguno",
     source_none="sin campo",

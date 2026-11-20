@@ -89,6 +89,12 @@ class Session(QObject):
         models = self.models_read
         return models["schema"] if models and models["ok"] else None
 
+    @property
+    def mapper_project(self) -> dict | None:
+        """The Mapper project the models come from, whose relations the matching follows."""
+        models = self.models_read
+        return models.get("project") if models and models["ok"] else None
+
     def _schema_changed(self) -> None:
         """The design follows the schema only when what was read changes, not on every keystroke."""
         key = json.dumps(self.schema, sort_keys=True) if self.schema else ""
@@ -111,7 +117,7 @@ class Session(QObject):
         """Applies an edit (a function of the design that returns the new design); it can be undone."""
         if not self.schema or not self.design:
             return
-        changed = propose_crud(self.schema, edit(self.design), self.model_schema)
+        changed = propose_crud(self.schema, edit(self.design), self.model_schema, self.mapper_project)
         if changed == self.design:
             return
         self._past.append(self._present)
@@ -123,7 +129,7 @@ class Session(QObject):
     def reset_design(self) -> None:
         """Back to the proposal, keeping nothing the user decided; it can be undone."""
         if self.schema:
-            self.change(lambda _design: propose_crud(self.schema, None, self.model_schema))
+            self.change(lambda _design: propose_crud(self.schema, None, self.model_schema, self.mapper_project))
 
     def undo(self) -> None:
         if self._past:
@@ -145,7 +151,7 @@ class Session(QObject):
 
     def _update(self) -> None:
         schema = self.schema
-        self.design = propose_crud(schema, self._present, self.model_schema) if schema else None
+        self.design = propose_crud(schema, self._present, self.model_schema, self.mapper_project) if schema else None
         self.pending = pending_decisions(self.design) if self.design else []
         self.design_changed.emit()
         self._generate()

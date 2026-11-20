@@ -269,7 +269,13 @@ class DatabasePane(Pane):
             elif not read["ok"]:
                 text, role = t.models_error(read["error"]), "error"
             else:
-                text, role = t.models_summary(read["format"], len(read["schema"]["models"])), "success"
+                project = read.get("project")
+                summary = (
+                    t.mapper_summary(project["source"]["model"], project["target"]["model"])
+                    if project
+                    else t.models_summary(read["format"], len(read["schema"]["models"]))
+                )
+                text, role = summary, "success"
         else:
             read = session.read
             if trim(state["text"]) == "" or read is None:

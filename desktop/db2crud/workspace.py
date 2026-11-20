@@ -13,6 +13,7 @@ from pathlib import Path
 from .core.importers.ddl.ddl import detect_ddl, read_ddl
 from .core.importers.orm.registry import ORM_READERS, detect_orm, read_orm_code
 from .core.importers.registry import accepted_extensions, detect_format, find_parser, parse_input
+from .core.interop.mapper.read import is_mapper_project, mapper_models, read_mapper_project
 from .core.interop.model2db.read import read_model2db_project
 from .core.js import coalesce, trim, trim_start
 
@@ -110,10 +111,22 @@ def column_count(schema: dict) -> int:
 
 def read_models(state: dict) -> dict | None:
     """The application models of their input (classes, DTOs, JSON, schemas…), or why they cannot be read: {"ok": True,
-    "schema", "format"} or {"ok": False, "error"}; None while it is empty. They are optional: without them the services
-    work with the entities."""
+    "schema", "format", "project"?} or {"ok": False, "error"}; None while it is empty. They are optional: without them
+    the services work with the entities. A Mapper project brings the models of both its sides and its relations
+    (`project`), which the matching follows."""
     if trim(state["text"]) == "":
         return None
+    if is_mapper_project(state["text"]):
+        project = read_mapper_project(state["text"])
+        if not project["ok"]:
+            error = f"{project['error']} {project['path']}" if project.get("path") else project["error"]
+            return {"ok": False, "error": error}
+        return {
+            "ok": True,
+            "schema": mapper_models(project["project"]),
+            "format": "Mapper",
+            "project": project["project"],
+        }
     format_id = detect_format(state["text"], state.get("fileName"))
     if not format_id:
         return {"ok": False, "error": "unknownFormat"}
@@ -128,6 +141,8 @@ def read_models(state: dict) -> dict | None:
 
 def models_language(state: dict) -> str:
     """The highlighting of the models input: the language of their format."""
+    if is_mapper_project(state["text"]):
+        return "json"
     format_id = detect_format(state["text"], state.get("fileName")) if trim(state["text"]) != "" else None
     parser = find_parser(format_id) if format_id else None
     return parser.editor_language if parser else "text"

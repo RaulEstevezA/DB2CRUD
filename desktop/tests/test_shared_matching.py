@@ -9,6 +9,7 @@ from db2crud.core.crud.edit import accept, choose_model, choose_source, find_dec
 from db2crud.core.crud.propose import propose_crud
 from db2crud.core.importers.ddl.ddl import read_ddl
 from db2crud.core.importers.registry import detect_format, parse_input
+from db2crud.core.interop.mapper.read import is_mapper_project, mapper_models, read_mapper_project
 from db2crud.core.matching.matching import match_models
 
 from .conftest import SHARED_CASES
@@ -17,25 +18,29 @@ CASES = sorted(path for path in (SHARED_CASES / "matching").iterdir() if path.is
 
 
 def read_case(folder):
-    """The database and the models of a case."""
+    """The database and the models of a case, with the Mapper project they come from when they do."""
     database = read_ddl((folder / "schema.sql").read_text(encoding="utf-8"))
     models_file = next(path for path in folder.iterdir() if path.name.startswith("models."))
     text = models_file.read_text(encoding="utf-8")
+    if is_mapper_project(text):
+        read = read_mapper_project(text)
+        assert read["ok"], read
+        return database, mapper_models(read["project"]), read["project"]
     models = parse_input(text, detect_format(text, models_file.name))
     assert models["ok"], models
-    return database, models["schema"]
+    return database, models["schema"], None
 
 
 @pytest.mark.parametrize("folder", CASES, ids=lambda folder: folder.name)
 def test_matches_like_the_web_version(folder):
-    database, models = read_case(folder)
-    matching = match_models(database, models)
+    database, models, project = read_case(folder)
+    matching = match_models(database, models, None, project)
     assert matching == json.loads((folder / "expected.json").read_text(encoding="utf-8"))
 
 
 # The matching as decisions of the design (mirrors web/src/core/crud/edit.test.ts)
 
-DATABASE, MODELS = read_case(SHARED_CASES / "matching" / "directions-typescript")
+DATABASE, MODELS, _ = read_case(SHARED_CASES / "matching" / "directions-typescript")
 START = propose_crud(DATABASE, None, MODELS)
 
 

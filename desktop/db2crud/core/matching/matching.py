@@ -12,42 +12,15 @@ source, conflicts}; a source {kind: field, field} | {kind: lookup, field, table,
 from ..analysis.constraints import read_constraints
 from ..decisions.decision import decision, keep, reason
 from ..js import js_string
-from ..model.naming import name_words, singularize
-
-# Names
-
-_SUFFIX_DIRECTIONS = {
-    "entity": "both",
-    "model": "both",
-    "dto": "both",
-    "record": "both",
-    "request": "input",
-    "input": "input",
-    "command": "input",
-    "response": "output",
-    "output": "output",
-}
-_DIRECTIONS = ("both", "input", "output")
-
-
-def _singular_words(words: list[str]) -> list[str]:
-    return [*words[:-1], singularize(words[-1])] if words else words
-
-
-def _model_name(name: str) -> tuple[list[str], str]:
-    """The words a model name is compared by (without its suffixes, the last one singular) and its direction."""
-    words = name_words(name)
-    direction = "both"
-    while len(words) > 1 and words[-1] in _SUFFIX_DIRECTIONS:
-        found = _SUFFIX_DIRECTIONS[words.pop()]
-        if direction == "both":
-            direction = found
-    return _singular_words(words), direction
-
-
-def _key(words: list[str]) -> str:
-    return " ".join(words)
-
+from ..model.naming import name_words
+from .mapper import mapper_ignored, mapper_relation, mapper_source
+from .names import DIRECTIONS as _DIRECTIONS
+from .names import field_for as _field_for
+from .names import fields_of as _fields_of
+from .names import key as _key
+from .names import model_name as _model_name
+from .names import names_table
+from .names import singular_words as _singular_words
 
 # Types
 
@@ -184,27 +157,13 @@ def _conflicts_of(field: dict, column: dict, table: dict, database: dict, schema
 # Rules
 
 
-def _fields_of(model: dict, schema: dict, seen: set | None = None) -> list[dict]:
-    """All fields of a model, with those of the models it extends first."""
-    seen = seen if seen is not None else set()
-    seen.add(model["name"])
-    inherited: list[dict] = []
-    for name in model.get("extends") or []:
-        parent = next((item for item in schema["models"] if item["name"] == name), None)
-        if parent is not None and parent["name"] not in seen:
-            inherited.extend(_fields_of(parent, schema, seen))
-    return [*inherited, *model["fields"]]
-
-
 def _match_model(table: dict, schema: dict) -> list[tuple[str, dict]]:
     """The models of a table: those whose name, without its suffixes and plural, is the table's or its entity's, one
     per direction (exact), or several of one direction for review."""
-    names = [table["name"], *([table["entity"]] if table.get("entity") else [])]
-    targets = [_key(_singular_words(name_words(name))) for name in names]
     found = []
     for model in schema["models"]:
         words, direction = _model_name(model["name"])
-        if _key(words) in targets:
+        if names_table(words, table):
             found.append((model["name"], direction))
     if not found:
         options = [*(model["name"] for model in schema["models"]), None]
@@ -223,30 +182,6 @@ def _match_model(table: dict, schema: dict) -> list[tuple[str, dict]]:
                 (direction, decision(group[0], "review", [reason("modelNames", {"models": models})], options))
             )
     return result
-
-
-def _field_names(field: dict) -> list[str]:
-    """The names a field answers to: its own, its name on the wire and its aliases."""
-    return [
-        field["name"],
-        *([field["serializedName"]] if field.get("serializedName") else []),
-        *(field.get("aliases") or []),
-    ]
-
-
-def _field_for(column: dict, fields: list[dict], taken: set[str]) -> tuple[dict, str] | None:
-    """The field a column comes from: the same name, or the same words in another convention (both exact); the second
-    value says whether the name is the same."""
-    names = [column["name"], *([column["attribute"]] if column.get("attribute") else [])]
-    free = [field for field in fields if field["name"] not in taken]
-    exact = next((field for field in free if any(name in names for name in _field_names(field))), None)
-    if exact is not None:
-        return exact, "exact"
-    words = [_key(name_words(name)) for name in names]
-    close = next(
-        (field for field in free if any(_key(name_words(name)) in words for name in _field_names(field))), None
-    )
-    return (close, "probable") if close is not None else None
 
 
 def _lookup_for(column: dict, table: dict, fields: list[dict], taken: set[str], database: dict) -> dict | None:
@@ -308,17 +243,33 @@ def _children_for(field: dict, table: dict, database: dict) -> list[dict]:
     return found
 
 
-def _match_table(table: dict, database: dict, schema: dict, previous: dict | None) -> dict:
+def _match_table(table: dict, database: dict, schema: dict, previous: dict | None, project: dict | None) -> dict:
+    # A Mapper project that relates the table says its model, for both directions
+    relation = mapper_relation(table, project) if project else None
+    if relation is not None:
+        name = relation["model"]
+        options = [name, *(model["name"] for model in schema["models"] if model["name"] != name), None]
+        mapping = relation["mapping"]["id"]
+        proposed = [("both", decision(name, "exact", [reason("mapperModel", {"mapping": mapping})], options))]
+    else:
+        proposed = _match_model(table, schema)
     models = []
-    for direction, model in _match_model(table, schema):
+    for direction, model in proposed:
         before = next((item for item in (previous or {}).get("models", []) if item["direction"] == direction), None)
         chosen = keep(before["model"] if before else None, model)
-        models.append(_match_columns(table, direction, chosen, database, schema, before))
+        follows = relation if relation is not None and relation["model"] == chosen["value"] else None
+        models.append(_match_columns(table, direction, chosen, database, schema, before, follows))
     return {"table": table["name"], "models": models}
 
 
 def _match_columns(
-    table: dict, direction: str, model: dict, database: dict, schema: dict, previous: dict | None
+    table: dict,
+    direction: str,
+    model: dict,
+    database: dict,
+    schema: dict,
+    previous: dict | None,
+    relation: dict | None,
 ) -> dict:
     """Where each column of a table comes from (or goes to) in one of its models."""
     # The choices made on the columns of another model do not apply to this one
@@ -326,13 +277,26 @@ def _match_columns(
     definition = next((item for item in schema["models"] if item["name"] == model["value"]), None)
     fields = _fields_of(definition, schema) if definition is not None else []
     taken: set[str] = set()
+    mapper_taken: set[str] = set()
     columns: list[dict] = []
     for column in table["columns"]:
         options = [*({"kind": "field", "field": field["name"]} for field in fields), None]
         if definition is None:
             columns.append({"column": column["name"], "source": decision(None, "none", [], []), "conflicts": []})
             continue
-        found = _field_for(column, fields, taken)
+        # With a Mapper relation, the mapping says where each column comes from; a column it leaves out has no field
+        mapped = mapper_source(relation, column, mapper_taken) if relation is not None else None
+        if mapped is not None:
+            source, confidence, reasons = mapped
+            columns.append(
+                {
+                    "column": column["name"],
+                    "source": decision(source, confidence, reasons, [source, *options]),
+                    "conflicts": [],
+                }
+            )
+            continue
+        found = _field_for(column, fields, taken) if relation is None else None
         if found is not None:
             field, confidence = found
             taken.add(field["name"])
@@ -352,7 +316,7 @@ def _match_columns(
                 }
             )
             continue
-        lookup = _lookup_for(column, table, fields, taken, database)
+        lookup = _lookup_for(column, table, fields, taken, database) if relation is None else None
         if lookup is not None:
             taken.add(lookup["field"]["name"])
             source = {
@@ -394,7 +358,7 @@ def _match_columns(
         )
         columns.append({"column": column["name"], "source": source_decision, "conflicts": []})
     children: list[dict] = []
-    for field in fields:
+    for field in fields if relation is None else []:
         if field["name"] in taken:
             continue
         found_tables = _children_for(field, table, database)
@@ -416,11 +380,13 @@ def _match_columns(
         children.append({"field": field["name"], "table": keep(chosen, choice)})
     _keep_sources(columns, before, fields, table, database, schema, direction)
     # Unused: what no column or child table takes once the user's choices are applied
-    used = {
-        item["source"]["value"]["field"]
-        for item in columns
-        if item["source"]["value"] and item["source"]["value"]["kind"] != "database"
-    }
+    used = set(mapper_ignored(relation)) if relation is not None else set()
+    for item in columns:
+        value = item["source"]["value"]
+        if value and value["kind"] == "mapper":
+            used.update(path.split(".")[0] for path in value["fields"])
+        elif value and value["kind"] != "database":
+            used.add(value["field"])
     used.update(item["field"] for item in children if item["table"]["value"] is not None)
     unused = [field["name"] for field in fields if field["name"] not in used and not field.get("generated")]
     return {"direction": direction, "model": model, "columns": columns, "children": children, "unused": unused}
@@ -452,10 +418,12 @@ def _keep_sources(
         columns[index] = {**item, "source": source, "conflicts": conflicts}
 
 
-def match_models(database: dict, schema: dict, previous: dict | None = None) -> dict:
-    """The matching of every table of the database with the application models, keeping the choices of `previous`."""
+def match_models(database: dict, schema: dict, previous: dict | None = None, project: dict | None = None) -> dict:
+    """The matching of every table of the database with the application models, keeping the choices of `previous`.
+    With a Mapper project, `schema` holds the models of both its sides (`mapper_models`), and its relations come
+    first."""
     tables = []
     for table in database["tables"]:
         before = next((item for item in (previous or {}).get("tables", []) if item["table"] == table["name"]), None)
-        tables.append(_match_table(table, database, schema, before))
+        tables.append(_match_table(table, database, schema, before, project))
     return {"tables": tables}

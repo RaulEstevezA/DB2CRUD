@@ -289,6 +289,8 @@ class DesignPane(Pane):
                 return (t.target_field if output else t.source_field)(source["field"])
             if source["kind"] == "lookup":
                 return (t.target_lookup if output else t.source_lookup)(source["field"], source["table"], source["by"])
+            if source["kind"] == "mapper":
+                return t.source_mapper(source["fields"], source["transform"], output)
             return t.source_database
 
         def conflict_text(conflict: dict) -> str:

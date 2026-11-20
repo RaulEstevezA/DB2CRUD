@@ -325,9 +325,11 @@ def _propose_operations(schema: dict, table: dict, policy: dict, previous: dict 
     return operations
 
 
-def propose_crud(schema: dict, previous: dict | None = None, models: dict | None = None) -> dict:
+def propose_crud(
+    schema: dict, previous: dict | None = None, models: dict | None = None, project: dict | None = None
+) -> dict:
     """The CRUD design of the schema, keeping the user's earlier choices from `previous`; with application models, also
-    how they match the tables."""
+    how they match the tables (following the relations of `project` when they come from a Mapper project)."""
     policies = [
         _propose_policy(schema, table, find_policy(previous, table["name"]) if previous else None)
         for table in schema["tables"]
@@ -366,5 +368,5 @@ def propose_crud(schema: dict, previous: dict | None = None, models: dict | None
         )
     design = {"policies": policies, "repositories": repositories, "services": services}
     if models is not None:
-        design["matching"] = match_models(schema, models, (previous or {}).get("matching"))
+        design["matching"] = match_models(schema, models, (previous or {}).get("matching"), project)
     return design
