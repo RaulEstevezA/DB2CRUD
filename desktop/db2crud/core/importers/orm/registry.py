@@ -6,6 +6,7 @@ web/src/core/importers/orm/registry.ts.
 A result is {"ok": True, "schema", "reader"} or {"ok": False, "error": "unknownOrm" | "noTables"}."""
 
 from .django import DJANGO_READER
+from .drizzle import DRIZZLE_READER
 from .prisma import PRISMA_READER
 from .sequelize import SEQUELIZE_READER
 from .sqlalchemy import SQLALCHEMY_READER
@@ -22,6 +23,7 @@ ORM_READERS: list[OrmReader] = [
     PRISMA_READER,
     TYPEORM_READER,
     SEQUELIZE_READER,
+    DRIZZLE_READER,
 ]
 
 
