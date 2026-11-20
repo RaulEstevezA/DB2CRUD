@@ -1,7 +1,7 @@
 /**
  * Database pane: the database the code is generated for, pasted, opened or dropped, read in the browser and
  * never uploaded. It reads Model2DB projects, ORM code (SQLAlchemy, SQLModel, Django, Tortoise, Prisma, TypeORM,
- * Sequelize, Drizzle, JPA, EF Core and Doctrine so far) and SQL DDL.
+ * Sequelize, Drizzle, JPA, EF Core, Doctrine and Eloquent so far) and SQL DDL.
  * The footer says what was read or why the input cannot be read.
  */
 import type { LanguageSupport } from '@codemirror/language'

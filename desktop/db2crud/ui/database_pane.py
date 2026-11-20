@@ -1,6 +1,6 @@
 """The database the code is generated for: editor, open, clear and the reading status. Read on this computer and never
 sent anywhere. It reads Model2DB projects and ORM code (SQLAlchemy, SQLModel, Django, Tortoise, Prisma,
-TypeORM, Sequelize, Drizzle, JPA, EF Core and Doctrine so far) and SQL DDL.
+TypeORM, Sequelize, Drizzle, JPA, EF Core, Doctrine and Eloquent so far) and SQL DDL.
 Mirrors web/src/components/database/DatabasePane.tsx."""
 
 from pathlib import Path

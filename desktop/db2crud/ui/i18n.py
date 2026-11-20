@@ -98,8 +98,8 @@ def _read_error_en(error: str, path: str | None = None) -> str:
         "unreadableInput": "The models inside the project cannot be read.",
         "noModels": "The project has no models.",
         "notRelational": "The project is for a database without tables (MongoDB, Redis, Cassandra…): not supported yet.",
-        "unknownInput": "It is neither a Model2DB project, nor SQL DDL, nor ORM code it can read (SQLAlchemy, SQLModel, Django, Tortoise, Prisma, TypeORM, Sequelize, Drizzle, JPA/Hibernate, EF Core and Doctrine so far).",
-        "noTables": "The code declares no table: a SQLAlchemy class needs its __tablename__, a SQLModel one table=True, a Django or Tortoise one Model, a Prisma schema a model block, a TypeORM class @Entity(), Sequelize models Model.init() or sequelize.define(), a Drizzle schema pgTable(), mysqlTable() or sqliteTable(), a JPA class @Entity, an EF Core model a DbContext with its DbSet<…>, a Doctrine class #[ORM\\Entity], and SQL DDL a CREATE TABLE.",
+        "unknownInput": "It is neither a Model2DB project, nor SQL DDL, nor ORM code it can read (SQLAlchemy, SQLModel, Django, Tortoise, Prisma, TypeORM, Sequelize, Drizzle, JPA/Hibernate, EF Core, Doctrine and Eloquent so far).",
+        "noTables": "The code declares no table: a SQLAlchemy class needs its __tablename__, a SQLModel one table=True, a Django or Tortoise one Model, a Prisma schema a model block, a TypeORM class @Entity(), Sequelize models Model.init() or sequelize.define(), a Drizzle schema pgTable(), mysqlTable() or sqliteTable(), a JPA class @Entity, an EF Core model a DbContext with its DbSet<…>, a Doctrine class #[ORM\\Entity], Eloquent the migrations with Schema::create, and SQL DDL a CREATE TABLE.",
     }[error]
 
 
@@ -112,8 +112,8 @@ def _read_error_es(error: str, path: str | None = None) -> str:
         "unreadableInput": "No se pueden leer los modelos del proyecto.",
         "noModels": "El proyecto no tiene modelos.",
         "notRelational": "El proyecto es para una base de datos sin tablas (MongoDB, Redis, Cassandra…): todavía no se admite.",
-        "unknownInput": "No es un proyecto de Model2DB, ni DDL de SQL, ni código ORM que sepa leer (por ahora, SQLAlchemy, SQLModel, Django, Tortoise, Prisma, TypeORM, Sequelize, Drizzle, JPA/Hibernate, EF Core y Doctrine).",
-        "noTables": "El código no declara ninguna tabla: una clase de SQLAlchemy necesita su __tablename__; una de SQLModel, table=True, una de Django o Tortoise, Model; un schema de Prisma, un bloque model, una clase de TypeORM, @Entity(), los modelos de Sequelize, Model.init() o sequelize.define(), un schema de Drizzle, pgTable(), mysqlTable() o sqliteTable(), una clase JPA, @Entity, un modelo de EF Core, un DbContext con sus DbSet<…>, una clase de Doctrine, #[ORM\\Entity], y el DDL de SQL, un CREATE TABLE.",
+        "unknownInput": "No es un proyecto de Model2DB, ni DDL de SQL, ni código ORM que sepa leer (por ahora, SQLAlchemy, SQLModel, Django, Tortoise, Prisma, TypeORM, Sequelize, Drizzle, JPA/Hibernate, EF Core, Doctrine y Eloquent).",
+        "noTables": "El código no declara ninguna tabla: una clase de SQLAlchemy necesita su __tablename__; una de SQLModel, table=True, una de Django o Tortoise, Model; un schema de Prisma, un bloque model, una clase de TypeORM, @Entity(), los modelos de Sequelize, Model.init() o sequelize.define(), un schema de Drizzle, pgTable(), mysqlTable() o sqliteTable(), una clase JPA, @Entity, un modelo de EF Core, un DbContext con sus DbSet<…>, una clase de Doctrine, #[ORM\\Entity]; Eloquent, las migraciones con Schema::create, y el DDL de SQL, un CREATE TABLE.",
     }[error]
 
 
@@ -184,7 +184,7 @@ EN = SimpleNamespace(
     },
     confirm_replace="Your current database and the decisions made on it will be replaced. Continue?",
     input_label="Database to read",
-    input_placeholder="Paste a Model2DB project (the .model2db.json file Model2DB saves) or ORM models (SQLAlchemy, SQLModel, Django, Tortoise, a Prisma schema, TypeORM entities, Sequelize models, a Drizzle schema, JPA entities, an EF Core model, Doctrine entities) or SQL DDL (CREATE TABLE…), or drop the file here…",
+    input_placeholder="Paste a Model2DB project (the .model2db.json file Model2DB saves) or ORM models (SQLAlchemy, SQLModel, Django, Tortoise, a Prisma schema, TypeORM entities, Sequelize models, a Drizzle schema, JPA entities, an EF Core model, Doctrine entities, Laravel migrations and Eloquent models) or SQL DDL (CREATE TABLE…), or drop the file here…",
     editor_keys="Tab indents. To leave the editor with the keyboard, press Escape and then Tab.",
     open_file="Open",
     open_dialog="Open a Model2DB project",
@@ -343,7 +343,7 @@ ES = SimpleNamespace(
     },
     confirm_replace="Se sustituirán tu base de datos actual y las decisiones tomadas sobre ella. ¿Continuar?",
     input_label="Base de datos que leer",
-    input_placeholder="Pega un proyecto de Model2DB (el archivo .model2db.json que guarda Model2DB) o modelos de un ORM (SQLAlchemy, SQLModel, Django, Tortoise, un schema de Prisma, entidades de TypeORM, modelos de Sequelize, un schema de Drizzle, entidades JPA, un modelo de EF Core, entidades de Doctrine) o DDL de SQL (CREATE TABLE…), o suelta aquí el archivo…",
+    input_placeholder="Pega un proyecto de Model2DB (el archivo .model2db.json que guarda Model2DB) o modelos de un ORM (SQLAlchemy, SQLModel, Django, Tortoise, un schema de Prisma, entidades de TypeORM, modelos de Sequelize, un schema de Drizzle, entidades JPA, un modelo de EF Core, entidades de Doctrine, migraciones de Laravel y modelos de Eloquent) o DDL de SQL (CREATE TABLE…), o suelta aquí el archivo…",
     editor_keys="Tab sangra. Para salir del editor con el teclado, pulsa Escape y después Tab.",
     open_file="Abrir",
     open_dialog="Abrir un proyecto de Model2DB",
