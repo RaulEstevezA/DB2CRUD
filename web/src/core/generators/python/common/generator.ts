@@ -4,7 +4,9 @@
  */
 import type { GeneratedFile } from '../../../export/files.ts'
 import type { Generator } from '../../types.ts'
+import { planConversions } from '../../../conversions/plan.ts'
 import { createContext, type Context } from './context.ts'
+import { conversionFiles } from './conversions.ts'
 import { dtosFile } from './dtos.ts'
 import type { PythonOrm } from './orm.ts'
 import { contractFile, envExampleFile, gitignoreFile, pyprojectFile, readmeFile, requirementsFiles } from './project.ts'
@@ -14,11 +16,11 @@ import { errorsFile, pagingFile } from './support.ts'
 import { testFiles } from './tests.ts'
 import { unitOfWorkFile } from './unitOfWork.ts'
 
-/** Empty `__init__.py` files that make every folder of `app/` a package. */
-function packages(files: GeneratedFile[]): GeneratedFile[] {
+/** Empty `__init__.py` files that make every folder of `app/` (and of the models' module) a package. */
+function packages(files: GeneratedFile[], roots: string[]): GeneratedFile[] {
   const folders = new Set<string>()
   for (const file of files) {
-    if (!file.path.startsWith('app/')) continue
+    if (!roots.some((root) => file.path.startsWith(`${root}/`))) continue
     const parts = file.path.split('/').slice(0, -1)
     for (let index = 1; index <= parts.length; index++) folders.add(parts.slice(0, index).join('/'))
   }
@@ -46,9 +48,11 @@ export function pythonGenerator(orm: PythonOrm): Generator {
   return {
     language: 'python',
     orm: orm.id,
-    generate({ schema, design, settings }) {
+    generate({ schema, design, settings, models }) {
       const context = createContext(orm, schema, design, settings)
       const app = code(context)
+      if (models) app.push(...conversionFiles(context, models.schema, planConversions(schema, design, models)))
+      const roots = [...new Set(['app', settings.modelsModule.split('.')[0]])]
       return [
         readmeFile(context),
         pyprojectFile(context),
@@ -57,7 +61,7 @@ export function pythonGenerator(orm: PythonOrm): Generator {
         gitignoreFile(),
         contractFile(context),
         ...app,
-        ...packages(app),
+        ...packages(app, roots),
         ...testFiles(context),
       ]
     },
