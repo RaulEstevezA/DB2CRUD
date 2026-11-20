@@ -9,9 +9,10 @@ import { prismaReader } from './prisma.ts'
 import { sqlalchemyReader } from './sqlalchemy.ts'
 import { sqlmodelReader } from './sqlmodel.ts'
 import { tortoiseReader } from './tortoise.ts'
+import { typeormReader } from './typeorm.ts'
 import type { OrmReader, SourceFile } from './types.ts'
 
-export const ORM_READERS: OrmReader[] = [sqlalchemyReader, sqlmodelReader, djangoReader, tortoiseReader, prismaReader]
+export const ORM_READERS: OrmReader[] = [sqlalchemyReader, sqlmodelReader, djangoReader, tortoiseReader, prismaReader, typeormReader]
 
 /** The reader for these files, or null when none recognises them. */
 export function detectOrm(files: SourceFile[]): OrmReader | null {

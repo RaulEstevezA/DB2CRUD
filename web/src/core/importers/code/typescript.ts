@@ -20,7 +20,7 @@ import {
 import { readType, type TypeSyntax } from './typeSyntax.ts'
 import { ZodReader } from './zod.ts'
 
-const LEXER: LexerConfig = {
+export const TYPESCRIPT_LEXER: LexerConfig = {
   ...C_LIKE,
   strings: [{ open: '`', close: '`', escapes: true, multiline: true }, ...C_LIKE.strings],
   identifierChars: '$',
@@ -563,7 +563,7 @@ function parseJsDocType(text: string): RawType | null {
         .replace(/^\(|\)$/g, '')
         .replace(/Object\.</g, 'Object<')
         .replace(/\*/g, 'any'),
-      LEXER,
+      TYPESCRIPT_LEXER,
     )
     const type = readType(new Cursor(tokens), JSDOC_SYNTAX)
     if (type?.name === 'Object' && type.args.length === 2) return { name: 'Record', args: type.args }
@@ -587,7 +587,7 @@ function parseScript(text: string, javascript: boolean): ParseOutcome {
   if (text.trim() === '') return failure('empty')
   let tokens: Token[]
   try {
-    tokens = tokenize(text, LEXER)
+    tokens = tokenize(text, TYPESCRIPT_LEXER)
   } catch (error) {
     if (error instanceof LexError) return failure(error.code, positionAt(text, error.index))
     throw error
