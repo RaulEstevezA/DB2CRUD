@@ -11,7 +11,7 @@ from .lexer import C_LIKE, Cursor, LexerConfig, LexError, tokenize
 from .raw import MISSING, TypeTable, build_schema, parse_literal
 from .type_syntax import TypeSyntax, read_type
 
-_LEXER = LexerConfig(
+PHP_LEXER = LexerConfig(
     line_comments=("//", "#"),
     block_comments=(("/*", "*/"),),
     strings=C_LIKE.strings,
@@ -77,7 +77,7 @@ def _doc_type(doc_raw: str | None, pattern: re.Pattern):
     if not match:
         return None
     try:
-        type_ref = read_type(Cursor(tokenize(match.group(1), _LEXER)), _SYNTAX)
+        type_ref = read_type(Cursor(tokenize(match.group(1), PHP_LEXER)), _SYNTAX)
     except LexError:
         return None
     if not type_ref:
@@ -352,7 +352,7 @@ def _parse(text: str, options: dict | None = None) -> dict:
         return failure("empty")
     try:
         # The opening tag is blanked out, keeping every position in place
-        tokens = tokenize(_OPEN_TAG.sub(lambda match: " " * len(match.group(0)), text, count=1), _LEXER)
+        tokens = tokenize(_OPEN_TAG.sub(lambda match: " " * len(match.group(0)), text, count=1), PHP_LEXER)
     except LexError as error:
         return failure(error.code, position_at(text, error.index))
     declarations = _Reader(text, tokens).run()

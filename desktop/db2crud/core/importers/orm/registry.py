@@ -6,6 +6,7 @@ web/src/core/importers/orm/registry.ts.
 A result is {"ok": True, "schema", "reader"} or {"ok": False, "error": "unknownOrm" | "noTables"}."""
 
 from .django import DJANGO_READER
+from .doctrine import DOCTRINE_READER
 from .drizzle import DRIZZLE_READER
 from .efcore import EFCORE_READER
 from .jpa import JPA_READER
@@ -28,6 +29,7 @@ ORM_READERS: list[OrmReader] = [
     DRIZZLE_READER,
     JPA_READER,
     EFCORE_READER,
+    DOCTRINE_READER,
 ]
 
 
