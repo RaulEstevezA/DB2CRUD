@@ -215,7 +215,9 @@ class ProjectPane(Pane):
     def _settings_form(self) -> None:
         t = self._i18n.t
         settings = self._session.settings
-        key = (self._i18n.language, tuple(sorted((name, str(value)) for name, value in settings.items())))
+        # The form also depends on whether the application models get conversions
+        conversions = str(self._session.conversions)
+        key = (self._i18n.language, conversions, tuple(sorted((name, str(value)) for name, value in settings.items())))
         if key == self._form_key:
             return
         self._form_key = key
