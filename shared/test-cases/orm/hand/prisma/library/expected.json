@@ -1,0 +1,520 @@
+{
+ "format": "db-schema",
+ "version": 1,
+ "dialect": "postgresql",
+ "source": {
+  "kind": "orm",
+  "format": "prisma"
+ },
+ "tables": [
+  {
+   "name": "authors",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "String @db.Uuid",
+      "kind": "uuid"
+     },
+     "nullable": false,
+     "generated": "uuid"
+    },
+    {
+     "name": "name",
+     "type": {
+      "sql": "String @db.VarChar(120)",
+      "kind": "text",
+      "length": 120
+     },
+     "nullable": false
+    },
+    {
+     "name": "email",
+     "type": {
+      "sql": "String @db.VarChar(200)",
+      "kind": "text",
+      "length": 200
+     },
+     "nullable": true
+    },
+    {
+     "name": "aliases",
+     "type": {
+      "sql": "String[]",
+      "kind": "array",
+      "items": {
+       "sql": "String",
+       "kind": "text"
+      }
+     },
+     "nullable": false
+    },
+    {
+     "name": "created_at",
+     "type": {
+      "sql": "DateTime @db.Timestamptz(3)",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": false,
+     "generated": "now",
+     "attribute": "createdAt"
+    },
+    {
+     "name": "updated_at",
+     "type": {
+      "sql": "DateTime",
+      "kind": "datetime",
+      "timezone": false
+     },
+     "nullable": false,
+     "generated": "onUpdateNow",
+     "attribute": "updatedAt"
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [],
+   "uniques": [
+    {
+     "name": "uq_authors_email",
+     "columns": [
+      "email"
+     ]
+    }
+   ],
+   "indexes": [],
+   "checks": [
+    {
+     "name": "ck_authors_name",
+     "sql": "length(name) > 0",
+     "parsed": {
+      "kind": "length",
+      "column": "name",
+      "op": ">",
+      "value": 0
+     }
+    }
+   ],
+   "entity": "Author",
+   "origin": {
+    "line": 24,
+    "column": 1
+   },
+   "schema": "public"
+  },
+  {
+   "name": "books",
+   "columns": [
+    {
+     "name": "isbn",
+     "type": {
+      "sql": "String @db.Char(13)",
+      "kind": "text",
+      "length": 13,
+      "fixed": true
+     },
+     "nullable": false
+    },
+    {
+     "name": "title",
+     "type": {
+      "sql": "String",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "format",
+     "type": {
+      "sql": "Format",
+      "kind": "enum",
+      "name": "book_format"
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": "paperback"
+     }
+    },
+    {
+     "name": "pages",
+     "type": {
+      "sql": "Int @db.SmallInt",
+      "kind": "integer",
+      "bits": 16
+     },
+     "nullable": true
+    },
+    {
+     "name": "price",
+     "type": {
+      "sql": "Decimal @db.Decimal(8, 2)",
+      "kind": "decimal",
+      "precision": 8,
+      "scale": 2
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": 0
+     }
+    },
+    {
+     "name": "published",
+     "type": {
+      "sql": "DateTime @db.Date",
+      "kind": "date"
+     },
+     "nullable": true
+    },
+    {
+     "name": "slug",
+     "type": {
+      "sql": "String",
+      "kind": "text"
+     },
+     "nullable": false,
+     "default": {
+      "kind": "expression",
+      "sql": "lower(md5(random()::text))"
+     }
+    },
+    {
+     "name": "location",
+     "type": {
+      "sql": "Unsupported \"point\"",
+      "kind": "unknown"
+     },
+     "nullable": true
+    },
+    {
+     "name": "meta",
+     "type": {
+      "sql": "Json",
+      "kind": "json"
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": "{}"
+     }
+    }
+   ],
+   "primaryKey": [
+    "isbn"
+   ],
+   "foreignKeys": [],
+   "uniques": [],
+   "indexes": [
+    {
+     "name": "ix_books_title",
+     "columns": [
+      "title"
+     ]
+    }
+   ],
+   "checks": [
+    {
+     "sql": "\"pages\" > 0",
+     "parsed": {
+      "kind": "compare",
+      "column": "pages",
+      "op": ">",
+      "value": 0
+     }
+    },
+    {
+     "name": "ck_books_price",
+     "sql": "price >= 0",
+     "parsed": {
+      "kind": "compare",
+      "column": "price",
+      "op": ">=",
+      "value": 0
+     }
+    }
+   ],
+   "entity": "Book",
+   "origin": {
+    "line": 37,
+    "column": 1
+   },
+   "schema": "public"
+  },
+  {
+   "name": "copies",
+   "columns": [
+    {
+     "name": "book_isbn",
+     "type": {
+      "sql": "String @db.Char(13)",
+      "kind": "text",
+      "length": 13,
+      "fixed": true
+     },
+     "nullable": false,
+     "attribute": "bookIsbn"
+    },
+    {
+     "name": "number",
+     "type": {
+      "sql": "Int",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false
+    },
+    {
+     "name": "shelf",
+     "type": {
+      "sql": "String @db.VarChar(20)",
+      "kind": "text",
+      "length": 20
+     },
+     "nullable": true
+    }
+   ],
+   "primaryKey": [
+    "book_isbn",
+    "number"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "book_isbn"
+     ],
+     "references": {
+      "table": "books",
+      "schema": "public",
+      "columns": [
+       "isbn"
+      ]
+     },
+     "onDelete": "cascade",
+     "onUpdate": "cascade",
+     "attribute": "book",
+     "inverse": "copies"
+    }
+   ],
+   "uniques": [
+    {
+     "columns": [
+      "shelf",
+      "number"
+     ]
+    }
+   ],
+   "indexes": [],
+   "checks": [
+    {
+     "name": "ck_copies_number",
+     "sql": "\"number\" >= 1",
+     "parsed": {
+      "kind": "compare",
+      "column": "number",
+      "op": ">=",
+      "value": 1
+     }
+    }
+   ],
+   "entity": "Copy",
+   "origin": {
+    "line": 55,
+    "column": 1
+   },
+   "schema": "lending"
+  },
+  {
+   "name": "loans",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "BigInt",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false,
+     "generated": "identity"
+    },
+    {
+     "name": "book_isbn",
+     "type": {
+      "sql": "String @db.Char(13)",
+      "kind": "text",
+      "length": 13,
+      "fixed": true
+     },
+     "nullable": false,
+     "attribute": "bookIsbn"
+    },
+    {
+     "name": "copy_number",
+     "type": {
+      "sql": "Int",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false,
+     "attribute": "copyNumber"
+    },
+    {
+     "name": "lent_at",
+     "type": {
+      "sql": "DateTime",
+      "kind": "datetime",
+      "timezone": false
+     },
+     "nullable": false,
+     "generated": "now",
+     "attribute": "lentAt"
+    },
+    {
+     "name": "returned_at",
+     "type": {
+      "sql": "DateTime",
+      "kind": "datetime",
+      "timezone": false
+     },
+     "nullable": true,
+     "attribute": "returnedAt"
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [
+    {
+     "name": "fk_loans_copy",
+     "columns": [
+      "book_isbn",
+      "copy_number"
+     ],
+     "references": {
+      "table": "copies",
+      "schema": "lending",
+      "columns": [
+       "book_isbn",
+       "number"
+      ]
+     },
+     "onDelete": "restrict",
+     "attribute": "copy",
+     "inverse": "loans"
+    }
+   ],
+   "uniques": [],
+   "indexes": [
+    {
+     "columns": [
+      "lent_at"
+     ]
+    }
+   ],
+   "checks": [
+    {
+     "sql": "returned_at IS NULL OR returned_at >= lent_at"
+    }
+   ],
+   "entity": "Loan",
+   "origin": {
+    "line": 68,
+    "column": 1
+   },
+   "schema": "lending"
+  },
+  {
+   "name": "_AuthorToBook",
+   "columns": [
+    {
+     "name": "A",
+     "type": {
+      "sql": "String @db.Uuid",
+      "kind": "uuid"
+     },
+     "nullable": false
+    },
+    {
+     "name": "B",
+     "type": {
+      "sql": "String @db.Char(13)",
+      "kind": "text",
+      "length": 13,
+      "fixed": true
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": [
+    "A",
+    "B"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "A"
+     ],
+     "references": {
+      "table": "authors",
+      "schema": "public",
+      "columns": [
+       "id"
+      ]
+     },
+     "onDelete": "cascade",
+     "onUpdate": "cascade"
+    },
+    {
+     "columns": [
+      "B"
+     ],
+     "references": {
+      "table": "books",
+      "schema": "public",
+      "columns": [
+       "isbn"
+      ]
+     },
+     "onDelete": "cascade",
+     "onUpdate": "cascade"
+    }
+   ],
+   "uniques": [],
+   "indexes": [
+    {
+     "columns": [
+      "B"
+     ]
+    }
+   ],
+   "checks": [],
+   "origin": {
+    "line": 31,
+    "column": 1
+   }
+  }
+ ],
+ "enums": [
+  {
+   "name": "book_format",
+   "values": [
+    "hardcover",
+    "paperback",
+    "e-book"
+   ],
+   "storage": "native"
+  }
+ ],
+ "notes": [
+  {
+   "code": "orm.unknownType",
+   "params": {
+    "table": "books",
+    "column": "location",
+    "type": "Unsupported"
+   }
+  }
+ ]
+}

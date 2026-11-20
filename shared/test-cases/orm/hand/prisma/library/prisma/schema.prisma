@@ -1,0 +1,79 @@
+// A library on PostgreSQL, written by hand: composite keys, implicit many-to-many, scalar lists, renamed enum
+// values, database-generated defaults, a type Prisma does not support and several schemas.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["public", "lending"]
+}
+
+enum Format {
+  Hardcover @map("hardcover")
+  Paperback @map("paperback")
+  Ebook     @map("e-book")
+
+  @@map("book_format")
+  @@schema("public")
+}
+
+/// A person who writes books
+model Author {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String   @db.VarChar(120)
+  email     String?  @unique(map: "uq_authors_email") @db.VarChar(200)
+  aliases   String[]
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at")
+  books     Book[]
+
+  @@schema("public")
+  @@map("authors")
+}
+
+model Book {
+  isbn      String   @id @db.Char(13)
+  title     String
+  format    Format   @default(Paperback)
+  pages     Int?     @db.SmallInt
+  price     Decimal  @default(0) @db.Decimal(8, 2)
+  published DateTime? @db.Date
+  slug      String   @default(dbgenerated("lower(md5(random()::text))"))
+  location  Unsupported("point")?
+  meta      Json     @default("{}")
+  authors   Author[]
+  copies    Copy[]
+
+  @@index([title(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_books_title")
+  @@schema("public")
+  @@map("books")
+}
+
+model Copy {
+  bookIsbn String @map("book_isbn") @db.Char(13)
+  number   Int
+  shelf    String? @db.VarChar(20)
+  book     Book    @relation(fields: [bookIsbn], references: [isbn], onDelete: Cascade, onUpdate: Cascade)
+  loans    Loan[]
+
+  @@id([bookIsbn, number], map: "pk_copies")
+  @@unique([shelf, number])
+  @@schema("lending")
+  @@map("copies")
+}
+
+model Loan {
+  id         BigInt    @id @default(autoincrement())
+  bookIsbn   String    @map("book_isbn") @db.Char(13)
+  copyNumber Int       @map("copy_number")
+  lentAt     DateTime  @default(dbgenerated("now()")) @map("lent_at")
+  returnedAt DateTime? @map("returned_at")
+  copy       Copy      @relation(fields: [bookIsbn, copyNumber], references: [bookIsbn, number], map: "fk_loans_copy")
+
+  @@index([lentAt(sort: Desc)])
+  @@schema("lending")
+  @@map("loans")
+}

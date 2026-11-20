@@ -134,7 +134,8 @@ describe('ORM code written by Model2DB', () => {
         const expected = readModel2DBProject(example.text)
         if (!expected.ok) throw new Error(expected.error)
         const schema = readOk(folder)
-        expect(schema.notes).toEqual([])
+        // Prisma keeps no CHECK constraints, and these folders have no migrations to read them from
+        expect(schema.notes.filter((note) => note.code !== 'orm.checksNotKept')).toEqual([])
         expect(comparable(schema, expected.schema)).toEqual(comparable(expected.schema, schema))
         matchesExpected(folder, schema)
       })
@@ -161,6 +162,7 @@ describe('ORM code written by DB2CRUD', () => {
   const models: Record<string, (path: string, text: string) => boolean> = {
     sqlalchemy: (path, text) => path.endsWith('.py') && text.includes('__tablename__'),
     django: (path, text) => path.endsWith('.py') && text.includes('models.Model'),
+    prisma: (path) => path.endsWith('.prisma'),
   }
   for (const name of readdirSync(outputs).filter((item) => models[item.split('-')[0]]))
     it(name, () => {
@@ -176,7 +178,19 @@ describe('ORM code written by DB2CRUD', () => {
         expect(project.schema.tables.find((item) => item.name === table.name)?.primaryKey).toBeNull()
         table.primaryKey = null
       }
-      expect(comparable(read.schema, project.schema)).toEqual(comparable(project.schema, read.schema))
+      // Prisma keeps no CHECK constraints (DB2CRUD leaves them in a comment), and without migrations they are not read
+      const expected = structuredClone(project.schema)
+      if (read.schema.notes.some((note) => note.code === 'orm.checksNotKept')) for (const table of expected.tables) table.checks = []
+      // Code for another engine than the project's has the types of that engine: only the structure has to agree
+      const sameEngine = !read.schema.dialect || read.schema.dialect === expected.dialect
+      const shape = (schema: ReturnType<typeof comparable>) =>
+        sameEngine
+          ? schema
+          : {
+              ...schema,
+              tables: schema.tables.map((table) => ({ ...table, columns: table.columns.map(({ type: _type, ...rest }) => rest) })),
+            }
+      expect(shape(comparable(read.schema, expected))).toEqual(shape(comparable(expected, read.schema)))
     })
 })
 

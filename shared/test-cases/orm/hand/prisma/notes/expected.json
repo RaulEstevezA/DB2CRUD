@@ -1,0 +1,257 @@
+{
+ "format": "db-schema",
+ "version": 1,
+ "dialect": "sqlite",
+ "source": {
+  "kind": "orm",
+  "format": "prisma"
+ },
+ "tables": [
+  {
+   "name": "Ticket",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "Int",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false,
+     "generated": "identity"
+    },
+    {
+     "name": "status",
+     "type": {
+      "sql": "Status",
+      "kind": "text"
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": "OPEN"
+     }
+    },
+    {
+     "name": "parent_id",
+     "type": {
+      "sql": "Int",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": true,
+     "attribute": "parentId"
+    },
+    {
+     "name": "uuid",
+     "type": {
+      "sql": "String",
+      "kind": "text"
+     },
+     "nullable": false,
+     "generated": "uuid"
+    },
+    {
+     "name": "touched",
+     "type": {
+      "sql": "DateTime",
+      "kind": "datetime",
+      "timezone": false
+     },
+     "nullable": false,
+     "generated": "onUpdateNow"
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "parent_id"
+     ],
+     "references": {
+      "table": "Ticket",
+      "columns": [
+       "id"
+      ]
+     },
+     "onDelete": "set null",
+     "attribute": "parent",
+     "inverse": "replies"
+    }
+   ],
+   "uniques": [
+    {
+     "columns": [
+      "uuid"
+     ]
+    }
+   ],
+   "indexes": [],
+   "checks": [
+    {
+     "sql": "status IN ('OPEN', 'CLOSED')",
+     "parsed": {
+      "kind": "in",
+      "column": "status",
+      "values": [
+       "OPEN",
+       "CLOSED"
+      ]
+     }
+    }
+   ],
+   "entity": "Ticket",
+   "origin": {
+    "line": 13,
+    "column": 1
+   }
+  },
+  {
+   "name": "Label",
+   "columns": [
+    {
+     "name": "name",
+     "type": {
+      "sql": "String",
+      "kind": "text"
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": [
+    "name"
+   ],
+   "foreignKeys": [],
+   "uniques": [],
+   "indexes": [],
+   "checks": [],
+   "entity": "Label",
+   "origin": {
+    "line": 24,
+    "column": 1
+   }
+  },
+  {
+   "name": "events",
+   "columns": [
+    {
+     "name": "at",
+     "type": {
+      "sql": "DateTime",
+      "kind": "datetime",
+      "timezone": false
+     },
+     "nullable": false
+    },
+    {
+     "name": "message",
+     "type": {
+      "sql": "String",
+      "kind": "text"
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": null,
+   "foreignKeys": [],
+   "uniques": [],
+   "indexes": [],
+   "checks": [],
+   "entity": "Event",
+   "origin": {
+    "line": 29,
+    "column": 1
+   }
+  },
+  {
+   "name": "_TicketLabels",
+   "columns": [
+    {
+     "name": "A",
+     "type": {
+      "sql": "String",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "B",
+     "type": {
+      "sql": "Int",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": [
+    "A",
+    "B"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "A"
+     ],
+     "references": {
+      "table": "Label",
+      "columns": [
+       "name"
+      ]
+     },
+     "onDelete": "cascade",
+     "onUpdate": "cascade"
+    },
+    {
+     "columns": [
+      "B"
+     ],
+     "references": {
+      "table": "Ticket",
+      "columns": [
+       "id"
+      ]
+     },
+     "onDelete": "cascade",
+     "onUpdate": "cascade"
+    }
+   ],
+   "uniques": [],
+   "indexes": [
+    {
+     "columns": [
+      "B"
+     ]
+    }
+   ],
+   "checks": [],
+   "origin": {
+    "line": 26,
+    "column": 1
+   }
+  }
+ ],
+ "enums": [
+  {
+   "name": "Status",
+   "values": [
+    "OPEN",
+    "CLOSED"
+   ],
+   "storage": "check"
+  }
+ ],
+ "notes": [
+  {
+   "code": "orm.ormOnlyUnique",
+   "params": {
+    "table": "events"
+   }
+  },
+  {
+   "code": "orm.checksNotKept"
+  }
+ ]
+}

@@ -1,0 +1,35 @@
+// A SQLite schema with no migrations: enums are text with a CHECK, a table with no key told apart by all its fields,
+// a relation with no foreign key fields on one side, a self relation and a named many-to-many.
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+enum Status {
+  OPEN
+  CLOSED
+}
+
+model Ticket {
+  id       Int      @id @default(autoincrement())
+  status   Status   @default(OPEN)
+  parentId Int?     @map("parent_id")
+  parent   Ticket?  @relation("Thread", fields: [parentId], references: [id])
+  replies  Ticket[] @relation("Thread")
+  labels   Label[]  @relation("TicketLabels")
+  uuid     String   @unique @default(uuid())
+  touched  DateTime @updatedAt
+}
+
+model Label {
+  name    String   @id
+  tickets Ticket[] @relation("TicketLabels")
+}
+
+model Event {
+  at      DateTime
+  message String
+
+  @@unique([at, message])
+  @@map("events")
+}
