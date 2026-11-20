@@ -98,8 +98,8 @@ def _read_error_en(error: str, path: str | None = None) -> str:
         "unreadableInput": "The models inside the project cannot be read.",
         "noModels": "The project has no models.",
         "notRelational": "The project is for a database without tables (MongoDB, Redis, Cassandra…): not supported yet.",
-        "unknownInput": "It is neither a Model2DB project nor ORM code it can read (SQLAlchemy, SQLModel, Django, Tortoise, Prisma and TypeORM so far).",
-        "noTables": "The code declares no table: a SQLAlchemy class needs its __tablename__, a SQLModel one table=True, a Django or Tortoise one Model, a Prisma schema a model block, and a TypeORM class @Entity().",
+        "unknownInput": "It is neither a Model2DB project nor ORM code it can read (SQLAlchemy, SQLModel, Django, Tortoise, Prisma, TypeORM and Sequelize so far).",
+        "noTables": "The code declares no table: a SQLAlchemy class needs its __tablename__, a SQLModel one table=True, a Django or Tortoise one Model, a Prisma schema a model block, a TypeORM class @Entity(), and Sequelize models Model.init() or sequelize.define().",
     }[error]
 
 
@@ -112,8 +112,8 @@ def _read_error_es(error: str, path: str | None = None) -> str:
         "unreadableInput": "No se pueden leer los modelos del proyecto.",
         "noModels": "El proyecto no tiene modelos.",
         "notRelational": "El proyecto es para una base de datos sin tablas (MongoDB, Redis, Cassandra…): todavía no se admite.",
-        "unknownInput": "No es un proyecto de Model2DB ni código ORM que sepa leer (por ahora, SQLAlchemy, SQLModel, Django, Tortoise, Prisma y TypeORM).",
-        "noTables": "El código no declara ninguna tabla: una clase de SQLAlchemy necesita su __tablename__; una de SQLModel, table=True, una de Django o Tortoise, Model; un schema de Prisma, un bloque model, y una clase de TypeORM, @Entity().",
+        "unknownInput": "No es un proyecto de Model2DB ni código ORM que sepa leer (por ahora, SQLAlchemy, SQLModel, Django, Tortoise, Prisma, TypeORM y Sequelize).",
+        "noTables": "El código no declara ninguna tabla: una clase de SQLAlchemy necesita su __tablename__; una de SQLModel, table=True, una de Django o Tortoise, Model; un schema de Prisma, un bloque model, una clase de TypeORM, @Entity(), y los modelos de Sequelize, Model.init() o sequelize.define().",
     }[error]
 
 
@@ -184,7 +184,7 @@ EN = SimpleNamespace(
     },
     confirm_replace="Your current database and the decisions made on it will be replaced. Continue?",
     input_label="Database to read",
-    input_placeholder="Paste a Model2DB project (the .model2db.json file Model2DB saves) or ORM models (SQLAlchemy, SQLModel, Django, Tortoise, a Prisma schema, TypeORM entities), or drop the file here…",
+    input_placeholder="Paste a Model2DB project (the .model2db.json file Model2DB saves) or ORM models (SQLAlchemy, SQLModel, Django, Tortoise, a Prisma schema, TypeORM entities, Sequelize models), or drop the file here…",
     editor_keys="Tab indents. To leave the editor with the keyboard, press Escape and then Tab.",
     open_file="Open",
     open_dialog="Open a Model2DB project",
@@ -343,7 +343,7 @@ ES = SimpleNamespace(
     },
     confirm_replace="Se sustituirán tu base de datos actual y las decisiones tomadas sobre ella. ¿Continuar?",
     input_label="Base de datos que leer",
-    input_placeholder="Pega un proyecto de Model2DB (el archivo .model2db.json que guarda Model2DB) o modelos de un ORM (SQLAlchemy, SQLModel, Django, Tortoise, un schema de Prisma, entidades de TypeORM), o suelta aquí el archivo…",
+    input_placeholder="Pega un proyecto de Model2DB (el archivo .model2db.json que guarda Model2DB) o modelos de un ORM (SQLAlchemy, SQLModel, Django, Tortoise, un schema de Prisma, entidades de TypeORM, modelos de Sequelize), o suelta aquí el archivo…",
     editor_keys="Tab sangra. Para salir del editor con el teclado, pulsa Escape y después Tab.",
     open_file="Abrir",
     open_dialog="Abrir un proyecto de Model2DB",
