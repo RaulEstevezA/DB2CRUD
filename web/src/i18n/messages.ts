@@ -310,6 +310,31 @@ const en = {
         return 'You chose it.'
     }
   },
+  inputSourcesLabel: 'What to read',
+  inputSources: { database: 'Database schema', models: 'Application models' },
+  modelsLabel: 'Application models',
+  modelsPlaceholder:
+    'Optional: paste or open the models of your application (classes, DTOs, records… in TypeScript, Python, Java, C#, Kotlin, Dart, Go, Rust, PHP, Swift, Scala; JSON, JSON Schema, OpenAPI, GraphQL…). The services will take and return them.',
+  modelsEmpty: 'No application models: the services take and return the entities.',
+  modelsError: (code: string) =>
+    code === 'unknownFormat'
+      ? 'The format of these models is not one DB2CRUD reads.'
+      : code === 'noModels'
+        ? 'There is no model in this text.'
+        : `These models cannot be read (${code}).`,
+  modelsSummary: (format: string, count: number) => `${format} · ${en$(count)} ${plural(count, 'model', 'models')}`,
+  modelTitle: 'Application model',
+  noModel: 'none',
+  sourceNone: 'no field',
+  sourceField: (field: string) => `← ${field}`,
+  sourceLookup: (field: string, table: string, by: string) => `← ${field}, looked up in ${table}.${by}`,
+  sourceDatabase: 'filled by the database',
+  sourceChildren: (table: string | null) => (table ? `rows of ${table}` : 'no table'),
+  unusedFields: (fields: string[]) => `Not saved: ${fields.join(', ')}`,
+  conflictLength: (model: number, column: number) => `the model allows ${en$(model)} characters, the column ${en$(column)}`,
+  conflictNullable: 'optional in the model, required in the column',
+  conflictType: (model: string, column: string) => `${model} in the model, ${column} in the column`,
+  conflictValues: (missing: string[]) => `the column does not accept ${missing.join(', ')}`,
   fileTreeLabel: 'Generated files',
 }
 
@@ -564,6 +589,31 @@ const es: Messages = {
         return 'Lo has elegido tú.'
     }
   },
+  inputSourcesLabel: 'Qué leer',
+  inputSources: { database: 'Esquema de la base de datos', models: 'Modelos de aplicación' },
+  modelsLabel: 'Modelos de aplicación',
+  modelsPlaceholder:
+    'Opcional: pega o abre los modelos de tu aplicación (clases, DTOs, records… en TypeScript, Python, Java, C#, Kotlin, Dart, Go, Rust, PHP, Swift, Scala; JSON, JSON Schema, OpenAPI, GraphQL…). Los servicios los recibirán y devolverán.',
+  modelsEmpty: 'Sin modelos de aplicación: los servicios reciben y devuelven las entidades.',
+  modelsError: (code) =>
+    code === 'unknownFormat'
+      ? 'DB2CRUD no lee el formato de estos modelos.'
+      : code === 'noModels'
+        ? 'Este texto no tiene ningún modelo.'
+        : `No se pueden leer estos modelos (${code}).`,
+  modelsSummary: (format, count) => `${format} · ${es$(count)} ${plural(count, 'modelo', 'modelos')}`,
+  modelTitle: 'Modelo de aplicación',
+  noModel: 'ninguno',
+  sourceNone: 'sin campo',
+  sourceField: (field) => `← ${field}`,
+  sourceLookup: (field, table, by) => `← ${field}, buscado en ${table}.${by}`,
+  sourceDatabase: 'la rellena la base de datos',
+  sourceChildren: (table) => (table ? `filas de ${table}` : 'ninguna tabla'),
+  unusedFields: (fields) => `No se guardan: ${fields.join(', ')}`,
+  conflictLength: (model, column) => `el modelo admite ${es$(model)} caracteres; la columna, ${es$(column)}`,
+  conflictNullable: 'opcional en el modelo, obligatoria en la columna',
+  conflictType: (model, column) => `${model} en el modelo, ${column} en la columna`,
+  conflictValues: (missing) => `la columna no admite ${missing.join(', ')}`,
   fileTreeLabel: 'Archivos generados',
 }
 

@@ -2,10 +2,11 @@
  * The page: header, presentation, the workspace (database, CRUD design, project) and the links of the suite.
  */
 import { useDeferredValue, useMemo, useState } from 'react'
-import { EMPTY_INPUT, readDatabase, type InputState } from './app/workspace.ts'
+import { EMPTY_INPUT, readDatabase, readModels, type InputState } from './app/workspace.ts'
 import type { WorkspacePart } from './app/workspaceParts.ts'
 import { DatabasePane } from './components/database/DatabasePane.tsx'
 import { DesignPane } from './components/design/DesignPane.tsx'
+import { matchModels } from './core/matching/matching.ts'
 import { AppFooter } from './components/layout/AppFooter.tsx'
 import { AppHeader } from './components/layout/AppHeader.tsx'
 import { IntroPanel } from './components/layout/IntroPanel.tsx'
@@ -26,6 +27,7 @@ import './App.css'
 function App() {
   const { t } = useI18n()
   const [input, setInput] = useState<InputState>(EMPTY_INPUT)
+  const [models, setModels] = useState<InputState>(EMPTY_INPUT)
   const [part, setPart] = useState<WorkspacePart>('database')
   // The settings are a preference, kept in this browser; the database never is
   const [stored, setStored] = useStoredState<ProjectSettings>('db2crud.settings', () => DEFAULT_SETTINGS)
@@ -35,6 +37,10 @@ function App() {
   const deferredInput = useDeferredValue(input)
   const read = useMemo(() => readDatabase(deferredInput), [deferredInput])
   const schema = read?.ok ? read.schema : null
+  // The application models are optional: each table gets the model it corresponds to
+  const deferredModels = useDeferredValue(models)
+  const modelsRead = useMemo(() => readModels(deferredModels), [deferredModels])
+  const matching = useMemo(() => (schema && modelsRead?.ok ? matchModels(schema, modelsRead.schema) : null), [schema, modelsRead])
   const designState = useCrudDesign(schema)
   const { design } = designState
   useUndoShortcuts(designState.history)
@@ -74,11 +80,20 @@ function App() {
         <IntroPanel onExample={loadExample} />
         <Workspace
           part={part}
-          errors={{ database: read !== null && !read.ok }}
+          errors={{ database: (read !== null && !read.ok) || (modelsRead !== null && !modelsRead.ok) }}
           counts={{ design: pending }}
           panes={{
-            database: <DatabasePane input={input} read={read} onChange={changeInput} />,
-            design: <DesignPane state={designState} />,
+            database: (
+              <DatabasePane
+                input={input}
+                read={read}
+                onChange={changeInput}
+                models={models}
+                modelsRead={modelsRead}
+                onModelsChange={setModels}
+              />
+            ),
+            design: <DesignPane state={designState} matching={matching} />,
             project: <ProjectPane settings={settings} files={files} onSettingsChange={changeSettings} />,
           }}
         />

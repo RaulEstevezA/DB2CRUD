@@ -59,3 +59,44 @@
   color: var(--warning);
   cursor: help;
 }
+
+/* What the pane reads: the database, or the application models (optional) */
+.input-tabs {
+  display: flex;
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
+  padding: var(--space-4);
+  border: var(--border-line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.input-tabs__tab {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-6);
+  padding: var(--space-4) var(--space-8);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--muted);
+  font-size: var(--font-small);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+}
+
+.input-tabs__tab--active {
+  background: var(--surface-raised);
+  color: var(--text);
+}
+
+.input-tabs__count {
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-pill);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-size: var(--font-caption);
+}

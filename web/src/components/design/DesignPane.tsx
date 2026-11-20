@@ -16,6 +16,7 @@ import type {
   TablePolicy,
 } from '../../core/crud/types.ts'
 import type { Decision } from '../../core/decisions/decision.ts'
+import type { ColumnSource, Conflict, Matching, TableMatch } from '../../core/matching/matching.ts'
 import type { CrudDesignState } from '../../hooks/useCrudDesign.ts'
 import { useI18n } from '../../i18n/useI18n.ts'
 import { ConfidenceBadge } from '../common/ConfidenceBadge.tsx'
@@ -31,9 +32,11 @@ function focus(id: string) {
 
 export interface DesignPaneProps {
   state: CrudDesignState
+  /** How the application models match the tables, when there are models */
+  matching?: Matching | null
 }
 
-export function DesignPane({ state }: DesignPaneProps) {
+export function DesignPane({ state, matching = null }: DesignPaneProps) {
   const { t } = useI18n()
   const { design, change, reset, history } = state
   const pending = design ? pendingDecisions(design) : []
@@ -93,7 +96,13 @@ export function DesignPane({ state }: DesignPaneProps) {
             </details>
           )}
           {design.policies.map((policy) => (
-            <TableCard key={policy.table} design={design} policy={policy} onChange={change} />
+            <TableCard
+              key={policy.table}
+              design={design}
+              policy={policy}
+              match={matching?.tables.find((item) => item.table === policy.table)}
+              onChange={change}
+            />
           ))}
         </div>
       )}
@@ -104,10 +113,11 @@ export function DesignPane({ state }: DesignPaneProps) {
 interface TableCardProps {
   design: CrudDesign
   policy: TablePolicy
+  match?: TableMatch
   onChange: CrudDesignState['change']
 }
 
-function TableCard({ design, policy, onChange }: TableCardProps) {
+function TableCard({ design, policy, match, onChange }: TableCardProps) {
   const { t } = useI18n()
   const table = policy.table
   const repository = design.repositories.find((item) => item.table === table)
@@ -163,6 +173,7 @@ function TableCard({ design, policy, onChange }: TableCardProps) {
           </div>
         ))}
       </div>
+      {match && <ModelMatch match={match} />}
       {repository && (
         <ItemList
           title={t.queriesTitle}
@@ -241,6 +252,66 @@ function ItemList<T extends { id: string; name: string; include: Decision<boolea
           )
         })}
       </ul>
+    </details>
+  )
+}
+
+/** The model of a table and where each column comes from, with the conflicts between both. */
+function ModelMatch({ match }: { match: TableMatch }) {
+  const { t } = useI18n()
+  const { model } = match
+  const describe = (source: ColumnSource | null): string => {
+    if (!source) return t.sourceNone
+    if (source.kind === 'field') return t.sourceField(source.field)
+    if (source.kind === 'lookup') return t.sourceLookup(source.field, source.table, source.by)
+    return t.sourceDatabase
+  }
+  const conflictText = (conflict: Conflict): string => {
+    if (conflict.kind === 'length') return t.conflictLength(conflict.model, conflict.column)
+    if (conflict.kind === 'nullable') return t.conflictNullable
+    if (conflict.kind === 'type') return t.conflictType(conflict.model, conflict.column)
+    return t.conflictValues(conflict.missing)
+  }
+  const reasons = (decision: Decision<unknown>) => decision.reasons.map((reason) => t.reason(reason)).join(' ')
+  return (
+    <details className="table-card__items" open={model.value !== null}>
+      <summary>
+        {t.modelTitle}: <span className="mono">{model.value ?? t.noModel}</span>{' '}
+        {model.confidence !== 'none' && <ConfidenceBadge confidence={model.confidence} title={reasons(model)} />}
+      </summary>
+      {model.value !== null && (
+        <ul className="item-list">
+          {match.columns.map((column) => (
+            <li key={column.column} className="item">
+              <span className="mono item__name">{column.column}</span>
+              <span className="item__description">
+                {describe(column.source.value)}
+                {column.conflicts.map((conflict) => (
+                  <span key={conflict.kind} className="item__conflict">
+                    {' · '}
+                    {conflictText(conflict)}
+                  </span>
+                ))}
+              </span>
+              {column.source.confidence !== 'exact' && column.source.confidence !== 'none' && (
+                <ConfidenceBadge confidence={column.source.confidence} title={reasons(column.source)} />
+              )}
+            </li>
+          ))}
+          {match.children.map((child) => (
+            <li key={child.field} className="item">
+              <span className="mono item__name">{child.field}</span>
+              <span className="item__description">{t.sourceChildren(child.table.value)}</span>
+              <ConfidenceBadge confidence={child.table.confidence} title={reasons(child.table)} />
+            </li>
+          ))}
+          {match.unused.length > 0 && (
+            <li className="item item--off">
+              <span className="item__description">{t.unusedFields(match.unused)}</span>
+            </li>
+          )}
+        </ul>
+      )}
     </details>
   )
 }

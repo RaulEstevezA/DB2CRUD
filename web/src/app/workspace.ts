@@ -3,8 +3,10 @@
  * input and counting what was read.
  */
 import { detectDdl, readDdl } from '../core/importers/ddl/ddl.ts'
+import { acceptedExtensions, detectFormat, findParser, parseInput } from '../core/importers/registry.ts'
 import { ORM_READERS, detectOrm, readOrmCode } from '../core/importers/orm/registry.ts'
 import { readModel2DBProject, type Model2DBReadError } from '../core/interop/model2db/read.ts'
+import type { ModelSchema } from '../core/model/schema.ts'
 import type { DbSchema } from '../core/schema/types.ts'
 
 export interface InputState {
@@ -53,3 +55,28 @@ export function sourceLabel(schema: DbSchema): string {
 export function columnCount(schema: DbSchema): number {
   return schema.tables.reduce((total, table) => total + table.columns.length, 0)
 }
+
+// Application models
+
+export type ModelsReadResult = { ok: true; schema: ModelSchema; format: string } | { ok: false; error: string }
+
+/** The application models of their input (classes, DTOs, JSON, schemas…), or why they cannot be read; null while it
+ * is empty. They are optional: without them the services work with the entities. */
+export function readModels(input: InputState): ModelsReadResult | null {
+  if (input.text.trim() === '') return null
+  const format = detectFormat(input.text, input.fileName)
+  if (!format) return { ok: false, error: 'unknownFormat' }
+  const read = parseInput(input.text, format, { rootName: 'Root' })
+  if (!read.ok) return { ok: false, error: read.error.code }
+  if (read.schema.models.length === 0) return { ok: false, error: 'noModels' }
+  return { ok: true, schema: read.schema, format: findParser(format)?.label ?? format }
+}
+
+/** The highlighting of the models input: the language of their format. */
+export function modelsLanguage(input: InputState): string {
+  const format = input.text.trim() === '' ? null : detectFormat(input.text, input.fileName)
+  return (format && findParser(format)?.editorLanguage) || 'text'
+}
+
+/** The extensions the models input opens. */
+export const MODEL_EXTENSIONS = acceptedExtensions().join(',')

@@ -114,3 +114,8 @@
   color: var(--muted);
   font-size: var(--font-label);
 }
+
+/* Where an application model and a column disagree */
+.item__conflict {
+  color: var(--danger);
+}

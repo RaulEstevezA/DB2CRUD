@@ -81,6 +81,19 @@ describe('App', () => {
     expect((within(design).getAllByRole('checkbox')[0] as HTMLInputElement).checked).toBe(true)
   })
 
+  it('matches the application models with the tables', async () => {
+    const { container } = renderApp()
+    fireEvent.click(screen.getByRole('button', { name: 'Online shop' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'Application models' }))
+    const models = 'export interface Customer {\n  id: number\n  email: string\n  phone?: string\n}\n'
+    const file = new File([models], 'models.ts', { type: 'text/plain' })
+    fireEvent.change(container.querySelector('input[type="file"]')!, { target: { files: [file] } })
+    await vi.waitFor(() => expect(screen.getByText(/TypeScript · 1 model/)).toBeTruthy())
+    const design = screen.getByRole('region', { name: 'Design' })
+    expect(within(design).getAllByText('Customer').length).toBeGreaterThan(0)
+    expect(within(design).getAllByText(/← email/).length).toBeGreaterThan(0)
+  })
+
   it('says why the input cannot be read', () => {
     renderApp()
     fireEvent.click(screen.getByRole('button', { name: 'Online shop' }))
