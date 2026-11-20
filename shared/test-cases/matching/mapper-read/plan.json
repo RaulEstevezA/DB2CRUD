@@ -1,0 +1,110 @@
+[
+ {
+  "table": "orders",
+  "model": "OrderSummary",
+  "direction": "both",
+  "write": [
+   {
+    "column": "id",
+    "value": {
+     "kind": "inverse",
+     "transform": {
+      "kind": "direct"
+     },
+     "path": [
+      "id"
+     ]
+    }
+   },
+   {
+    "column": "customer_id",
+    "value": {
+     "kind": "todo",
+     "reason": "noField"
+    }
+   },
+   {
+    "column": "total_cents",
+    "value": {
+     "kind": "inverse",
+     "transform": {
+      "kind": "arithmetic",
+      "operator": "/",
+      "operand": 100
+     },
+     "path": [
+      "total"
+     ]
+    }
+   },
+   {
+    "column": "placed_at",
+    "value": {
+     "kind": "inverse",
+     "transform": {
+      "kind": "direct"
+     },
+     "path": [
+      "placedAt"
+     ]
+    }
+   },
+   {
+    "column": "note",
+    "value": {
+     "kind": "todo",
+     "reason": "oneWay",
+     "detail": "label"
+    }
+   }
+  ],
+  "read": [
+   {
+    "field": "id",
+    "value": {
+     "kind": "mapper",
+     "transform": {
+      "kind": "direct"
+     },
+     "columns": [
+      "id"
+     ]
+    }
+   },
+   {
+    "field": "total",
+    "value": {
+     "kind": "mapper",
+     "transform": {
+      "kind": "arithmetic",
+      "operator": "/",
+      "operand": 100
+     },
+     "columns": [
+      "total_cents"
+     ]
+    }
+   },
+   {
+    "field": "placedAt",
+    "value": {
+     "kind": "mapper",
+     "transform": {
+      "kind": "direct"
+     },
+     "columns": [
+      "placed_at"
+     ]
+    }
+   },
+   {
+    "field": "label",
+    "value": {
+     "kind": "todo",
+     "reason": "unsupported",
+     "detail": "'#' + id + ' ' + note"
+    }
+   }
+  ]
+ }
+]

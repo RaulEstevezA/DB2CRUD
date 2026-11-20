@@ -1,0 +1,190 @@
+[
+ {
+  "table": "customers",
+  "model": "CustomerForm",
+  "direction": "both",
+  "write": [
+   {
+    "column": "email",
+    "value": {
+     "kind": "mapper",
+     "transform": {
+      "kind": "direct"
+     },
+     "sources": [
+      [
+       "email"
+      ]
+     ]
+    }
+   },
+   {
+    "column": "full_name",
+    "value": {
+     "kind": "mapper",
+     "transform": {
+      "kind": "concat",
+      "separator": " "
+     },
+     "sources": [
+      [
+       "firstName"
+      ],
+      [
+       "lastName"
+      ]
+     ]
+    }
+   },
+   {
+    "column": "status",
+    "value": {
+     "kind": "mapper",
+     "transform": {
+      "kind": "enum",
+      "pairs": [
+       {
+        "from": "ACTIVE",
+        "to": "active"
+       },
+       {
+        "from": "BLOCKED",
+        "to": "blocked"
+       }
+      ]
+     },
+     "sources": [
+      [
+       "status"
+      ]
+     ]
+    }
+   },
+   {
+    "column": "created_at",
+    "value": {
+     "kind": "mapper",
+     "transform": {
+      "kind": "epoch",
+      "unit": "seconds"
+     },
+     "sources": [
+      [
+       "signedUp"
+      ]
+     ]
+    }
+   },
+   {
+    "column": "balance_cents",
+    "value": {
+     "kind": "mapper",
+     "transform": {
+      "kind": "arithmetic",
+      "operator": "*",
+      "operand": 100
+     },
+     "sources": [
+      [
+       "balance"
+      ]
+     ]
+    }
+   },
+   {
+    "column": "nickname",
+    "value": {
+     "kind": "todo",
+     "reason": "pending",
+     "detail": "nickname"
+    }
+   },
+   {
+    "column": "country",
+    "value": {
+     "kind": "todo",
+     "reason": "noField"
+    }
+   }
+  ],
+  "read": [
+   {
+    "field": "email",
+    "value": {
+     "kind": "inverse",
+     "transform": {
+      "kind": "direct"
+     },
+     "column": "email"
+    }
+   },
+   {
+    "field": "firstName",
+    "value": {
+     "kind": "todo",
+     "reason": "oneWay",
+     "detail": "firstName, lastName"
+    }
+   },
+   {
+    "field": "lastName",
+    "value": {
+     "kind": "todo",
+     "reason": "oneWay",
+     "detail": "firstName, lastName"
+    }
+   },
+   {
+    "field": "status",
+    "value": {
+     "kind": "inverse",
+     "transform": {
+      "kind": "enum",
+      "pairs": [
+       {
+        "from": "ACTIVE",
+        "to": "active"
+       },
+       {
+        "from": "BLOCKED",
+        "to": "blocked"
+       }
+      ]
+     },
+     "column": "status"
+    }
+   },
+   {
+    "field": "signedUp",
+    "value": {
+     "kind": "inverse",
+     "transform": {
+      "kind": "epoch",
+      "unit": "seconds"
+     },
+     "column": "created_at"
+    }
+   },
+   {
+    "field": "balance",
+    "value": {
+     "kind": "inverse",
+     "transform": {
+      "kind": "arithmetic",
+      "operator": "*",
+      "operand": 100
+     },
+     "column": "balance_cents"
+    }
+   },
+   {
+    "field": "nickname",
+    "value": {
+     "kind": "todo",
+     "reason": "pending",
+     "detail": "nickname"
+    }
+   }
+  ]
+ }
+]

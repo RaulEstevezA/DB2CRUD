@@ -1,0 +1,140 @@
+[
+ {
+  "table": "authors",
+  "model": "Author",
+  "direction": "both",
+  "write": [
+   {
+    "column": "id",
+    "value": {
+     "kind": "field",
+     "path": [
+      "id"
+     ]
+    }
+   },
+   {
+    "column": "name",
+    "value": {
+     "kind": "field",
+     "path": [
+      "name"
+     ]
+    }
+   },
+   {
+    "column": "created_at",
+    "value": {
+     "kind": "field",
+     "path": [
+      "created_at"
+     ]
+    }
+   }
+  ],
+  "read": [
+   {
+    "field": "id",
+    "value": {
+     "kind": "column",
+     "column": "id"
+    }
+   },
+   {
+    "field": "name",
+    "value": {
+     "kind": "column",
+     "column": "name"
+    }
+   },
+   {
+    "field": "created_at",
+    "value": {
+     "kind": "column",
+     "column": "created_at"
+    }
+   }
+  ]
+ },
+ {
+  "table": "posts",
+  "model": "Posts",
+  "direction": "both",
+  "write": [
+   {
+    "column": "id",
+    "value": {
+     "kind": "field",
+     "path": [
+      "id"
+     ]
+    }
+   },
+   {
+    "column": "author_id",
+    "value": {
+     "kind": "field",
+     "path": [
+      "author_id"
+     ]
+    }
+   },
+   {
+    "column": "title",
+    "value": {
+     "kind": "field",
+     "path": [
+      "title"
+     ]
+    }
+   },
+   {
+    "column": "body",
+    "value": {
+     "kind": "field",
+     "path": [
+      "body"
+     ]
+    }
+   }
+  ],
+  "read": [
+   {
+    "field": "id",
+    "value": {
+     "kind": "column",
+     "column": "id"
+    }
+   },
+   {
+    "field": "author_id",
+    "value": {
+     "kind": "column",
+     "column": "author_id"
+    }
+   },
+   {
+    "field": "title",
+    "value": {
+     "kind": "column",
+     "column": "title"
+    }
+   },
+   {
+    "field": "body",
+    "value": {
+     "kind": "column",
+     "column": "body"
+    }
+   },
+   {
+    "field": "comment_ids",
+    "value": {
+     "kind": "todo",
+     "reason": "unsupported",
+     "detail": "comment_ids"
+    }
+   }
+  ]
+ }
+]

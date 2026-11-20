@@ -1,0 +1,131 @@
+[
+ {
+  "table": "teams",
+  "model": "Team",
+  "direction": "both",
+  "write": [
+   {
+    "column": "id",
+    "value": {
+     "kind": "field",
+     "path": [
+      "id"
+     ]
+    }
+   },
+   {
+    "column": "title",
+    "value": {
+     "kind": "field",
+     "path": [
+      "title"
+     ]
+    }
+   }
+  ],
+  "read": [
+   {
+    "field": "id",
+    "value": {
+     "kind": "column",
+     "column": "id"
+    }
+   },
+   {
+    "field": "title",
+    "value": {
+     "kind": "column",
+     "column": "title"
+    }
+   },
+   {
+    "field": "motto",
+    "value": {
+     "kind": "todo",
+     "reason": "noField",
+     "detail": "motto"
+    }
+   }
+  ]
+ },
+ {
+  "table": "users",
+  "model": "UserRequest",
+  "direction": "input",
+  "write": [
+   {
+    "column": "id",
+    "value": {
+     "kind": "field",
+     "path": [
+      "id"
+     ]
+    }
+   },
+   {
+    "column": "user_name",
+    "value": {
+     "kind": "todo",
+     "reason": "pending",
+     "detail": "userName"
+    }
+   },
+   {
+    "column": "age",
+    "value": {
+     "kind": "todo",
+     "reason": "pending",
+     "detail": "age"
+    }
+   },
+   {
+    "column": "role",
+    "value": {
+     "kind": "todo",
+     "reason": "pending",
+     "detail": "role"
+    }
+   },
+   {
+    "column": "team_id",
+    "value": {
+     "kind": "todo",
+     "reason": "pending",
+     "detail": "teamTitle"
+    }
+   },
+   {
+    "column": "joined",
+    "value": {
+     "kind": "field",
+     "path": [
+      "joined"
+     ]
+    }
+   }
+  ],
+  "read": null
+ },
+ {
+  "table": "users",
+  "model": "UserResponse",
+  "direction": "output",
+  "write": null,
+  "read": [
+   {
+    "field": "id",
+    "value": {
+     "kind": "column",
+     "column": "id"
+    }
+   },
+   {
+    "field": "userName",
+    "value": {
+     "kind": "column",
+     "column": "user_name"
+    }
+   }
+  ]
+ }
+]

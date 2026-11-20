@@ -1,0 +1,164 @@
+[
+ {
+  "table": "customers",
+  "model": "Customer",
+  "direction": "both",
+  "write": [
+   {
+    "column": "id",
+    "value": {
+     "kind": "field",
+     "path": [
+      "id"
+     ]
+    }
+   },
+   {
+    "column": "email",
+    "value": {
+     "kind": "field",
+     "path": [
+      "email"
+     ]
+    }
+   },
+   {
+    "column": "full_name",
+    "value": {
+     "kind": "todo",
+     "reason": "pending",
+     "detail": "fullName"
+    }
+   }
+  ],
+  "read": [
+   {
+    "field": "id",
+    "value": {
+     "kind": "column",
+     "column": "id"
+    }
+   },
+   {
+    "field": "email",
+    "value": {
+     "kind": "column",
+     "column": "email"
+    }
+   },
+   {
+    "field": "fullName",
+    "value": {
+     "kind": "todo",
+     "reason": "pending",
+     "detail": "fullName"
+    }
+   }
+  ]
+ },
+ {
+  "table": "customers",
+  "model": "CustomerResponse",
+  "direction": "output",
+  "write": null,
+  "read": [
+   {
+    "field": "id",
+    "value": {
+     "kind": "column",
+     "column": "id"
+    }
+   },
+   {
+    "field": "email",
+    "value": {
+     "kind": "column",
+     "column": "email"
+    }
+   },
+   {
+    "field": "createdAt",
+    "value": {
+     "kind": "column",
+     "column": "created_at"
+    }
+   }
+  ]
+ },
+ {
+  "table": "orders",
+  "model": "OrderRequest",
+  "direction": "input",
+  "write": [
+   {
+    "column": "customer_id",
+    "value": {
+     "kind": "lookup",
+     "path": [
+      "customerEmail"
+     ],
+     "table": "customers",
+     "by": "email",
+     "key": "id"
+    }
+   },
+   {
+    "column": "quantity",
+    "value": {
+     "kind": "field",
+     "path": [
+      "quantity"
+     ]
+    }
+   },
+   {
+    "column": "unit_price",
+    "value": {
+     "kind": "field",
+     "path": [
+      "unitPrice"
+     ]
+    }
+   }
+  ],
+  "read": null
+ },
+ {
+  "table": "orders",
+  "model": "OrderResponse",
+  "direction": "output",
+  "write": null,
+  "read": [
+   {
+    "field": "id",
+    "value": {
+     "kind": "column",
+     "column": "id"
+    }
+   },
+   {
+    "field": "status",
+    "value": {
+     "kind": "todo",
+     "reason": "pending",
+     "detail": "status"
+    }
+   },
+   {
+    "field": "total",
+    "value": {
+     "kind": "column",
+     "column": "total"
+    }
+   },
+   {
+    "field": "shippedAt",
+    "value": {
+     "kind": "todo",
+     "reason": "pending",
+     "detail": "shippedAt"
+    }
+   }
+  ]
+ }
+]
