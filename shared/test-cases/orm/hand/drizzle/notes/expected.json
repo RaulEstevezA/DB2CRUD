@@ -1,0 +1,179 @@
+{
+ "format": "db-schema",
+ "version": 1,
+ "dialect": "sqlite",
+ "source": {
+  "kind": "orm",
+  "format": "drizzle"
+ },
+ "tables": [
+  {
+   "name": "notes",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "integer(\"id\")",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false,
+     "generated": "identity"
+    },
+    {
+     "name": "title",
+     "type": {
+      "sql": "text(\"title\", {length: 80})",
+      "kind": "text",
+      "length": 80
+     },
+     "nullable": false
+    },
+    {
+     "name": "done",
+     "type": {
+      "sql": "integer(\"done\", {mode: \"boolean\"})",
+      "kind": "boolean"
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": false
+     }
+    },
+    {
+     "name": "created_at",
+     "type": {
+      "sql": "integer(\"created_at\", {mode: \"timestamp\"})",
+      "kind": "datetime",
+      "timezone": false
+     },
+     "nullable": false,
+     "generated": "now",
+     "attribute": "createdAt"
+    },
+    {
+     "name": "meta",
+     "type": {
+      "sql": "text(\"meta\", {mode: \"json\"})",
+      "kind": "json"
+     },
+     "nullable": true
+    },
+    {
+     "name": "picture",
+     "type": {
+      "sql": "blob(\"picture\")",
+      "kind": "binary"
+     },
+     "nullable": true
+    },
+    {
+     "name": "weight",
+     "type": {
+      "sql": "real(\"weight\")",
+      "kind": "float",
+      "bits": 64
+     },
+     "nullable": true
+    },
+    {
+     "name": "cost",
+     "type": {
+      "sql": "decimal(10, 2)",
+      "kind": "decimal",
+      "precision": 10,
+      "scale": 2
+     },
+     "nullable": true
+    },
+    {
+     "name": "folder_id",
+     "type": {
+      "sql": "integer(\"folder_id\")",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": true,
+     "attribute": "folderId"
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "folder_id"
+     ],
+     "references": {
+      "table": "folders",
+      "columns": [
+       "id"
+      ]
+     },
+     "onDelete": "cascade"
+    }
+   ],
+   "uniques": [
+    {
+     "columns": [
+      "title",
+      "folder_id"
+     ]
+    }
+   ],
+   "indexes": [
+    {
+     "name": "notes_folder_idx",
+     "columns": [
+      "folder_id"
+     ]
+    }
+   ],
+   "checks": [],
+   "entity": "notes",
+   "origin": {
+    "line": 10,
+    "column": 1
+   }
+  },
+  {
+   "name": "folders",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "integer(\"id\")",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false,
+     "generated": "identity"
+    },
+    {
+     "name": "name",
+     "type": {
+      "sql": "text(\"name\")",
+      "kind": "text"
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [],
+   "uniques": [],
+   "indexes": [],
+   "checks": [],
+   "entity": "folders",
+   "origin": {
+    "line": 26,
+    "column": 1
+   }
+  }
+ ],
+ "enums": [],
+ "notes": []
+}

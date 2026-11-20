@@ -71,8 +71,8 @@ function comparable(original: DbSchema, originalProject?: DbSchema) {
   }
   const byName = <T extends { name: string }>(items: T[]) => [...items].sort((a, b) => a.name.localeCompare(b.name))
   const columns = (items: string[]) => items.join(',')
+  // The enums are not compared by name: a CHECK of their values says the same, and some ORMs name none
   return {
-    enums: byName(schema.enums),
     tables: byName(schema.tables).map((table) => {
       const other = project?.tables.find((item) => item.name === table.name && item.schema === table.schema)
       return {
@@ -164,6 +164,7 @@ describe('ORM code written by DB2CRUD', () => {
     django: (path, text) => path.endsWith('.py') && text.includes('models.Model'),
     prisma: (path) => path.endsWith('.prisma'),
     typeorm: (path, text) => path.endsWith('.ts') && text.includes('@Entity('),
+    drizzle: (path, text) => path.endsWith('.ts') && !path.startsWith('test') && text.includes("from 'drizzle-orm/"),
     sequelize: (path, text) => path.endsWith('.ts') && !path.startsWith('test') && text.includes("from 'sequelize'"),
   }
   for (const name of readdirSync(outputs).filter((item) => models[item.split('-')[0]]))

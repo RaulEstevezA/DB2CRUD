@@ -1,0 +1,400 @@
+{
+ "format": "db-schema",
+ "version": 1,
+ "dialect": "postgresql",
+ "source": {
+  "kind": "orm",
+  "format": "drizzle"
+ },
+ "tables": [
+  {
+   "name": "users",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "uuid()",
+      "kind": "uuid"
+     },
+     "nullable": false,
+     "generated": "uuid"
+    },
+    {
+     "name": "email",
+     "type": {
+      "sql": "varchar({length: 200})",
+      "kind": "text",
+      "length": 200
+     },
+     "nullable": false
+    },
+    {
+     "name": "role",
+     "type": {
+      "sql": "roleEnum(\"role\")",
+      "kind": "enum",
+      "name": "user_role"
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": "reader"
+     }
+    },
+    {
+     "name": "nickname",
+     "type": {
+      "sql": "text(\"nickname\", {enum: [\"ana\", \"bo\"]})",
+      "kind": "text"
+     },
+     "nullable": true
+    },
+    {
+     "name": "joined_at",
+     "type": {
+      "sql": "timestamp(\"joined_at\", {withTimezone: true, mode: \"string\"})",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": false,
+     "generated": "now",
+     "attribute": "joinedAt"
+    },
+    {
+     "name": "settings",
+     "type": {
+      "sql": "jsonb(\"settings\")",
+      "kind": "json"
+     },
+     "nullable": true,
+     "default": {
+      "kind": "expression",
+      "sql": "'{}'::jsonb"
+     }
+    },
+    {
+     "name": "$extra",
+     "type": {
+      "sql": "text(\"$extra\")",
+      "kind": "text"
+     },
+     "nullable": true
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [],
+   "uniques": [
+    {
+     "name": "uq_users_email",
+     "columns": [
+      "email"
+     ]
+    },
+    {
+     "name": "ix_users_email_lower",
+     "columns": [
+      "email",
+      "role"
+     ]
+    }
+   ],
+   "indexes": [],
+   "checks": [
+    {
+     "sql": "nickname IN ('ana', 'bo')",
+     "parsed": {
+      "kind": "in",
+      "column": "nickname",
+      "values": [
+       "ana",
+       "bo"
+      ]
+     }
+    }
+   ],
+   "entity": "users",
+   "origin": {
+    "line": 28,
+    "column": 1
+   }
+  },
+  {
+   "name": "posts",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "serial(\"id\")",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false,
+     "generated": "identity"
+    },
+    {
+     "name": "author_id",
+     "type": {
+      "sql": "uuid(\"author_id\")",
+      "kind": "uuid"
+     },
+     "nullable": false,
+     "attribute": "authorId"
+    },
+    {
+     "name": "title",
+     "type": {
+      "sql": "varchar(\"title\", {length: 160})",
+      "kind": "text",
+      "length": 160
+     },
+     "nullable": false
+    },
+    {
+     "name": "words",
+     "type": {
+      "sql": "integer(\"words\")",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": 0
+     }
+    },
+    {
+     "name": "minutes",
+     "type": {
+      "sql": "integer(\"minutes\")",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": true,
+     "generated": {
+      "computed": "words / 200"
+     }
+    },
+    {
+     "name": "score",
+     "type": {
+      "sql": "doublePrecision(\"score\")",
+      "kind": "float",
+      "bits": 64
+     },
+     "nullable": true
+    },
+    {
+     "name": "price",
+     "type": {
+      "sql": "numeric(\"price\", {precision: 8, scale: 2})",
+      "kind": "decimal",
+      "precision": 8,
+      "scale": 2
+     },
+     "nullable": true
+    },
+    {
+     "name": "published",
+     "type": {
+      "sql": "boolean(\"published\")",
+      "kind": "boolean"
+     },
+     "nullable": true,
+     "default": {
+      "kind": "literal",
+      "value": false
+     }
+    },
+    {
+     "name": "tags",
+     "type": {
+      "sql": "text(\"tags\").array()",
+      "kind": "array",
+      "items": {
+       "sql": "text(\"tags\")",
+       "kind": "text"
+      }
+     },
+     "nullable": true
+    },
+    {
+     "name": "reply_to",
+     "type": {
+      "sql": "integer(\"reply_to\")",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": true,
+     "attribute": "replyTo"
+    },
+    {
+     "name": "code",
+     "type": {
+      "sql": "char(\"code\", {length: 4})",
+      "kind": "text",
+      "length": 4,
+      "fixed": true
+     },
+     "nullable": true
+    },
+    {
+     "name": "read_at",
+     "type": {
+      "sql": "time(\"read_at\")",
+      "kind": "time",
+      "timezone": false
+     },
+     "nullable": true,
+     "attribute": "readAt"
+    },
+    {
+     "name": "rank",
+     "type": {
+      "sql": "smallint(\"rank\")",
+      "kind": "integer",
+      "bits": 16
+     },
+     "nullable": true
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "author_id"
+     ],
+     "references": {
+      "table": "users",
+      "columns": [
+       "id"
+      ]
+     },
+     "onDelete": "cascade",
+     "onUpdate": "cascade",
+     "attribute": "author",
+     "inverse": "posts"
+    },
+    {
+     "columns": [
+      "reply_to"
+     ],
+     "references": {
+      "table": "posts",
+      "schema": "content",
+      "columns": [
+       "id"
+      ]
+     },
+     "onDelete": "set null",
+     "attribute": "parent",
+     "inverse": "replies"
+    }
+   ],
+   "uniques": [],
+   "indexes": [],
+   "checks": [
+    {
+     "name": "posts_words_check",
+     "sql": "words >= 0",
+     "parsed": {
+      "kind": "compare",
+      "column": "words",
+      "op": ">=",
+      "value": 0
+     }
+    }
+   ],
+   "entity": "posts",
+   "origin": {
+    "line": 44,
+    "column": 1
+   },
+   "schema": "content"
+  },
+  {
+   "name": "post_likes",
+   "columns": [
+    {
+     "name": "post_id",
+     "type": {
+      "sql": "integer(\"post_id\")",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false,
+     "attribute": "postId"
+    },
+    {
+     "name": "user_id",
+     "type": {
+      "sql": "uuid(\"user_id\")",
+      "kind": "uuid"
+     },
+     "nullable": false,
+     "attribute": "userId"
+    }
+   ],
+   "primaryKey": [
+    "post_id",
+    "user_id"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "post_id"
+     ],
+     "references": {
+      "table": "posts",
+      "schema": "content",
+      "columns": [
+       "id"
+      ]
+     }
+    },
+    {
+     "columns": [
+      "user_id"
+     ],
+     "references": {
+      "table": "users",
+      "columns": [
+       "id"
+      ]
+     }
+    }
+   ],
+   "uniques": [],
+   "indexes": [],
+   "checks": [],
+   "entity": "postLikes",
+   "origin": {
+    "line": 66,
+    "column": 1
+   }
+  }
+ ],
+ "enums": [
+  {
+   "name": "user_role",
+   "values": [
+    "reader",
+    "writer",
+    "admin"
+   ],
+   "storage": "native"
+  },
+  {
+   "name": "users_nickname",
+   "values": [
+    "ana",
+    "bo"
+   ],
+   "storage": "check"
+  }
+ ],
+ "notes": []
+}

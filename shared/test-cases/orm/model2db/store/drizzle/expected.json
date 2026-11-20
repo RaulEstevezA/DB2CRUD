@@ -1,0 +1,416 @@
+{
+ "format": "db-schema",
+ "version": 1,
+ "dialect": "postgresql",
+ "source": {
+  "kind": "orm",
+  "format": "drizzle"
+ },
+ "tables": [
+  {
+   "name": "customers",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "bigint(\"id\", {mode: \"number\"})",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": {
+      "sql": "text(\"name\")",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "email",
+     "type": {
+      "sql": "text(\"email\")",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "password",
+     "type": {
+      "sql": "text(\"password\")",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "phone",
+     "type": {
+      "sql": "text(\"phone\")",
+      "kind": "text"
+     },
+     "nullable": true
+    },
+    {
+     "name": "created_at",
+     "type": {
+      "sql": "timestamp(\"created_at\", {withTimezone: true})",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": false,
+     "attribute": "createdAt"
+    },
+    {
+     "name": "address_street",
+     "type": {
+      "sql": "text(\"address_street\")",
+      "kind": "text"
+     },
+     "nullable": false,
+     "attribute": "addressStreet"
+    },
+    {
+     "name": "address_city",
+     "type": {
+      "sql": "text(\"address_city\")",
+      "kind": "text"
+     },
+     "nullable": false,
+     "attribute": "addressCity"
+    },
+    {
+     "name": "address_postal_code",
+     "type": {
+      "sql": "text(\"address_postal_code\")",
+      "kind": "text"
+     },
+     "nullable": false,
+     "attribute": "addressPostalCode"
+    },
+    {
+     "name": "address_country",
+     "type": {
+      "sql": "text(\"address_country\")",
+      "kind": "text"
+     },
+     "nullable": false,
+     "attribute": "addressCountry"
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [],
+   "uniques": [],
+   "indexes": [],
+   "checks": [],
+   "entity": "customers",
+   "origin": {
+    "line": 5,
+    "column": 1
+   }
+  },
+  {
+   "name": "products",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "bigint(\"id\", {mode: \"number\"})",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false
+    },
+    {
+     "name": "sku",
+     "type": {
+      "sql": "text(\"sku\")",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": {
+      "sql": "text(\"name\")",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "description",
+     "type": {
+      "sql": "text(\"description\")",
+      "kind": "text"
+     },
+     "nullable": true
+    },
+    {
+     "name": "price",
+     "type": {
+      "sql": "doublePrecision(\"price\")",
+      "kind": "float",
+      "bits": 64
+     },
+     "nullable": false
+    },
+    {
+     "name": "stock",
+     "type": {
+      "sql": "integer(\"stock\")",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false
+    },
+    {
+     "name": "active",
+     "type": {
+      "sql": "boolean(\"active\")",
+      "kind": "boolean"
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [],
+   "uniques": [],
+   "indexes": [],
+   "checks": [],
+   "entity": "products",
+   "origin": {
+    "line": 18,
+    "column": 1
+   }
+  },
+  {
+   "name": "order_lines",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "bigint(\"id\", {mode: \"number\"})",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false,
+     "generated": "identity"
+    },
+    {
+     "name": "quantity",
+     "type": {
+      "sql": "integer(\"quantity\")",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false
+    },
+    {
+     "name": "unit_price",
+     "type": {
+      "sql": "doublePrecision(\"unit_price\")",
+      "kind": "float",
+      "bits": 64
+     },
+     "nullable": false,
+     "attribute": "unitPrice"
+    },
+    {
+     "name": "product_id",
+     "type": {
+      "sql": "bigint(\"product_id\", {mode: \"number\"})",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false,
+     "attribute": "productId"
+    },
+    {
+     "name": "order_id",
+     "type": {
+      "sql": "bigint(\"order_id\", {mode: \"number\"})",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false,
+     "attribute": "orderId"
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "product_id"
+     ],
+     "references": {
+      "table": "products",
+      "columns": [
+       "id"
+      ]
+     },
+     "attribute": "product"
+    },
+    {
+     "columns": [
+      "order_id"
+     ],
+     "references": {
+      "table": "orders",
+      "columns": [
+       "id"
+      ]
+     },
+     "onDelete": "cascade",
+     "attribute": "order",
+     "inverse": "lines"
+    }
+   ],
+   "uniques": [],
+   "indexes": [
+    {
+     "name": "ix_order_lines_product_id",
+     "columns": [
+      "product_id"
+     ]
+    },
+    {
+     "name": "ix_order_lines_order_id",
+     "columns": [
+      "order_id"
+     ]
+    }
+   ],
+   "checks": [],
+   "entity": "orderLines",
+   "origin": {
+    "line": 28,
+    "column": 1
+   }
+  },
+  {
+   "name": "orders",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "bigint(\"id\", {mode: \"number\"})",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false
+    },
+    {
+     "name": "status",
+     "type": {
+      "sql": "varchar(\"status\", {length: 20})",
+      "kind": "text",
+      "length": 20
+     },
+     "nullable": false
+    },
+    {
+     "name": "total",
+     "type": {
+      "sql": "doublePrecision(\"total\")",
+      "kind": "float",
+      "bits": 64
+     },
+     "nullable": false
+    },
+    {
+     "name": "notes",
+     "type": {
+      "sql": "text(\"notes\")",
+      "kind": "text"
+     },
+     "nullable": true
+    },
+    {
+     "name": "created_at",
+     "type": {
+      "sql": "timestamp(\"created_at\", {withTimezone: true})",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": false,
+     "attribute": "createdAt"
+    },
+    {
+     "name": "updated_at",
+     "type": {
+      "sql": "timestamp(\"updated_at\", {withTimezone: true})",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": false,
+     "attribute": "updatedAt"
+    },
+    {
+     "name": "customer_id",
+     "type": {
+      "sql": "bigint(\"customer_id\", {mode: \"number\"})",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false,
+     "attribute": "customerId"
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "customer_id"
+     ],
+     "references": {
+      "table": "customers",
+      "columns": [
+       "id"
+      ]
+     },
+     "attribute": "customer"
+    }
+   ],
+   "uniques": [],
+   "indexes": [
+    {
+     "name": "ix_orders_customer_id",
+     "columns": [
+      "customer_id"
+     ]
+    }
+   ],
+   "checks": [
+    {
+     "name": "ck_orders_status",
+     "sql": "status IN ('pending', 'paid', 'shipped', 'cancelled')",
+     "parsed": {
+      "kind": "in",
+      "column": "status",
+      "values": [
+       "pending",
+       "paid",
+       "shipped",
+       "cancelled"
+      ]
+     }
+    }
+   ],
+   "entity": "orders",
+   "origin": {
+    "line": 40,
+    "column": 1
+   }
+  }
+ ],
+ "enums": [],
+ "notes": []
+}
