@@ -6,6 +6,7 @@
 import type { DbSchema } from '../../schema/types.ts'
 import { djangoReader } from './django.ts'
 import { drizzleReader } from './drizzle.ts'
+import { efcoreReader } from './efcore.ts'
 import { jpaReader } from './jpa.ts'
 import { prismaReader } from './prisma.ts'
 import { sequelizeReader } from './sequelize.ts'
@@ -25,6 +26,7 @@ export const ORM_READERS: OrmReader[] = [
   sequelizeReader,
   drizzleReader,
   jpaReader,
+  efcoreReader,
 ]
 
 /** The reader for these files, or null when none recognises them. */

@@ -18,7 +18,7 @@ import {
 } from './raw.ts'
 import { readType, type TypeSyntax } from './typeSyntax.ts'
 
-const LEXER: LexerConfig = {
+export const CSHARP_LEXER: LexerConfig = {
   ...C_LIKE,
   // Raw string literals (C# 11), verbatim and interpolated strings
   strings: [{ open: '"""', close: '"""', escapes: false, multiline: true }, ...C_LIKE.strings],
@@ -405,7 +405,7 @@ export const cSharpParser: InputParser = {
     if (text.trim() === '') return failure('empty')
     let tokens: Token[]
     try {
-      tokens = tokenize(text, LEXER)
+      tokens = tokenize(text, CSHARP_LEXER)
     } catch (error) {
       if (error instanceof LexError) return failure(error.code, positionAt(text, error.index))
       throw error
