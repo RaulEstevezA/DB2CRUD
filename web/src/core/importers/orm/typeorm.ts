@@ -392,8 +392,7 @@ function applyDefault(expr: Expr, column: DbColumn, enums: Map<string, EnumDef>)
   }
   const value = literalOf(expr)
   if (value !== undefined) column.default = { kind: 'literal', value }
-  else if (expr.kind === 'list' || expr.kind === 'dict')
-    column.default = { kind: 'literal', value: JSON.stringify(JSON.parse(toJson(expr))) }
+  else if (expr.kind === 'list' || expr.kind === 'dict') column.default = { kind: 'literal', value: toJson(expr) }
 }
 
 /** An array or object literal as JSON, for the default of a JSON column. */
