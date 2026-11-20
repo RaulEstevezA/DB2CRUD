@@ -6,7 +6,9 @@
  * Given the previous design, the proposal keeps every choice the user made where it still applies, so the
  * design follows the schema when the input changes without losing the review.
  */
-import { decision, reason, sameValue, type Decision } from '../decisions/decision.ts'
+import { decision, keep, reason, type Decision } from '../decisions/decision.ts'
+import { matchModels } from '../matching/matching.ts'
+import type { ModelSchema } from '../model/schema.ts'
 import { pluralize, singularize, splitWords, toPascalCase } from '../model/naming.ts'
 import { findTable, isUniqueKey, type DbColumn, type DbForeignKey, type DbSchema, type DbTable } from '../schema/types.ts'
 import {
@@ -55,12 +57,6 @@ function pluralName(entity: string): string {
 /** `['first_name', 'last_name']` → `FirstNameAndLastName`. */
 function byColumns(columns: string[]): string {
   return columns.map((column) => toPascalCase(column)).join('And')
-}
-
-/** A new proposal that keeps the user's earlier choice when it is still one of the options. */
-function keep<T>(previous: Decision<T> | null | undefined, next: Decision<T>): Decision<T> {
-  if (!previous?.manual || !next.options.some((option) => sameValue(option, previous.value))) return next
-  return { ...next, value: previous.value, status: 'active', manual: true }
 }
 
 const include = (confidence: 'exact' | 'review', reasons: ReturnType<typeof reason>[]) => decision(true, confidence, reasons, [true, false])
@@ -308,8 +304,11 @@ function proposeOperations(schema: DbSchema, table: DbTable, policy: TablePolicy
   return operations
 }
 
-/** The CRUD design of the schema, keeping the user's earlier choices from `previous`. */
-export function proposeCrud(schema: DbSchema, previous: CrudDesign | null = null): CrudDesign {
+/**
+ * The CRUD design of the schema, keeping the user's earlier choices from `previous`; with application models, also
+ * how they match the tables.
+ */
+export function proposeCrud(schema: DbSchema, previous: CrudDesign | null = null, models: ModelSchema | null = null): CrudDesign {
   const policies = schema.tables.map((table) => proposePolicy(schema, table, previous ? findPolicy(previous, table.name) : undefined))
   // A join table only stays one while its role says so: the links of the parents depend on it
   const joins = new Set(policies.filter((policy) => policy.role.value === 'join').map((policy) => policy.table))
@@ -333,5 +332,7 @@ export function proposeCrud(schema: DbSchema, previous: CrudDesign | null = null
       operations: proposeOperations(linkable, table, policy, previous ? findService(previous, table.name) : undefined),
     })
   })
-  return { policies, repositories, services }
+  const design: CrudDesign = { policies, repositories, services }
+  if (models) design.matching = matchModels(schema, models, previous?.matching ?? null)
+  return design
 }

@@ -5,7 +5,17 @@
  */
 import type { ReactNode } from 'react'
 import { decisionId } from '../../app/review.ts'
-import { accept, decidePolicy, pendingDecisions, setOperationInclude, setQueryInclude, type CrudDecisionRef } from '../../core/crud/edit.ts'
+import {
+  accept,
+  chooseChildTable,
+  chooseModel,
+  chooseSource,
+  decidePolicy,
+  pendingDecisions,
+  setOperationInclude,
+  setQueryInclude,
+  type CrudDecisionRef,
+} from '../../core/crud/edit.ts'
 import type {
   Concurrency,
   CrudDesign,
@@ -16,7 +26,7 @@ import type {
   TablePolicy,
 } from '../../core/crud/types.ts'
 import type { Decision } from '../../core/decisions/decision.ts'
-import type { ColumnSource, Conflict, Matching, ModelMatch as Match, TableMatch } from '../../core/matching/matching.ts'
+import type { ColumnSource, Conflict, ModelMatch as Match, TableMatch } from '../../core/matching/matching.ts'
 import type { CrudDesignState } from '../../hooks/useCrudDesign.ts'
 import { useI18n } from '../../i18n/useI18n.ts'
 import { ConfidenceBadge } from '../common/ConfidenceBadge.tsx'
@@ -32,17 +42,20 @@ function focus(id: string) {
 
 export interface DesignPaneProps {
   state: CrudDesignState
-  /** How the application models match the tables, when there are models */
-  matching?: Matching | null
 }
 
-export function DesignPane({ state, matching = null }: DesignPaneProps) {
+export function DesignPane({ state }: DesignPaneProps) {
   const { t } = useI18n()
   const { design, change, reset, history } = state
   const pending = design ? pendingDecisions(design) : []
 
-  const subjectOf = (ref: CrudDecisionRef) =>
-    ref.kind === 'policy' ? t.policySubject(ref.table, t.policyKinds[ref.decision]) : t.itemSubject(ref.table, ref.id.split(':')[0], ref.id)
+  const subjectOf = (ref: CrudDecisionRef) => {
+    if (ref.kind === 'policy') return t.policySubject(ref.table, t.policyKinds[ref.decision])
+    if (ref.kind === 'model') return t.policySubject(ref.table, t.modelTitles[ref.direction])
+    if (ref.kind === 'source') return t.fieldSubject(ref.table, ref.column, t.modelTitles[ref.direction])
+    if (ref.kind === 'childTable') return t.fieldSubject(ref.table, ref.field, t.modelTitles[ref.direction])
+    return t.itemSubject(ref.table, ref.id.split(':')[0], ref.id)
+  }
 
   return (
     <Pane
@@ -100,7 +113,7 @@ export function DesignPane({ state, matching = null }: DesignPaneProps) {
               key={policy.table}
               design={design}
               policy={policy}
-              match={matching?.tables.find((item) => item.table === policy.table)}
+              match={design.matching?.tables.find((item) => item.table === policy.table)}
               onChange={change}
             />
           ))}
@@ -174,7 +187,7 @@ function TableCard({ design, policy, match, onChange }: TableCardProps) {
         ))}
       </div>
       {match?.models.map((item) => (
-        <ModelMatch key={item.direction} match={item} />
+        <ModelMatch key={item.direction} table={table} match={item} onChange={onChange} />
       ))}
       {repository && (
         <ItemList
@@ -258,11 +271,18 @@ function ItemList<T extends { id: string; name: string; include: Decision<boolea
   )
 }
 
-/** A model of a table (read, written or both) and where each column comes from or goes, with their conflicts. */
-function ModelMatch({ match }: { match: Match }) {
+interface ModelMatchProps {
+  table: string
+  match: Match
+  onChange: CrudDesignState['change']
+}
+
+/** A model of a table (read, written or both) and where each column comes from or goes, each a decision. */
+function ModelMatch({ table, match, onChange }: ModelMatchProps) {
   const { t } = useI18n()
   const { model, direction } = match
   const output = direction === 'output'
+  const title = t.modelTitles[direction]
   const describe = (source: ColumnSource | null): string => {
     if (!source) return t.sourceNone
     if (source.kind === 'field') return output ? t.targetField(source.field) : t.sourceField(source.field)
@@ -277,39 +297,63 @@ function ModelMatch({ match }: { match: Match }) {
     if (conflict.kind === 'unknownValues') return t.conflictUnknownValues(conflict.values)
     return t.conflictValues(conflict.missing)
   }
-  const reasons = (decision: Decision<unknown>) => decision.reasons.map((reason) => t.reason(reason)).join(' ')
+  const modelRef: CrudDecisionRef = { kind: 'model', table, direction }
   return (
     <details className="table-card__items" open={model.value !== null}>
       <summary>
-        {t.modelTitles[direction]}: <span className="mono">{model.value ?? t.noModel}</span>{' '}
-        {model.confidence !== 'none' && <ConfidenceBadge confidence={model.confidence} title={reasons(model)} />}
+        {title}: <span className="mono">{model.value ?? t.noModel}</span>
       </summary>
+      <div className="table-card__decision">
+        <span className="table-card__label">{title}</span>
+        <DecisionControl
+          id={decisionId(modelRef)}
+          subject={t.policySubject(table, title)}
+          decision={model}
+          optionLabel={(value) => value ?? t.noModel}
+          onChoose={(value) => onChange((current) => chooseModel(current, table, direction, value))}
+          onAccept={() => onChange((current) => accept(current, modelRef))}
+          compact
+        />
+      </div>
       {model.value !== null && (
         <ul className="item-list">
-          {match.columns.map((column) => (
-            <li key={column.column} className="item">
-              <span className="mono item__name">{column.column}</span>
-              <span className="item__description">
-                {describe(column.source.value)}
-                {column.conflicts.map((conflict) => (
-                  <span key={conflict.kind} className="item__conflict">
-                    {' · '}
-                    {conflictText(conflict)}
-                  </span>
-                ))}
-              </span>
-              {column.source.confidence !== 'exact' && column.source.confidence !== 'none' && (
-                <ConfidenceBadge confidence={column.source.confidence} title={reasons(column.source)} />
-              )}
-            </li>
-          ))}
-          {match.children.map((child) => (
-            <li key={child.field} className="item">
-              <span className="mono item__name">{child.field}</span>
-              <span className="item__description">{t.sourceChildren(child.table.value)}</span>
-              <ConfidenceBadge confidence={child.table.confidence} title={reasons(child.table)} />
-            </li>
-          ))}
+          {match.columns.map((column) => {
+            const ref: CrudDecisionRef = { kind: 'source', table, direction, column: column.column }
+            return (
+              <li key={column.column} className="item item--decision">
+                <span className="mono item__name">{column.column}</span>
+                <DecisionControl
+                  id={decisionId(ref)}
+                  subject={t.fieldSubject(table, column.column, title)}
+                  decision={column.source}
+                  optionLabel={describe}
+                  onChoose={(value) => onChange((current) => chooseSource(current, table, direction, column.column, value))}
+                  onAccept={() => onChange((current) => accept(current, ref))}
+                  compact
+                />
+                {column.conflicts.length > 0 && (
+                  <span className="item__description item__conflict">{column.conflicts.map(conflictText).join(' · ')}</span>
+                )}
+              </li>
+            )
+          })}
+          {match.children.map((child) => {
+            const ref: CrudDecisionRef = { kind: 'childTable', table, direction, field: child.field }
+            return (
+              <li key={child.field} className="item item--decision">
+                <span className="mono item__name">{child.field}</span>
+                <DecisionControl
+                  id={decisionId(ref)}
+                  subject={t.fieldSubject(table, child.field, title)}
+                  decision={child.table}
+                  optionLabel={(value) => t.sourceChildren(value)}
+                  onChoose={(value) => onChange((current) => chooseChildTable(current, table, direction, child.field, value))}
+                  onAccept={() => onChange((current) => accept(current, ref))}
+                  compact
+                />
+              </li>
+            )
+          })}
           {match.unused.length > 0 && (
             <li className="item item--off">
               <span className="item__description">{t.unusedFields(match.unused, direction)}</span>

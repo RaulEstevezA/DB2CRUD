@@ -92,6 +92,15 @@ describe('App', () => {
     const design = screen.getByRole('region', { name: 'Design' })
     expect(within(design).getAllByText('Customer').length).toBeGreaterThan(0)
     expect(within(design).getAllByText(/← email/).length).toBeGreaterThan(0)
+    // Where a column comes from is a decision: it can be changed and undone
+    const phone = within(design).getByRole('combobox', { name: 'customers.phone: application model' }) as HTMLSelectElement
+    const before = phone.value
+    fireEvent.change(phone, { target: { value: String(phone.options.length - 1) } })
+    expect((within(design).getByRole('combobox', { name: 'customers.phone: application model' }) as HTMLSelectElement).value).not.toBe(
+      before,
+    )
+    fireEvent.click(within(design).getByRole('button', { name: 'Undo' }))
+    expect((within(design).getByRole('combobox', { name: 'customers.phone: application model' }) as HTMLSelectElement).value).toBe(before)
   })
 
   it('says why the input cannot be read', () => {

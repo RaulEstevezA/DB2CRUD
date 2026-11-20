@@ -1,5 +1,5 @@
 """The matching of application models with tables in shared/test-cases/matching/: the desktop version must give the
-matching the web version gives (web/src/core/matching/matching.test.ts writes it in expected.json)."""
+matching the web version gives (web/src/core/matching/test/matching.test.ts writes it in expected.json)."""
 
 import json
 

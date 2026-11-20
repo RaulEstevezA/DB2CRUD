@@ -75,6 +75,12 @@ export function sameValue<T>(a: T, b: T): boolean {
   return JSON.stringify(a) === JSON.stringify(b)
 }
 
+/** A new proposal that keeps the user's earlier choice when it is still one of the options. */
+export function keep<T>(previous: Decision<T> | null | undefined, next: Decision<T>): Decision<T> {
+  if (!previous?.manual || !next.options.some((option) => sameValue(option, previous.value))) return next
+  return { ...next, value: previous.value, status: 'active', manual: true }
+}
+
 /** A proposal: review and conflict wait for the user, the others are applied. */
 export function decision<T>(value: T, confidence: Confidence, reasons: Reason[], options: T[]): Decision<T> {
   return { value, status: confidence === 'review' || confidence === 'conflict' ? 'pending' : 'active', confidence, reasons, options }

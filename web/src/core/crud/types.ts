@@ -7,6 +7,7 @@
  * language's convention. Designs are plain JSON values: edits return new designs.
  */
 import type { Decision } from '../decisions/decision.ts'
+import type { Matching } from '../matching/matching.ts'
 
 export type QueryKind = 'getByKey' | 'findByUnique' | 'findAllBy' | 'listByParent' | 'list' | 'insert' | 'update' | 'delete'
 
@@ -83,6 +84,8 @@ export interface CrudDesign {
   policies: TablePolicy[]
   repositories: RepositoryDesign[]
   services: ServiceDesign[]
+  /** How the application models match the tables, when there are models (crud/../matching) */
+  matching?: Matching | null
 }
 
 export const POLICY_DECISIONS = ['role', 'delete', 'concurrency', 'children', 'hidden'] as const

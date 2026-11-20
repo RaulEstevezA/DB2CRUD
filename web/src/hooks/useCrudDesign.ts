@@ -1,10 +1,12 @@
 /**
  * The CRUD design the user reviews, with undo and redo. The design always follows the current schema: a
- * change in the input proposes it again and keeps every choice the user made where it still applies.
+ * change in the input proposes it again and keeps every choice the user made where it still applies. With application
+ * models, the design also says how they match the tables, and those choices are kept and undone the same way.
  */
 import { useCallback, useMemo } from 'react'
 import { proposeCrud } from '../core/crud/propose.ts'
 import type { CrudDesign } from '../core/crud/types.ts'
+import type { ModelSchema } from '../core/model/schema.ts'
 import type { DbSchema } from '../core/schema/types.ts'
 import { useHistory, type History } from './useHistory.ts'
 
@@ -20,18 +22,18 @@ export interface CrudDesignState {
   history: History<CrudDesign | null>
 }
 
-export function useCrudDesign(schema: DbSchema | null): CrudDesignState {
+export function useCrudDesign(schema: DbSchema | null, models: ModelSchema | null = null): CrudDesignState {
   const history = useHistory<CrudDesign | null>(null)
   const { present, push, reset: restart } = history
-  const design = useMemo(() => (schema ? proposeCrud(schema, present) : null), [schema, present])
+  const design = useMemo(() => (schema ? proposeCrud(schema, present, models) : null), [schema, present, models])
   const change = useCallback(
     (edit: (current: CrudDesign) => CrudDesign) => {
-      if (schema && design) push(proposeCrud(schema, edit(design)))
+      if (schema && design) push(proposeCrud(schema, edit(design), models))
     },
-    [schema, design, push],
+    [schema, design, models, push],
   )
   const reset = useCallback(() => {
-    if (schema) push(proposeCrud(schema))
-  }, [schema, push])
+    if (schema) push(proposeCrud(schema, null, models))
+  }, [schema, models, push])
   return { design, change, reset, load: restart, history }
 }

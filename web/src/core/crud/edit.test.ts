@@ -1,8 +1,19 @@
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { accept, decidePolicy, findDecision, pendingDecisions, setOperationInclude, setQueryInclude } from './edit.ts'
+import { MATCHING_CASES, readCase } from '../matching/test/cases.ts'
+import {
+  accept,
+  chooseModel,
+  chooseSource,
+  decidePolicy,
+  findDecision,
+  pendingDecisions,
+  setOperationInclude,
+  setQueryInclude,
+} from './edit.ts'
 import { SHOP } from './fixtures.ts'
 import { proposeCrud } from './propose.ts'
-import { findPolicy, findRepository, findService } from './types.ts'
+import { findPolicy, findRepository, findService, type CrudDesign } from './types.ts'
 
 const design = proposeCrud(SHOP)
 
@@ -51,5 +62,46 @@ describe('edits', () => {
   it('keeps the edits when the design is proposed again', () => {
     const edited = proposeCrud(SHOP, decidePolicy(design, 'categories', 'children', 'deleteFirst'))
     expect(findPolicy(edited, 'categories')!.children!.value).toBe('deleteFirst')
+  })
+})
+
+describe('matching decisions', () => {
+  const { database, models } = readCase(join(MATCHING_CASES, 'directions-typescript'))
+  const start = proposeCrud(database, null, models)
+  const written = (current: CrudDesign) =>
+    current.matching!.tables.find((item) => item.table === 'orders')!.models.find((item) => item.direction === 'input')!
+  const products = (current: CrudDesign) => current.matching!.tables.find((item) => item.table === 'products')!.models[0]
+
+  it('lists the models and columns waiting for the user with the other decisions', () => {
+    const pending = pendingDecisions(start)
+    expect(pending).toContainEqual({ kind: 'model', table: 'products', direction: 'input' })
+    expect(pending).toContainEqual({ kind: 'source', table: 'orders', direction: 'output', column: 'status' })
+  })
+
+  it('keeps a chosen source when the design is proposed again', () => {
+    const edited = proposeCrud(database, chooseSource(start, 'orders', 'input', 'status', null), models)
+    const status = written(edited).columns.find((item) => item.column === 'status')!
+    expect(status.source).toMatchObject({ value: null, status: 'active', manual: true })
+  })
+
+  it('matches the columns again with another model, with its conflicts and unused fields', () => {
+    expect(products(start).model.value).toBe('ProductInput')
+    const edited = proposeCrud(database, chooseModel(start, 'products', 'input', 'ProductCommand'), models)
+    const match = products(edited)
+    expect(match.model).toMatchObject({ value: 'ProductCommand', manual: true })
+    expect(match.columns.find((item) => item.column === 'price')!.source.confidence).toBe('conflict')
+    expect(pendingDecisions(edited)).toContainEqual({ kind: 'source', table: 'products', direction: 'input', column: 'price' })
+  })
+
+  it('takes the conflicts of the field chosen, and leaves the one given up unused', () => {
+    const edited = proposeCrud(database, chooseSource(start, 'customers', 'both', 'full_name', { kind: 'field', field: 'email' }), models)
+    const match = edited.matching!.tables.find((item) => item.table === 'customers')!.models[0]
+    expect(match.columns.find((item) => item.column === 'full_name')!.conflicts).toEqual([])
+    expect(match.unused).toEqual(['fullName'])
+  })
+
+  it('confirms a pending model as it is', () => {
+    const edited = accept(start, { kind: 'model', table: 'products', direction: 'input' })
+    expect(findDecision(edited, { kind: 'model', table: 'products', direction: 'input' })).toMatchObject({ status: 'active', manual: true })
   })
 })

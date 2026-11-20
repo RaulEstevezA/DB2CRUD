@@ -6,7 +6,6 @@ import { EMPTY_INPUT, readDatabase, readModels, type InputState } from './app/wo
 import type { WorkspacePart } from './app/workspaceParts.ts'
 import { DatabasePane } from './components/database/DatabasePane.tsx'
 import { DesignPane } from './components/design/DesignPane.tsx'
-import { matchModels } from './core/matching/matching.ts'
 import { AppFooter } from './components/layout/AppFooter.tsx'
 import { AppHeader } from './components/layout/AppHeader.tsx'
 import { IntroPanel } from './components/layout/IntroPanel.tsx'
@@ -40,8 +39,7 @@ function App() {
   // The application models are optional: each table gets the model it corresponds to
   const deferredModels = useDeferredValue(models)
   const modelsRead = useMemo(() => readModels(deferredModels), [deferredModels])
-  const matching = useMemo(() => (schema && modelsRead?.ok ? matchModels(schema, modelsRead.schema) : null), [schema, modelsRead])
-  const designState = useCrudDesign(schema)
+  const designState = useCrudDesign(schema, modelsRead?.ok ? modelsRead.schema : null)
   const { design } = designState
   useUndoShortcuts(designState.history)
   const files = useMemo(() => (schema && design ? generateProject(schema, design, settings) : []), [schema, design, settings])
@@ -93,7 +91,7 @@ function App() {
                 onModelsChange={setModels}
               />
             ),
-            design: <DesignPane state={designState} matching={matching} />,
+            design: <DesignPane state={designState} />,
             project: <ProjectPane settings={settings} files={files} onSettingsChange={changeSettings} />,
           }}
         />

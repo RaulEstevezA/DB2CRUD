@@ -119,3 +119,13 @@
 .item__conflict {
   color: var(--danger);
 }
+
+/* A column of a model: its source is a decision, its conflicts go below */
+.item--decision > .decision {
+  flex: 1 1 12em;
+  min-width: 0;
+}
+
+.item--decision > .item__conflict {
+  flex-basis: 100%;
+}

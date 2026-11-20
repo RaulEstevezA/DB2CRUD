@@ -10,9 +10,12 @@
  * table may have one model of each, matched with its columns on its own. A field may also come from another table: a
  * lookup (`categoryName` → the `name` of the category `category_id` points to) or the rows of a child table
  * (`tagIds` → the rows of `product_tags`).
+ *
+ * Every proposal is a decision the user can change; given the previous matching, a new one keeps the choices the
+ * user made where they still apply, as the CRUD design does.
  */
 import { readConstraints } from '../analysis/constraints.ts'
-import { decision, reason, type Decision, type Reason } from '../decisions/decision.ts'
+import { decision, keep, reason, type Decision, type Reason } from '../decisions/decision.ts'
 import { nameWords, singularize } from '../model/naming.ts'
 import type { FieldDef, ModelDef, ModelSchema, TypeRef } from '../model/schema.ts'
 import type { DbColumn, DbSchema, DbTable } from '../schema/types.ts'
@@ -315,10 +318,13 @@ function childrenFor(field: FieldDef, table: DbTable, database: DbSchema): DbTab
   return found
 }
 
-function matchTable(table: DbTable, database: DbSchema, schema: ModelSchema): TableMatch {
+function matchTable(table: DbTable, database: DbSchema, schema: ModelSchema, previous: TableMatch | undefined): TableMatch {
   return {
     table: table.name,
-    models: matchModel(table, schema).map(({ direction, model }) => matchColumns(table, direction, model, database, schema)),
+    models: matchModel(table, schema).map(({ direction, model }) => {
+      const before = previous?.models.find((item) => item.direction === direction)
+      return matchColumns(table, direction, keep(before?.model, model), database, schema, before)
+    }),
   }
 }
 
@@ -329,9 +335,20 @@ function matchColumns(
   model: Decision<string | null>,
   database: DbSchema,
   schema: ModelSchema,
+  previous: ModelMatch | undefined,
 ): ModelMatch {
+  // The choices made on the columns of another model do not apply to this one
+  const before = previous?.model.value === model.value ? previous : undefined
+  const fieldsByName = new Map<string, FieldDef>()
   const definition = schema.models.find((item) => item.name === model.value)
   const fields = definition ? fieldsOf(definition, schema) : []
+  for (const field of fields) fieldsByName.set(field.name, field)
+  const keepSource = (column: DbColumn, next: Decision<ColumnSource | null>): ColumnMatch => {
+    const source = keep(before?.columns.find((item) => item.column === column.name)?.source, next)
+    // The conflicts are those of the field chosen
+    const chosen = source.value?.kind === 'field' ? fieldsByName.get(source.value.field) : undefined
+    return { column: column.name, source, conflicts: chosen ? conflictsOf(chosen, column, table, database, schema, direction) : [] }
+  }
   const taken = new Set<string>()
   const columns: ColumnMatch[] = []
   for (const column of table.columns) {
@@ -344,13 +361,9 @@ function matchColumns(
     if (found) {
       taken.add(found.field.name)
       const conflicts = conflictsOf(found.field, column, table, database, schema, direction)
-      const confidence = conflicts.length > 0 ? 'conflict' : 'exact'
       const reasons: Reason[] = [reason(found.sameName ? 'fieldName' : 'fieldWords', { field: found.field.name })]
-      columns.push({
-        column: column.name,
-        source: decision({ kind: 'field', field: found.field.name }, confidence, reasons, options),
-        conflicts,
-      })
+      const source: ColumnSource = { kind: 'field', field: found.field.name }
+      columns.push(keepSource(column, decision(source, conflicts.length > 0 ? 'conflict' : 'exact', reasons, options)))
       continue
     }
     const lookup = lookupFor(column, table, fields, taken, database)
@@ -364,31 +377,22 @@ function matchColumns(
           column: lookup.by,
         }),
       ]
-      columns.push({
-        column: column.name,
-        source: decision(source, lookup.unique ? 'probable' : 'review', reasons, [source, ...options]),
-        conflicts: [],
-      })
+      columns.push(keepSource(column, decision(source, lookup.unique ? 'probable' : 'review', reasons, [source, ...options])))
       continue
     }
     if (column.generated && direction !== 'output') {
       const source: ColumnSource = { kind: 'database' }
-      columns.push({
-        column: column.name,
-        source: decision(source, 'exact', [reason('generatedColumn')], [source, ...options]),
-        conflicts: [],
-      })
+      columns.push(keepSource(column, decision(source, 'exact', [reason('generatedColumn')], [source, ...options])))
       continue
     }
     // No field: the column keeps its default or null, unless it needs a value; a model that only reads skips it
     const required = direction !== 'output' && !column.nullable && column.default === undefined && !column.generated
-    columns.push({
-      column: column.name,
-      source: required
-        ? decision(null, 'conflict', [reason('noFieldRequired')], options)
-        : decision(null, 'none', [reason('noField')], options),
-      conflicts: [],
-    })
+    columns.push(
+      keepSource(
+        column,
+        required ? decision(null, 'conflict', [reason('noFieldRequired')], options) : decision(null, 'none', [reason('noField')], options),
+      ),
+    )
   }
   const children: ChildrenMatch[] = []
   for (const field of fields) {
@@ -397,24 +401,36 @@ function matchColumns(
     if (found.length === 0) continue
     taken.add(field.name)
     const options = [...found.map((item) => item.name), null]
-    children.push({
-      field: field.name,
-      table:
-        found.length === 1
-          ? decision(found[0].name, 'probable', [reason('childRows', { field: field.name, table: found[0].name })], options)
-          : decision(
-              found[0].name,
-              'review',
-              [reason('childTables', { field: field.name, tables: found.map((item) => item.name).join(', ') })],
-              options,
-            ),
-    })
+    const proposal =
+      found.length === 1
+        ? decision(found[0].name, 'probable', [reason('childRows', { field: field.name, table: found[0].name })], options)
+        : decision(
+            found[0].name,
+            'review',
+            [reason('childTables', { field: field.name, tables: found.map((item) => item.name).join(', ') })],
+            options,
+          )
+    const chosen = before?.children.find((item) => item.field === field.name)?.table
+    children.push({ field: field.name, table: keep(chosen, proposal) })
   }
-  const unused = fields.filter((field) => !taken.has(field.name) && !field.generated).map((field) => field.name)
+  // Unused: what no column or child table takes once the user's choices are applied
+  const used = new Set<string>()
+  for (const column of columns) if (column.source.value && column.source.value.kind !== 'database') used.add(column.source.value.field)
+  for (const child of children) if (child.table.value !== null) used.add(child.field)
+  const unused = fields.filter((field) => !used.has(field.name) && !field.generated).map((field) => field.name)
   return { direction, model, columns, children, unused }
 }
 
-/** The matching of every table of the database with the application models. */
-export function matchModels(database: DbSchema, schema: ModelSchema): Matching {
-  return { tables: database.tables.map((table) => matchTable(table, database, schema)) }
+/** The matching of every table of the database with the application models, keeping the choices of `previous`. */
+export function matchModels(database: DbSchema, schema: ModelSchema, previous: Matching | null = null): Matching {
+  return {
+    tables: database.tables.map((table) =>
+      matchTable(
+        table,
+        database,
+        schema,
+        previous?.tables.find((item) => item.table === table.name),
+      ),
+    ),
+  }
 }
