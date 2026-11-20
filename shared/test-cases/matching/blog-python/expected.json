@@ -2,447 +2,462 @@
  "tables": [
   {
    "table": "authors",
-   "model": {
-    "value": "Author",
-    "status": "active",
-    "confidence": "exact",
-    "reasons": [
-     {
-      "code": "modelName",
-      "params": {
-       "model": "Author"
-      }
-     }
-    ],
-    "options": [
-     "Author",
-     null
-    ]
-   },
-   "columns": [
+   "models": [
     {
-     "column": "id",
-     "source": {
-      "value": {
-       "kind": "field",
-       "field": "id"
-      },
+     "direction": "both",
+     "model": {
+      "value": "Author",
       "status": "active",
       "confidence": "exact",
       "reasons": [
        {
-        "code": "fieldName",
+        "code": "modelName",
         "params": {
+         "model": "Author"
+        }
+       }
+      ],
+      "options": [
+       "Author",
+       null
+      ]
+     },
+     "columns": [
+      {
+       "column": "id",
+       "source": {
+        "value": {
+         "kind": "field",
          "field": "id"
-        }
-       }
-      ],
-      "options": [
-       {
-        "kind": "field",
-        "field": "id"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldName",
+          "params": {
+           "field": "id"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "name"
+         },
+         {
+          "kind": "field",
+          "field": "created_at"
+         },
+         null
+        ]
        },
-       {
-        "kind": "field",
-        "field": "name"
-       },
-       {
-        "kind": "field",
-        "field": "created_at"
-       },
-       null
-      ]
-     },
-     "conflicts": []
-    },
-    {
-     "column": "name",
-     "source": {
-      "value": {
-       "kind": "field",
-       "field": "name"
+       "conflicts": []
       },
-      "status": "active",
-      "confidence": "exact",
-      "reasons": [
-       {
-        "code": "fieldName",
-        "params": {
+      {
+       "column": "name",
+       "source": {
+        "value": {
+         "kind": "field",
          "field": "name"
-        }
-       }
-      ],
-      "options": [
-       {
-        "kind": "field",
-        "field": "id"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldName",
+          "params": {
+           "field": "name"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "name"
+         },
+         {
+          "kind": "field",
+          "field": "created_at"
+         },
+         null
+        ]
        },
-       {
-        "kind": "field",
-        "field": "name"
-       },
-       {
-        "kind": "field",
-        "field": "created_at"
-       },
-       null
-      ]
-     },
-     "conflicts": []
-    },
-    {
-     "column": "created_at",
-     "source": {
-      "value": {
-       "kind": "field",
-       "field": "created_at"
+       "conflicts": []
       },
-      "status": "active",
-      "confidence": "exact",
-      "reasons": [
-       {
-        "code": "fieldName",
-        "params": {
+      {
+       "column": "created_at",
+       "source": {
+        "value": {
+         "kind": "field",
          "field": "created_at"
-        }
-       }
-      ],
-      "options": [
-       {
-        "kind": "field",
-        "field": "id"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldName",
+          "params": {
+           "field": "created_at"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "name"
+         },
+         {
+          "kind": "field",
+          "field": "created_at"
+         },
+         null
+        ]
        },
-       {
-        "kind": "field",
-        "field": "name"
-       },
-       {
-        "kind": "field",
-        "field": "created_at"
-       },
-       null
-      ]
-     },
-     "conflicts": []
+       "conflicts": []
+      }
+     ],
+     "children": [],
+     "unused": []
     }
-   ],
-   "children": [],
-   "unused": []
+   ]
   },
   {
    "table": "posts",
-   "model": {
-    "value": "Posts",
-    "status": "active",
-    "confidence": "exact",
-    "reasons": [
-     {
-      "code": "modelName",
-      "params": {
-       "model": "Posts"
-      }
-     }
-    ],
-    "options": [
-     "Posts",
-     null
-    ]
-   },
-   "columns": [
+   "models": [
     {
-     "column": "id",
-     "source": {
-      "value": {
-       "kind": "field",
-       "field": "id"
-      },
+     "direction": "both",
+     "model": {
+      "value": "Posts",
       "status": "active",
       "confidence": "exact",
       "reasons": [
        {
-        "code": "fieldName",
+        "code": "modelName",
         "params": {
+         "model": "Posts"
+        }
+       }
+      ],
+      "options": [
+       "Posts",
+       null
+      ]
+     },
+     "columns": [
+      {
+       "column": "id",
+       "source": {
+        "value": {
+         "kind": "field",
          "field": "id"
-        }
-       }
-      ],
-      "options": [
-       {
-        "kind": "field",
-        "field": "id"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldName",
+          "params": {
+           "field": "id"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "author_id"
+         },
+         {
+          "kind": "field",
+          "field": "title"
+         },
+         {
+          "kind": "field",
+          "field": "body"
+         },
+         {
+          "kind": "field",
+          "field": "comment_ids"
+         },
+         null
+        ]
        },
-       {
-        "kind": "field",
-        "field": "author_id"
-       },
-       {
-        "kind": "field",
-        "field": "title"
-       },
-       {
-        "kind": "field",
-        "field": "body"
-       },
-       {
-        "kind": "field",
-        "field": "comment_ids"
-       },
-       null
-      ]
-     },
-     "conflicts": []
-    },
-    {
-     "column": "author_id",
-     "source": {
-      "value": {
-       "kind": "field",
-       "field": "author_id"
+       "conflicts": []
       },
-      "status": "active",
-      "confidence": "exact",
-      "reasons": [
-       {
-        "code": "fieldName",
-        "params": {
+      {
+       "column": "author_id",
+       "source": {
+        "value": {
+         "kind": "field",
          "field": "author_id"
-        }
-       }
-      ],
-      "options": [
-       {
-        "kind": "field",
-        "field": "id"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldName",
+          "params": {
+           "field": "author_id"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "author_id"
+         },
+         {
+          "kind": "field",
+          "field": "title"
+         },
+         {
+          "kind": "field",
+          "field": "body"
+         },
+         {
+          "kind": "field",
+          "field": "comment_ids"
+         },
+         null
+        ]
        },
-       {
-        "kind": "field",
-        "field": "author_id"
-       },
-       {
-        "kind": "field",
-        "field": "title"
-       },
-       {
-        "kind": "field",
-        "field": "body"
-       },
-       {
-        "kind": "field",
-        "field": "comment_ids"
-       },
-       null
-      ]
-     },
-     "conflicts": []
-    },
-    {
-     "column": "title",
-     "source": {
-      "value": {
-       "kind": "field",
-       "field": "title"
+       "conflicts": []
       },
-      "status": "active",
-      "confidence": "exact",
-      "reasons": [
-       {
-        "code": "fieldName",
-        "params": {
+      {
+       "column": "title",
+       "source": {
+        "value": {
+         "kind": "field",
          "field": "title"
-        }
-       }
-      ],
-      "options": [
-       {
-        "kind": "field",
-        "field": "id"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldName",
+          "params": {
+           "field": "title"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "author_id"
+         },
+         {
+          "kind": "field",
+          "field": "title"
+         },
+         {
+          "kind": "field",
+          "field": "body"
+         },
+         {
+          "kind": "field",
+          "field": "comment_ids"
+         },
+         null
+        ]
        },
-       {
-        "kind": "field",
-        "field": "author_id"
-       },
-       {
-        "kind": "field",
-        "field": "title"
-       },
-       {
-        "kind": "field",
-        "field": "body"
-       },
-       {
-        "kind": "field",
-        "field": "comment_ids"
-       },
-       null
-      ]
-     },
-     "conflicts": []
-    },
-    {
-     "column": "body",
-     "source": {
-      "value": {
-       "kind": "field",
-       "field": "body"
+       "conflicts": []
       },
-      "status": "active",
-      "confidence": "exact",
-      "reasons": [
-       {
-        "code": "fieldName",
-        "params": {
+      {
+       "column": "body",
+       "source": {
+        "value": {
+         "kind": "field",
          "field": "body"
-        }
-       }
-      ],
-      "options": [
-       {
-        "kind": "field",
-        "field": "id"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldName",
+          "params": {
+           "field": "body"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "author_id"
+         },
+         {
+          "kind": "field",
+          "field": "title"
+         },
+         {
+          "kind": "field",
+          "field": "body"
+         },
+         {
+          "kind": "field",
+          "field": "comment_ids"
+         },
+         null
+        ]
        },
-       {
-        "kind": "field",
-        "field": "author_id"
-       },
-       {
-        "kind": "field",
-        "field": "title"
-       },
-       {
-        "kind": "field",
-        "field": "body"
-       },
-       {
-        "kind": "field",
-        "field": "comment_ids"
-       },
-       null
-      ]
-     },
-     "conflicts": []
-    },
-    {
-     "column": "word_count",
-     "source": {
-      "value": {
-       "kind": "database"
+       "conflicts": []
       },
-      "status": "active",
-      "confidence": "exact",
-      "reasons": [
-       {
-        "code": "generatedColumn"
+      {
+       "column": "word_count",
+       "source": {
+        "value": {
+         "kind": "database"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "generatedColumn"
+         }
+        ],
+        "options": [
+         {
+          "kind": "database"
+         },
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "author_id"
+         },
+         {
+          "kind": "field",
+          "field": "title"
+         },
+         {
+          "kind": "field",
+          "field": "body"
+         },
+         {
+          "kind": "field",
+          "field": "comment_ids"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      }
+     ],
+     "children": [
+      {
+       "field": "comment_ids",
+       "table": {
+        "value": "comments",
+        "status": "active",
+        "confidence": "probable",
+        "reasons": [
+         {
+          "code": "childRows",
+          "params": {
+           "field": "comment_ids",
+           "table": "comments"
+          }
+         }
+        ],
+        "options": [
+         "comments",
+         null
+        ]
        }
-      ],
-      "options": [
-       {
-        "kind": "database"
-       },
-       {
-        "kind": "field",
-        "field": "id"
-       },
-       {
-        "kind": "field",
-        "field": "author_id"
-       },
-       {
-        "kind": "field",
-        "field": "title"
-       },
-       {
-        "kind": "field",
-        "field": "body"
-       },
-       {
-        "kind": "field",
-        "field": "comment_ids"
-       },
-       null
-      ]
-     },
-     "conflicts": []
+      }
+     ],
+     "unused": []
     }
-   ],
-   "children": [
-    {
-     "field": "comment_ids",
-     "table": {
-      "value": "comments",
-      "status": "active",
-      "confidence": "probable",
-      "reasons": [
-       {
-        "code": "childRows",
-        "params": {
-         "field": "comment_ids",
-         "table": "comments"
-        }
-       }
-      ],
-      "options": [
-       "comments",
-       null
-      ]
-     }
-    }
-   ],
-   "unused": []
+   ]
   },
   {
    "table": "comments",
-   "model": {
-    "value": null,
-    "status": "active",
-    "confidence": "none",
-    "reasons": [
-     {
-      "code": "noModel"
-     }
-    ],
-    "options": [
-     "Author",
-     "Posts",
-     null
-    ]
-   },
-   "columns": [
+   "models": [
     {
-     "column": "id",
-     "source": {
+     "direction": "both",
+     "model": {
       "value": null,
       "status": "active",
       "confidence": "none",
-      "reasons": [],
-      "options": []
+      "reasons": [
+       {
+        "code": "noModel"
+       }
+      ],
+      "options": [
+       "Author",
+       "Posts",
+       null
+      ]
      },
-     "conflicts": []
-    },
-    {
-     "column": "post_id",
-     "source": {
-      "value": null,
-      "status": "active",
-      "confidence": "none",
-      "reasons": [],
-      "options": []
-     },
-     "conflicts": []
-    },
-    {
-     "column": "text",
-     "source": {
-      "value": null,
-      "status": "active",
-      "confidence": "none",
-      "reasons": [],
-      "options": []
-     },
-     "conflicts": []
+     "columns": [
+      {
+       "column": "id",
+       "source": {
+        "value": null,
+        "status": "active",
+        "confidence": "none",
+        "reasons": [],
+        "options": []
+       },
+       "conflicts": []
+      },
+      {
+       "column": "post_id",
+       "source": {
+        "value": null,
+        "status": "active",
+        "confidence": "none",
+        "reasons": [],
+        "options": []
+       },
+       "conflicts": []
+      },
+      {
+       "column": "text",
+       "source": {
+        "value": null,
+        "status": "active",
+        "confidence": "none",
+        "reasons": [],
+        "options": []
+       },
+       "conflicts": []
+      }
+     ],
+     "children": [],
+     "unused": []
     }
-   ],
-   "children": [],
-   "unused": []
+   ]
   }
  ]
 }

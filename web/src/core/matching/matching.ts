@@ -5,7 +5,9 @@
  * type, enum values the column refuses), the conflict is shown and never resolved on its own.
  *
  * The rules compare names by their words, whatever their convention (`customerId`, `customer_id`), with plurals and
- * the usual suffixes of models (`Entity`, `Dto`, `Request`…) left out. A field may also come from another table: a
+ * the usual suffixes of models (`Entity`, `Dto`, `Request`…) left out. A suffix may also give the model a direction:
+ * a `Request`, `Input` or `Command` only goes into the table, a `Response` or `Output` only comes out of it, so a
+ * table may have one model of each, matched with its columns on its own. A field may also come from another table: a
  * lookup (`categoryName` → the `name` of the category `category_id` points to) or the rows of a child table
  * (`tagIds` → the rows of `product_tags`).
  */
@@ -26,7 +28,10 @@ export type Conflict =
   | { kind: 'length'; model: number; column: number }
   | { kind: 'nullable' }
   | { kind: 'type'; model: string; column: string }
+  /** Values the model sends and the column refuses */
   | { kind: 'values'; missing: string[] }
+  /** Values the column keeps and the model cannot take (models that only read) */
+  | { kind: 'unknownValues'; values: string[] }
 
 export interface ColumnMatch {
   column: string
@@ -41,13 +46,22 @@ export interface ChildrenMatch {
   table: Decision<string | null>
 }
 
-export interface TableMatch {
-  table: string
+/** Which way a model goes: both, only into the table (a request) or only out of it (a response). */
+export type Direction = 'both' | 'input' | 'output'
+
+export interface ModelMatch {
+  direction: Direction
   model: Decision<string | null>
   columns: ColumnMatch[]
   children: ChildrenMatch[]
-  /** Fields of the model no column or child table takes: they are not saved */
+  /** Fields of the model no column or child table matches: not saved (or, in a model that only reads, not filled) */
   unused: string[]
+}
+
+export interface TableMatch {
+  table: string
+  /** One model per direction found (`both` first); a single `both` with no model when there is none */
+  models: ModelMatch[]
 }
 
 export interface Matching {
@@ -56,13 +70,28 @@ export interface Matching {
 
 // Names
 
-const MODEL_SUFFIXES = new Set(['entity', 'model', 'dto', 'record', 'request', 'response'])
+const SUFFIX_DIRECTIONS: Record<string, Direction> = {
+  entity: 'both',
+  model: 'both',
+  dto: 'both',
+  record: 'both',
+  request: 'input',
+  input: 'input',
+  command: 'input',
+  response: 'output',
+  output: 'output',
+}
+const DIRECTIONS: Direction[] = ['both', 'input', 'output']
 
-/** The words a model name is compared by: without its suffixes, the last one singular. */
-function modelWords(name: string): string[] {
+/** The words a model name is compared by (without its suffixes, the last one singular) and its direction. */
+function modelName(name: string): { words: string[]; direction: Direction } {
   const words = nameWords(name)
-  while (words.length > 1 && MODEL_SUFFIXES.has(words.at(-1)!)) words.pop()
-  return singularWords(words)
+  let direction: Direction = 'both'
+  while (words.length > 1 && SUFFIX_DIRECTIONS[words.at(-1)!]) {
+    const found = SUFFIX_DIRECTIONS[words.pop()!]
+    if (direction === 'both') direction = found
+  }
+  return { words: singularWords(words), direction }
 }
 
 const singularWords = (words: string[]) => (words.length > 0 ? [...words.slice(0, -1), singularize(words.at(-1)!)] : words)
@@ -133,9 +162,29 @@ function fieldValues(type: TypeRef, schema: ModelSchema): string[] | null {
 }
 
 /** Where the field and the column disagree. */
-function conflictsOf(field: FieldDef, column: DbColumn, table: DbTable, database: DbSchema, schema: ModelSchema): Conflict[] {
+function conflictsOf(
+  field: FieldDef,
+  column: DbColumn,
+  table: DbTable,
+  database: DbSchema,
+  schema: ModelSchema,
+  direction: Direction,
+): Conflict[] {
   const conflicts: Conflict[] = []
   const declared = readConstraints(field, schema.origin?.language).constraints
+  const sent = fieldValues(field.type, schema)
+  const accepted = acceptedValues(column, table, database)
+  if (direction === 'output') {
+    // Reading: a null or a value the model cannot take fails, a longer text does not
+    if (column.nullable && !field.optional && !field.nullable) conflicts.push({ kind: 'nullable' })
+    if (!compatible(field.type, column, schema)) conflicts.push({ kind: 'type', model: typeName(field.type), column: column.type.kind })
+    else if (sent && accepted) {
+      const lower = sent.map((value) => value.toLowerCase())
+      const values = accepted.filter((value) => !lower.includes(value.toLowerCase()))
+      if (values.length > 0) conflicts.push({ kind: 'unknownValues', values })
+    }
+    return conflicts
+  }
   if (
     column.type.kind === 'text' &&
     column.type.length !== undefined &&
@@ -144,11 +193,12 @@ function conflictsOf(field: FieldDef, column: DbColumn, table: DbTable, database
   )
     conflicts.push({ kind: 'length', model: declared.maxLength, column: column.type.length })
   const required = !column.nullable && !column.default && !column.generated
-  if (required && (field.optional || field.nullable)) conflicts.push({ kind: 'nullable' })
+  // A field left out that has a value of its own still sends one
+  const missing = field.nullable || (field.optional && (field.defaultValue === undefined || field.defaultValue === null))
+  if (required && missing) conflicts.push({ kind: 'nullable' })
   if (!compatible(field.type, column, schema)) conflicts.push({ kind: 'type', model: typeName(field.type), column: column.type.kind })
-  const sent = fieldValues(field.type, schema)
-  const accepted = acceptedValues(column, table, database)
-  if (sent && accepted) {
+  // Another type already says it all: its values are not compared
+  else if (sent && accepted) {
     // A value that differs only in case is converted on the way: only one the column does not have is a conflict
     const lower = accepted.map((value) => value.toLowerCase())
     const missing = sent.filter((value) => !lower.includes(value.toLowerCase()))
@@ -169,29 +219,44 @@ function fieldsOf(model: ModelDef, schema: ModelSchema, seen = new Set<string>()
   return [...inherited, ...model.fields]
 }
 
-/** The model of a table: the one whose name, without its suffixes and plural, is the table's or its entity's. */
-function matchModel(table: DbTable, schema: ModelSchema): Decision<string | null> {
+/**
+ * The models of a table: those whose name, without its suffixes and plural, is the table's or its entity's, one per
+ * direction (exact), or several of one direction for review.
+ */
+function matchModel(table: DbTable, schema: ModelSchema): { direction: Direction; model: Decision<string | null> }[] {
   const targets = [table.name, ...(table.entity ? [table.entity] : [])].map((name) => key(singularWords(nameWords(name))))
-  const found = schema.models.filter((model) => targets.includes(key(modelWords(model.name))))
-  const options = [...found.map((model) => model.name), null]
-  if (found.length === 1) return decision(found[0].name, 'exact', [reason('modelName', { model: found[0].name })], options)
-  if (found.length > 1)
-    return decision(found[0].name, 'review', [reason('modelNames', { models: found.map((model) => model.name).join(', ') })], options)
-  return decision(null, 'none', [reason('noModel')], [...schema.models.map((model) => model.name), null])
+  const named = schema.models.map((model) => ({ model, ...modelName(model.name) }))
+  const found = named.filter((item) => targets.includes(key(item.words)))
+  if (found.length === 0)
+    return [{ direction: 'both', model: decision(null, 'none', [reason('noModel')], [...schema.models.map((model) => model.name), null]) }]
+  return DIRECTIONS.flatMap((direction) => {
+    const group = found.filter((item) => item.direction === direction).map((item) => item.model.name)
+    if (group.length === 0) return []
+    const options = [...group, null]
+    return [
+      {
+        direction,
+        model:
+          group.length === 1
+            ? decision(group[0], 'exact', [reason('modelName', { model: group[0] })], options)
+            : decision(group[0], 'review', [reason('modelNames', { models: group.join(', ') })], options),
+      },
+    ]
+  })
 }
 
 /** The names a field answers to: its own, its name on the wire and its aliases. */
 const fieldNames = (field: FieldDef) => [field.name, ...(field.serializedName ? [field.serializedName] : []), ...(field.aliases ?? [])]
 
-/** The field a column comes from: the same name (exact), or the same words in another convention (probable). */
-function fieldFor(column: DbColumn, fields: FieldDef[], taken: Set<string>): { field: FieldDef; confidence: 'exact' | 'probable' } | null {
+/** The field a column comes from: the same name, or the same words in another convention (both exact). */
+function fieldFor(column: DbColumn, fields: FieldDef[], taken: Set<string>): { field: FieldDef; sameName: boolean } | null {
   const names = [column.name, ...(column.attribute ? [column.attribute] : [])]
   const free = fields.filter((field) => !taken.has(field.name))
   const exact = free.find((field) => fieldNames(field).some((name) => names.includes(name)))
-  if (exact) return { field: exact, confidence: 'exact' }
+  if (exact) return { field: exact, sameName: true }
   const words = names.map((name) => key(nameWords(name)))
   const close = free.find((field) => fieldNames(field).some((name) => words.includes(key(nameWords(name)))))
-  return close ? { field: close, confidence: 'probable' } : null
+  return close ? { field: close, sameName: false } : null
 }
 
 /** A lookup: a field `<x><Column>` (`categoryName`) for a foreign key `<x>_id` to a table with that column. */
@@ -251,7 +316,20 @@ function childrenFor(field: FieldDef, table: DbTable, database: DbSchema): DbTab
 }
 
 function matchTable(table: DbTable, database: DbSchema, schema: ModelSchema): TableMatch {
-  const model = matchModel(table, schema)
+  return {
+    table: table.name,
+    models: matchModel(table, schema).map(({ direction, model }) => matchColumns(table, direction, model, database, schema)),
+  }
+}
+
+/** Where each column of a table comes from (or goes to) in one of its models. */
+function matchColumns(
+  table: DbTable,
+  direction: Direction,
+  model: Decision<string | null>,
+  database: DbSchema,
+  schema: ModelSchema,
+): ModelMatch {
   const definition = schema.models.find((item) => item.name === model.value)
   const fields = definition ? fieldsOf(definition, schema) : []
   const taken = new Set<string>()
@@ -265,9 +343,9 @@ function matchTable(table: DbTable, database: DbSchema, schema: ModelSchema): Ta
     const found = fieldFor(column, fields, taken)
     if (found) {
       taken.add(found.field.name)
-      const conflicts = conflictsOf(found.field, column, table, database, schema)
-      const confidence = conflicts.length > 0 ? 'conflict' : found.confidence
-      const reasons: Reason[] = [reason(found.confidence === 'exact' ? 'fieldName' : 'fieldWords', { field: found.field.name })]
+      const conflicts = conflictsOf(found.field, column, table, database, schema, direction)
+      const confidence = conflicts.length > 0 ? 'conflict' : 'exact'
+      const reasons: Reason[] = [reason(found.sameName ? 'fieldName' : 'fieldWords', { field: found.field.name })]
       columns.push({
         column: column.name,
         source: decision({ kind: 'field', field: found.field.name }, confidence, reasons, options),
@@ -293,7 +371,7 @@ function matchTable(table: DbTable, database: DbSchema, schema: ModelSchema): Ta
       })
       continue
     }
-    if (column.generated) {
+    if (column.generated && direction !== 'output') {
       const source: ColumnSource = { kind: 'database' }
       columns.push({
         column: column.name,
@@ -302,8 +380,8 @@ function matchTable(table: DbTable, database: DbSchema, schema: ModelSchema): Ta
       })
       continue
     }
-    // No field: the column keeps its default or null, unless it needs a value
-    const required = !column.nullable && column.default === undefined
+    // No field: the column keeps its default or null, unless it needs a value; a model that only reads skips it
+    const required = direction !== 'output' && !column.nullable && column.default === undefined && !column.generated
     columns.push({
       column: column.name,
       source: required
@@ -333,7 +411,7 @@ function matchTable(table: DbTable, database: DbSchema, schema: ModelSchema): Ta
     })
   }
   const unused = fields.filter((field) => !taken.has(field.name) && !field.generated).map((field) => field.name)
-  return { table: table.name, model, columns, children, unused }
+  return { direction, model, columns, children, unused }
 }
 
 /** The matching of every table of the database with the application models. */

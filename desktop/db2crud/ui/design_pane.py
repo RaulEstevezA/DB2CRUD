@@ -195,8 +195,8 @@ class DesignPane(Pane):
         layout.addLayout(grid)
 
         match = next((item for item in (session.matching or {}).get("tables", []) if item["table"] == table), None)
-        if match is not None:
-            self._model_match(layout, match)
+        for item in match["models"] if match is not None else []:
+            self._model_match(layout, item)
 
         if repository:
             layout.addWidget(field_label(t.queries_title))
@@ -223,11 +223,13 @@ class DesignPane(Pane):
         return card
 
     def _model_match(self, layout: QVBoxLayout, match: dict) -> None:
-        """The model of a table and where each column comes from, with the conflicts between both."""
+        """A model of a table (read, written or both) and where each column comes from or goes, with their conflicts."""
         t = self._i18n.t
         model = match["model"]
+        direction = match["direction"]
+        output = direction == "output"
         title = QHBoxLayout()
-        title.addWidget(field_label(t.model_title))
+        title.addWidget(field_label(t.model_titles[direction]))
         title.addWidget(mono(model["value"] if model["value"] is not None else t.no_model, "type"))
         if model["confidence"] != "none":
             badge = confidence_badge(t, model["confidence"])
@@ -242,18 +244,20 @@ class DesignPane(Pane):
             if source is None:
                 return t.source_none
             if source["kind"] == "field":
-                return t.source_field(source["field"])
+                return (t.target_field if output else t.source_field)(source["field"])
             if source["kind"] == "lookup":
-                return t.source_lookup(source["field"], source["table"], source["by"])
+                return (t.target_lookup if output else t.source_lookup)(source["field"], source["table"], source["by"])
             return t.source_database
 
         def conflict_text(conflict: dict) -> str:
             if conflict["kind"] == "length":
                 return t.conflict_length(conflict["model"], conflict["column"])
             if conflict["kind"] == "nullable":
-                return t.conflict_nullable
+                return t.conflict_nullable_output if output else t.conflict_nullable
             if conflict["kind"] == "type":
                 return t.conflict_type(conflict["model"], conflict["column"])
+            if conflict["kind"] == "unknownValues":
+                return t.conflict_unknown_values(conflict["values"])
             return t.conflict_values(conflict["missing"])
 
         rows = [
@@ -281,7 +285,7 @@ class DesignPane(Pane):
                 row_layout.addWidget(badge)
             layout.addWidget(row)
         if match["unused"]:
-            layout.addWidget(muted(t.unused_fields(match["unused"])))
+            layout.addWidget(muted(t.unused_fields(match["unused"], direction)))
 
     def _item(self, ref: dict, item: dict, description: str, toggle) -> QWidget:
         """A query or an operation, on or off, with its confidence when it is not exact."""

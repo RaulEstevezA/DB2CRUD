@@ -16,7 +16,7 @@ import type {
   TablePolicy,
 } from '../../core/crud/types.ts'
 import type { Decision } from '../../core/decisions/decision.ts'
-import type { ColumnSource, Conflict, Matching, TableMatch } from '../../core/matching/matching.ts'
+import type { ColumnSource, Conflict, Matching, ModelMatch as Match, TableMatch } from '../../core/matching/matching.ts'
 import type { CrudDesignState } from '../../hooks/useCrudDesign.ts'
 import { useI18n } from '../../i18n/useI18n.ts'
 import { ConfidenceBadge } from '../common/ConfidenceBadge.tsx'
@@ -173,7 +173,9 @@ function TableCard({ design, policy, match, onChange }: TableCardProps) {
           </div>
         ))}
       </div>
-      {match && <ModelMatch match={match} />}
+      {match?.models.map((item) => (
+        <ModelMatch key={item.direction} match={item} />
+      ))}
       {repository && (
         <ItemList
           title={t.queriesTitle}
@@ -256,27 +258,30 @@ function ItemList<T extends { id: string; name: string; include: Decision<boolea
   )
 }
 
-/** The model of a table and where each column comes from, with the conflicts between both. */
-function ModelMatch({ match }: { match: TableMatch }) {
+/** A model of a table (read, written or both) and where each column comes from or goes, with their conflicts. */
+function ModelMatch({ match }: { match: Match }) {
   const { t } = useI18n()
-  const { model } = match
+  const { model, direction } = match
+  const output = direction === 'output'
   const describe = (source: ColumnSource | null): string => {
     if (!source) return t.sourceNone
-    if (source.kind === 'field') return t.sourceField(source.field)
-    if (source.kind === 'lookup') return t.sourceLookup(source.field, source.table, source.by)
+    if (source.kind === 'field') return output ? t.targetField(source.field) : t.sourceField(source.field)
+    if (source.kind === 'lookup')
+      return output ? t.targetLookup(source.field, source.table, source.by) : t.sourceLookup(source.field, source.table, source.by)
     return t.sourceDatabase
   }
   const conflictText = (conflict: Conflict): string => {
     if (conflict.kind === 'length') return t.conflictLength(conflict.model, conflict.column)
-    if (conflict.kind === 'nullable') return t.conflictNullable
+    if (conflict.kind === 'nullable') return output ? t.conflictNullableOutput : t.conflictNullable
     if (conflict.kind === 'type') return t.conflictType(conflict.model, conflict.column)
+    if (conflict.kind === 'unknownValues') return t.conflictUnknownValues(conflict.values)
     return t.conflictValues(conflict.missing)
   }
   const reasons = (decision: Decision<unknown>) => decision.reasons.map((reason) => t.reason(reason)).join(' ')
   return (
     <details className="table-card__items" open={model.value !== null}>
       <summary>
-        {t.modelTitle}: <span className="mono">{model.value ?? t.noModel}</span>{' '}
+        {t.modelTitles[direction]}: <span className="mono">{model.value ?? t.noModel}</span>{' '}
         {model.confidence !== 'none' && <ConfidenceBadge confidence={model.confidence} title={reasons(model)} />}
       </summary>
       {model.value !== null && (
@@ -307,7 +312,7 @@ function ModelMatch({ match }: { match: TableMatch }) {
           ))}
           {match.unused.length > 0 && (
             <li className="item item--off">
-              <span className="item__description">{t.unusedFields(match.unused)}</span>
+              <span className="item__description">{t.unusedFields(match.unused, direction)}</span>
             </li>
           )}
         </ul>

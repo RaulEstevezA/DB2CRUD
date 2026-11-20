@@ -3,8 +3,11 @@ it corresponds to, and each column the field it comes from, every proposal with 
 a model and a column disagree (a longer text, an optional field for a required column, another type, enum values the
 column refuses), the conflict is shown and never resolved on its own. Mirrors web/src/core/matching/matching.ts.
 
-A matching is {"tables": [{table, model, columns, children, unused}]}; a column match {column, source, conflicts}; a
-source {kind: field, field} | {kind: lookup, field, table, by} | {kind: database}."""
+A suffix may give a model a direction: a `Request`, `Input` or `Command` only goes into the table, a `Response` or
+`Output` only comes out of it, so a table may have one model of each, matched with its columns on its own.
+
+A matching is {"tables": [{table, models: [{direction, model, columns, children, unused}]}]}; a column match {column,
+source, conflicts}; a source {kind: field, field} | {kind: lookup, field, table, by} | {kind: database}."""
 
 from ..analysis.constraints import read_constraints
 from ..decisions.decision import decision, reason
@@ -13,19 +16,33 @@ from ..model.naming import name_words, singularize
 
 # Names
 
-_MODEL_SUFFIXES = {"entity", "model", "dto", "record", "request", "response"}
+_SUFFIX_DIRECTIONS = {
+    "entity": "both",
+    "model": "both",
+    "dto": "both",
+    "record": "both",
+    "request": "input",
+    "input": "input",
+    "command": "input",
+    "response": "output",
+    "output": "output",
+}
+_DIRECTIONS = ("both", "input", "output")
 
 
 def _singular_words(words: list[str]) -> list[str]:
     return [*words[:-1], singularize(words[-1])] if words else words
 
 
-def _model_words(name: str) -> list[str]:
-    """The words a model name is compared by: without its suffixes, the last one singular."""
+def _model_name(name: str) -> tuple[list[str], str]:
+    """The words a model name is compared by (without its suffixes, the last one singular) and its direction."""
     words = name_words(name)
-    while len(words) > 1 and words[-1] in _MODEL_SUFFIXES:
-        words.pop()
-    return _singular_words(words)
+    direction = "both"
+    while len(words) > 1 and words[-1] in _SUFFIX_DIRECTIONS:
+        found = _SUFFIX_DIRECTIONS[words.pop()]
+        if direction == "both":
+            direction = found
+    return _singular_words(words), direction
 
 
 def _key(words: list[str]) -> str:
@@ -120,11 +137,25 @@ def _field_values(type_ref: dict, schema: dict) -> list[str] | None:
     return [js_string(value["value"] if value.get("value") is not None else value["name"]) for value in found["values"]]
 
 
-def _conflicts_of(field: dict, column: dict, table: dict, database: dict, schema: dict) -> list[dict]:
+def _conflicts_of(field: dict, column: dict, table: dict, database: dict, schema: dict, direction: str) -> list[dict]:
     """Where the field and the column disagree."""
     conflicts: list[dict] = []
     declared = read_constraints(field, _language(schema))["constraints"]
     column_type = column["type"]
+    sent = _field_values(field["type"], schema)
+    accepted = _accepted_values(column, table, database)
+    if direction == "output":
+        # Reading: a null or a value the model cannot take fails, a longer text does not
+        if column["nullable"] and not field.get("optional") and not field.get("nullable"):
+            conflicts.append({"kind": "nullable"})
+        if not _compatible(field["type"], column, schema):
+            conflicts.append({"kind": "type", "model": _type_name(field["type"]), "column": column_type["kind"]})
+        elif sent is not None and accepted is not None:
+            lower = [value.lower() for value in sent]
+            values = [value for value in accepted if value.lower() not in lower]
+            if values:
+                conflicts.append({"kind": "unknownValues", "values": values})
+        return conflicts
     max_length = declared.get("maxLength")
     if (
         column_type["kind"] == "text"
@@ -134,13 +165,14 @@ def _conflicts_of(field: dict, column: dict, table: dict, database: dict, schema
     ):
         conflicts.append({"kind": "length", "model": max_length, "column": column_type["length"]})
     required = not column["nullable"] and not column.get("default") and not column.get("generated")
-    if required and (field.get("optional") or field.get("nullable")):
+    # A field left out that has a value of its own still sends one
+    missing_value = field.get("nullable") or (field.get("optional") and field.get("defaultValue") is None)
+    if required and missing_value:
         conflicts.append({"kind": "nullable"})
     if not _compatible(field["type"], column, schema):
         conflicts.append({"kind": "type", "model": _type_name(field["type"]), "column": column_type["kind"]})
-    sent = _field_values(field["type"], schema)
-    accepted = _accepted_values(column, table, database)
-    if sent is not None and accepted is not None:
+    # Another type already says it all: its values are not compared
+    elif sent is not None and accepted is not None:
         # A value that differs only in case is converted on the way: only one the column does not have is a conflict
         lower = [value.lower() for value in accepted]
         missing = [value for value in sent if value.lower() not in lower]
@@ -164,18 +196,33 @@ def _fields_of(model: dict, schema: dict, seen: set | None = None) -> list[dict]
     return [*inherited, *model["fields"]]
 
 
-def _match_model(table: dict, schema: dict) -> dict:
-    """The model of a table: the one whose name, without its suffixes and plural, is the table's or its entity's."""
+def _match_model(table: dict, schema: dict) -> list[tuple[str, dict]]:
+    """The models of a table: those whose name, without its suffixes and plural, is the table's or its entity's, one
+    per direction (exact), or several of one direction for review."""
     names = [table["name"], *([table["entity"]] if table.get("entity") else [])]
     targets = [_key(_singular_words(name_words(name))) for name in names]
-    found = [model for model in schema["models"] if _key(_model_words(model["name"])) in targets]
-    options = [*(model["name"] for model in found), None]
-    if len(found) == 1:
-        return decision(found[0]["name"], "exact", [reason("modelName", {"model": found[0]["name"]})], options)
-    if len(found) > 1:
-        models = ", ".join(model["name"] for model in found)
-        return decision(found[0]["name"], "review", [reason("modelNames", {"models": models})], options)
-    return decision(None, "none", [reason("noModel")], [*(model["name"] for model in schema["models"]), None])
+    found = []
+    for model in schema["models"]:
+        words, direction = _model_name(model["name"])
+        if _key(words) in targets:
+            found.append((model["name"], direction))
+    if not found:
+        options = [*(model["name"] for model in schema["models"]), None]
+        return [("both", decision(None, "none", [reason("noModel")], options))]
+    result = []
+    for direction in _DIRECTIONS:
+        group = [name for name, item in found if item == direction]
+        if not group:
+            continue
+        options = [*group, None]
+        if len(group) == 1:
+            result.append((direction, decision(group[0], "exact", [reason("modelName", {"model": group[0]})], options)))
+        else:
+            models = ", ".join(group)
+            result.append(
+                (direction, decision(group[0], "review", [reason("modelNames", {"models": models})], options))
+            )
+    return result
 
 
 def _field_names(field: dict) -> list[str]:
@@ -188,7 +235,8 @@ def _field_names(field: dict) -> list[str]:
 
 
 def _field_for(column: dict, fields: list[dict], taken: set[str]) -> tuple[dict, str] | None:
-    """The field a column comes from: the same name (exact), or the same words in another convention (probable)."""
+    """The field a column comes from: the same name, or the same words in another convention (both exact); the second
+    value says whether the name is the same."""
     names = [column["name"], *([column["attribute"]] if column.get("attribute") else [])]
     free = [field for field in fields if field["name"] not in taken]
     exact = next((field for field in free if any(name in names for name in _field_names(field))), None)
@@ -261,7 +309,14 @@ def _children_for(field: dict, table: dict, database: dict) -> list[dict]:
 
 
 def _match_table(table: dict, database: dict, schema: dict) -> dict:
-    model = _match_model(table, schema)
+    models = [
+        _match_columns(table, direction, model, database, schema) for direction, model in _match_model(table, schema)
+    ]
+    return {"table": table["name"], "models": models}
+
+
+def _match_columns(table: dict, direction: str, model: dict, database: dict, schema: dict) -> dict:
+    """Where each column of a table comes from (or goes to) in one of its models."""
     definition = next((item for item in schema["models"] if item["name"] == model["value"]), None)
     fields = _fields_of(definition, schema) if definition is not None else []
     taken: set[str] = set()
@@ -275,7 +330,7 @@ def _match_table(table: dict, database: dict, schema: dict) -> dict:
         if found is not None:
             field, confidence = found
             taken.add(field["name"])
-            conflicts = _conflicts_of(field, column, table, database, schema)
+            conflicts = _conflicts_of(field, column, table, database, schema, direction)
             code = "fieldName" if confidence == "exact" else "fieldWords"
             source = {"kind": "field", "field": field["name"]}
             columns.append(
@@ -283,7 +338,7 @@ def _match_table(table: dict, database: dict, schema: dict) -> dict:
                     "column": column["name"],
                     "source": decision(
                         source,
-                        "conflict" if conflicts else confidence,
+                        "conflict" if conflicts else "exact",
                         [reason(code, {"field": field["name"]})],
                         options,
                     ),
@@ -312,7 +367,7 @@ def _match_table(table: dict, database: dict, schema: dict) -> dict:
                 }
             )
             continue
-        if column.get("generated"):
+        if column.get("generated") and direction != "output":
             source = {"kind": "database"}
             columns.append(
                 {
@@ -322,8 +377,10 @@ def _match_table(table: dict, database: dict, schema: dict) -> dict:
                 }
             )
             continue
-        # No field: the column keeps its default or null, unless it needs a value
-        required = not column["nullable"] and "default" not in column
+        # No field: the column keeps its default or null, unless it needs a value; a model that only reads skips it
+        required = (
+            direction != "output" and not column["nullable"] and "default" not in column and not column.get("generated")
+        )
         source_decision = (
             decision(None, "conflict", [reason("noFieldRequired")], options)
             if required
@@ -347,7 +404,7 @@ def _match_table(table: dict, database: dict, schema: dict) -> dict:
             choice = decision(found_tables[0]["name"], "review", [reason("childTables", params)], options)
         children.append({"field": field["name"], "table": choice})
     unused = [field["name"] for field in fields if field["name"] not in taken and not field.get("generated")]
-    return {"table": table["name"], "model": model, "columns": columns, "children": children, "unused": unused}
+    return {"direction": direction, "model": model, "columns": columns, "children": children, "unused": unused}
 
 
 def match_models(database: dict, schema: dict) -> dict:

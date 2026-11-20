@@ -2,480 +2,680 @@
  "tables": [
   {
    "table": "teams",
-   "model": {
-    "value": "Team",
-    "status": "active",
-    "confidence": "exact",
-    "reasons": [
-     {
-      "code": "modelName",
-      "params": {
-       "model": "Team"
-      }
-     }
-    ],
-    "options": [
-     "Team",
-     null
-    ]
-   },
-   "columns": [
+   "models": [
     {
-     "column": "id",
-     "source": {
-      "value": {
-       "kind": "field",
-       "field": "id"
-      },
+     "direction": "both",
+     "model": {
+      "value": "Team",
       "status": "active",
       "confidence": "exact",
       "reasons": [
        {
-        "code": "fieldName",
+        "code": "modelName",
         "params": {
+         "model": "Team"
+        }
+       }
+      ],
+      "options": [
+       "Team",
+       null
+      ]
+     },
+     "columns": [
+      {
+       "column": "id",
+       "source": {
+        "value": {
+         "kind": "field",
          "field": "id"
-        }
-       }
-      ],
-      "options": [
-       {
-        "kind": "field",
-        "field": "id"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldName",
+          "params": {
+           "field": "id"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "title"
+         },
+         {
+          "kind": "field",
+          "field": "motto"
+         },
+         null
+        ]
        },
-       {
-        "kind": "field",
-        "field": "title"
-       },
-       {
-        "kind": "field",
-        "field": "motto"
-       },
-       null
-      ]
-     },
-     "conflicts": []
-    },
-    {
-     "column": "title",
-     "source": {
-      "value": {
-       "kind": "field",
-       "field": "title"
+       "conflicts": []
       },
-      "status": "active",
-      "confidence": "exact",
-      "reasons": [
-       {
-        "code": "fieldName",
-        "params": {
+      {
+       "column": "title",
+       "source": {
+        "value": {
+         "kind": "field",
          "field": "title"
-        }
-       }
-      ],
-      "options": [
-       {
-        "kind": "field",
-        "field": "id"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldName",
+          "params": {
+           "field": "title"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "title"
+         },
+         {
+          "kind": "field",
+          "field": "motto"
+         },
+         null
+        ]
        },
-       {
-        "kind": "field",
-        "field": "title"
-       },
-       {
-        "kind": "field",
-        "field": "motto"
-       },
-       null
-      ]
-     },
-     "conflicts": []
+       "conflicts": []
+      }
+     ],
+     "children": [],
+     "unused": [
+      "motto"
+     ]
     }
-   ],
-   "children": [],
-   "unused": [
-    "motto"
    ]
   },
   {
    "table": "users",
-   "model": {
-    "value": "UserRequest",
-    "status": "pending",
-    "confidence": "review",
-    "reasons": [
-     {
-      "code": "modelNames",
-      "params": {
-       "models": "UserRequest, UserResponse"
-      }
-     }
-    ],
-    "options": [
-     "UserRequest",
-     "UserResponse",
-     null
-    ]
-   },
-   "columns": [
+   "models": [
     {
-     "column": "id",
-     "source": {
-      "value": {
-       "kind": "field",
-       "field": "id"
-      },
+     "direction": "input",
+     "model": {
+      "value": "UserRequest",
       "status": "active",
       "confidence": "exact",
       "reasons": [
        {
-        "code": "fieldName",
+        "code": "modelName",
         "params": {
+         "model": "UserRequest"
+        }
+       }
+      ],
+      "options": [
+       "UserRequest",
+       null
+      ]
+     },
+     "columns": [
+      {
+       "column": "id",
+       "source": {
+        "value": {
+         "kind": "field",
          "field": "id"
-        }
-       }
-      ],
-      "options": [
-       {
-        "kind": "field",
-        "field": "id"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldName",
+          "params": {
+           "field": "id"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "userName"
+         },
+         {
+          "kind": "field",
+          "field": "age"
+         },
+         {
+          "kind": "field",
+          "field": "role"
+         },
+         {
+          "kind": "field",
+          "field": "teamTitle"
+         },
+         {
+          "kind": "field",
+          "field": "joined"
+         },
+         null
+        ]
        },
-       {
-        "kind": "field",
-        "field": "userName"
-       },
-       {
-        "kind": "field",
-        "field": "age"
-       },
-       {
-        "kind": "field",
-        "field": "role"
-       },
-       {
-        "kind": "field",
-        "field": "teamTitle"
-       },
-       {
-        "kind": "field",
-        "field": "joined"
-       },
-       null
-      ]
-     },
-     "conflicts": []
-    },
-    {
-     "column": "user_name",
-     "source": {
-      "value": {
-       "kind": "field",
-       "field": "userName"
+       "conflicts": []
       },
-      "status": "pending",
-      "confidence": "conflict",
-      "reasons": [
-       {
-        "code": "fieldWords",
-        "params": {
+      {
+       "column": "user_name",
+       "source": {
+        "value": {
+         "kind": "field",
          "field": "userName"
+        },
+        "status": "pending",
+        "confidence": "conflict",
+        "reasons": [
+         {
+          "code": "fieldWords",
+          "params": {
+           "field": "userName"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "userName"
+         },
+         {
+          "kind": "field",
+          "field": "age"
+         },
+         {
+          "kind": "field",
+          "field": "role"
+         },
+         {
+          "kind": "field",
+          "field": "teamTitle"
+         },
+         {
+          "kind": "field",
+          "field": "joined"
+         },
+         null
+        ]
+       },
+       "conflicts": [
+        {
+         "kind": "length",
+         "model": 100,
+         "column": 50
         }
-       }
-      ],
-      "options": [
-       {
-        "kind": "field",
-        "field": "id"
-       },
-       {
-        "kind": "field",
-        "field": "userName"
-       },
-       {
-        "kind": "field",
-        "field": "age"
-       },
-       {
-        "kind": "field",
-        "field": "role"
-       },
-       {
-        "kind": "field",
-        "field": "teamTitle"
-       },
-       {
-        "kind": "field",
-        "field": "joined"
-       },
-       null
-      ]
-     },
-     "conflicts": [
-      {
-       "kind": "length",
-       "model": 100,
-       "column": 50
-      }
-     ]
-    },
-    {
-     "column": "age",
-     "source": {
-      "value": {
-       "kind": "field",
-       "field": "age"
-      },
-      "status": "pending",
-      "confidence": "conflict",
-      "reasons": [
-       {
-        "code": "fieldName",
-        "params": {
-         "field": "age"
-        }
-       }
-      ],
-      "options": [
-       {
-        "kind": "field",
-        "field": "id"
-       },
-       {
-        "kind": "field",
-        "field": "userName"
-       },
-       {
-        "kind": "field",
-        "field": "age"
-       },
-       {
-        "kind": "field",
-        "field": "role"
-       },
-       {
-        "kind": "field",
-        "field": "teamTitle"
-       },
-       {
-        "kind": "field",
-        "field": "joined"
-       },
-       null
-      ]
-     },
-     "conflicts": [
-      {
-       "kind": "type",
-       "model": "string",
-       "column": "integer"
-      }
-     ]
-    },
-    {
-     "column": "role",
-     "source": {
-      "value": {
-       "kind": "field",
-       "field": "role"
-      },
-      "status": "pending",
-      "confidence": "conflict",
-      "reasons": [
-       {
-        "code": "fieldName",
-        "params": {
-         "field": "role"
-        }
-       }
-      ],
-      "options": [
-       {
-        "kind": "field",
-        "field": "id"
-       },
-       {
-        "kind": "field",
-        "field": "userName"
-       },
-       {
-        "kind": "field",
-        "field": "age"
-       },
-       {
-        "kind": "field",
-        "field": "role"
-       },
-       {
-        "kind": "field",
-        "field": "teamTitle"
-       },
-       {
-        "kind": "field",
-        "field": "joined"
-       },
-       null
-      ]
-     },
-     "conflicts": [
-      {
-       "kind": "values",
-       "missing": [
-        "ADMIN"
        ]
-      }
-     ]
-    },
-    {
-     "column": "team_id",
-     "source": {
-      "value": {
-       "kind": "lookup",
-       "field": "teamTitle",
-       "table": "teams",
-       "by": "title"
       },
-      "status": "pending",
-      "confidence": "review",
-      "reasons": [
-       {
-        "code": "lookupNotUnique",
-        "params": {
+      {
+       "column": "age",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "age"
+        },
+        "status": "pending",
+        "confidence": "conflict",
+        "reasons": [
+         {
+          "code": "fieldName",
+          "params": {
+           "field": "age"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "userName"
+         },
+         {
+          "kind": "field",
+          "field": "age"
+         },
+         {
+          "kind": "field",
+          "field": "role"
+         },
+         {
+          "kind": "field",
+          "field": "teamTitle"
+         },
+         {
+          "kind": "field",
+          "field": "joined"
+         },
+         null
+        ]
+       },
+       "conflicts": [
+        {
+         "kind": "type",
+         "model": "string",
+         "column": "integer"
+        }
+       ]
+      },
+      {
+       "column": "role",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "role"
+        },
+        "status": "pending",
+        "confidence": "conflict",
+        "reasons": [
+         {
+          "code": "fieldName",
+          "params": {
+           "field": "role"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "userName"
+         },
+         {
+          "kind": "field",
+          "field": "age"
+         },
+         {
+          "kind": "field",
+          "field": "role"
+         },
+         {
+          "kind": "field",
+          "field": "teamTitle"
+         },
+         {
+          "kind": "field",
+          "field": "joined"
+         },
+         null
+        ]
+       },
+       "conflicts": [
+        {
+         "kind": "values",
+         "missing": [
+          "ADMIN"
+         ]
+        }
+       ]
+      },
+      {
+       "column": "team_id",
+       "source": {
+        "value": {
+         "kind": "lookup",
          "field": "teamTitle",
          "table": "teams",
-         "column": "title"
-        }
-       }
-      ],
-      "options": [
-       {
-        "kind": "lookup",
-        "field": "teamTitle",
-        "table": "teams",
-        "by": "title"
+         "by": "title"
+        },
+        "status": "pending",
+        "confidence": "review",
+        "reasons": [
+         {
+          "code": "lookupNotUnique",
+          "params": {
+           "field": "teamTitle",
+           "table": "teams",
+           "column": "title"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "lookup",
+          "field": "teamTitle",
+          "table": "teams",
+          "by": "title"
+         },
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "userName"
+         },
+         {
+          "kind": "field",
+          "field": "age"
+         },
+         {
+          "kind": "field",
+          "field": "role"
+         },
+         {
+          "kind": "field",
+          "field": "teamTitle"
+         },
+         {
+          "kind": "field",
+          "field": "joined"
+         },
+         null
+        ]
        },
-       {
-        "kind": "field",
-        "field": "id"
+       "conflicts": []
+      },
+      {
+       "column": "joined",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "joined"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldName",
+          "params": {
+           "field": "joined"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "userName"
+         },
+         {
+          "kind": "field",
+          "field": "age"
+         },
+         {
+          "kind": "field",
+          "field": "role"
+         },
+         {
+          "kind": "field",
+          "field": "teamTitle"
+         },
+         {
+          "kind": "field",
+          "field": "joined"
+         },
+         null
+        ]
        },
-       {
-        "kind": "field",
-        "field": "userName"
-       },
-       {
-        "kind": "field",
-        "field": "age"
-       },
-       {
-        "kind": "field",
-        "field": "role"
-       },
-       {
-        "kind": "field",
-        "field": "teamTitle"
-       },
-       {
-        "kind": "field",
-        "field": "joined"
-       },
-       null
-      ]
-     },
-     "conflicts": []
+       "conflicts": []
+      }
+     ],
+     "children": [],
+     "unused": []
     },
     {
-     "column": "joined",
-     "source": {
-      "value": {
-       "kind": "field",
-       "field": "joined"
-      },
+     "direction": "output",
+     "model": {
+      "value": "UserResponse",
       "status": "active",
       "confidence": "exact",
       "reasons": [
        {
-        "code": "fieldName",
+        "code": "modelName",
         "params": {
-         "field": "joined"
+         "model": "UserResponse"
         }
        }
       ],
       "options": [
-       {
-        "kind": "field",
-        "field": "id"
-       },
-       {
-        "kind": "field",
-        "field": "userName"
-       },
-       {
-        "kind": "field",
-        "field": "age"
-       },
-       {
-        "kind": "field",
-        "field": "role"
-       },
-       {
-        "kind": "field",
-        "field": "teamTitle"
-       },
-       {
-        "kind": "field",
-        "field": "joined"
-       },
+       "UserResponse",
        null
       ]
      },
-     "conflicts": []
+     "columns": [
+      {
+       "column": "id",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "id"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldName",
+          "params": {
+           "field": "id"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "userName"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "user_name",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "userName"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldWords",
+          "params": {
+           "field": "userName"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "userName"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "age",
+       "source": {
+        "value": null,
+        "status": "active",
+        "confidence": "none",
+        "reasons": [
+         {
+          "code": "noField"
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "userName"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "role",
+       "source": {
+        "value": null,
+        "status": "active",
+        "confidence": "none",
+        "reasons": [
+         {
+          "code": "noField"
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "userName"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "team_id",
+       "source": {
+        "value": null,
+        "status": "active",
+        "confidence": "none",
+        "reasons": [
+         {
+          "code": "noField"
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "userName"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "joined",
+       "source": {
+        "value": null,
+        "status": "active",
+        "confidence": "none",
+        "reasons": [
+         {
+          "code": "noField"
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "userName"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      }
+     ],
+     "children": [],
+     "unused": []
     }
-   ],
-   "children": [],
-   "unused": []
+   ]
   },
   {
    "table": "audit",
-   "model": {
-    "value": null,
-    "status": "active",
-    "confidence": "none",
-    "reasons": [
-     {
-      "code": "noModel"
-     }
-    ],
-    "options": [
-     "UserRequest",
-     "UserResponse",
-     "Team",
-     null
-    ]
-   },
-   "columns": [
+   "models": [
     {
-     "column": "id",
-     "source": {
+     "direction": "both",
+     "model": {
       "value": null,
       "status": "active",
       "confidence": "none",
-      "reasons": [],
-      "options": []
+      "reasons": [
+       {
+        "code": "noModel"
+       }
+      ],
+      "options": [
+       "UserRequest",
+       "UserResponse",
+       "Team",
+       null
+      ]
      },
-     "conflicts": []
-    },
-    {
-     "column": "happened",
-     "source": {
-      "value": null,
-      "status": "active",
-      "confidence": "none",
-      "reasons": [],
-      "options": []
-     },
-     "conflicts": []
+     "columns": [
+      {
+       "column": "id",
+       "source": {
+        "value": null,
+        "status": "active",
+        "confidence": "none",
+        "reasons": [],
+        "options": []
+       },
+       "conflicts": []
+      },
+      {
+       "column": "happened",
+       "source": {
+        "value": null,
+        "status": "active",
+        "confidence": "none",
+        "reasons": [],
+        "options": []
+       },
+       "conflicts": []
+      }
+     ],
+     "children": [],
+     "unused": []
     }
-   ],
-   "children": [],
-   "unused": []
+   ]
   }
  ]
 }

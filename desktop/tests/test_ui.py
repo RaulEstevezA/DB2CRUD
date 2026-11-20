@@ -99,7 +99,7 @@ def test_the_application_models_are_matched_with_the_tables(window):
     assert session.models_read["ok"]
     assert pane.status.text() == EN.models_summary("TypeScript", 1)
     match = next(item for item in session.matching["tables"] if item["table"] == "customers")
-    assert match["model"]["value"] == "Customer"
+    assert match["models"][0]["model"]["value"] == "Customer"
     texts = [label.text() for label in window.design_pane.findChildren(QLabel)]
     assert "← email" in texts
     # The database tab keeps its own text

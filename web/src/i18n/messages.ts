@@ -5,6 +5,7 @@
  * checks. To add a text, add it to both. Texts that depend on a value are functions.
  */
 
+import type { Direction } from '../core/matching/matching.ts'
 import type { WorkspacePart } from '../app/workspaceParts.ts'
 import type { Confidence, Reason } from '../core/decisions/decision.ts'
 import type { ChildrenPolicy, OperationCheck, OperationDesign, PolicyDecisionKind, QueryKind, TableRole } from '../core/crud/types.ts'
@@ -323,18 +324,22 @@ const en = {
         ? 'There is no model in this text.'
         : `These models cannot be read (${code}).`,
   modelsSummary: (format: string, count: number) => `${format} · ${en$(count)} ${plural(count, 'model', 'models')}`,
-  modelTitle: 'Application model',
+  modelTitles: { both: 'Application model', input: 'Model written', output: 'Model read' } satisfies Record<Direction, string>,
   noModel: 'none',
   sourceNone: 'no field',
   sourceField: (field: string) => `← ${field}`,
   sourceLookup: (field: string, table: string, by: string) => `← ${field}, looked up in ${table}.${by}`,
+  targetField: (field: string) => `→ ${field}`,
+  targetLookup: (field: string, table: string, by: string) => `→ ${field}, from ${table}.${by}`,
   sourceDatabase: 'filled by the database',
   sourceChildren: (table: string | null) => (table ? `rows of ${table}` : 'no table'),
-  unusedFields: (fields: string[]) => `Not saved: ${fields.join(', ')}`,
+  unusedFields: (fields: string[], direction: Direction) => `${direction === 'output' ? 'Not filled' : 'Not saved'}: ${fields.join(', ')}`,
   conflictLength: (model: number, column: number) => `the model allows ${en$(model)} characters, the column ${en$(column)}`,
   conflictNullable: 'optional in the model, required in the column',
+  conflictNullableOutput: 'required in the model, may be null in the column',
   conflictType: (model: string, column: string) => `${model} in the model, ${column} in the column`,
   conflictValues: (missing: string[]) => `the column does not accept ${missing.join(', ')}`,
+  conflictUnknownValues: (values: string[]) => `the model does not accept ${values.join(', ')}`,
   fileTreeLabel: 'Generated files',
 }
 
@@ -602,18 +607,22 @@ const es: Messages = {
         ? 'Este texto no tiene ningún modelo.'
         : `No se pueden leer estos modelos (${code}).`,
   modelsSummary: (format, count) => `${format} · ${es$(count)} ${plural(count, 'modelo', 'modelos')}`,
-  modelTitle: 'Modelo de aplicación',
+  modelTitles: { both: 'Modelo de aplicación', input: 'Modelo que se escribe', output: 'Modelo que se lee' },
   noModel: 'ninguno',
   sourceNone: 'sin campo',
   sourceField: (field) => `← ${field}`,
   sourceLookup: (field, table, by) => `← ${field}, buscado en ${table}.${by}`,
+  targetField: (field) => `→ ${field}`,
+  targetLookup: (field, table, by) => `→ ${field}, desde ${table}.${by}`,
   sourceDatabase: 'la rellena la base de datos',
   sourceChildren: (table) => (table ? `filas de ${table}` : 'ninguna tabla'),
-  unusedFields: (fields) => `No se guardan: ${fields.join(', ')}`,
+  unusedFields: (fields, direction) => `${direction === 'output' ? 'No se rellenan' : 'No se guardan'}: ${fields.join(', ')}`,
   conflictLength: (model, column) => `el modelo admite ${es$(model)} caracteres; la columna, ${es$(column)}`,
   conflictNullable: 'opcional en el modelo, obligatoria en la columna',
+  conflictNullableOutput: 'obligatorio en el modelo, la columna admite nulos',
   conflictType: (model, column) => `${model} en el modelo, ${column} en la columna`,
   conflictValues: (missing) => `la columna no admite ${missing.join(', ')}`,
+  conflictUnknownValues: (values) => `el modelo no admite ${values.join(', ')}`,
   fileTreeLabel: 'Archivos generados',
 }
 
