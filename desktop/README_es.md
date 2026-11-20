@@ -2,7 +2,7 @@
 
 Versión de escritorio de DB2CRUD: Python + PySide6.
 
-Hace lo mismo que la versión web, en tu equipo y sin navegador: pasa los mismos casos de prueba de [`shared/test-cases/`](../shared/README.md) y lee los modelos exactamente igual.
+Hace lo mismo que la versión web, en tu equipo y sin navegador: pasa los mismos casos de prueba de [`shared/test-cases/`](../shared/README.md) y lee los modelos exactamente igual. Llega más lejos para trabajos grandes: abre varios archivos o la carpeta entera de un proyecto (modelos, migraciones, configuración), dejando fuera las dependencias y las compilaciones, mientras que la versión web lee un solo texto.
 
 Qué hace la herramienta y su filosofía están en el [README principal](../README_es.md).
 

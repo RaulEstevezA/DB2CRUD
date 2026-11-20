@@ -2,7 +2,7 @@
 
 Desktop version of DB2CRUD: Python + PySide6.
 
-It does the same as the web version, on your computer and without a browser: it passes the same test cases from [`shared/test-cases/`](../shared/README.md) and reads models exactly the same way.
+It does the same as the web version, on your computer and without a browser: it passes the same test cases from [`shared/test-cases/`](../shared/README.md) and reads models exactly the same way. It goes further for larger work: it opens several files or a whole project folder at once (models, migrations, configuration), leaving out dependencies and builds, while the web version reads one text.
 
 What the tool does and its philosophy are in the [main README](../README_en.md).
 
