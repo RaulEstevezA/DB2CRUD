@@ -282,6 +282,30 @@ const en = {
         return `${p(params, 'columns')} looks like a secret: it is never returned.`
       case 'noSecrets':
         return 'No column looks like a secret.'
+      case 'modelName':
+        return `The model ${p(params, 'model')} has the name of the table.`
+      case 'modelNames':
+        return `Several models have the name of the table (${p(params, 'models')}): choose the one the service takes.`
+      case 'noModel':
+        return 'No model has the name of the table: the service works with the entity.'
+      case 'fieldName':
+        return `The field ${p(params, 'field')} has the name of the column.`
+      case 'fieldWords':
+        return `The field ${p(params, 'field')} has the name of the column in another convention.`
+      case 'lookupUnique':
+        return `${p(params, 'field')} names a row of ${p(params, 'table')} by its ${p(params, 'column')}, which is unique: the service looks the key up.`
+      case 'lookupNotUnique':
+        return `${p(params, 'field')} names a row of ${p(params, 'table')} by its ${p(params, 'column')}, but several rows may have it: check the lookup.`
+      case 'generatedColumn':
+        return 'The database fills the column: the model does not send it.'
+      case 'noFieldRequired':
+        return 'No field fills the column, and it needs a value: give it a field or a default.'
+      case 'noField':
+        return 'No field fills the column: it keeps its default or null.'
+      case 'childRows':
+        return `${p(params, 'field')} lists the rows of ${p(params, 'table')}.`
+      case 'childTables':
+        return `${p(params, 'field')} may list the rows of several tables (${p(params, 'tables')}): choose one.`
       case 'manual':
         return 'You chose it.'
     }
@@ -512,6 +536,30 @@ const es: Messages = {
         return `${p(params, 'columns')} parece un secreto: nunca se devuelve.`
       case 'noSecrets':
         return 'Ninguna columna parece un secreto.'
+      case 'modelName':
+        return `El modelo ${p(params, 'model')} tiene el nombre de la tabla.`
+      case 'modelNames':
+        return `Varios modelos tienen el nombre de la tabla (${p(params, 'models')}): elige el que recibe el servicio.`
+      case 'noModel':
+        return 'Ningún modelo tiene el nombre de la tabla: el servicio trabaja con la entidad.'
+      case 'fieldName':
+        return `El campo ${p(params, 'field')} tiene el nombre de la columna.`
+      case 'fieldWords':
+        return `El campo ${p(params, 'field')} tiene el nombre de la columna en otra convención.`
+      case 'lookupUnique':
+        return `${p(params, 'field')} nombra una fila de ${p(params, 'table')} por su ${p(params, 'column')}, que es único: el servicio busca la clave.`
+      case 'lookupNotUnique':
+        return `${p(params, 'field')} nombra una fila de ${p(params, 'table')} por su ${p(params, 'column')}, pero varias filas pueden tenerlo: revisa la búsqueda.`
+      case 'generatedColumn':
+        return 'La base de datos rellena la columna: el modelo no la envía.'
+      case 'noFieldRequired':
+        return 'Ningún campo rellena la columna, y necesita un valor: dale un campo o un valor por defecto.'
+      case 'noField':
+        return 'Ningún campo rellena la columna: se queda con su valor por defecto o nulo.'
+      case 'childRows':
+        return `${p(params, 'field')} enumera las filas de ${p(params, 'table')}.`
+      case 'childTables':
+        return `${p(params, 'field')} puede enumerar las filas de varias tablas (${p(params, 'tables')}): elige una.`
       case 'manual':
         return 'Lo has elegido tú.'
     }

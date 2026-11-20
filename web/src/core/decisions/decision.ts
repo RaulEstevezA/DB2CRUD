@@ -42,6 +42,19 @@ export type ReasonCode =
   // Hidden columns
   | 'secretNamed'
   | 'noSecrets'
+  // Matching application models
+  | 'modelName'
+  | 'modelNames'
+  | 'noModel'
+  | 'fieldName'
+  | 'fieldWords'
+  | 'lookupUnique'
+  | 'lookupNotUnique'
+  | 'generatedColumn'
+  | 'noFieldRequired'
+  | 'noField'
+  | 'childRows'
+  | 'childTables'
   // The user chose it
   | 'manual'
 
