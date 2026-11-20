@@ -26,6 +26,10 @@ export interface MapperSource {
   kind: 'mapper'
   /** The model mapping (`Source->Target`) */
   mapping: string
+  /** The side of the mapping the table is (as in `MapperRelation`) */
+  side: 'source' | 'target'
+  /** The target field of the relation in the mapping: the table's field, or the application model's */
+  target: string
   /** The fields of the application model it uses (paths joined by dots), or fills */
   fields: string[]
   transform: string
@@ -88,7 +92,15 @@ export function mapperSource(
   if (!field) return null
   const fields = relation.side === 'target' ? field.sources.map((path) => path.join('.')) : [field.target]
   const inverse = invertible(field.transform)
-  const source: MapperSource = { kind: 'mapper', mapping: relation.mapping.id, fields, transform: field.transform.kind, inverse }
+  const source: MapperSource = {
+    kind: 'mapper',
+    mapping: relation.mapping.id,
+    side: relation.side,
+    target: field.target,
+    fields,
+    transform: field.transform.kind,
+    inverse,
+  }
   const params = { fields: fields.join(', '), transform: field.transform.kind }
   if (field.status === 'pending') return { source, confidence: 'review', reasons: [reason('mapperPending', params)] }
   return inverse

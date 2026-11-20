@@ -88,6 +88,8 @@
         "value": {
          "kind": "mapper",
          "mapping": "CustomerForm->Customer",
+         "side": "target",
+         "target": "email",
          "fields": [
           "email"
          ],
@@ -109,6 +111,8 @@
          {
           "kind": "mapper",
           "mapping": "CustomerForm->Customer",
+          "side": "target",
+          "target": "email",
           "fields": [
            "email"
           ],
@@ -162,6 +166,8 @@
         "value": {
          "kind": "mapper",
          "mapping": "CustomerForm->Customer",
+         "side": "target",
+         "target": "fullName",
          "fields": [
           "firstName",
           "lastName"
@@ -184,6 +190,8 @@
          {
           "kind": "mapper",
           "mapping": "CustomerForm->Customer",
+          "side": "target",
+          "target": "fullName",
           "fields": [
            "firstName",
            "lastName"
@@ -238,6 +246,8 @@
         "value": {
          "kind": "mapper",
          "mapping": "CustomerForm->Customer",
+         "side": "target",
+         "target": "status",
          "fields": [
           "status"
          ],
@@ -259,6 +269,8 @@
          {
           "kind": "mapper",
           "mapping": "CustomerForm->Customer",
+          "side": "target",
+          "target": "status",
           "fields": [
            "status"
           ],
@@ -312,6 +324,8 @@
         "value": {
          "kind": "mapper",
          "mapping": "CustomerForm->Customer",
+         "side": "target",
+         "target": "createdAt",
          "fields": [
           "signedUp"
          ],
@@ -333,6 +347,8 @@
          {
           "kind": "mapper",
           "mapping": "CustomerForm->Customer",
+          "side": "target",
+          "target": "createdAt",
           "fields": [
            "signedUp"
           ],
@@ -386,6 +402,8 @@
         "value": {
          "kind": "mapper",
          "mapping": "CustomerForm->Customer",
+         "side": "target",
+         "target": "balanceCents",
          "fields": [
           "balance"
          ],
@@ -407,6 +425,8 @@
          {
           "kind": "mapper",
           "mapping": "CustomerForm->Customer",
+          "side": "target",
+          "target": "balanceCents",
           "fields": [
            "balance"
           ],
@@ -460,6 +480,8 @@
         "value": {
          "kind": "mapper",
          "mapping": "CustomerForm->Customer",
+         "side": "target",
+         "target": "nickname",
          "fields": [
           "nickname"
          ],
@@ -481,6 +503,8 @@
          {
           "kind": "mapper",
           "mapping": "CustomerForm->Customer",
+          "side": "target",
+          "target": "nickname",
           "fields": [
            "nickname"
           ],

@@ -6,7 +6,7 @@ otherwise that direction is left for review and the generated code leaves a `TOD
 web/src/core/matching/mapper.ts.
 
 A relation is {mapping, side: source | target (the table's), model (the application model), tableFields}; a source
-{kind: mapper, mapping, fields, transform, inverse}."""
+{kind: mapper, mapping, side, target, fields, transform, inverse}."""
 
 from ..decisions.decision import reason
 from ..interop.mapper.read import invertible
@@ -68,6 +68,8 @@ def mapper_source(relation: dict, column: dict, taken: set[str]) -> tuple[dict, 
     source = {
         "kind": "mapper",
         "mapping": relation["mapping"]["id"],
+        "side": relation["side"],
+        "target": field["target"],
         "fields": fields,
         "transform": kind,
         "inverse": inverse,

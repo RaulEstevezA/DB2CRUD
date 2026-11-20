@@ -30,6 +30,8 @@
         "value": {
          "kind": "mapper",
          "mapping": "Order->OrderSummary",
+         "side": "source",
+         "target": "id",
          "fields": [
           "id"
          ],
@@ -51,6 +53,8 @@
          {
           "kind": "mapper",
           "mapping": "Order->OrderSummary",
+          "side": "source",
+          "target": "id",
           "fields": [
            "id"
           ],
@@ -125,6 +129,8 @@
         "value": {
          "kind": "mapper",
          "mapping": "Order->OrderSummary",
+         "side": "source",
+         "target": "total",
          "fields": [
           "total"
          ],
@@ -146,6 +152,8 @@
          {
           "kind": "mapper",
           "mapping": "Order->OrderSummary",
+          "side": "source",
+          "target": "total",
           "fields": [
            "total"
           ],
@@ -183,6 +191,8 @@
         "value": {
          "kind": "mapper",
          "mapping": "Order->OrderSummary",
+         "side": "source",
+         "target": "placedAt",
          "fields": [
           "placedAt"
          ],
@@ -204,6 +214,8 @@
          {
           "kind": "mapper",
           "mapping": "Order->OrderSummary",
+          "side": "source",
+          "target": "placedAt",
           "fields": [
            "placedAt"
           ],
@@ -241,6 +253,8 @@
         "value": {
          "kind": "mapper",
          "mapping": "Order->OrderSummary",
+         "side": "source",
+         "target": "label",
          "fields": [
           "label"
          ],
@@ -262,6 +276,8 @@
          {
           "kind": "mapper",
           "mapping": "Order->OrderSummary",
+          "side": "source",
+          "target": "label",
           "fields": [
            "label"
           ],
