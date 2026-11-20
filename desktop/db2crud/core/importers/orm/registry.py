@@ -10,9 +10,17 @@ from .prisma import PRISMA_READER
 from .sqlalchemy import SQLALCHEMY_READER
 from .sqlmodel import SQLMODEL_READER
 from .tortoise import TORTOISE_READER
+from .typeorm import TYPEORM_READER
 from .types import OrmReader
 
-ORM_READERS: list[OrmReader] = [SQLALCHEMY_READER, SQLMODEL_READER, DJANGO_READER, TORTOISE_READER, PRISMA_READER]
+ORM_READERS: list[OrmReader] = [
+    SQLALCHEMY_READER,
+    SQLMODEL_READER,
+    DJANGO_READER,
+    TORTOISE_READER,
+    PRISMA_READER,
+    TYPEORM_READER,
+]
 
 
 def detect_orm(files: list[dict]) -> OrmReader | None:

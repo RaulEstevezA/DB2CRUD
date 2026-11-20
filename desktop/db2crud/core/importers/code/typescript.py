@@ -14,7 +14,7 @@ from .raw import MISSING, TypeTable, build_schema, parse_literal, raw
 from .type_syntax import TypeSyntax, read_type
 from .zod import ZodReader
 
-_LEXER = LexerConfig(
+TYPESCRIPT_LEXER = LexerConfig(
     line_comments=C_LIKE.line_comments,
     block_comments=C_LIKE.block_comments,
     strings=(StringRule("`", "`", True, True), *C_LIKE.strings),
@@ -100,7 +100,7 @@ def _type_of_initializer(text: str):
 def _parse_jsdoc_type(text: str):
     cleaned = re.sub(r"^\(|\)$", "", text).replace("Object.<", "Object<").replace("*", "any")
     try:
-        tokens = tokenize(cleaned, _LEXER)
+        tokens = tokenize(cleaned, TYPESCRIPT_LEXER)
     except LexError:
         return None
     type_ref = read_type(Cursor(tokens), _JSDOC_SYNTAX)
@@ -663,7 +663,7 @@ def _parse_script(text: str, javascript: bool) -> dict:
     if trim(text) == "":
         return failure("empty")
     try:
-        tokens = tokenize(text, _LEXER)
+        tokens = tokenize(text, TYPESCRIPT_LEXER)
     except LexError as error:
         return failure(error.code, position_at(text, error.index))
     reader = _Reader(text, tokens, javascript)
