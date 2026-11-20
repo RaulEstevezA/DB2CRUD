@@ -18,10 +18,16 @@ CASES = sorted((SHARED_CASES / "outputs").glob("*.json"))
 def test_writes_the_same_project(path):
     case = json.loads(path.read_text(encoding="utf-8"))
     schema = case["schema"]
-    design = propose_crud(schema)
+    # A scenario with application models proposes their matching and writes their conversions too
+    models = case.get("models")
+    model_schema = models["schema"] if models else None
+    project = models["project"] if models else None
+    design = propose_crud(schema, None, model_schema, project)
     for item in case["decisions"]:
-        design = propose_crud(schema, decide_policy(design, item["table"], item["decision"], item["value"]))
-    files = {file["path"]: file["content"] for file in generate_project(schema, design, case["settings"])}
+        decided = decide_policy(design, item["table"], item["decision"], item["value"])
+        design = propose_crud(schema, decided, model_schema, project)
+    written = generate_project(schema, design, case["settings"], models)
+    files = {file["path"]: file["content"] for file in written}
     assert sorted(files) == sorted(case["files"])
     for name, content in case["files"].items():
         assert files[name] == content, name

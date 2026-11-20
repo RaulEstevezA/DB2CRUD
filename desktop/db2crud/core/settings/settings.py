@@ -163,7 +163,7 @@ DEFAULT_SETTINGS = {
     "entities": "missing",
     "entitiesModule": "app.entities",
     "modelsSource": "copy",
-    "modelsModule": "app.models",
+    "modelsModule": "app.application_models",
     "services": True,
     "serviceTypes": "entities",
     "dtoKind": "pydantic",
