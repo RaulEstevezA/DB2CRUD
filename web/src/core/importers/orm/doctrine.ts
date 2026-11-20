@@ -12,7 +12,7 @@ import { checkOf } from '../../schema/checks.ts'
 import type { DbColumn, DbEnum, DbNote, DbSchema, DbTable, DbType, Dialect, ReferentialAction } from '../../schema/types.ts'
 import { Cursor, tokenize, type Token } from '../code/lexer.ts'
 import { PHP_LEXER } from '../code/php.ts'
-import { booleanOf, literalOf, nameOf, numberOf, readExpression, stringOf, textOf, type Expr } from './expressions.ts'
+import { booleanOf, literalOf, nameOf, numberOf, readExpression, stringOf, type Expr } from './expressions.ts'
 import { sqlTypeOf } from './sqlTypes.ts'
 import type { OrmReader, SourceFile } from './types.ts'
 
