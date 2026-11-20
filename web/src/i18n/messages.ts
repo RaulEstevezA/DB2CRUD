@@ -79,7 +79,8 @@ const en = {
   dropFile: 'Drop the file to open it',
   fileTooLarge: (name: string) => `“${name}” is larger than 10 MB.`,
   fileError: (name: string) => `“${name}” could not be read.`,
-  inputEmpty: 'Paste or open a Model2DB project or Python ORM models to start. SQL DDL and the other ORMs are coming.',
+  inputEmpty:
+    'Paste or open a Model2DB project, ORM code or SQL DDL to start. To read a project of several files or a whole folder, download the desktop app.',
   warningsCount: (count: number) => `${en$(count)} ${plural(count, 'note', 'notes')}`,
   readError: (error: DatabaseReadError, path?: string): string =>
     ({
@@ -330,7 +331,7 @@ const es: Messages = {
   fileTooLarge: (name) => `«${name}» ocupa más de 10 MB.`,
   fileError: (name) => `No se ha podido leer «${name}».`,
   inputEmpty:
-    'Pega o abre un proyecto de Model2DB o modelos de un ORM de Python para empezar. El DDL de SQL y los demás ORM llegarán después.',
+    'Pega o abre un proyecto de Model2DB, código ORM o DDL de SQL para empezar. Para leer un proyecto de varios archivos o una carpeta entera, descarga la app de escritorio.',
   warningsCount: (count) => `${es$(count)} ${plural(count, 'nota', 'notas')}`,
   readError: (error, path) =>
     ({
