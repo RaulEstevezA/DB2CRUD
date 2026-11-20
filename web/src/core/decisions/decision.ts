@@ -55,6 +55,11 @@ export type ReasonCode =
   | 'noField'
   | 'childRows'
   | 'childTables'
+  // Mapper projects
+  | 'mapperModel'
+  | 'mapperField'
+  | 'mapperOneWay'
+  | 'mapperPending'
   // The user chose it
   | 'manual'
 

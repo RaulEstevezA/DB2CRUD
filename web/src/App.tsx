@@ -39,7 +39,7 @@ function App() {
   // The application models are optional: each table gets the model it corresponds to
   const deferredModels = useDeferredValue(models)
   const modelsRead = useMemo(() => readModels(deferredModels), [deferredModels])
-  const designState = useCrudDesign(schema, modelsRead?.ok ? modelsRead.schema : null)
+  const designState = useCrudDesign(schema, modelsRead?.ok ? modelsRead.schema : null, modelsRead?.ok ? (modelsRead.project ?? null) : null)
   const { design } = designState
   useUndoShortcuts(designState.history)
   const files = useMemo(() => (schema && design ? generateProject(schema, design, settings) : []), [schema, design, settings])

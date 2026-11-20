@@ -2,6 +2,7 @@
  * Workspace logic the interface uses, kept out of the components so it can be tested: reading the database
  * input and counting what was read.
  */
+import { isMapperProject, mapperModels, readMapperProject, type MapperProject } from '../core/interop/mapper/read.ts'
 import { detectDdl, readDdl } from '../core/importers/ddl/ddl.ts'
 import { acceptedExtensions, detectFormat, findParser, parseInput } from '../core/importers/registry.ts'
 import { ORM_READERS, detectOrm, readOrmCode } from '../core/importers/orm/registry.ts'
@@ -58,12 +59,19 @@ export function columnCount(schema: DbSchema): number {
 
 // Application models
 
-export type ModelsReadResult = { ok: true; schema: ModelSchema; format: string } | { ok: false; error: string }
+export type ModelsReadResult =
+  /** `project`: the Mapper project they come from, whose relations the matching follows */
+  { ok: true; schema: ModelSchema; format: string; project?: MapperProject } | { ok: false; error: string }
 
 /** The application models of their input (classes, DTOs, JSON, schemas…), or why they cannot be read; null while it
  * is empty. They are optional: without them the services work with the entities. */
 export function readModels(input: InputState): ModelsReadResult | null {
   if (input.text.trim() === '') return null
+  if (isMapperProject(input.text)) {
+    const read = readMapperProject(input.text)
+    if (!read.ok) return { ok: false, error: read.path ? `${read.error} ${read.path}` : read.error }
+    return { ok: true, schema: mapperModels(read.project), format: 'Mapper', project: read.project }
+  }
   const format = detectFormat(input.text, input.fileName)
   if (!format) return { ok: false, error: 'unknownFormat' }
   const read = parseInput(input.text, format, { rootName: 'Root' })
@@ -74,6 +82,7 @@ export function readModels(input: InputState): ModelsReadResult | null {
 
 /** The highlighting of the models input: the language of their format. */
 export function modelsLanguage(input: InputState): string {
+  if (isMapperProject(input.text)) return 'json'
   const format = input.text.trim() === '' ? null : detectFormat(input.text, input.fileName)
   return (format && findParser(format)?.editorLanguage) || 'text'
 }

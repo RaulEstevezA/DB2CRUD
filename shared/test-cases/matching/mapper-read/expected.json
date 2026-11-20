@@ -1,0 +1,305 @@
+{
+ "tables": [
+  {
+   "table": "orders",
+   "models": [
+    {
+     "direction": "both",
+     "model": {
+      "value": "OrderSummary",
+      "status": "active",
+      "confidence": "exact",
+      "reasons": [
+       {
+        "code": "mapperModel",
+        "params": {
+         "mapping": "Order->OrderSummary"
+        }
+       }
+      ],
+      "options": [
+       "OrderSummary",
+       "Order",
+       null
+      ]
+     },
+     "columns": [
+      {
+       "column": "id",
+       "source": {
+        "value": {
+         "kind": "mapper",
+         "mapping": "Order->OrderSummary",
+         "fields": [
+          "id"
+         ],
+         "transform": "direct",
+         "inverse": true
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "mapperField",
+          "params": {
+           "fields": "id",
+           "transform": "direct"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "mapper",
+          "mapping": "Order->OrderSummary",
+          "fields": [
+           "id"
+          ],
+          "transform": "direct",
+          "inverse": true
+         },
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "total"
+         },
+         {
+          "kind": "field",
+          "field": "placedAt"
+         },
+         {
+          "kind": "field",
+          "field": "label"
+         },
+         {
+          "kind": "field",
+          "field": "extra"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "customer_id",
+       "source": {
+        "value": null,
+        "status": "pending",
+        "confidence": "conflict",
+        "reasons": [
+         {
+          "code": "noFieldRequired"
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "total"
+         },
+         {
+          "kind": "field",
+          "field": "placedAt"
+         },
+         {
+          "kind": "field",
+          "field": "label"
+         },
+         {
+          "kind": "field",
+          "field": "extra"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "total_cents",
+       "source": {
+        "value": {
+         "kind": "mapper",
+         "mapping": "Order->OrderSummary",
+         "fields": [
+          "total"
+         ],
+         "transform": "arithmetic",
+         "inverse": true
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "mapperField",
+          "params": {
+           "fields": "total",
+           "transform": "arithmetic"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "mapper",
+          "mapping": "Order->OrderSummary",
+          "fields": [
+           "total"
+          ],
+          "transform": "arithmetic",
+          "inverse": true
+         },
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "total"
+         },
+         {
+          "kind": "field",
+          "field": "placedAt"
+         },
+         {
+          "kind": "field",
+          "field": "label"
+         },
+         {
+          "kind": "field",
+          "field": "extra"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "placed_at",
+       "source": {
+        "value": {
+         "kind": "mapper",
+         "mapping": "Order->OrderSummary",
+         "fields": [
+          "placedAt"
+         ],
+         "transform": "direct",
+         "inverse": true
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "mapperField",
+          "params": {
+           "fields": "placedAt",
+           "transform": "direct"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "mapper",
+          "mapping": "Order->OrderSummary",
+          "fields": [
+           "placedAt"
+          ],
+          "transform": "direct",
+          "inverse": true
+         },
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "total"
+         },
+         {
+          "kind": "field",
+          "field": "placedAt"
+         },
+         {
+          "kind": "field",
+          "field": "label"
+         },
+         {
+          "kind": "field",
+          "field": "extra"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "note",
+       "source": {
+        "value": {
+         "kind": "mapper",
+         "mapping": "Order->OrderSummary",
+         "fields": [
+          "label"
+         ],
+         "transform": "expression",
+         "inverse": false
+        },
+        "status": "pending",
+        "confidence": "review",
+        "reasons": [
+         {
+          "code": "mapperOneWay",
+          "params": {
+           "fields": "label",
+           "transform": "expression"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "mapper",
+          "mapping": "Order->OrderSummary",
+          "fields": [
+           "label"
+          ],
+          "transform": "expression",
+          "inverse": false
+         },
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "total"
+         },
+         {
+          "kind": "field",
+          "field": "placedAt"
+         },
+         {
+          "kind": "field",
+          "field": "label"
+         },
+         {
+          "kind": "field",
+          "field": "extra"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      }
+     ],
+     "children": [],
+     "unused": [
+      "extra"
+     ]
+    }
+   ]
+  }
+ ]
+}

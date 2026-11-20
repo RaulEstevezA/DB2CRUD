@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { EXAMPLES } from '../examples/index.ts'
-import { columnCount, inputLanguage, readDatabase, sourceLabel } from './workspace.ts'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+import { columnCount, inputLanguage, modelsLanguage, readDatabase, readModels, sourceLabel } from './workspace.ts'
 
 describe('readDatabase', () => {
   it('reads nothing while the input is empty', () => {
@@ -50,5 +52,21 @@ describe('readDatabase', () => {
   it('names Model2DB projects with their output', () => {
     const read = readDatabase({ text: EXAMPLES[0].text })
     if (read?.ok) expect(sourceLabel(read.schema)).toMatch(/^Model2DB \(/)
+  })
+})
+
+describe('readModels', () => {
+  it('reads classes and DTOs', () => {
+    const read = readModels({ text: 'export interface Customer { id: number }', fileName: 'models.ts' })
+    expect(read).toMatchObject({ ok: true, format: 'TypeScript' })
+  })
+
+  it('reads a Mapper project with the models of both sides and its relations', () => {
+    const text = readFileSync(resolve(process.cwd(), '../shared/test-cases/matching/mapper-write/models.mapper.json'), 'utf8')
+    const read = readModels({ text, fileName: 'customer.mapper.json' })
+    expect(read?.ok && read.project?.root).toBe('CustomerForm->Customer')
+    expect(read?.ok && read.schema.models.length).toBe(2)
+    expect(modelsLanguage({ text })).toBe('json')
+    expect(readModels({ text: text.replace('"version": 1', '"version": 9') })).toEqual({ ok: false, error: 'newerVersion' })
   })
 })

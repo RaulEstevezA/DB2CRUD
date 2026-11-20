@@ -94,7 +94,14 @@ export function DatabasePane({ input, read, onChange, models, modelsRead, onMode
           {t.modelsError(modelsRead.error)}
         </p>
       )
-    else status = <p className="input-status input-status--ok">{t.modelsSummary(modelsRead.format, modelsRead.schema.models.length)}</p>
+    else
+      status = (
+        <p className="input-status input-status--ok">
+          {modelsRead.project
+            ? t.mapperSummary(modelsRead.project.source.model, modelsRead.project.target.model)
+            : t.modelsSummary(modelsRead.format, modelsRead.schema.models.length)}
+        </p>
+      )
   } else if (!read) status = <p className="input-status">{t.inputEmpty}</p>
   else if (!read.ok)
     status = (

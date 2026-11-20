@@ -1,0 +1,225 @@
+{
+ "format": "mapper-project",
+ "version": 1,
+ "savedAt": "2026-11-20T12:00:00.000Z",
+ "source": {
+  "format": "python",
+  "text": "",
+  "model": "Order",
+  "schema": {
+   "format": "model-schema",
+   "version": 1,
+   "origin": {
+    "format": "python",
+    "language": "python"
+   },
+   "models": [
+    {
+     "name": "Order",
+     "kind": "interface",
+     "fields": [
+      {
+       "name": "id",
+       "type": {
+        "kind": "primitive",
+        "name": "integer"
+       },
+       "nullable": false,
+       "optional": false
+      },
+      {
+       "name": "customerId",
+       "type": {
+        "kind": "primitive",
+        "name": "integer"
+       },
+       "nullable": false,
+       "optional": false
+      },
+      {
+       "name": "totalCents",
+       "type": {
+        "kind": "primitive",
+        "name": "integer"
+       },
+       "nullable": false,
+       "optional": false
+      },
+      {
+       "name": "placedAt",
+       "type": {
+        "kind": "primitive",
+        "name": "datetime"
+       },
+       "nullable": false,
+       "optional": false
+      },
+      {
+       "name": "note",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": true,
+       "optional": false
+      }
+     ]
+    }
+   ],
+   "enums": []
+  }
+ },
+ "target": {
+  "format": "python",
+  "text": "",
+  "model": "OrderSummary",
+  "schema": {
+   "format": "model-schema",
+   "version": 1,
+   "origin": {
+    "format": "python",
+    "language": "python"
+   },
+   "models": [
+    {
+     "name": "OrderSummary",
+     "kind": "interface",
+     "fields": [
+      {
+       "name": "id",
+       "type": {
+        "kind": "primitive",
+        "name": "integer"
+       },
+       "nullable": false,
+       "optional": false
+      },
+      {
+       "name": "total",
+       "type": {
+        "kind": "primitive",
+        "name": "decimal"
+       },
+       "nullable": false,
+       "optional": false
+      },
+      {
+       "name": "placedAt",
+       "type": {
+        "kind": "primitive",
+        "name": "datetime"
+       },
+       "nullable": false,
+       "optional": false
+      },
+      {
+       "name": "label",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false
+      },
+      {
+       "name": "extra",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": true
+      }
+     ]
+    }
+   ],
+   "enums": []
+  }
+ },
+ "mapping": {
+  "root": "Order->OrderSummary",
+  "mappings": [
+   {
+    "id": "Order->OrderSummary",
+    "source": "Order",
+    "target": "OrderSummary",
+    "ignoredSources": [],
+    "fields": [
+     {
+      "target": "id",
+      "sources": [
+       [
+        "id"
+       ]
+      ],
+      "transform": {
+       "kind": "direct"
+      },
+      "status": "active",
+      "confidence": "exact"
+     },
+     {
+      "target": "total",
+      "sources": [
+       [
+        "totalCents"
+       ]
+      ],
+      "transform": {
+       "kind": "arithmetic",
+       "operator": "/",
+       "operand": 100
+      },
+      "status": "active",
+      "confidence": "exact"
+     },
+     {
+      "target": "placedAt",
+      "sources": [
+       [
+        "placedAt"
+       ]
+      ],
+      "transform": {
+       "kind": "direct"
+      },
+      "status": "active",
+      "confidence": "exact"
+     },
+     {
+      "target": "label",
+      "sources": [
+       [
+        "id"
+       ],
+       [
+        "note"
+       ]
+      ],
+      "transform": {
+       "kind": "expression",
+       "expression": "'#' + id + ' ' + note"
+      },
+      "status": "active",
+      "confidence": "exact"
+     },
+     {
+      "target": "extra",
+      "sources": [],
+      "transform": {
+       "kind": "direct"
+      },
+      "status": "unmapped",
+      "confidence": "exact"
+     }
+    ]
+   }
+  ]
+ },
+ "output": {
+  "generator": "typescript",
+  "mode": "functions",
+  "naming": "auto",
+  "options": {}
+ }
+}

@@ -308,6 +308,14 @@ const en = {
         return `${p(params, 'field')} lists the rows of ${p(params, 'table')}.`
       case 'childTables':
         return `${p(params, 'field')} may list the rows of several tables (${p(params, 'tables')}): choose one.`
+      case 'mapperModel':
+        return `The Mapper project relates this table with the model (${p(params, 'mapping')}).`
+      case 'mapperField':
+        return `Mapper relates the column with ${p(params, 'fields')} (${p(params, 'transform')}), a relation that also works the other way.`
+      case 'mapperOneWay':
+        return `Mapper relates the column with ${p(params, 'fields')} (${p(params, 'transform')}) in one direction only: the other one is left as a TODO.`
+      case 'mapperPending':
+        return `Mapper suggests ${p(params, 'fields')} (${p(params, 'transform')}), but it was not confirmed there: check it.`
       case 'manual':
         return 'You chose it.'
     }
@@ -325,6 +333,9 @@ const en = {
         ? 'There is no model in this text.'
         : `These models cannot be read (${code}).`,
   modelsSummary: (format: string, count: number) => `${format} · ${en$(count)} ${plural(count, 'model', 'models')}`,
+  mapperSummary: (source: string, target: string) => `Mapper project · ${source} → ${target}`,
+  sourceMapper: (fields: string[], transform: string, output: boolean) =>
+    `${output ? '→' : '←'} ${fields.join(' + ') || '—'} (Mapper: ${transform})`,
   modelTitles: { both: 'Application model', input: 'Model written', output: 'Model read' } satisfies Record<Direction, string>,
   noModel: 'none',
   sourceNone: 'no field',
@@ -592,6 +603,14 @@ const es: Messages = {
         return `${p(params, 'field')} enumera las filas de ${p(params, 'table')}.`
       case 'childTables':
         return `${p(params, 'field')} puede enumerar las filas de varias tablas (${p(params, 'tables')}): elige una.`
+      case 'mapperModel':
+        return `El proyecto de Mapper relaciona esta tabla con el modelo (${p(params, 'mapping')}).`
+      case 'mapperField':
+        return `Mapper relaciona la columna con ${p(params, 'fields')} (${p(params, 'transform')}), una relación que también sirve en el otro sentido.`
+      case 'mapperOneWay':
+        return `Mapper relaciona la columna con ${p(params, 'fields')} (${p(params, 'transform')}) en un solo sentido: el otro queda como TODO.`
+      case 'mapperPending':
+        return `Mapper propone ${p(params, 'fields')} (${p(params, 'transform')}), pero no se confirmó allí: revísalo.`
       case 'manual':
         return 'Lo has elegido tú.'
     }
@@ -609,6 +628,8 @@ const es: Messages = {
         ? 'Este texto no tiene ningún modelo.'
         : `No se pueden leer estos modelos (${code}).`,
   modelsSummary: (format, count) => `${format} · ${es$(count)} ${plural(count, 'modelo', 'modelos')}`,
+  mapperSummary: (source, target) => `Proyecto de Mapper · ${source} → ${target}`,
+  sourceMapper: (fields, transform, output) => `${output ? '→' : '←'} ${fields.join(' + ') || '—'} (Mapper: ${transform})`,
   modelTitles: { both: 'Modelo de aplicación', input: 'Modelo que se escribe', output: 'Modelo que se lee' },
   noModel: 'ninguno',
   sourceNone: 'sin campo',

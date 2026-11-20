@@ -7,6 +7,7 @@
  * design follows the schema when the input changes without losing the review.
  */
 import { decision, keep, reason, type Decision } from '../decisions/decision.ts'
+import type { MapperProject } from '../interop/mapper/read.ts'
 import { matchModels } from '../matching/matching.ts'
 import type { ModelSchema } from '../model/schema.ts'
 import { pluralize, singularize, splitWords, toPascalCase } from '../model/naming.ts'
@@ -306,9 +307,14 @@ function proposeOperations(schema: DbSchema, table: DbTable, policy: TablePolicy
 
 /**
  * The CRUD design of the schema, keeping the user's earlier choices from `previous`; with application models, also
- * how they match the tables.
+ * how they match the tables (following the relations of `project` when they come from a Mapper project).
  */
-export function proposeCrud(schema: DbSchema, previous: CrudDesign | null = null, models: ModelSchema | null = null): CrudDesign {
+export function proposeCrud(
+  schema: DbSchema,
+  previous: CrudDesign | null = null,
+  models: ModelSchema | null = null,
+  project: MapperProject | null = null,
+): CrudDesign {
   const policies = schema.tables.map((table) => proposePolicy(schema, table, previous ? findPolicy(previous, table.name) : undefined))
   // A join table only stays one while its role says so: the links of the parents depend on it
   const joins = new Set(policies.filter((policy) => policy.role.value === 'join').map((policy) => policy.table))
@@ -333,6 +339,6 @@ export function proposeCrud(schema: DbSchema, previous: CrudDesign | null = null
     })
   })
   const design: CrudDesign = { policies, repositories, services }
-  if (models) design.matching = matchModels(schema, models, previous?.matching ?? null)
+  if (models) design.matching = matchModels(schema, models, previous?.matching ?? null, project)
   return design
 }

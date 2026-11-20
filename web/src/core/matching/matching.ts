@@ -19,6 +19,8 @@ import { decision, keep, reason, type Decision, type Reason } from '../decisions
 import { nameWords } from '../model/naming.ts'
 import type { FieldDef, ModelSchema, TypeRef } from '../model/schema.ts'
 import type { DbColumn, DbSchema, DbTable } from '../schema/types.ts'
+import type { MapperProject } from '../interop/mapper/read.ts'
+import { mapperIgnored, mapperRelation, mapperSource, type MapperRelation, type MapperSource } from './mapper.ts'
 import { DIRECTIONS, fieldFor, fieldsOf, key, modelName, namesTable, sameWords, singularWords, type Direction } from './names.ts'
 
 export type ColumnSource =
@@ -27,6 +29,8 @@ export type ColumnSource =
   | { kind: 'lookup'; field: string; table: string; by: string }
   /** The database fills it: the model does not send it */
   | { kind: 'database' }
+  /** A relation of a Mapper project */
+  | MapperSource
 
 export type Conflict =
   | { kind: 'length'; model: number; column: number }
@@ -263,12 +267,34 @@ function childrenFor(field: FieldDef, table: DbTable, database: DbSchema): DbTab
   return found
 }
 
-function matchTable(table: DbTable, database: DbSchema, schema: ModelSchema, previous: TableMatch | undefined): TableMatch {
+function matchTable(
+  table: DbTable,
+  database: DbSchema,
+  schema: ModelSchema,
+  previous: TableMatch | undefined,
+  project: MapperProject | null,
+): TableMatch {
+  // A Mapper project that relates the table says its model, for both directions
+  const relation = project ? mapperRelation(table, project) : null
+  const proposed = relation
+    ? [
+        {
+          direction: 'both' as const,
+          model: decision<string | null>(
+            relation.model,
+            'exact',
+            [reason('mapperModel', { mapping: relation.mapping.id })],
+            [relation.model, ...schema.models.map((model) => model.name).filter((name) => name !== relation.model), null],
+          ),
+        },
+      ]
+    : matchModel(table, schema)
   return {
     table: table.name,
-    models: matchModel(table, schema).map(({ direction, model }) => {
+    models: proposed.map(({ direction, model }) => {
       const before = previous?.models.find((item) => item.direction === direction)
-      return matchColumns(table, direction, keep(before?.model, model), database, schema, before)
+      const chosen = keep(before?.model, model)
+      return matchColumns(table, direction, chosen, database, schema, before, relation?.model === chosen.value ? relation : null)
     }),
   }
 }
@@ -281,6 +307,7 @@ function matchColumns(
   database: DbSchema,
   schema: ModelSchema,
   previous: ModelMatch | undefined,
+  relation: MapperRelation | null,
 ): ModelMatch {
   // The choices made on the columns of another model do not apply to this one
   const before = previous?.model.value === model.value ? previous : undefined
@@ -295,6 +322,7 @@ function matchColumns(
     return { column: column.name, source, conflicts: chosen ? conflictsOf(chosen, column, table, database, schema, direction) : [] }
   }
   const taken = new Set<string>()
+  const mapperTaken = new Set<string>()
   const columns: ColumnMatch[] = []
   for (const column of table.columns) {
     const options: (ColumnSource | null)[] = [...fields.map((field): ColumnSource => ({ kind: 'field', field: field.name })), null]
@@ -302,7 +330,15 @@ function matchColumns(
       columns.push({ column: column.name, source: decision(null, 'none', [], []), conflicts: [] })
       continue
     }
-    const found = fieldFor(column, fields, taken)
+    // With a Mapper relation, the mapping says where each column comes from; a column it leaves out has no field
+    const mapped = relation ? mapperSource(relation, column, mapperTaken) : null
+    if (mapped) {
+      columns.push(
+        keepSource(column, decision<ColumnSource | null>(mapped.source, mapped.confidence, mapped.reasons, [mapped.source, ...options])),
+      )
+      continue
+    }
+    const found = relation ? null : fieldFor(column, fields, taken)
     if (found) {
       taken.add(found.field.name)
       const conflicts = conflictsOf(found.field, column, table, database, schema, direction)
@@ -311,7 +347,7 @@ function matchColumns(
       columns.push(keepSource(column, decision(source, conflicts.length > 0 ? 'conflict' : 'exact', reasons, options)))
       continue
     }
-    const lookup = lookupFor(column, table, fields, taken, database)
+    const lookup = relation ? null : lookupFor(column, table, fields, taken, database)
     if (lookup) {
       taken.add(lookup.field.name)
       const source: ColumnSource = { kind: 'lookup', field: lookup.field.name, table: lookup.table.name, by: lookup.by }
@@ -340,7 +376,7 @@ function matchColumns(
     )
   }
   const children: ChildrenMatch[] = []
-  for (const field of fields) {
+  for (const field of relation ? [] : fields) {
     if (taken.has(field.name)) continue
     const found = childrenFor(field, table, database)
     if (found.length === 0) continue
@@ -359,15 +395,27 @@ function matchColumns(
     children.push({ field: field.name, table: keep(chosen, proposal) })
   }
   // Unused: what no column or child table takes once the user's choices are applied
-  const used = new Set<string>()
-  for (const column of columns) if (column.source.value && column.source.value.kind !== 'database') used.add(column.source.value.field)
+  const used = new Set<string>(relation ? mapperIgnored(relation) : [])
+  for (const column of columns) {
+    const value = column.source.value
+    if (value?.kind === 'mapper') for (const path of value.fields) used.add(path.split('.')[0])
+    else if (value && value.kind !== 'database') used.add(value.field)
+  }
   for (const child of children) if (child.table.value !== null) used.add(child.field)
   const unused = fields.filter((field) => !used.has(field.name) && !field.generated).map((field) => field.name)
   return { direction, model, columns, children, unused }
 }
 
-/** The matching of every table of the database with the application models, keeping the choices of `previous`. */
-export function matchModels(database: DbSchema, schema: ModelSchema, previous: Matching | null = null): Matching {
+/**
+ * The matching of every table of the database with the application models, keeping the choices of `previous`. With
+ * a Mapper project, `schema` holds the models of both its sides (`mapperModels`), and its relations come first.
+ */
+export function matchModels(
+  database: DbSchema,
+  schema: ModelSchema,
+  previous: Matching | null = null,
+  project: MapperProject | null = null,
+): Matching {
   return {
     tables: database.tables.map((table) =>
       matchTable(
@@ -375,6 +423,7 @@ export function matchModels(database: DbSchema, schema: ModelSchema, previous: M
         database,
         schema,
         previous?.tables.find((item) => item.table === table.name),
+        project,
       ),
     ),
   }

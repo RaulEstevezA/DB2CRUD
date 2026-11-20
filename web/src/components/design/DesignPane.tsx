@@ -288,6 +288,7 @@ function ModelMatch({ table, match, onChange }: ModelMatchProps) {
     if (source.kind === 'field') return output ? t.targetField(source.field) : t.sourceField(source.field)
     if (source.kind === 'lookup')
       return output ? t.targetLookup(source.field, source.table, source.by) : t.sourceLookup(source.field, source.table, source.by)
+    if (source.kind === 'mapper') return t.sourceMapper(source.fields, source.transform, output)
     return t.sourceDatabase
   }
   const conflictText = (conflict: Conflict): string => {
