@@ -1,0 +1,577 @@
+{
+ "format": "db-schema",
+ "version": 1,
+ "dialect": "postgresql",
+ "source": {
+  "kind": "orm",
+  "format": "sequelize"
+ },
+ "tables": [
+  {
+   "name": "Users",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "DataTypes.UUID",
+      "kind": "uuid"
+     },
+     "nullable": false,
+     "generated": "uuid"
+    },
+    {
+     "name": "email",
+     "type": {
+      "sql": "DataTypes.STRING",
+      "kind": "text",
+      "length": 255
+     },
+     "nullable": false
+    },
+    {
+     "name": "display_name",
+     "type": {
+      "sql": "DataTypes.STRING(80)",
+      "kind": "text",
+      "length": 80
+     },
+     "nullable": false,
+     "attribute": "displayName"
+    },
+    {
+     "name": "role",
+     "type": {
+      "sql": "DataTypes.ENUM(\"customer\", \"staff\")",
+      "kind": "enum",
+      "name": "enum_Users_role"
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": "customer"
+     }
+    },
+    {
+     "name": "karma",
+     "type": {
+      "sql": "DataTypes.INTEGER.UNSIGNED",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": true,
+     "default": {
+      "kind": "literal",
+      "value": 0
+     }
+    },
+    {
+     "name": "created_at",
+     "type": {
+      "sql": "DATE",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": false,
+     "generated": "now",
+     "attribute": "createdAt"
+    },
+    {
+     "name": "updated_at",
+     "type": {
+      "sql": "DATE",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": false,
+     "generated": "onUpdateNow",
+     "attribute": "updatedAt"
+    },
+    {
+     "name": "deleted_at",
+     "type": {
+      "sql": "DATE",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": true,
+     "attribute": "deletedAt"
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [],
+   "uniques": [
+    {
+     "name": "uq_users_email",
+     "columns": [
+      "email"
+     ]
+    }
+   ],
+   "indexes": [],
+   "checks": [
+    {
+     "sql": "LENGTH(display_name) >= 2",
+     "parsed": {
+      "kind": "length",
+      "column": "display_name",
+      "op": ">=",
+      "value": 2
+     }
+    },
+    {
+     "sql": "LENGTH(display_name) <= 80",
+     "parsed": {
+      "kind": "length",
+      "column": "display_name",
+      "op": "<=",
+      "value": 80
+     }
+    },
+    {
+     "sql": "karma >= 0",
+     "parsed": {
+      "kind": "compare",
+      "column": "karma",
+      "op": ">=",
+      "value": 0
+     }
+    },
+    {
+     "sql": "karma <= 1000",
+     "parsed": {
+      "kind": "compare",
+      "column": "karma",
+      "op": "<=",
+      "value": 1000
+     }
+    }
+   ],
+   "entity": "User",
+   "origin": {
+    "line": 5,
+    "column": 1
+   }
+  },
+  {
+   "name": "Addresses",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "INTEGER",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false,
+     "generated": "identity"
+    },
+    {
+     "name": "street",
+     "type": {
+      "sql": "DataTypes.TEXT",
+      "kind": "text"
+     },
+     "nullable": true
+    },
+    {
+     "name": "city",
+     "type": {
+      "sql": "DataTypes.STRING(60)",
+      "kind": "text",
+      "length": 60
+     },
+     "nullable": false
+    },
+    {
+     "name": "tags",
+     "type": {
+      "sql": "DataTypes.ARRAY(DataTypes.TEXT)",
+      "kind": "array",
+      "items": {
+       "sql": "DataTypes.TEXT",
+       "kind": "text"
+      }
+     },
+     "nullable": true,
+     "default": {
+      "kind": "literal",
+      "value": "[]"
+     }
+    },
+    {
+     "name": "created_at",
+     "type": {
+      "sql": "DATE",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": false,
+     "generated": "now",
+     "attribute": "createdAt"
+    },
+    {
+     "name": "updated_at",
+     "type": {
+      "sql": "DATE",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": false,
+     "generated": "onUpdateNow",
+     "attribute": "updatedAt"
+    },
+    {
+     "name": "user_id",
+     "type": {
+      "sql": "DataTypes.UUID",
+      "kind": "uuid"
+     },
+     "nullable": true,
+     "attribute": "UserId"
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "user_id"
+     ],
+     "references": {
+      "table": "Users",
+      "columns": [
+       "id"
+      ]
+     },
+     "onDelete": "set null"
+    }
+   ],
+   "uniques": [
+    {
+     "columns": [
+      "user_id"
+     ]
+    }
+   ],
+   "indexes": [],
+   "checks": [],
+   "entity": "Address",
+   "origin": {
+    "line": 17,
+    "column": 1
+   }
+  },
+  {
+   "name": "product",
+   "columns": [
+    {
+     "name": "sku",
+     "type": {
+      "sql": "DataTypes.CHAR(12)",
+      "kind": "text",
+      "length": 12,
+      "fixed": true
+     },
+     "nullable": false
+    },
+    {
+     "name": "price",
+     "type": {
+      "sql": "DataTypes.DECIMAL(8, 2)",
+      "kind": "decimal",
+      "precision": 8,
+      "scale": 2
+     },
+     "nullable": false
+    },
+    {
+     "name": "stock",
+     "type": {
+      "sql": "DataTypes.SMALLINT",
+      "kind": "integer",
+      "bits": 16
+     },
+     "nullable": false,
+     "default": {
+      "kind": "expression",
+      "sql": "0"
+     }
+    },
+    {
+     "name": "details",
+     "type": {
+      "sql": "DataTypes.JSONB",
+      "kind": "json"
+     },
+     "nullable": true,
+     "default": {
+      "kind": "literal",
+      "value": "{\"color\":\"red\",\"sizes\":[1,2]}"
+     }
+    },
+    {
+     "name": "added_on",
+     "type": {
+      "sql": "DataTypes.DATEONLY",
+      "kind": "date"
+     },
+     "nullable": true,
+     "generated": "now",
+     "attribute": "addedOn"
+    },
+    {
+     "name": "checked_at",
+     "type": {
+      "sql": "DataTypes.DATE(3)",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": true,
+     "generated": "now",
+     "attribute": "checkedAt"
+    },
+    {
+     "name": "picture",
+     "type": {
+      "sql": "DataTypes.BLOB(\"long\")",
+      "kind": "binary"
+     },
+     "nullable": true
+    },
+    {
+     "name": "rating",
+     "type": {
+      "sql": "DataTypes.FLOAT",
+      "kind": "float",
+      "bits": 64
+     },
+     "nullable": true
+    }
+   ],
+   "primaryKey": [
+    "sku"
+   ],
+   "foreignKeys": [],
+   "uniques": [
+    {
+     "columns": [
+      "price",
+      "stock"
+     ]
+    }
+   ],
+   "indexes": [
+    {
+     "name": "ix_product_added",
+     "columns": [
+      "added_on"
+     ]
+    }
+   ],
+   "checks": [
+    {
+     "sql": "price IN (1, 5, 10)",
+     "parsed": {
+      "kind": "in",
+      "column": "price",
+      "values": [
+       1,
+       5,
+       10
+      ]
+     }
+    }
+   ],
+   "entity": "Product",
+   "origin": {
+    "line": 23,
+    "column": 1
+   },
+   "schema": "store",
+   "comment": "What the shop sells"
+  },
+  {
+   "name": "Orders",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "INTEGER",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false,
+     "generated": "identity"
+    },
+    {
+     "name": "placed_at",
+     "type": {
+      "sql": "DataTypes.DATE",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": false,
+     "generated": "now",
+     "attribute": "placedAt"
+    },
+    {
+     "name": "user_id",
+     "type": {
+      "sql": "DataTypes.UUID",
+      "kind": "uuid"
+     },
+     "nullable": false,
+     "attribute": "userId"
+    },
+    {
+     "name": "note",
+     "type": {
+      "sql": "DataTypes.TEXT",
+      "kind": "text"
+     },
+     "nullable": true,
+     "comment": "Left by the customer"
+    },
+    {
+     "name": "opened_at",
+     "type": {
+      "sql": "DATE",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": false,
+     "generated": "now",
+     "attribute": "createdAt"
+    },
+    {
+     "name": "replaces_id",
+     "type": {
+      "sql": "INTEGER",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": true,
+     "attribute": "replacesId"
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "user_id"
+     ],
+     "references": {
+      "table": "Users",
+      "columns": [
+       "id"
+      ]
+     },
+     "onDelete": "cascade",
+     "attribute": "buyer",
+     "inverse": "orders"
+    },
+    {
+     "columns": [
+      "replaces_id"
+     ],
+     "references": {
+      "table": "Orders",
+      "columns": [
+       "id"
+      ]
+     },
+     "onDelete": "set null",
+     "attribute": "replaces"
+    }
+   ],
+   "uniques": [],
+   "indexes": [],
+   "checks": [],
+   "entity": "Order",
+   "origin": {
+    "line": 44,
+    "column": 1
+   }
+  },
+  {
+   "name": "order_items",
+   "columns": [
+    {
+     "name": "order_id",
+     "type": {
+      "sql": "INTEGER",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false
+    },
+    {
+     "name": "product_sku",
+     "type": {
+      "sql": "DataTypes.CHAR(12)",
+      "kind": "text",
+      "length": 12,
+      "fixed": true
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": [
+    "order_id",
+    "product_sku"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "order_id"
+     ],
+     "references": {
+      "table": "Orders",
+      "columns": [
+       "id"
+      ]
+     },
+     "onDelete": "cascade",
+     "onUpdate": "cascade"
+    },
+    {
+     "columns": [
+      "product_sku"
+     ],
+     "references": {
+      "table": "product",
+      "schema": "store",
+      "columns": [
+       "sku"
+      ]
+     },
+     "onDelete": "cascade",
+     "onUpdate": "cascade"
+    }
+   ],
+   "uniques": [],
+   "indexes": [],
+   "checks": []
+  }
+ ],
+ "enums": [
+  {
+   "name": "enum_Users_role",
+   "values": [
+    "customer",
+    "staff"
+   ],
+   "storage": "native"
+  }
+ ],
+ "notes": [
+  {
+   "code": "orm.checksNotKept"
+  }
+ ]
+}

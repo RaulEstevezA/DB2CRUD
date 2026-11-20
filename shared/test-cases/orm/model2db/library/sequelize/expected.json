@@ -1,0 +1,201 @@
+{
+ "format": "db-schema",
+ "version": 1,
+ "dialect": null,
+ "source": {
+  "kind": "orm",
+  "format": "sequelize"
+ },
+ "tables": [
+  {
+   "name": "authors",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "DataTypes.UUID",
+      "kind": "uuid"
+     },
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": {
+      "sql": "DataTypes.STRING(120)",
+      "kind": "text",
+      "length": 120
+     },
+     "nullable": false
+    },
+    {
+     "name": "email",
+     "type": {
+      "sql": "DataTypes.TEXT",
+      "kind": "text"
+     },
+     "nullable": true
+    },
+    {
+     "name": "born",
+     "type": {
+      "sql": "DataTypes.DATEONLY",
+      "kind": "date"
+     },
+     "nullable": true
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [],
+   "uniques": [],
+   "indexes": [],
+   "checks": [],
+   "entity": "Author",
+   "origin": {
+    "line": 33,
+    "column": 1
+   }
+  },
+  {
+   "name": "books",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "DataTypes.UUID",
+      "kind": "uuid"
+     },
+     "nullable": false
+    },
+    {
+     "name": "title",
+     "type": {
+      "sql": "DataTypes.STRING(200)",
+      "kind": "text",
+      "length": 200
+     },
+     "nullable": false
+    },
+    {
+     "name": "isbn",
+     "type": {
+      "sql": "DataTypes.TEXT",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "genre",
+     "type": {
+      "sql": "DataTypes.STRING(20)",
+      "kind": "text",
+      "length": 20
+     },
+     "nullable": false
+    },
+    {
+     "name": "pages",
+     "type": {
+      "sql": "DataTypes.INTEGER",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false
+    },
+    {
+     "name": "published",
+     "type": {
+      "sql": "DataTypes.DATEONLY",
+      "kind": "date"
+     },
+     "nullable": true
+    },
+    {
+     "name": "available",
+     "type": {
+      "sql": "DataTypes.BOOLEAN",
+      "kind": "boolean"
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": true
+     }
+    },
+    {
+     "name": "author_id",
+     "type": {
+      "sql": "DataTypes.UUID",
+      "kind": "uuid"
+     },
+     "nullable": false,
+     "attribute": "authorId"
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "author_id"
+     ],
+     "references": {
+      "table": "authors",
+      "columns": [
+       "id"
+      ]
+     },
+     "attribute": "author"
+    }
+   ],
+   "uniques": [],
+   "indexes": [
+    {
+     "name": "ix_books_author_id",
+     "columns": [
+      "author_id"
+     ]
+    }
+   ],
+   "checks": [
+    {
+     "sql": "genre IN ('novel', 'essay', 'poetry', 'science')",
+     "parsed": {
+      "kind": "in",
+      "column": "genre",
+      "values": [
+       "novel",
+       "essay",
+       "poetry",
+       "science"
+      ]
+     }
+    }
+   ],
+   "entity": "Book",
+   "origin": {
+    "line": 42,
+    "column": 1
+   }
+  }
+ ],
+ "enums": [
+  {
+   "name": "genre",
+   "values": [
+    "novel",
+    "essay",
+    "poetry",
+    "science"
+   ],
+   "storage": "check"
+  }
+ ],
+ "notes": [
+  {
+   "code": "orm.checksNotKept"
+  }
+ ]
+}

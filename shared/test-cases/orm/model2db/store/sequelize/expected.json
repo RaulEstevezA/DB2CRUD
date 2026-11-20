@@ -1,0 +1,430 @@
+{
+ "format": "db-schema",
+ "version": 1,
+ "dialect": null,
+ "source": {
+  "kind": "orm",
+  "format": "sequelize"
+ },
+ "tables": [
+  {
+   "name": "customers",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "DataTypes.BIGINT",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": {
+      "sql": "DataTypes.TEXT",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "email",
+     "type": {
+      "sql": "DataTypes.TEXT",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "password",
+     "type": {
+      "sql": "DataTypes.TEXT",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "phone",
+     "type": {
+      "sql": "DataTypes.TEXT",
+      "kind": "text"
+     },
+     "nullable": true
+    },
+    {
+     "name": "created_at",
+     "type": {
+      "sql": "DataTypes.DATE",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": false,
+     "attribute": "createdAt"
+    },
+    {
+     "name": "address_street",
+     "type": {
+      "sql": "DataTypes.TEXT",
+      "kind": "text"
+     },
+     "nullable": false,
+     "attribute": "addressStreet"
+    },
+    {
+     "name": "address_city",
+     "type": {
+      "sql": "DataTypes.TEXT",
+      "kind": "text"
+     },
+     "nullable": false,
+     "attribute": "addressCity"
+    },
+    {
+     "name": "address_postal_code",
+     "type": {
+      "sql": "DataTypes.TEXT",
+      "kind": "text"
+     },
+     "nullable": false,
+     "attribute": "addressPostalCode"
+    },
+    {
+     "name": "address_country",
+     "type": {
+      "sql": "DataTypes.TEXT",
+      "kind": "text"
+     },
+     "nullable": false,
+     "attribute": "addressCountry"
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [],
+   "uniques": [],
+   "indexes": [],
+   "checks": [],
+   "entity": "Customer",
+   "origin": {
+    "line": 59,
+    "column": 1
+   }
+  },
+  {
+   "name": "products",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "DataTypes.BIGINT",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false
+    },
+    {
+     "name": "sku",
+     "type": {
+      "sql": "DataTypes.TEXT",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": {
+      "sql": "DataTypes.TEXT",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "description",
+     "type": {
+      "sql": "DataTypes.TEXT",
+      "kind": "text"
+     },
+     "nullable": true
+    },
+    {
+     "name": "price",
+     "type": {
+      "sql": "DataTypes.DOUBLE",
+      "kind": "float",
+      "bits": 64
+     },
+     "nullable": false
+    },
+    {
+     "name": "stock",
+     "type": {
+      "sql": "DataTypes.INTEGER",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false
+    },
+    {
+     "name": "active",
+     "type": {
+      "sql": "DataTypes.BOOLEAN",
+      "kind": "boolean"
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [],
+   "uniques": [],
+   "indexes": [],
+   "checks": [],
+   "entity": "Product",
+   "origin": {
+    "line": 74,
+    "column": 1
+   }
+  },
+  {
+   "name": "order_lines",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "DataTypes.BIGINT",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false,
+     "generated": "identity"
+    },
+    {
+     "name": "quantity",
+     "type": {
+      "sql": "DataTypes.INTEGER",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false
+    },
+    {
+     "name": "unit_price",
+     "type": {
+      "sql": "DataTypes.DOUBLE",
+      "kind": "float",
+      "bits": 64
+     },
+     "nullable": false,
+     "attribute": "unitPrice"
+    },
+    {
+     "name": "product_id",
+     "type": {
+      "sql": "DataTypes.BIGINT",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false,
+     "attribute": "productId"
+    },
+    {
+     "name": "order_id",
+     "type": {
+      "sql": "DataTypes.BIGINT",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false,
+     "attribute": "orderId"
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "product_id"
+     ],
+     "references": {
+      "table": "products",
+      "columns": [
+       "id"
+      ]
+     },
+     "attribute": "product"
+    },
+    {
+     "columns": [
+      "order_id"
+     ],
+     "references": {
+      "table": "orders",
+      "columns": [
+       "id"
+      ]
+     },
+     "onDelete": "cascade",
+     "attribute": "order",
+     "inverse": "lines"
+    }
+   ],
+   "uniques": [],
+   "indexes": [
+    {
+     "name": "ix_order_lines_product_id",
+     "columns": [
+      "product_id"
+     ]
+    },
+    {
+     "name": "ix_order_lines_order_id",
+     "columns": [
+      "order_id"
+     ]
+    }
+   ],
+   "checks": [],
+   "entity": "OrderLine",
+   "origin": {
+    "line": 86,
+    "column": 1
+   }
+  },
+  {
+   "name": "orders",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "DataTypes.BIGINT",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false
+    },
+    {
+     "name": "status",
+     "type": {
+      "sql": "DataTypes.STRING(20)",
+      "kind": "text",
+      "length": 20
+     },
+     "nullable": false
+    },
+    {
+     "name": "total",
+     "type": {
+      "sql": "DataTypes.DOUBLE",
+      "kind": "float",
+      "bits": 64
+     },
+     "nullable": false
+    },
+    {
+     "name": "notes",
+     "type": {
+      "sql": "DataTypes.TEXT",
+      "kind": "text"
+     },
+     "nullable": true
+    },
+    {
+     "name": "created_at",
+     "type": {
+      "sql": "DataTypes.DATE",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": false,
+     "attribute": "createdAt"
+    },
+    {
+     "name": "updated_at",
+     "type": {
+      "sql": "DataTypes.DATE",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": false,
+     "attribute": "updatedAt"
+    },
+    {
+     "name": "customer_id",
+     "type": {
+      "sql": "DataTypes.BIGINT",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false,
+     "attribute": "customerId"
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "customer_id"
+     ],
+     "references": {
+      "table": "customers",
+      "columns": [
+       "id"
+      ]
+     },
+     "attribute": "customer"
+    }
+   ],
+   "uniques": [],
+   "indexes": [
+    {
+     "name": "ix_orders_customer_id",
+     "columns": [
+      "customer_id"
+     ]
+    }
+   ],
+   "checks": [
+    {
+     "sql": "status IN ('pending', 'paid', 'shipped', 'cancelled')",
+     "parsed": {
+      "kind": "in",
+      "column": "status",
+      "values": [
+       "pending",
+       "paid",
+       "shipped",
+       "cancelled"
+      ]
+     }
+    }
+   ],
+   "entity": "Order",
+   "origin": {
+    "line": 96,
+    "column": 1
+   }
+  }
+ ],
+ "enums": [
+  {
+   "name": "order_status",
+   "values": [
+    "pending",
+    "paid",
+    "shipped",
+    "cancelled"
+   ],
+   "storage": "check"
+  }
+ ],
+ "notes": [
+  {
+   "code": "orm.checksNotKept"
+  }
+ ]
+}

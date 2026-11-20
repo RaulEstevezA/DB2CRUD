@@ -164,6 +164,7 @@ describe('ORM code written by DB2CRUD', () => {
     django: (path, text) => path.endsWith('.py') && text.includes('models.Model'),
     prisma: (path) => path.endsWith('.prisma'),
     typeorm: (path, text) => path.endsWith('.ts') && text.includes('@Entity('),
+    sequelize: (path, text) => path.endsWith('.ts') && !path.startsWith('test') && text.includes("from 'sequelize'"),
   }
   for (const name of readdirSync(outputs).filter((item) => models[item.split('-')[0]]))
     it(name, () => {
