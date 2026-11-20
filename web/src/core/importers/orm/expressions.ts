@@ -88,11 +88,16 @@ function readPrimary(cursor: Cursor, source: string, syntax: ExpressionSyntax): 
     const close = cursor.is('[') ? ']' : ')'
     cursor.next()
     const items: Expr[] = []
+    const entries: { key: Expr; value: Expr }[] = []
     while (!cursor.done && !cursor.is(close)) {
-      items.push(readExpression(cursor, source, syntax))
+      const item = readExpression(cursor, source, syntax)
+      // PHP arrays with keys: `['default' => 1]`
+      if (close === ']' && cursor.eat('=>')) entries.push({ key: item, value: readExpression(cursor, source, syntax) })
+      else items.push(item)
       if (!cursor.eat(',')) break
     }
     cursor.eat(close)
+    if (entries.length > 0) return { kind: 'dict', entries }
     // A group of one is the expression itself: (x)
     return close === ')' && items.length === 1 ? items[0] : { kind: 'list', items }
   }
@@ -115,9 +120,15 @@ function readPrimary(cursor: Cursor, source: string, syntax: ExpressionSyntax): 
     cursor.next()
     return readPrimary(cursor, source, syntax)
   }
+  // `new X(…)` reads as the call `X(…)`; `\\DateTime` (PHP) as `DateTime`
+  if ((token.kind === 'ident' && token.value === 'new' && cursor.isIdent(1)) || (cursor.is('\\') && cursor.isIdent(1))) {
+    cursor.next()
+    return readPrimary(cursor, source, syntax)
+  }
   if (token.kind === 'ident') {
     const path = [cursor.next().value]
-    while (cursor.is('.') && cursor.isIdent(1)) {
+    // `a.b`, `Types::BIGINT` (PHP), `ORM\\Column` (PHP namespaces)
+    while ((cursor.is('.') || cursor.is('::') || cursor.is('\\')) && cursor.isIdent(1)) {
       cursor.next()
       path.push(cursor.next().value)
     }
@@ -151,6 +162,8 @@ export function readExpression(cursor: Cursor, source: string, syntax: Expressio
       expr = { kind: 'other', text: cursor.textBetween(source, start, cursor.index) }
     } else break
   }
+  // A literal before `=>` is the key of a PHP array, not the start of a lambda
+  if ((expr.kind === 'string' || expr.kind === 'number') && cursor.is('=>')) return expr
   // Anything else up to the end of the expression (operators, lambdas) makes it text
   if (!cursor.done && !STOP.has(cursor.value()) && cursor.peek()!.kind === 'punct' && !cursor.peek()!.lineStart) {
     cursor.skipUntil([',', ';'])

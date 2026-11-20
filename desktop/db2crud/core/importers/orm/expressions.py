@@ -85,11 +85,19 @@ def _read_primary(cursor: Cursor, source: str, named_by: str) -> dict:
         close = "]" if cursor.is_("[") else ")"
         cursor.next()
         items: list = []
+        keyed: list = []
         while not cursor.done and not cursor.is_(close):
-            items.append(read_expression(cursor, source, named_by))
+            item = read_expression(cursor, source, named_by)
+            # PHP arrays with keys: `['default' => 1]`
+            if close == "]" and cursor.eat("=>"):
+                keyed.append({"key": item, "value": read_expression(cursor, source, named_by)})
+            else:
+                items.append(item)
             if not cursor.eat(","):
                 break
         cursor.eat(close)
+        if keyed:
+            return {"kind": "dict", "entries": keyed}
         # A group of one is the expression itself: (x)
         return items[0] if close == ")" and len(items) == 1 else {"kind": "list", "items": items}
     if cursor.is_("{"):
@@ -111,9 +119,16 @@ def _read_primary(cursor: Cursor, source: str, named_by: str) -> dict:
         # An annotation inside another (`indexes = { @Index(columnList = "a") }`) reads as a call
         cursor.next()
         return _read_primary(cursor, source, named_by)
+    # `new X(…)` reads as the call `X(…)`; `\\DateTime` (PHP) as `DateTime`
+    if (token.kind == "ident" and token.value == "new" and cursor.is_ident(1)) or (
+        cursor.is_("\\") and cursor.is_ident(1)
+    ):
+        cursor.next()
+        return _read_primary(cursor, source, named_by)
     if token.kind == "ident":
         path = [cursor.next().value]
-        while cursor.is_(".") and cursor.is_ident(1):
+        # `a.b`, `Types::BIGINT` (PHP), `ORM\\Column` (PHP namespaces)
+        while (cursor.is_(".") or cursor.is_("::") or cursor.is_("\\")) and cursor.is_ident(1):
             cursor.next()
             path.append(cursor.next().value)
         return {"kind": "name", "path": path}
@@ -152,6 +167,9 @@ def read_expression(cursor: Cursor, source: str, named_by: str = "=") -> dict:
             expr = {"kind": "other", "text": cursor.text_between(source, start, cursor.index)}
         else:
             break
+    # A literal before `=>` is the key of a PHP array, not the start of a lambda
+    if expr["kind"] in ("string", "number") and cursor.is_("=>"):
+        return expr
     # Anything else up to the end of the expression (operators, lambdas) makes it text
     token = cursor.peek()
     if not cursor.done and cursor.value() not in _STOP and token.kind == "punct" and not token.line_start:
