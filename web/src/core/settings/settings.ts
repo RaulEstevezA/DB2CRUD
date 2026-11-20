@@ -244,7 +244,7 @@ export const DEFAULT_SETTINGS: ProjectSettings = {
   entities: 'missing',
   entitiesModule: 'app.entities',
   modelsSource: 'copy',
-  modelsModule: 'app.models',
+  modelsModule: 'app.application_models',
   services: true,
   serviceTypes: 'entities',
   dtoKind: 'pydantic',

@@ -15,20 +15,30 @@ import { lines } from '../../types.ts'
 import { Imports, pyLiteral, snakeName } from '../python.ts'
 import { createDto, readDto } from './dtos.ts'
 import { aw, def, findInfo, moduleOf, pathOf, query, queryName, type Context, type TableInfo } from './context.ts'
+import { canMake } from './tests.ts'
 
 const IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/
 
 /** The attribute of a model field: its name, or its snake form when the name is not an identifier. */
 export const fieldAttr = (name: string) => (IDENTIFIER.test(name) ? name : snakeName(name))
 
-/** The Python names of the conversion functions of a plan. */
-export function conversionNames(context: Context, plan: ConversionPlan): { write: string; read: string; target: string; source: string } {
+/**
+ * The Python names of a plan: its functions, the classes they take and return, and the name the model is imported
+ * as (`ProductModel` when the model is named like the entity or a DTO it is converted to).
+ */
+export function conversionNames(
+  context: Context,
+  plan: ConversionPlan,
+): { write: string; read: string; target: string; source: string; model: string; imported: string } {
   const info = findInfo(context, plan.table)!
   const dtos = usesDtos(context, info)
   const target = dtos ? createDto(info) : info.entity
   const source = dtos ? readDto(info) : info.entity
-  const model = snakeName(plan.model)
-  return { write: `${model}_to_${snakeName(target)}`, read: `${snakeName(source)}_to_${model}`, target, source }
+  const taken = [info.entity, target, source]
+  const model = taken.includes(plan.model) ? `${plan.model}Model` : plan.model
+  const imported = model === plan.model ? plan.model : `${plan.model} as ${model}`
+  const snake = snakeName(model)
+  return { write: `${snake}_to_${snakeName(target)}`, read: `${snakeName(source)}_to_${snake}`, target, source, model, imported }
 }
 
 const usesDtos = (context: Context, info: TableInfo) =>
@@ -114,8 +124,11 @@ function closure(schema: ModelSchema, names: string[]): { models: ModelDef[]; en
   }
 }
 
-/** The copy of the application models the conversions use, as dataclasses, at `settings.modelsModule`. */
-export function modelsFile(context: Context, schema: ModelSchema, plans: ConversionPlan[]): GeneratedFile {
+/**
+ * The copy of the application models the conversions use, as dataclasses: at `settings.modelsModule`, or, when they
+ * are imported from the user's module, at `tests/application_models.py` for the tests only.
+ */
+export function modelsFile(schema: ModelSchema, plans: ConversionPlan[], path: string): GeneratedFile {
   const imports = new Imports().annotations()
   const { models, enums } = closure(schema, [...new Set(plans.map((plan) => plan.model))])
   if (models.length > 0) imports.from('dataclasses', 'dataclass')
@@ -150,7 +163,28 @@ export function modelsFile(context: Context, schema: ModelSchema, plans: Convers
     ...[...enumBlocks, ...modelBlocks].flatMap((block) => ['', '', block]),
     '',
   )
-  return { path: pathOf(context.settings.modelsModule), content }
+  return { path, content }
+}
+
+/**
+ * `tests/__init__.py` when the models are imported: without the user's module (the project on its own), the tests
+ * take the copy in its place, so they run anywhere and use the real classes inside the application.
+ */
+export function testsPackage(context: Context): GeneratedFile {
+  const module = pyLiteral(context.settings.modelsModule)
+  const content = lines(
+    '"""The tests. The application models come from your module; without it, they are the copy DB2CRUD read."""',
+    '',
+    'import importlib',
+    'import sys',
+    '',
+    'try:',
+    `    importlib.import_module(${module})`,
+    'except ModuleNotFoundError:',
+    `    sys.modules[${module}] = importlib.import_module("tests.application_models")`,
+    '',
+  )
+  return { path: 'tests/__init__.py', content }
 }
 
 // Expressions
@@ -281,7 +315,11 @@ function readExpression(
 ): string | null {
   const attr = (column: string) => info.columns.find((item) => item.column.name === column)?.attr ?? column
   const toInteger = field?.type.kind === 'primitive' && field.type.name === 'integer'
-  const enumOf = (expression: string) => (field?.type.kind === 'enum' ? `${field.type.name}(${expression})` : expression)
+  const enumOf = (expression: string) => {
+    if (field?.type.kind !== 'enum') return expression
+    imports.from(context.settings.modelsModule, field.type.name)
+    return `${field.type.name}(${expression})`
+  }
   switch (value.kind) {
     case 'column':
       return `row.${attr(value.column)}`
@@ -329,7 +367,7 @@ export function conversionFile(context: Context, plans: ConversionPlan[], schema
     const model = schema.models.find((item) => item.name === plan.model)
     const names = conversionNames(context, plan)
     const dtos = usesDtos(context, info)
-    imports.from(context.settings.modelsModule, plan.model)
+    imports.from(context.settings.modelsModule, names.imported)
     imports.from(dtos ? moduleOf(context, info, 'dtos') : moduleOf(context, info, 'entity'), dtos ? names.target : info.entity)
     if (plan.write) {
       const body: Body = { lines: [], uow: false }
@@ -345,7 +383,7 @@ export function conversionFile(context: Context, plans: ConversionPlan[], schema
       }
       if (args.some((arg) => arg.includes('_plain('))) usesPlain = true
       usesUow ||= body.uow
-      const params = body.uow ? `model: ${plan.model}, uow: UnitOfWork` : `model: ${plan.model}`
+      const params = body.uow ? `model: ${names.model}, uow: UnitOfWork` : `model: ${names.model}`
       functions.push(
         lines(
           `${body.uow ? def(context) : 'def'} ${names.write}(${params}) -> ${names.target}:`,
@@ -379,12 +417,12 @@ export function conversionFile(context: Context, plans: ConversionPlan[], schema
       if (dtos) imports.from(moduleOf(context, info, 'dtos'), names.source)
       functions.push(
         lines(
-          `${body.uow ? def(context) : 'def'} ${names.read}(${params}) -> ${plan.model}:`,
+          `${body.uow ? def(context) : 'def'} ${names.read}(${params}) -> ${names.model}:`,
           `    """A row of the ${info.name} table as ${article(plan.model)
             .toLowerCase()
             .replace(/^(an?) .*/, '$1')} ${plan.model}."""`,
           ...body.lines.map((line) => `    ${line}`),
-          `    return ${plan.model}(`,
+          `    return ${names.model}(`,
           ...args.map((arg) => `        ${arg}`),
           '    )',
         ),
@@ -413,6 +451,61 @@ export function conversionFile(context: Context, plans: ConversionPlan[], schema
   return { path: pathOf(conversionsModule(context, info)), content }
 }
 
+/**
+ * The tests of the conversions: a row stored by the factories is read as the model, and each field taken from a
+ * column holds its value; a model that goes both ways and leaves nothing to the user is written back, and every value
+ * it gives is the row's (lookups and Mapper's lossless transformations included).
+ */
+export function conversionTestFile(context: Context, plans: ConversionPlan[]): GeneratedFile | null {
+  const imports = new Imports()
+  const fixture = context.settings.memoryRepositories ? 'memory_uow: MemoryUnitOfWork' : context.orm.databaseFixture
+  const uow = fixture.split(':')[0]
+  const blocks: string[] = []
+  for (const plan of plans) {
+    const info = findInfo(context, plan.table)
+    const hasTodo = (items: { value: { kind: string } }[] | null) => (items ?? []).some((item) => item.value.kind === 'todo')
+    if (!info || !plan.read || hasTodo(plan.read) || !canMake(context, info)) continue
+    const names = conversionNames(context, plan)
+    const reads = plan.read.some((item) => ['lookup', 'children'].includes(item.value.kind))
+    const writes = plan.write !== null && !hasTodo(plan.write)
+    const writeUow = writes && plan.write!.some((item) => item.value.kind === 'lookup')
+    imports.from(conversionsModule(context, info), names.read, ...(writes ? [names.write] : []))
+    imports.from('tests.factories', `add_${info.module}`)
+    const a = (async: boolean) => (async && context.async ? 'await ' : '')
+    const attr = (column: string) => info.columns.find((item) => item.column.name === column)?.attr ?? column
+    const body = [
+      `row = ${aw(context)}add_${info.module}(${uow})`,
+      `model = ${a(reads)}${names.read}(row${reads ? `, ${uow}` : ''})`,
+      ...plan.read.flatMap((item) =>
+        item.value.kind === 'column' ? [`assert model.${fieldAttr(item.field)} == row.${attr(item.value.column)}`] : [],
+      ),
+      ...(writes
+        ? [
+            `values = ${a(writeUow)}${names.write}(model${writeUow ? `, ${uow}` : ''})`,
+            ...plan.write!.map((item) => `assert values.${attr(item.column)} == row.${attr(item.column)}`),
+          ]
+        : []),
+    ]
+    blocks.push(
+      lines(
+        `${def(context)} test_${snakeName(plan.model)}_${writes ? 'goes_both_ways' : 'is_read'}(${fixture}) -> None:`,
+        `    """${writes ? `A row read as ${article(plan.model).replace(/^A/, 'a')} and written back gives the same values.` : `A row is read as ${article(plan.model).replace(/^A/, 'a')}.`}"""`,
+        ...body.map((line) => `    ${line}`),
+      ),
+    )
+  }
+  if (blocks.length === 0) return null
+  imports.from('app.unit_of_work', fixture.split(': ')[1])
+  const content = lines(
+    `"""Tests of the conversions between the application models and the tables${context.async ? ' (asynchronous: pytest-asyncio runs every test function)' : ''}."""`,
+    '',
+    imports.write('app'),
+    ...blocks.flatMap((block) => ['', '', block]),
+    '',
+  )
+  return { path: 'tests/test_conversions.py', content }
+}
+
 /** The conversion files of a project and, when they are copied, the module of the models. */
 export function conversionFiles(context: Context, schema: ModelSchema, plans: ConversionPlan[]): GeneratedFile[] {
   const files: GeneratedFile[] = []
@@ -425,6 +518,8 @@ export function conversionFiles(context: Context, schema: ModelSchema, plans: Co
     )
     if (file) files.push(file)
   }
-  if (files.length > 0 && context.settings.modelsSource === 'copy') files.push(modelsFile(context, schema, plans))
+  if (files.length === 0) return files
+  if (context.settings.modelsSource === 'copy') files.push(modelsFile(schema, plans, pathOf(context.settings.modelsModule)))
+  else if (context.settings.tests !== 'none') files.push(modelsFile(schema, plans, 'tests/application_models.py'))
   return files
 }

@@ -1,6 +1,7 @@
 /**
- * Combinations the verification generates and runs. Each scenario is a schema of the built-in fixtures, the
- * project settings that differ from the defaults, and optional decisions of the review (crud/edit.ts).
+ * Combinations the verification generates and runs. Each scenario is a schema of the built-in fixtures, or a shared
+ * case of the matching with its application models (`case`, shared/test-cases/matching/), the project settings that
+ * differ from the defaults, and optional decisions of the review (crud/edit.ts).
  * Together they cover every option of every setting, on every database.
  *
  * A stack is shown as verified in the interface only when a scenario with it passes
@@ -8,7 +9,7 @@
  */
 
 /** @typedef {{ table: string, decision: string, value: unknown }} Decision */
-/** @typedef {{ id: string, schema: 'shop', settings: Record<string, unknown>, decisions?: Decision[], service?: 'postgresql' | 'mysql' | 'mariadb' }} Scenario */
+/** @typedef {{ id: string, schema?: 'shop', case?: string, settings: Record<string, unknown>, decisions?: Decision[], service?: 'postgresql' | 'mysql' | 'mariadb' }} Scenario */
 
 /** Every pending decision of the shop taken the other way, so the code of the other options runs too. */
 const OTHER_WAY = [
@@ -24,6 +25,11 @@ const OTHER_WAY = [
 /** @type {Scenario[]} */
 export const SCENARIOS = [
   { id: 'sqlalchemy-sqlite-defaults', schema: 'shop', settings: { database: 'sqlite' } },
+  // Conversions to the application models of a shared case (`case`), copied into the project or imported
+  { id: 'sqlalchemy-postgresql-conversions-dtos', case: 'shop-python', settings: { database: 'postgresql', serviceTypes: 'dtos' }, service: 'postgresql' },
+  { id: 'sqlalchemy-sqlite-conversions-async', case: 'shop-python', settings: { database: 'sqlite', execution: 'async', memoryRepositories: false } },
+  { id: 'sqlalchemy-mysql-conversions-mapper', case: 'mapper-read', settings: { database: 'mysql', serviceTypes: 'dtos' }, service: 'mysql' },
+  { id: 'sqlalchemy-sqlite-conversions-blog', case: 'blog-python', settings: { database: 'sqlite', architecture: 'table' } },
   { id: 'sqlalchemy-postgresql-sync', schema: 'shop', settings: { database: 'postgresql' }, service: 'postgresql' },
   { id: 'sqlalchemy-mysql-sync-pydantic', schema: 'shop', settings: { database: 'mysql', serviceTypes: 'dtos' }, service: 'mysql' },
   {
@@ -49,6 +55,12 @@ export const SCENARIOS = [
   { id: 'sqlalchemy-sqlite-repositories-only', schema: 'shop', settings: { database: 'sqlite', services: false } },
   { id: 'sqlalchemy-postgresql-services-tests-only', schema: 'shop', settings: { database: 'postgresql', tests: 'services', entities: 'all' }, service: 'postgresql' },
   { id: 'django-sqlite-defaults', schema: 'shop', settings: { language: 'python', orm: 'django', database: 'sqlite' } },
+  {
+    id: 'django-postgresql-conversions-import',
+    case: 'shop-python',
+    settings: { language: 'python', orm: 'django', database: 'postgresql', serviceTypes: 'dtos', modelsSource: 'import' },
+    service: 'postgresql',
+  },
   { id: 'django-postgresql-pydantic', schema: 'shop', settings: { language: 'python', orm: 'django', database: 'postgresql', serviceTypes: 'dtos' }, service: 'postgresql' },
   {
     id: 'django-mysql-decided-cursor-by-table',

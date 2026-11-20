@@ -1,0 +1,353 @@
+{
+ "schema": {
+  "format": "db-schema",
+  "version": 1,
+  "dialect": "sqlite",
+  "source": {
+   "kind": "ddl",
+   "format": "sqlite-ddl"
+  },
+  "tables": [
+   {
+    "name": "authors",
+    "columns": [
+     {
+      "name": "id",
+      "type": {
+       "sql": "INTEGER",
+       "kind": "integer",
+       "bits": 64
+      },
+      "nullable": false,
+      "generated": "identity"
+     },
+     {
+      "name": "name",
+      "type": {
+       "sql": "TEXT",
+       "kind": "text"
+      },
+      "nullable": false
+     },
+     {
+      "name": "created_at",
+      "type": {
+       "sql": "TEXT",
+       "kind": "text"
+      },
+      "nullable": false,
+      "generated": "now"
+     }
+    ],
+    "primaryKey": [
+     "id"
+    ],
+    "foreignKeys": [],
+    "uniques": [],
+    "indexes": [],
+    "checks": [],
+    "origin": {
+     "line": 1,
+     "column": 1
+    }
+   },
+   {
+    "name": "posts",
+    "columns": [
+     {
+      "name": "id",
+      "type": {
+       "sql": "INTEGER",
+       "kind": "integer",
+       "bits": 64
+      },
+      "nullable": false,
+      "generated": "identity"
+     },
+     {
+      "name": "author_id",
+      "type": {
+       "sql": "INTEGER",
+       "kind": "integer",
+       "bits": 64
+      },
+      "nullable": false
+     },
+     {
+      "name": "title",
+      "type": {
+       "sql": "TEXT",
+       "kind": "text"
+      },
+      "nullable": false
+     },
+     {
+      "name": "body",
+      "type": {
+       "sql": "TEXT",
+       "kind": "text"
+      },
+      "nullable": true
+     },
+     {
+      "name": "word_count",
+      "type": {
+       "sql": "INTEGER",
+       "kind": "integer",
+       "bits": 64
+      },
+      "nullable": true,
+      "generated": {
+       "computed": "length(body)"
+      }
+     }
+    ],
+    "primaryKey": [
+     "id"
+    ],
+    "foreignKeys": [
+     {
+      "columns": [
+       "author_id"
+      ],
+      "references": {
+       "table": "authors",
+       "columns": [
+        "id"
+       ]
+      }
+     }
+    ],
+    "uniques": [],
+    "indexes": [],
+    "checks": [],
+    "origin": {
+     "line": 6,
+     "column": 1
+    }
+   },
+   {
+    "name": "comments",
+    "columns": [
+     {
+      "name": "id",
+      "type": {
+       "sql": "INTEGER",
+       "kind": "integer",
+       "bits": 64
+      },
+      "nullable": false,
+      "generated": "identity"
+     },
+     {
+      "name": "post_id",
+      "type": {
+       "sql": "INTEGER",
+       "kind": "integer",
+       "bits": 64
+      },
+      "nullable": false
+     },
+     {
+      "name": "text",
+      "type": {
+       "sql": "TEXT",
+       "kind": "text"
+      },
+      "nullable": false
+     }
+    ],
+    "primaryKey": [
+     "id"
+    ],
+    "foreignKeys": [
+     {
+      "columns": [
+       "post_id"
+      ],
+      "references": {
+       "table": "posts",
+       "columns": [
+        "id"
+       ]
+      },
+      "onDelete": "cascade"
+     }
+    ],
+    "uniques": [],
+    "indexes": [],
+    "checks": [],
+    "origin": {
+     "line": 13,
+     "column": 1
+    }
+   }
+  ],
+  "enums": [],
+  "notes": []
+ },
+ "decisions": [],
+ "settings": {
+  "name": "sqlalchemy-sqlite-conversions-blog",
+  "database": "sqlite",
+  "architecture": "table"
+ },
+ "models": {
+  "schema": {
+   "format": "model-schema",
+   "version": 1,
+   "origin": {
+    "format": "python",
+    "language": "python",
+    "framework": "pydantic"
+   },
+   "models": [
+    {
+     "name": "Author",
+     "kind": "class",
+     "fields": [
+      {
+       "name": "id",
+       "type": {
+        "kind": "primitive",
+        "name": "integer"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "int"
+      },
+      {
+       "name": "name",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "str",
+       "annotations": [
+        {
+         "name": "Field",
+         "args": "max_length=80"
+        }
+       ]
+      },
+      {
+       "name": "created_at",
+       "type": {
+        "kind": "primitive",
+        "name": "datetime"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "datetime"
+      }
+     ],
+     "framework": "pydantic",
+     "construction": "named"
+    },
+    {
+     "name": "Posts",
+     "kind": "class",
+     "fields": [
+      {
+       "name": "id",
+       "type": {
+        "kind": "primitive",
+        "name": "integer"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "int"
+      },
+      {
+       "name": "author_id",
+       "type": {
+        "kind": "primitive",
+        "name": "integer"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "int"
+      },
+      {
+       "name": "title",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "str"
+      },
+      {
+       "name": "body",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": true,
+       "optional": true,
+       "originalType": "str | None",
+       "defaultValue": null
+      },
+      {
+       "name": "comment_ids",
+       "type": {
+        "kind": "array",
+        "items": {
+         "kind": "primitive",
+         "name": "integer"
+        }
+       },
+       "nullable": false,
+       "optional": true,
+       "originalType": "list[int]"
+      }
+     ],
+     "framework": "pydantic",
+     "construction": "named"
+    }
+   ],
+   "enums": []
+  },
+  "project": null
+ },
+ "files": {
+  ".env.example": "# Where the database is. The synchronous driver is named here; the asynchronous one is chosen from it.\nDATABASE_URL=sqlite:///./app.db\n# The tests use SQLite in a temporary file unless this names another database (it is emptied by the tests)\n# TEST_DATABASE_URL=\n",
+  ".gitignore": "__pycache__/\n*.py[cod]\n.venv/\n.pytest_cache/\n.env\n*.db\n",
+  "README.md": "# sqlalchemy-sqlite-conversions-blog\n\nData access layer generated by [DB2CRUD](https://github.com/RaulEstevezA/DB2CRUD) for a database that already exists: entities, repositories and services with SQLAlchemy 2. It does not create or migrate the database.\n\n## Settings\n\n- Database: sqlite; code: synchronous (Session).\n- Entities: written for the tables the input had no class for.\n- Services: take and return the entities.\n- Transactions: one transaction per service operation, committed when it ends.\n- Lists: lists return pages by offset and limit.\n\n## Layout\n\n```text\napp/db.py              engine, sessions and the declarative base\napp/errors.py          NotFoundError, ConflictError, ValidationFailedError: no HTTP codes\napp/unit_of_work.py    the repositories of every table, and the transaction of each operation\napp/<table>/           entity, repository and service of each table\ntests/                 repositories against a database, services on the in-memory repositories\ncrud-contract.json     what was written, for CRUD2Controller\n```\n\n## Running the tests\n\n```bash\npython -m venv .venv && source .venv/bin/activate\npip install -r requirements-dev.txt\npython -m pytest                       # SQLite in a temporary file\nTEST_DATABASE_URL=sqlite:///./app.db python -m pytest   # a real, disposable database: it is emptied\n```\n\nLook for `TODO` in the code: each one marks a decision the input did not settle.\n",
+  "app/__init__.py": "",
+  "app/application_models.py": "\"\"\"The application models the conversions use: a copy of the classes DB2CRUD read.\"\"\"\n\nfrom __future__ import annotations\n\nfrom dataclasses import dataclass\nfrom datetime import datetime\n\n\n@dataclass(kw_only=True)\nclass Author:\n    \"\"\"Author, as the application has it.\"\"\"\n\n    id: int\n    name: str\n    created_at: datetime\n\n\n@dataclass(kw_only=True)\nclass Posts:\n    \"\"\"Posts, as the application has it.\"\"\"\n\n    id: int\n    author_id: int\n    title: str\n    body: str | None = None\n    comment_ids: list[int] | None = None\n",
+  "app/author/__init__.py": "",
+  "app/author/conversions.py": "\"\"\"Conversions between the application models and the \"authors\" table: what the service takes and returns.\"\"\"\n\nfrom __future__ import annotations\n\nfrom app.application_models import Author as AuthorModel\nfrom app.author.entity import Author\n\n\ndef author_model_to_author(model: AuthorModel) -> Author:\n    \"\"\"An Author as the authors table takes it.\"\"\"\n    return Author(\n        name=model.name,\n    )\n\n\ndef author_to_author_model(row: Author) -> AuthorModel:\n    \"\"\"A row of the authors table as an Author.\"\"\"\n    return AuthorModel(\n        id=row.id,\n        name=row.name,\n        created_at=row.created_at,\n    )\n",
+  "app/author/entity.py": "\"\"\"Entity of the \"authors\" table.\"\"\"\n\nfrom sqlalchemy import BigInteger, Integer, Text, func\nfrom sqlalchemy.orm import Mapped, mapped_column\n\nfrom app.db import Base\n\n\nclass Author(Base):\n    \"\"\"A row of the \"authors\" table.\"\"\"\n\n    __tablename__ = \"authors\"\n\n    id: Mapped[int] = mapped_column(BigInteger().with_variant(Integer(), \"sqlite\"), primary_key=True, autoincrement=True)\n    name: Mapped[str] = mapped_column(Text(), nullable=False)\n    created_at: Mapped[str] = mapped_column(Text(), server_default=func.now(), nullable=False)\n",
+  "app/author/repository.py": "\"\"\"Repository of the \"authors\" table: reads and writes rows, and decides nothing.\"\"\"\n\nfrom __future__ import annotations\n\nfrom datetime import UTC, datetime\nfrom typing import Any, Protocol\n\nfrom sqlalchemy import func, select\nfrom sqlalchemy.exc import IntegrityError\nfrom sqlalchemy.orm import Session\n\nfrom app.author.entity import Author\nfrom app.errors import ConflictError\nfrom app.paging import Page\n\n\nclass AuthorRepository(Protocol):\n    \"\"\"Where authors rows are kept. Services depend only on this interface.\"\"\"\n\n    def find_by_id(self, id: int) -> Author | None:\n        \"\"\"The row with this primary key, or None.\"\"\"\n        ...\n\n    def list(self, offset: int = 0, limit: int = 50) -> Page[Author]:\n        \"\"\"At most `limit` rows from `offset`, by primary key, and how many there are.\"\"\"\n        ...\n\n    def insert(self, entity: Author) -> Author:\n        \"\"\"Stores a new row; the values the database fills are read back.\"\"\"\n        ...\n\n    def update(self, entity: Author) -> Author:\n        \"\"\"Stores the changes made to a row read from this repository.\"\"\"\n        ...\n\n    def delete(self, entity: Author) -> None:\n        \"\"\"Removes a row read from this repository.\"\"\"\n        ...\n\n\nclass SqlAuthorRepository:\n    \"\"\"Keeps authors rows in the database, through a Session. It never commits: the transaction belongs to whoever holds the session.\"\"\"\n\n    def __init__(self, session: Session) -> None:\n        self._session = session\n\n    def find_by_id(self, id: int) -> Author | None:\n        \"\"\"The row with this primary key, or None.\"\"\"\n        return (self._session.scalars(select(Author).where(Author.id == id))).first()\n\n    def list(self, offset: int = 0, limit: int = 50) -> Page[Author]:\n        \"\"\"At most `limit` rows from `offset`, by primary key, and how many there are.\"\"\"\n        query = select(Author)\n        total = self._session.scalar(select(func.count()).select_from(query.subquery())) or 0\n        rows = (self._session.scalars(query.order_by(Author.id).offset(offset).limit(limit))).all()\n        return Page(items=list(rows), total=total, offset=offset, limit=limit)\n\n    def insert(self, entity: Author) -> Author:\n        \"\"\"Stores a new row; the values the database fills are read back.\"\"\"\n        self._session.add(entity)\n        try:\n            self._session.flush()\n        except IntegrityError as error:\n            self._session.rollback()\n            raise ConflictError(\"Author\", \"the database refused the change: \" + str(error.orig)) from error\n        self._session.refresh(entity)\n        return entity\n\n    def update(self, entity: Author) -> Author:\n        \"\"\"Stores the changes made to a row read from this repository.\"\"\"\n        self._session.add(entity)\n        try:\n            self._session.flush()\n        except IntegrityError as error:\n            self._session.rollback()\n            raise ConflictError(\"Author\", \"the database refused the change: \" + str(error.orig)) from error\n        self._session.refresh(entity)\n        return entity\n\n    def delete(self, entity: Author) -> None:\n        \"\"\"Removes a row read from this repository.\"\"\"\n        self._session.delete(entity)\n        try:\n            self._session.flush()\n        except IntegrityError as error:\n            self._session.rollback()\n            raise ConflictError(\"Author\", \"the database refused the change: \" + str(error.orig)) from error\n\n\nclass MemoryAuthorRepository:\n    \"\"\"Keeps authors rows in memory, for tests and for trying the services without a database.\"\"\"\n\n    def __init__(self) -> None:\n        self._rows: dict[tuple[Any, ...], Author] = {}\n        self._next_id = 1\n\n    @staticmethod\n    def _key(row: Author) -> tuple[Any, ...]:\n        return (row.id,)\n\n    def find_by_id(self, id: int) -> Author | None:\n        \"\"\"The row with this primary key, or None.\"\"\"\n        return next((row for row in [row for row in sorted(self._rows.values(), key=self._key) if True] if row.id == id), None)\n\n    def list(self, offset: int = 0, limit: int = 50) -> Page[Author]:\n        \"\"\"At most `limit` rows from `offset`, by primary key, and how many there are.\"\"\"\n        rows = [row for row in sorted(self._rows.values(), key=self._key) if True]\n        return Page(items=rows[offset : offset + limit], total=len(rows), offset=offset, limit=limit)\n\n    def insert(self, entity: Author) -> Author:\n        \"\"\"Stores a new row; the values the database fills are read back.\"\"\"\n        if entity.id is None:\n            entity.id = self._next_id\n            self._next_id += 1\n        if entity.created_at is None:\n            entity.created_at = datetime.now(UTC)\n        self._rows[(entity.id,)] = entity\n        return entity\n\n    def update(self, entity: Author) -> Author:\n        \"\"\"Stores the changes made to a row read from this repository.\"\"\"\n        self._rows[(entity.id,)] = entity\n        return entity\n\n    def delete(self, entity: Author) -> None:\n        \"\"\"Removes a row read from this repository.\"\"\"\n        self._rows.pop((entity.id,), None)\n",
+  "app/author/service.py": "\"\"\"Operations on authors: what each one checks before it writes.\"\"\"\n\nfrom collections.abc import Mapping\nfrom typing import Any\n\nfrom app.author.entity import Author\nfrom app.errors import ConflictError, FieldError, NotFoundError, ValidationFailedError\nfrom app.paging import Page\nfrom app.unit_of_work import UnitOfWork\n\n# Columns a client may send: the database fills the others\n_FIELDS = frozenset({\"name\"})\n\n\nclass AuthorService:\n    \"\"\"Operations on authors. Each write runs in its own transaction.\"\"\"\n\n    def __init__(self, uow: UnitOfWork) -> None:\n        self._uow = uow\n\n    def _validate_all(self, values: dict[str, Any], current: Author | None) -> None:\n        \"\"\"Checks the values against the rules of the \"authors\" table; raises ValidationFailedError with every problem.\"\"\"\n        creating = current is None\n        errors: list[FieldError] = []\n        for name in values.keys() - _FIELDS:\n            errors.append(FieldError(name, \"is not a field of Author\"))\n        if not creating:\n            for name in values.keys() & {\"id\", \"created_at\"}:\n                errors.append(FieldError(name, \"cannot be changed\"))\n        value = values.get(\"name\")\n        if value is None:\n            if creating or \"name\" in values:\n                errors.append(FieldError(\"name\", \"is required\"))\n        if errors:\n            raise ValidationFailedError(\"Author\", errors)\n\n    def _check(self, values: dict[str, Any], current: Author | None) -> None:\n        \"\"\"Every check before a write: the values, the rows they point to, the unique values.\"\"\"\n        self._validate_all(values, current)\n\n    def _find(self, id: int) -> Author:\n        \"\"\"The Author with this key; NotFoundError when there is none.\"\"\"\n        entity = self._uow.authors.find_by_id(id)\n        if entity is None:\n            raise NotFoundError(\"Author\", id)\n        return entity\n\n    def create_author(self, author: Author) -> Author:\n        \"\"\"Stores a new Author after checking it.\"\"\"\n        values = {name: getattr(author, name) for name in _FIELDS}\n        with self._uow.transaction():\n            self._check(values, None)\n            created = self._uow.authors.insert(author)\n            return created\n\n    def get_author(self, id: int) -> Author:\n        \"\"\"The Author with this key; NotFoundError when there is none.\"\"\"\n        return self._find(id)\n\n    def list_authors(self, offset: int = 0, limit: int = 50) -> Page[Author]:\n        \"\"\"A page of authors, by primary key.\"\"\"\n        return self._uow.authors.list(offset, limit)\n\n    def update_author(self, id: int, changes: Mapping[str, Any]) -> Author:\n        \"\"\"Changes the given values of a Author.\"\"\"\n        values = dict(changes)\n        with self._uow.transaction():\n            current = self._find(id)\n            self._check(values, current)\n            for name, value in values.items():\n                setattr(current, name, value)\n            updated = self._uow.authors.update(current)\n            return updated\n\n    def delete_author(self, id: int) -> None:\n        \"\"\"Deletes a Author.\"\"\"\n        with self._uow.transaction():\n            current = self._find(id)\n            if self._uow.posts.list_by_author_id(current.id):\n                raise ConflictError(\"Author\", \"rows of posts still point to it\", (\"posts\",))\n            self._uow.authors.delete(current)\n",
+  "app/comment/__init__.py": "",
+  "app/comment/entity.py": "\"\"\"Entity of the \"comments\" table.\"\"\"\n\nfrom sqlalchemy import BigInteger, ForeignKey, Integer, Text\nfrom sqlalchemy.orm import Mapped, mapped_column\n\nfrom app.db import Base\n\n\nclass Comment(Base):\n    \"\"\"A row of the \"comments\" table.\"\"\"\n\n    __tablename__ = \"comments\"\n\n    id: Mapped[int] = mapped_column(BigInteger().with_variant(Integer(), \"sqlite\"), primary_key=True, autoincrement=True)\n    post_id: Mapped[int] = mapped_column(BigInteger(), ForeignKey(\"posts.id\", ondelete=\"CASCADE\"), nullable=False)\n    text: Mapped[str] = mapped_column(Text(), nullable=False)\n",
+  "app/comment/repository.py": "\"\"\"Repository of the \"comments\" table: reads and writes rows, and decides nothing.\"\"\"\n\nfrom __future__ import annotations\n\nfrom typing import Any, Protocol\n\nfrom sqlalchemy import func, select\nfrom sqlalchemy.exc import IntegrityError\nfrom sqlalchemy.orm import Session\n\nfrom app.comment.entity import Comment\nfrom app.errors import ConflictError\nfrom app.paging import Page\n\n\nclass CommentRepository(Protocol):\n    \"\"\"Where comments rows are kept. Services depend only on this interface.\"\"\"\n\n    def find_by_id(self, id: int) -> Comment | None:\n        \"\"\"The row with this primary key, or None.\"\"\"\n        ...\n\n    def list(self, offset: int = 0, limit: int = 50) -> Page[Comment]:\n        \"\"\"At most `limit` rows from `offset`, by primary key, and how many there are.\"\"\"\n        ...\n\n    def list_by_post_id(self, post_id: int) -> list[Comment]:\n        \"\"\"Rows with this post_id, by primary key.\"\"\"\n        ...\n\n    def insert(self, entity: Comment) -> Comment:\n        \"\"\"Stores a new row; the values the database fills are read back.\"\"\"\n        ...\n\n    def update(self, entity: Comment) -> Comment:\n        \"\"\"Stores the changes made to a row read from this repository.\"\"\"\n        ...\n\n    def delete(self, entity: Comment) -> None:\n        \"\"\"Removes a row read from this repository.\"\"\"\n        ...\n\n\nclass SqlCommentRepository:\n    \"\"\"Keeps comments rows in the database, through a Session. It never commits: the transaction belongs to whoever holds the session.\"\"\"\n\n    def __init__(self, session: Session) -> None:\n        self._session = session\n\n    def find_by_id(self, id: int) -> Comment | None:\n        \"\"\"The row with this primary key, or None.\"\"\"\n        return (self._session.scalars(select(Comment).where(Comment.id == id))).first()\n\n    def list(self, offset: int = 0, limit: int = 50) -> Page[Comment]:\n        \"\"\"At most `limit` rows from `offset`, by primary key, and how many there are.\"\"\"\n        query = select(Comment)\n        total = self._session.scalar(select(func.count()).select_from(query.subquery())) or 0\n        rows = (self._session.scalars(query.order_by(Comment.id).offset(offset).limit(limit))).all()\n        return Page(items=list(rows), total=total, offset=offset, limit=limit)\n\n    def list_by_post_id(self, post_id: int) -> list[Comment]:\n        \"\"\"Rows with this post_id, by primary key.\"\"\"\n        return list((self._session.scalars(select(Comment).where(Comment.post_id == post_id).order_by(Comment.id))).all())\n\n    def insert(self, entity: Comment) -> Comment:\n        \"\"\"Stores a new row; the values the database fills are read back.\"\"\"\n        self._session.add(entity)\n        try:\n            self._session.flush()\n        except IntegrityError as error:\n            self._session.rollback()\n            raise ConflictError(\"Comment\", \"the database refused the change: \" + str(error.orig)) from error\n        self._session.refresh(entity)\n        return entity\n\n    def update(self, entity: Comment) -> Comment:\n        \"\"\"Stores the changes made to a row read from this repository.\"\"\"\n        self._session.add(entity)\n        try:\n            self._session.flush()\n        except IntegrityError as error:\n            self._session.rollback()\n            raise ConflictError(\"Comment\", \"the database refused the change: \" + str(error.orig)) from error\n        self._session.refresh(entity)\n        return entity\n\n    def delete(self, entity: Comment) -> None:\n        \"\"\"Removes a row read from this repository.\"\"\"\n        self._session.delete(entity)\n        try:\n            self._session.flush()\n        except IntegrityError as error:\n            self._session.rollback()\n            raise ConflictError(\"Comment\", \"the database refused the change: \" + str(error.orig)) from error\n\n\nclass MemoryCommentRepository:\n    \"\"\"Keeps comments rows in memory, for tests and for trying the services without a database.\"\"\"\n\n    def __init__(self) -> None:\n        self._rows: dict[tuple[Any, ...], Comment] = {}\n        self._next_id = 1\n\n    @staticmethod\n    def _key(row: Comment) -> tuple[Any, ...]:\n        return (row.id,)\n\n    def find_by_id(self, id: int) -> Comment | None:\n        \"\"\"The row with this primary key, or None.\"\"\"\n        return next((row for row in [row for row in sorted(self._rows.values(), key=self._key) if True] if row.id == id), None)\n\n    def list(self, offset: int = 0, limit: int = 50) -> Page[Comment]:\n        \"\"\"At most `limit` rows from `offset`, by primary key, and how many there are.\"\"\"\n        rows = [row for row in sorted(self._rows.values(), key=self._key) if True]\n        return Page(items=rows[offset : offset + limit], total=len(rows), offset=offset, limit=limit)\n\n    def list_by_post_id(self, post_id: int) -> list[Comment]:\n        \"\"\"Rows with this post_id, by primary key.\"\"\"\n        return [row for row in [row for row in sorted(self._rows.values(), key=self._key) if True] if row.post_id == post_id]\n\n    def insert(self, entity: Comment) -> Comment:\n        \"\"\"Stores a new row; the values the database fills are read back.\"\"\"\n        if entity.id is None:\n            entity.id = self._next_id\n            self._next_id += 1\n        self._rows[(entity.id,)] = entity\n        return entity\n\n    def update(self, entity: Comment) -> Comment:\n        \"\"\"Stores the changes made to a row read from this repository.\"\"\"\n        self._rows[(entity.id,)] = entity\n        return entity\n\n    def delete(self, entity: Comment) -> None:\n        \"\"\"Removes a row read from this repository.\"\"\"\n        self._rows.pop((entity.id,), None)\n",
+  "app/comment/service.py": "\"\"\"Operations on comments: what each one checks before it writes.\"\"\"\n\nfrom collections.abc import Mapping\nfrom typing import Any\n\nfrom app.comment.entity import Comment\nfrom app.errors import FieldError, NotFoundError, ValidationFailedError\nfrom app.paging import Page\nfrom app.unit_of_work import UnitOfWork\n\n# Columns a client may send: the database fills the others\n_FIELDS = frozenset({\"post_id\", \"text\"})\n\n\nclass CommentService:\n    \"\"\"Operations on comments. Each write runs in its own transaction.\"\"\"\n\n    def __init__(self, uow: UnitOfWork) -> None:\n        self._uow = uow\n\n    def _validate_all(self, values: dict[str, Any], current: Comment | None) -> None:\n        \"\"\"Checks the values against the rules of the \"comments\" table; raises ValidationFailedError with every problem.\"\"\"\n        creating = current is None\n        errors: list[FieldError] = []\n        for name in values.keys() - _FIELDS:\n            errors.append(FieldError(name, \"is not a field of Comment\"))\n        if not creating:\n            for name in values.keys() & {\"id\"}:\n                errors.append(FieldError(name, \"cannot be changed\"))\n        value = values.get(\"post_id\")\n        if value is None:\n            if creating or \"post_id\" in values:\n                errors.append(FieldError(\"post_id\", \"is required\"))\n        value = values.get(\"text\")\n        if value is None:\n            if creating or \"text\" in values:\n                errors.append(FieldError(\"text\", \"is required\"))\n        post_id = values[\"post_id\"] if \"post_id\" in values else (getattr(current, \"post_id\") if current is not None else None)\n        if post_id is not None and self._uow.posts.find_by_id(post_id) is None:\n            errors.append(FieldError(\"post_id\", \"no Post has this key\"))\n        if errors:\n            raise ValidationFailedError(\"Comment\", errors)\n\n    def _check(self, values: dict[str, Any], current: Comment | None) -> None:\n        \"\"\"Every check before a write: the values, the rows they point to, the unique values.\"\"\"\n        self._validate_all(values, current)\n\n    def _find(self, id: int) -> Comment:\n        \"\"\"The Comment with this key; NotFoundError when there is none.\"\"\"\n        entity = self._uow.comments.find_by_id(id)\n        if entity is None:\n            raise NotFoundError(\"Comment\", id)\n        return entity\n\n    def create_comment(self, comment: Comment) -> Comment:\n        \"\"\"Stores a new Comment after checking it.\"\"\"\n        values = {name: getattr(comment, name) for name in _FIELDS}\n        with self._uow.transaction():\n            self._check(values, None)\n            created = self._uow.comments.insert(comment)\n            return created\n\n    def get_comment(self, id: int) -> Comment:\n        \"\"\"The Comment with this key; NotFoundError when there is none.\"\"\"\n        return self._find(id)\n\n    def list_comments(self, offset: int = 0, limit: int = 50) -> Page[Comment]:\n        \"\"\"A page of comments, by primary key.\"\"\"\n        return self._uow.comments.list(offset, limit)\n\n    def update_comment(self, id: int, changes: Mapping[str, Any]) -> Comment:\n        \"\"\"Changes the given values of a Comment.\"\"\"\n        values = dict(changes)\n        with self._uow.transaction():\n            current = self._find(id)\n            self._check(values, current)\n            for name, value in values.items():\n                setattr(current, name, value)\n            updated = self._uow.comments.update(current)\n            return updated\n\n    def delete_comment(self, id: int) -> None:\n        \"\"\"Deletes a Comment.\"\"\"\n        with self._uow.transaction():\n            current = self._find(id)\n            self._uow.comments.delete(current)\n\n    def list_comments_by_post_id(self, post_id: int) -> list[Comment]:\n        \"\"\"The comments with this post_id.\"\"\"\n        return self._uow.comments.list_by_post_id(post_id)\n",
+  "app/db.py": "\"\"\"Database engine, sessions and the declarative base of the entities (SQLAlchemy 2).\n\nThe URL comes from DATABASE_URL; see .env.example.\n\"\"\"\n\nimport os\n\nfrom sqlalchemy import Engine, create_engine, event\nfrom sqlalchemy.orm import DeclarativeBase, Session, sessionmaker\n\nDATABASE_URL = os.environ.get(\"DATABASE_URL\", \"sqlite:///./app.db\")\n\n\nclass Base(DeclarativeBase):\n    \"\"\"Base of every entity.\"\"\"\n\n\n\ndef create_db_engine(url: str = DATABASE_URL) -> Engine:\n    \"\"\"An engine for the database at `url`. SQLite gets foreign keys turned on, as other databases have them.\"\"\"\n    engine = create_engine(url, pool_pre_ping=not url.startswith(\"sqlite\"))\n    if url.startswith(\"sqlite\"):\n\n        @event.listens_for(engine, \"connect\")\n        def _foreign_keys(connection, _record) -> None:  # type: ignore[no-untyped-def]\n            cursor = connection.cursor()\n            cursor.execute(\"PRAGMA foreign_keys=ON\")\n            cursor.close()\n\n    return engine\n\n\ndef create_session_factory(engine: Engine) -> sessionmaker[Session]:\n    \"\"\"Sessions that keep loaded rows readable after a commit.\"\"\"\n    return sessionmaker(engine, expire_on_commit=False)\n",
+  "app/errors.py": "\"\"\"Errors of the data access layer. They carry no HTTP codes: whoever calls the services translates them.\"\"\"\n\nfrom dataclasses import dataclass, field\n\n\nclass DomainError(Exception):\n    \"\"\"Base of every error a service raises on purpose.\"\"\"\n\n\nclass NotFoundError(DomainError):\n    \"\"\"No row has this key.\"\"\"\n\n    def __init__(self, entity: str, key: object) -> None:\n        super().__init__(f\"No {entity} has the key {key!r}\")\n        self.entity = entity\n        self.key = key\n\n\nclass ConflictError(DomainError):\n    \"\"\"The change clashes with what is stored: a unique value, a newer version, rows that depend on it.\"\"\"\n\n    def __init__(self, entity: str, reason: str, fields: tuple[str, ...] = ()) -> None:\n        super().__init__(f\"{entity}: {reason}\")\n        self.entity = entity\n        self.reason = reason\n        self.fields = fields\n\n\n@dataclass(frozen=True)\nclass FieldError:\n    \"\"\"What is wrong with one field.\"\"\"\n\n    field: str\n    message: str\n\n\n@dataclass\nclass ValidationFailedError(DomainError):\n    \"\"\"The values break the rules of the table: missing, too long, out of range, pointing nowhere.\"\"\"\n\n    entity: str\n    errors: list[FieldError] = field(default_factory=list)\n\n    def __post_init__(self) -> None:\n        super().__init__(f\"{self.entity}: \" + \"; \".join(f\"{error.field}: {error.message}\" for error in self.errors))\n",
+  "app/paging.py": "\"\"\"A page of a list: the rows from an offset, and how many there are in all.\"\"\"\n\nfrom dataclasses import dataclass\n\n\n@dataclass(frozen=True)\nclass Page[T]:\n    items: list[T]\n    total: int\n    offset: int\n    limit: int\n",
+  "app/post/__init__.py": "",
+  "app/post/conversions.py": "\"\"\"Conversions between the application models and the \"posts\" table: what the service takes and returns.\"\"\"\n\nfrom __future__ import annotations\n\nfrom app.application_models import Posts\nfrom app.post.entity import Post\n\n\ndef posts_to_post(model: Posts) -> Post:\n    \"\"\"A Posts as the posts table takes it.\"\"\"\n    return Post(\n        author_id=model.author_id,\n        title=model.title,\n        body=model.body,\n    )\n\n\ndef post_to_posts(row: Post) -> Posts:\n    \"\"\"A row of the posts table as a Posts.\"\"\"\n    return Posts(\n        id=row.id,\n        author_id=row.author_id,\n        title=row.title,\n        body=row.body,\n        # TODO: comment_ids: DB2CRUD does not write this conversion (comment_ids)\n        comment_ids=None,\n    )\n",
+  "app/post/entity.py": "\"\"\"Entity of the \"posts\" table.\"\"\"\n\nfrom sqlalchemy import BigInteger, Computed, ForeignKey, Integer, Text\nfrom sqlalchemy.orm import Mapped, mapped_column\n\nfrom app.db import Base\n\n\nclass Post(Base):\n    \"\"\"A row of the \"posts\" table.\"\"\"\n\n    __tablename__ = \"posts\"\n\n    id: Mapped[int] = mapped_column(BigInteger().with_variant(Integer(), \"sqlite\"), primary_key=True, autoincrement=True)\n    author_id: Mapped[int] = mapped_column(BigInteger(), ForeignKey(\"authors.id\"), nullable=False)\n    title: Mapped[str] = mapped_column(Text(), nullable=False)\n    body: Mapped[str | None] = mapped_column(Text(), nullable=True)\n    word_count: Mapped[int | None] = mapped_column(BigInteger(), Computed(\"length(body)\"), nullable=True)\n",
+  "app/post/repository.py": "\"\"\"Repository of the \"posts\" table: reads and writes rows, and decides nothing.\"\"\"\n\nfrom __future__ import annotations\n\nfrom typing import Any, Protocol\n\nfrom sqlalchemy import func, select\nfrom sqlalchemy.exc import IntegrityError\nfrom sqlalchemy.orm import Session\n\nfrom app.errors import ConflictError\nfrom app.paging import Page\nfrom app.post.entity import Post\n\n\nclass PostRepository(Protocol):\n    \"\"\"Where posts rows are kept. Services depend only on this interface.\"\"\"\n\n    def find_by_id(self, id: int) -> Post | None:\n        \"\"\"The row with this primary key, or None.\"\"\"\n        ...\n\n    def list(self, offset: int = 0, limit: int = 50) -> Page[Post]:\n        \"\"\"At most `limit` rows from `offset`, by primary key, and how many there are.\"\"\"\n        ...\n\n    def list_by_author_id(self, author_id: int) -> list[Post]:\n        \"\"\"Rows with this author_id, by primary key.\"\"\"\n        ...\n\n    def insert(self, entity: Post) -> Post:\n        \"\"\"Stores a new row; the values the database fills are read back.\"\"\"\n        ...\n\n    def update(self, entity: Post) -> Post:\n        \"\"\"Stores the changes made to a row read from this repository.\"\"\"\n        ...\n\n    def delete(self, entity: Post) -> None:\n        \"\"\"Removes a row read from this repository.\"\"\"\n        ...\n\n\nclass SqlPostRepository:\n    \"\"\"Keeps posts rows in the database, through a Session. It never commits: the transaction belongs to whoever holds the session.\"\"\"\n\n    def __init__(self, session: Session) -> None:\n        self._session = session\n\n    def find_by_id(self, id: int) -> Post | None:\n        \"\"\"The row with this primary key, or None.\"\"\"\n        return (self._session.scalars(select(Post).where(Post.id == id))).first()\n\n    def list(self, offset: int = 0, limit: int = 50) -> Page[Post]:\n        \"\"\"At most `limit` rows from `offset`, by primary key, and how many there are.\"\"\"\n        query = select(Post)\n        total = self._session.scalar(select(func.count()).select_from(query.subquery())) or 0\n        rows = (self._session.scalars(query.order_by(Post.id).offset(offset).limit(limit))).all()\n        return Page(items=list(rows), total=total, offset=offset, limit=limit)\n\n    def list_by_author_id(self, author_id: int) -> list[Post]:\n        \"\"\"Rows with this author_id, by primary key.\"\"\"\n        return list((self._session.scalars(select(Post).where(Post.author_id == author_id).order_by(Post.id))).all())\n\n    def insert(self, entity: Post) -> Post:\n        \"\"\"Stores a new row; the values the database fills are read back.\"\"\"\n        self._session.add(entity)\n        try:\n            self._session.flush()\n        except IntegrityError as error:\n            self._session.rollback()\n            raise ConflictError(\"Post\", \"the database refused the change: \" + str(error.orig)) from error\n        self._session.refresh(entity)\n        return entity\n\n    def update(self, entity: Post) -> Post:\n        \"\"\"Stores the changes made to a row read from this repository.\"\"\"\n        self._session.add(entity)\n        try:\n            self._session.flush()\n        except IntegrityError as error:\n            self._session.rollback()\n            raise ConflictError(\"Post\", \"the database refused the change: \" + str(error.orig)) from error\n        self._session.refresh(entity)\n        return entity\n\n    def delete(self, entity: Post) -> None:\n        \"\"\"Removes a row read from this repository.\"\"\"\n        self._session.delete(entity)\n        try:\n            self._session.flush()\n        except IntegrityError as error:\n            self._session.rollback()\n            raise ConflictError(\"Post\", \"the database refused the change: \" + str(error.orig)) from error\n\n\nclass MemoryPostRepository:\n    \"\"\"Keeps posts rows in memory, for tests and for trying the services without a database.\"\"\"\n\n    def __init__(self) -> None:\n        self._rows: dict[tuple[Any, ...], Post] = {}\n        self._next_id = 1\n\n    @staticmethod\n    def _key(row: Post) -> tuple[Any, ...]:\n        return (row.id,)\n\n    def find_by_id(self, id: int) -> Post | None:\n        \"\"\"The row with this primary key, or None.\"\"\"\n        return next((row for row in [row for row in sorted(self._rows.values(), key=self._key) if True] if row.id == id), None)\n\n    def list(self, offset: int = 0, limit: int = 50) -> Page[Post]:\n        \"\"\"At most `limit` rows from `offset`, by primary key, and how many there are.\"\"\"\n        rows = [row for row in sorted(self._rows.values(), key=self._key) if True]\n        return Page(items=rows[offset : offset + limit], total=len(rows), offset=offset, limit=limit)\n\n    def list_by_author_id(self, author_id: int) -> list[Post]:\n        \"\"\"Rows with this author_id, by primary key.\"\"\"\n        return [row for row in [row for row in sorted(self._rows.values(), key=self._key) if True] if row.author_id == author_id]\n\n    def insert(self, entity: Post) -> Post:\n        \"\"\"Stores a new row; the values the database fills are read back.\"\"\"\n        if entity.id is None:\n            entity.id = self._next_id\n            self._next_id += 1\n        self._rows[(entity.id,)] = entity\n        return entity\n\n    def update(self, entity: Post) -> Post:\n        \"\"\"Stores the changes made to a row read from this repository.\"\"\"\n        self._rows[(entity.id,)] = entity\n        return entity\n\n    def delete(self, entity: Post) -> None:\n        \"\"\"Removes a row read from this repository.\"\"\"\n        self._rows.pop((entity.id,), None)\n",
+  "app/post/service.py": "\"\"\"Operations on posts: what each one checks before it writes.\"\"\"\n\nfrom collections.abc import Mapping\nfrom typing import Any\n\nfrom app.errors import FieldError, NotFoundError, ValidationFailedError\nfrom app.paging import Page\nfrom app.post.entity import Post\nfrom app.unit_of_work import UnitOfWork\n\n# Columns a client may send: the database fills the others\n_FIELDS = frozenset({\"author_id\", \"title\", \"body\"})\n\n\nclass PostService:\n    \"\"\"Operations on posts. Each write runs in its own transaction.\"\"\"\n\n    def __init__(self, uow: UnitOfWork) -> None:\n        self._uow = uow\n\n    def _validate_all(self, values: dict[str, Any], current: Post | None) -> None:\n        \"\"\"Checks the values against the rules of the \"posts\" table; raises ValidationFailedError with every problem.\"\"\"\n        creating = current is None\n        errors: list[FieldError] = []\n        for name in values.keys() - _FIELDS:\n            errors.append(FieldError(name, \"is not a field of Post\"))\n        if not creating:\n            for name in values.keys() & {\"id\", \"word_count\"}:\n                errors.append(FieldError(name, \"cannot be changed\"))\n        value = values.get(\"author_id\")\n        if value is None:\n            if creating or \"author_id\" in values:\n                errors.append(FieldError(\"author_id\", \"is required\"))\n        value = values.get(\"title\")\n        if value is None:\n            if creating or \"title\" in values:\n                errors.append(FieldError(\"title\", \"is required\"))\n        author_id = values[\"author_id\"] if \"author_id\" in values else (getattr(current, \"author_id\") if current is not None else None)\n        if author_id is not None and self._uow.authors.find_by_id(author_id) is None:\n            errors.append(FieldError(\"author_id\", \"no Author has this key\"))\n        if errors:\n            raise ValidationFailedError(\"Post\", errors)\n\n    def _check(self, values: dict[str, Any], current: Post | None) -> None:\n        \"\"\"Every check before a write: the values, the rows they point to, the unique values.\"\"\"\n        self._validate_all(values, current)\n\n    def _find(self, id: int) -> Post:\n        \"\"\"The Post with this key; NotFoundError when there is none.\"\"\"\n        entity = self._uow.posts.find_by_id(id)\n        if entity is None:\n            raise NotFoundError(\"Post\", id)\n        return entity\n\n    def create_post(self, post: Post) -> Post:\n        \"\"\"Stores a new Post after checking it.\"\"\"\n        values = {name: getattr(post, name) for name in _FIELDS}\n        with self._uow.transaction():\n            self._check(values, None)\n            created = self._uow.posts.insert(post)\n            return created\n\n    def get_post(self, id: int) -> Post:\n        \"\"\"The Post with this key; NotFoundError when there is none.\"\"\"\n        return self._find(id)\n\n    def list_posts(self, offset: int = 0, limit: int = 50) -> Page[Post]:\n        \"\"\"A page of posts, by primary key.\"\"\"\n        return self._uow.posts.list(offset, limit)\n\n    def update_post(self, id: int, changes: Mapping[str, Any]) -> Post:\n        \"\"\"Changes the given values of a Post.\"\"\"\n        values = dict(changes)\n        with self._uow.transaction():\n            current = self._find(id)\n            self._check(values, current)\n            for name, value in values.items():\n                setattr(current, name, value)\n            updated = self._uow.posts.update(current)\n            return updated\n\n    def delete_post(self, id: int) -> None:\n        \"\"\"Deletes a Post.\"\"\"\n        with self._uow.transaction():\n            current = self._find(id)\n            self._uow.posts.delete(current)\n\n    def list_posts_by_author_id(self, author_id: int) -> list[Post]:\n        \"\"\"The posts with this author_id.\"\"\"\n        return self._uow.posts.list_by_author_id(author_id)\n",
+  "app/unit_of_work.py": "\"\"\"The repositories of every table, and the transaction of each service operation. Each service operation runs in `transaction()`: committed when it ends, rolled back when it fails.\"\"\"\n\nfrom collections.abc import Iterator\nfrom contextlib import AbstractContextManager, contextmanager\nfrom typing import Protocol\n\nfrom sqlalchemy.orm import Session\n\nfrom app.author.repository import AuthorRepository, MemoryAuthorRepository, SqlAuthorRepository\nfrom app.comment.repository import CommentRepository, MemoryCommentRepository, SqlCommentRepository\nfrom app.post.repository import MemoryPostRepository, PostRepository, SqlPostRepository\n\n\nclass UnitOfWork(Protocol):\n    \"\"\"What services depend on: a repository per table and a transaction.\"\"\"\n\n    authors: AuthorRepository\n    posts: PostRepository\n    comments: CommentRepository\n\n    def transaction(self) -> AbstractContextManager[None]:\n        \"\"\"Commits what runs inside it, or rolls it back if it fails.\"\"\"\n        ...\n\n\nclass SqlUnitOfWork:\n    \"\"\"The repositories over one Session.\"\"\"\n\n    def __init__(self, session: Session) -> None:\n        self.session = session\n        self.authors = SqlAuthorRepository(session)\n        self.posts = SqlPostRepository(session)\n        self.comments = SqlCommentRepository(session)\n\n    @contextmanager\n    def transaction(self) -> Iterator[None]:\n        \"\"\"Commits what runs inside it, or rolls it back if it fails.\"\"\"\n        try:\n            yield\n        except BaseException:\n            self.session.rollback()\n            raise\n        self.session.commit()\n\n\nclass MemoryUnitOfWork:\n    \"\"\"The in-memory repositories, for tests and for trying the services without a database.\"\"\"\n\n    def __init__(self) -> None:\n        self.authors = MemoryAuthorRepository()\n        self.posts = MemoryPostRepository()\n        self.comments = MemoryCommentRepository()\n\n    @contextmanager\n    def transaction(self) -> Iterator[None]:\n        \"\"\"Memory has no transactions: changes are kept as they are made.\"\"\"\n        yield\n",
+  "crud-contract.json": "{\n  \"format\": \"crud-contract\",\n  \"version\": 1,\n  \"stack\": {\n    \"language\": \"python\",\n    \"orm\": \"sqlalchemy\",\n    \"database\": \"sqlite\",\n    \"execution\": \"sync\"\n  },\n  \"transactions\": \"operation\",\n  \"paging\": \"offset\",\n  \"types\": [\n    {\n      \"name\": \"Author\",\n      \"module\": \"app.author.entity\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"name\",\n          \"type\": {\n            \"kind\": \"text\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"created_at\",\n          \"type\": {\n            \"kind\": \"text\"\n          },\n          \"nullable\": false\n        }\n      ]\n    },\n    {\n      \"name\": \"Post\",\n      \"module\": \"app.post.entity\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"author_id\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"title\",\n          \"type\": {\n            \"kind\": \"text\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"body\",\n          \"type\": {\n            \"kind\": \"text\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"word_count\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"Comment\",\n      \"module\": \"app.comment.entity\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"post_id\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"text\",\n          \"type\": {\n            \"kind\": \"text\"\n          },\n          \"nullable\": false\n        }\n      ]\n    }\n  ],\n  \"errors\": [\n    {\n      \"kind\": \"notFound\",\n      \"name\": \"NotFoundError\",\n      \"module\": \"app.errors\"\n    },\n    {\n      \"kind\": \"conflict\",\n      \"name\": \"ConflictError\",\n      \"module\": \"app.errors\"\n    },\n    {\n      \"kind\": \"validation\",\n      \"name\": \"ValidationFailedError\",\n      \"module\": \"app.errors\"\n    }\n  ],\n  \"services\": [\n    {\n      \"name\": \"AuthorService\",\n      \"module\": \"app.author.service\",\n      \"operations\": [\n        {\n          \"name\": \"create_author\",\n          \"kind\": \"create\",\n          \"errors\": [\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"get_author\",\n          \"kind\": \"get\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"list_authors\",\n          \"kind\": \"list\",\n          \"errors\": []\n        },\n        {\n          \"name\": \"update_author\",\n          \"kind\": \"update\",\n          \"errors\": [\n            \"notFound\",\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"delete_author\",\n          \"kind\": \"delete\",\n          \"errors\": [\n            \"notFound\",\n            \"conflict\"\n          ]\n        }\n      ]\n    },\n    {\n      \"name\": \"PostService\",\n      \"module\": \"app.post.service\",\n      \"operations\": [\n        {\n          \"name\": \"create_post\",\n          \"kind\": \"create\",\n          \"errors\": [\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"get_post\",\n          \"kind\": \"get\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"list_posts\",\n          \"kind\": \"list\",\n          \"errors\": []\n        },\n        {\n          \"name\": \"update_post\",\n          \"kind\": \"update\",\n          \"errors\": [\n            \"notFound\",\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"delete_post\",\n          \"kind\": \"delete\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"list_posts_by_author_id\",\n          \"kind\": \"listByParent\",\n          \"by\": [\n            \"author_id\"\n          ],\n          \"errors\": []\n        }\n      ]\n    },\n    {\n      \"name\": \"CommentService\",\n      \"module\": \"app.comment.service\",\n      \"operations\": [\n        {\n          \"name\": \"create_comment\",\n          \"kind\": \"create\",\n          \"errors\": [\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"get_comment\",\n          \"kind\": \"get\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"list_comments\",\n          \"kind\": \"list\",\n          \"errors\": []\n        },\n        {\n          \"name\": \"update_comment\",\n          \"kind\": \"update\",\n          \"errors\": [\n            \"notFound\",\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"delete_comment\",\n          \"kind\": \"delete\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"list_comments_by_post_id\",\n          \"kind\": \"listByParent\",\n          \"by\": [\n            \"post_id\"\n          ],\n          \"errors\": []\n        }\n      ]\n    }\n  ]\n}\n",
+  "pyproject.toml": "[project]\nname = \"sqlalchemy-sqlite-conversions-blog\"\nversion = \"0.1.0\"\ndescription = \"Data access layer (entities, repositories and services) generated by DB2CRUD.\"\nrequires-python = \">=3.12\"\ndependencies = [\n    \"sqlalchemy>=2.0.36,<2.1\",\n]\n\n[project.optional-dependencies]\ndev = [\n    \"pytest>=8.3,<9\",\n]\n\n[tool.pytest.ini_options]\ntestpaths = [\"tests\"]\npythonpath = [\".\"]\n",
+  "requirements-dev.txt": "-r requirements.txt\npytest>=8.3,<9\n",
+  "requirements.txt": "sqlalchemy>=2.0.36,<2.1\n",
+  "tests/__init__.py": "",
+  "tests/conftest.py": "\"\"\"Fixtures of the tests: a database created from the entities, and the units of work.\"\"\"\n\nfrom collections.abc import Iterator\nimport os\n\nimport pytest\n\nfrom app.author.entity import Author\nfrom app.comment.entity import Comment\nfrom app.db import Base, create_db_engine, create_session_factory\nfrom app.post.entity import Post\nfrom app.unit_of_work import MemoryUnitOfWork, SqlUnitOfWork\n\n# Every entity is imported above, so the metadata knows every table\n\n\n@pytest.fixture\ndef engine(tmp_path):  # type: ignore[no-untyped-def]\n    \"\"\"The test database, empty: TEST_DATABASE_URL, or SQLite in a temporary file.\"\"\"\n    url = os.environ.get(\"TEST_DATABASE_URL\") or f\"sqlite:///{tmp_path / 'test.db'}\"\n    engine = create_db_engine(url)\n    Base.metadata.drop_all(engine)\n    Base.metadata.create_all(engine)\n    yield engine\n    Base.metadata.drop_all(engine)\n    engine.dispose()\n\n\n@pytest.fixture\ndef sql_uow(engine) -> Iterator[SqlUnitOfWork]:  # type: ignore[no-untyped-def]\n    \"\"\"The repositories over a session of the test database.\"\"\"\n    with create_session_factory(engine)() as session:\n        yield SqlUnitOfWork(session)\n\n\n@pytest.fixture\ndef memory_uow() -> MemoryUnitOfWork:\n    \"\"\"The in-memory repositories.\"\"\"\n    return MemoryUnitOfWork()\n",
+  "tests/factories.py": "\"\"\"Rows for the tests: valid values for every column, and the rows they point to.\"\"\"\n\nfrom typing import Any\n\nfrom app.author.entity import Author\nfrom app.comment.entity import Comment\nfrom app.post.entity import Post\nfrom app.unit_of_work import UnitOfWork\n\n\ndef new_author(n: int = 1, **values: Any) -> Author:\n    \"\"\"A valid Author that is not stored yet; `n` makes its unique values differ, `values` replace any of them.\"\"\"\n    defaults: dict[str, Any] = {\"name\": f\"name-{n}\"}\n    return Author(**(defaults | values))\n\n\ndef add_author(uow: UnitOfWork, n: int = 1) -> Author:\n    \"\"\"A stored Author.\"\"\"\n    return uow.authors.insert(new_author(n))\n\n\ndef new_post(n: int = 1, **values: Any) -> Post:\n    \"\"\"A valid Post that is not stored yet; `n` makes its unique values differ, `values` replace any of them.\"\"\"\n    defaults: dict[str, Any] = {\"title\": f\"title-{n}\", \"body\": f\"body-{n}\"}\n    return Post(**(defaults | values))\n\n\ndef add_post(uow: UnitOfWork, n: int = 1) -> Post:\n    \"\"\"A stored Post, with the rows it points to.\"\"\"\n    parent_0 = add_author(uow, n)\n    return uow.posts.insert(new_post(n, author_id=parent_0.id))\n\n\ndef new_comment(n: int = 1, **values: Any) -> Comment:\n    \"\"\"A valid Comment that is not stored yet; `n` makes its unique values differ, `values` replace any of them.\"\"\"\n    defaults: dict[str, Any] = {\"text\": f\"text-{n}\"}\n    return Comment(**(defaults | values))\n\n\ndef add_comment(uow: UnitOfWork, n: int = 1) -> Comment:\n    \"\"\"A stored Comment, with the rows it points to.\"\"\"\n    parent_0 = add_post(uow, n)\n    return uow.comments.insert(new_comment(n, post_id=parent_0.id))\n",
+  "tests/test_author.py": "\"\"\"Tests of the \"authors\" table.\"\"\"\n\nimport pytest\nfrom tests.factories import add_author, new_author\n\nfrom app.author.service import AuthorService\nfrom app.errors import NotFoundError, ValidationFailedError\nfrom app.unit_of_work import MemoryUnitOfWork, SqlUnitOfWork\n\n\ndef test_author_is_stored_and_read_back(sql_uow: SqlUnitOfWork) -> None:\n    stored = add_author(sql_uow, 1)\n    found = sql_uow.authors.find_by_id(stored.id)\n    assert found is not None\n    assert found.id == stored.id\n\n\ndef test_author_lists_rows_by_key(sql_uow: SqlUnitOfWork) -> None:\n    add_author(sql_uow, 1)\n    add_author(sql_uow, 2)\n    page = sql_uow.authors.list(0, 1)\n    assert page.total == 2\n    assert len(page.items) == 1\n\n\ndef test_author_changes_are_stored(sql_uow: SqlUnitOfWork) -> None:\n    stored = add_author(sql_uow, 1)\n    stored.name = \"changed\"\n    sql_uow.authors.update(stored)\n    found = sql_uow.authors.find_by_id(stored.id)\n    assert found is not None and found.name == \"changed\"\n\n\ndef test_author_is_deleted(sql_uow: SqlUnitOfWork) -> None:\n    stored = add_author(sql_uow, 1)\n    sql_uow.authors.delete(stored)\n    assert sql_uow.authors.find_by_id(stored.id) is None\n\n\ndef test_author_service_creates_a_valid_row(memory_uow: MemoryUnitOfWork) -> None:\n    service = AuthorService(memory_uow)\n    n = 100\n    created = service.create_author(new_author(1))\n    found = service.get_author(created.id)\n    assert found.id == created.id\n\n\ndef test_author_service_refuses_a_missing_value(memory_uow: MemoryUnitOfWork) -> None:\n    service = AuthorService(memory_uow)\n    n = 100\n    with pytest.raises(ValidationFailedError) as raised:\n        service.create_author(new_author(1, name=None))\n    assert [error.field for error in raised.value.errors] == [\"name\"]\n\n\ndef test_author_service_says_when_a_row_is_missing(memory_uow: MemoryUnitOfWork) -> None:\n    service = AuthorService(memory_uow)\n    with pytest.raises(NotFoundError):\n        service.get_author(999999)\n\n\ndef test_author_service_changes_a_row(memory_uow: MemoryUnitOfWork) -> None:\n    service = AuthorService(memory_uow)\n    n = 100\n    created = service.create_author(new_author(1))\n    updated = service.update_author(created.id, {\"name\": \"changed\"})\n    assert updated.name == \"changed\"\n\n\ndef test_author_service_deletes_a_row(memory_uow: MemoryUnitOfWork) -> None:\n    service = AuthorService(memory_uow)\n    n = 100\n    created = service.create_author(new_author(1))\n    service.delete_author(created.id)\n    with pytest.raises(NotFoundError):\n        service.get_author(created.id)\n",
+  "tests/test_comment.py": "\"\"\"Tests of the \"comments\" table.\"\"\"\n\nimport pytest\nfrom tests.factories import add_comment, add_post, new_comment\n\nfrom app.comment.service import CommentService\nfrom app.errors import NotFoundError, ValidationFailedError\nfrom app.unit_of_work import MemoryUnitOfWork, SqlUnitOfWork\n\n\ndef test_comment_is_stored_and_read_back(sql_uow: SqlUnitOfWork) -> None:\n    stored = add_comment(sql_uow, 1)\n    found = sql_uow.comments.find_by_id(stored.id)\n    assert found is not None\n    assert found.id == stored.id\n    assert stored.post_id is None or len(sql_uow.comments.list_by_post_id(stored.post_id)) == 1\n\n\ndef test_comment_lists_rows_by_key(sql_uow: SqlUnitOfWork) -> None:\n    add_comment(sql_uow, 1)\n    add_comment(sql_uow, 2)\n    page = sql_uow.comments.list(0, 1)\n    assert page.total == 2\n    assert len(page.items) == 1\n\n\ndef test_comment_changes_are_stored(sql_uow: SqlUnitOfWork) -> None:\n    stored = add_comment(sql_uow, 1)\n    stored.text = \"changed\"\n    sql_uow.comments.update(stored)\n    found = sql_uow.comments.find_by_id(stored.id)\n    assert found is not None and found.text == \"changed\"\n\n\ndef test_comment_is_deleted(sql_uow: SqlUnitOfWork) -> None:\n    stored = add_comment(sql_uow, 1)\n    sql_uow.comments.delete(stored)\n    assert sql_uow.comments.find_by_id(stored.id) is None\n\n\ndef test_comment_service_creates_a_valid_row(memory_uow: MemoryUnitOfWork) -> None:\n    service = CommentService(memory_uow)\n    n = 100\n    parent_0 = add_post(memory_uow, n)\n    created = service.create_comment(new_comment(1, post_id=parent_0.id))\n    found = service.get_comment(created.id)\n    assert found.id == created.id\n\n\ndef test_comment_service_refuses_a_missing_value(memory_uow: MemoryUnitOfWork) -> None:\n    service = CommentService(memory_uow)\n    n = 100\n    parent_0 = add_post(memory_uow, n)\n    with pytest.raises(ValidationFailedError) as raised:\n        service.create_comment(new_comment(1, post_id=parent_0.id, text=None))\n    assert [error.field for error in raised.value.errors] == [\"text\"]\n\n\ndef test_comment_service_refuses_a_missing_parent(memory_uow: MemoryUnitOfWork) -> None:\n    service = CommentService(memory_uow)\n    n = 100\n    parent_0 = add_post(memory_uow, n)\n    with pytest.raises(ValidationFailedError) as raised:\n        service.create_comment(new_comment(1, post_id=999999))\n    assert \"post_id\" in [error.field for error in raised.value.errors]\n\n\ndef test_comment_service_says_when_a_row_is_missing(memory_uow: MemoryUnitOfWork) -> None:\n    service = CommentService(memory_uow)\n    with pytest.raises(NotFoundError):\n        service.get_comment(999999)\n\n\ndef test_comment_service_changes_a_row(memory_uow: MemoryUnitOfWork) -> None:\n    service = CommentService(memory_uow)\n    n = 100\n    parent_0 = add_post(memory_uow, n)\n    created = service.create_comment(new_comment(1, post_id=parent_0.id))\n    updated = service.update_comment(created.id, {\"text\": \"changed\"})\n    assert updated.text == \"changed\"\n\n\ndef test_comment_service_deletes_a_row(memory_uow: MemoryUnitOfWork) -> None:\n    service = CommentService(memory_uow)\n    n = 100\n    parent_0 = add_post(memory_uow, n)\n    created = service.create_comment(new_comment(1, post_id=parent_0.id))\n    service.delete_comment(created.id)\n    with pytest.raises(NotFoundError):\n        service.get_comment(created.id)\n",
+  "tests/test_conversions.py": "\"\"\"Tests of the conversions between the application models and the tables.\"\"\"\n\nfrom tests.factories import add_author\n\nfrom app.author.conversions import author_model_to_author, author_to_author_model\nfrom app.unit_of_work import MemoryUnitOfWork\n\n\ndef test_author_goes_both_ways(memory_uow: MemoryUnitOfWork) -> None:\n    \"\"\"A row read as an Author and written back gives the same values.\"\"\"\n    row = add_author(memory_uow)\n    model = author_to_author_model(row)\n    assert model.id == row.id\n    assert model.name == row.name\n    assert model.created_at == row.created_at\n    values = author_model_to_author(model)\n    assert values.name == row.name\n",
+  "tests/test_database.py": "\"\"\"The tests run on the database they were asked to.\"\"\"\n\nimport os\n\n\ndef test_runs_on_the_database_asked(engine) -> None:  # type: ignore[no-untyped-def]\n    url = os.environ.get(\"TEST_DATABASE_URL\")\n    expected = url.split(\":\", 1)[0].split(\"+\", 1)[0] if url else \"sqlite\"\n    assert engine.dialect.name == expected\n",
+  "tests/test_post.py": "\"\"\"Tests of the \"posts\" table.\"\"\"\n\nimport pytest\nfrom tests.factories import add_author, add_post, new_post\n\nfrom app.errors import NotFoundError, ValidationFailedError\nfrom app.post.service import PostService\nfrom app.unit_of_work import MemoryUnitOfWork, SqlUnitOfWork\n\n\ndef test_post_is_stored_and_read_back(sql_uow: SqlUnitOfWork) -> None:\n    stored = add_post(sql_uow, 1)\n    found = sql_uow.posts.find_by_id(stored.id)\n    assert found is not None\n    assert found.id == stored.id\n    assert stored.author_id is None or len(sql_uow.posts.list_by_author_id(stored.author_id)) == 1\n\n\ndef test_post_lists_rows_by_key(sql_uow: SqlUnitOfWork) -> None:\n    add_post(sql_uow, 1)\n    add_post(sql_uow, 2)\n    page = sql_uow.posts.list(0, 1)\n    assert page.total == 2\n    assert len(page.items) == 1\n\n\ndef test_post_changes_are_stored(sql_uow: SqlUnitOfWork) -> None:\n    stored = add_post(sql_uow, 1)\n    stored.title = \"changed\"\n    sql_uow.posts.update(stored)\n    found = sql_uow.posts.find_by_id(stored.id)\n    assert found is not None and found.title == \"changed\"\n\n\ndef test_post_is_deleted(sql_uow: SqlUnitOfWork) -> None:\n    stored = add_post(sql_uow, 1)\n    sql_uow.posts.delete(stored)\n    assert sql_uow.posts.find_by_id(stored.id) is None\n\n\ndef test_post_service_creates_a_valid_row(memory_uow: MemoryUnitOfWork) -> None:\n    service = PostService(memory_uow)\n    n = 100\n    parent_0 = add_author(memory_uow, n)\n    created = service.create_post(new_post(1, author_id=parent_0.id))\n    found = service.get_post(created.id)\n    assert found.id == created.id\n\n\ndef test_post_service_refuses_a_missing_value(memory_uow: MemoryUnitOfWork) -> None:\n    service = PostService(memory_uow)\n    n = 100\n    parent_0 = add_author(memory_uow, n)\n    with pytest.raises(ValidationFailedError) as raised:\n        service.create_post(new_post(1, author_id=parent_0.id, title=None))\n    assert [error.field for error in raised.value.errors] == [\"title\"]\n\n\ndef test_post_service_refuses_a_missing_parent(memory_uow: MemoryUnitOfWork) -> None:\n    service = PostService(memory_uow)\n    n = 100\n    parent_0 = add_author(memory_uow, n)\n    with pytest.raises(ValidationFailedError) as raised:\n        service.create_post(new_post(1, author_id=999999))\n    assert \"author_id\" in [error.field for error in raised.value.errors]\n\n\ndef test_post_service_says_when_a_row_is_missing(memory_uow: MemoryUnitOfWork) -> None:\n    service = PostService(memory_uow)\n    with pytest.raises(NotFoundError):\n        service.get_post(999999)\n\n\ndef test_post_service_changes_a_row(memory_uow: MemoryUnitOfWork) -> None:\n    service = PostService(memory_uow)\n    n = 100\n    parent_0 = add_author(memory_uow, n)\n    created = service.create_post(new_post(1, author_id=parent_0.id))\n    updated = service.update_post(created.id, {\"title\": \"changed\"})\n    assert updated.title == \"changed\"\n\n\ndef test_post_service_deletes_a_row(memory_uow: MemoryUnitOfWork) -> None:\n    service = PostService(memory_uow)\n    n = 100\n    parent_0 = add_author(memory_uow, n)\n    created = service.create_post(new_post(1, author_id=parent_0.id))\n    service.delete_post(created.id)\n    with pytest.raises(NotFoundError):\n        service.get_post(created.id)\n"
+ }
+}

@@ -1,0 +1,435 @@
+{
+ "schema": {
+  "format": "db-schema",
+  "version": 1,
+  "dialect": null,
+  "source": {
+   "kind": "ddl",
+   "format": "sql-ddl"
+  },
+  "tables": [
+   {
+    "name": "orders",
+    "columns": [
+     {
+      "name": "id",
+      "type": {
+       "sql": "integer",
+       "kind": "integer",
+       "bits": 32
+      },
+      "nullable": false,
+      "generated": "identity"
+     },
+     {
+      "name": "customer_id",
+      "type": {
+       "sql": "integer",
+       "kind": "integer",
+       "bits": 32
+      },
+      "nullable": false
+     },
+     {
+      "name": "total_cents",
+      "type": {
+       "sql": "integer",
+       "kind": "integer",
+       "bits": 32
+      },
+      "nullable": false
+     },
+     {
+      "name": "placed_at",
+      "type": {
+       "sql": "timestamp",
+       "kind": "datetime",
+       "timezone": false
+      },
+      "nullable": false,
+      "generated": "now"
+     },
+     {
+      "name": "note",
+      "type": {
+       "sql": "text",
+       "kind": "text"
+      },
+      "nullable": true
+     }
+    ],
+    "primaryKey": [
+     "id"
+    ],
+    "foreignKeys": [],
+    "uniques": [],
+    "indexes": [],
+    "checks": [],
+    "origin": {
+     "line": 2,
+     "column": 1
+    }
+   }
+  ],
+  "enums": [],
+  "notes": []
+ },
+ "decisions": [],
+ "settings": {
+  "name": "sqlalchemy-mysql-conversions-mapper",
+  "database": "mysql",
+  "serviceTypes": "dtos"
+ },
+ "models": {
+  "schema": {
+   "format": "model-schema",
+   "version": 1,
+   "origin": {
+    "format": "python",
+    "language": "python"
+   },
+   "models": [
+    {
+     "name": "Order",
+     "kind": "interface",
+     "fields": [
+      {
+       "name": "id",
+       "type": {
+        "kind": "primitive",
+        "name": "integer"
+       },
+       "nullable": false,
+       "optional": false
+      },
+      {
+       "name": "customerId",
+       "type": {
+        "kind": "primitive",
+        "name": "integer"
+       },
+       "nullable": false,
+       "optional": false
+      },
+      {
+       "name": "totalCents",
+       "type": {
+        "kind": "primitive",
+        "name": "integer"
+       },
+       "nullable": false,
+       "optional": false
+      },
+      {
+       "name": "placedAt",
+       "type": {
+        "kind": "primitive",
+        "name": "datetime"
+       },
+       "nullable": false,
+       "optional": false
+      },
+      {
+       "name": "note",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": true,
+       "optional": false
+      }
+     ]
+    },
+    {
+     "name": "OrderSummary",
+     "kind": "interface",
+     "fields": [
+      {
+       "name": "id",
+       "type": {
+        "kind": "primitive",
+        "name": "integer"
+       },
+       "nullable": false,
+       "optional": false
+      },
+      {
+       "name": "total",
+       "type": {
+        "kind": "primitive",
+        "name": "decimal"
+       },
+       "nullable": false,
+       "optional": false
+      },
+      {
+       "name": "placedAt",
+       "type": {
+        "kind": "primitive",
+        "name": "datetime"
+       },
+       "nullable": false,
+       "optional": false
+      },
+      {
+       "name": "label",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false
+      },
+      {
+       "name": "extra",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": true
+      }
+     ]
+    }
+   ],
+   "enums": []
+  },
+  "project": {
+   "source": {
+    "format": "python",
+    "model": "Order",
+    "schema": {
+     "format": "model-schema",
+     "version": 1,
+     "origin": {
+      "format": "python",
+      "language": "python"
+     },
+     "models": [
+      {
+       "name": "Order",
+       "kind": "interface",
+       "fields": [
+        {
+         "name": "id",
+         "type": {
+          "kind": "primitive",
+          "name": "integer"
+         },
+         "nullable": false,
+         "optional": false
+        },
+        {
+         "name": "customerId",
+         "type": {
+          "kind": "primitive",
+          "name": "integer"
+         },
+         "nullable": false,
+         "optional": false
+        },
+        {
+         "name": "totalCents",
+         "type": {
+          "kind": "primitive",
+          "name": "integer"
+         },
+         "nullable": false,
+         "optional": false
+        },
+        {
+         "name": "placedAt",
+         "type": {
+          "kind": "primitive",
+          "name": "datetime"
+         },
+         "nullable": false,
+         "optional": false
+        },
+        {
+         "name": "note",
+         "type": {
+          "kind": "primitive",
+          "name": "string"
+         },
+         "nullable": true,
+         "optional": false
+        }
+       ]
+      }
+     ],
+     "enums": []
+    }
+   },
+   "target": {
+    "format": "python",
+    "model": "OrderSummary",
+    "schema": {
+     "format": "model-schema",
+     "version": 1,
+     "origin": {
+      "format": "python",
+      "language": "python"
+     },
+     "models": [
+      {
+       "name": "OrderSummary",
+       "kind": "interface",
+       "fields": [
+        {
+         "name": "id",
+         "type": {
+          "kind": "primitive",
+          "name": "integer"
+         },
+         "nullable": false,
+         "optional": false
+        },
+        {
+         "name": "total",
+         "type": {
+          "kind": "primitive",
+          "name": "decimal"
+         },
+         "nullable": false,
+         "optional": false
+        },
+        {
+         "name": "placedAt",
+         "type": {
+          "kind": "primitive",
+          "name": "datetime"
+         },
+         "nullable": false,
+         "optional": false
+        },
+        {
+         "name": "label",
+         "type": {
+          "kind": "primitive",
+          "name": "string"
+         },
+         "nullable": false,
+         "optional": false
+        },
+        {
+         "name": "extra",
+         "type": {
+          "kind": "primitive",
+          "name": "string"
+         },
+         "nullable": false,
+         "optional": true
+        }
+       ]
+      }
+     ],
+     "enums": []
+    }
+   },
+   "root": "Order->OrderSummary",
+   "mappings": [
+    {
+     "id": "Order->OrderSummary",
+     "source": "Order",
+     "target": "OrderSummary",
+     "fields": [
+      {
+       "target": "id",
+       "sources": [
+        [
+         "id"
+        ]
+       ],
+       "transform": {
+        "kind": "direct"
+       },
+       "status": "active"
+      },
+      {
+       "target": "total",
+       "sources": [
+        [
+         "totalCents"
+        ]
+       ],
+       "transform": {
+        "kind": "arithmetic",
+        "operator": "/",
+        "operand": 100
+       },
+       "status": "active"
+      },
+      {
+       "target": "placedAt",
+       "sources": [
+        [
+         "placedAt"
+        ]
+       ],
+       "transform": {
+        "kind": "direct"
+       },
+       "status": "active"
+      },
+      {
+       "target": "label",
+       "sources": [
+        [
+         "id"
+        ],
+        [
+         "note"
+        ]
+       ],
+       "transform": {
+        "kind": "expression",
+        "expression": "'#' + id + ' ' + note"
+       },
+       "status": "active"
+      },
+      {
+       "target": "extra",
+       "sources": [],
+       "transform": {
+        "kind": "direct"
+       },
+       "status": "unmapped"
+      }
+     ],
+     "ignoredSources": []
+    }
+   ]
+  }
+ },
+ "files": {
+  ".env.example": "# Where the database is. The synchronous driver is named here; the asynchronous one is chosen from it.\nDATABASE_URL=mysql+pymysql://app:app@localhost:3306/app\n# The tests use SQLite in a temporary file unless this names another database (it is emptied by the tests)\n# TEST_DATABASE_URL=\n",
+  ".gitignore": "__pycache__/\n*.py[cod]\n.venv/\n.pytest_cache/\n.env\n*.db\n",
+  "README.md": "# sqlalchemy-mysql-conversions-mapper\n\nData access layer generated by [DB2CRUD](https://github.com/RaulEstevezA/DB2CRUD) for a database that already exists: entities, repositories and services with SQLAlchemy 2. It does not create or migrate the database.\n\n## Settings\n\n- Database: mysql; code: synchronous (Session).\n- Entities: written for the tables the input had no class for.\n- Services: take and return DTOs (pydantic).\n- Transactions: one transaction per service operation, committed when it ends.\n- Lists: lists return pages by offset and limit.\n\n## Layout\n\n```text\napp/db.py              engine, sessions and the declarative base\napp/errors.py          NotFoundError, ConflictError, ValidationFailedError: no HTTP codes\napp/unit_of_work.py    the repositories of every table, and the transaction of each operation\napp/entities/          one entity per table\napp/repositories/      one repository per table\napp/services/          one service per table\ntests/                 repositories against a database, services on the in-memory repositories\ncrud-contract.json     what was written, for CRUD2Controller\n```\n\n## Running the tests\n\n```bash\npython -m venv .venv && source .venv/bin/activate\npip install -r requirements-dev.txt\npython -m pytest                       # SQLite in a temporary file\nTEST_DATABASE_URL=mysql+pymysql://app:app@localhost:3306/app python -m pytest   # a real, disposable database: it is emptied\n```\n\nLook for `TODO` in the code: each one marks a decision the input did not settle.\n",
+  "app/__init__.py": "",
+  "app/application_models.py": "\"\"\"The application models the conversions use: a copy of the classes DB2CRUD read.\"\"\"\n\nfrom __future__ import annotations\n\nfrom dataclasses import dataclass\nfrom datetime import datetime\nfrom decimal import Decimal\n\n\n@dataclass(kw_only=True)\nclass OrderSummary:\n    \"\"\"OrderSummary, as the application has it.\"\"\"\n\n    id: int\n    total: Decimal\n    placedAt: datetime\n    label: str\n    extra: str | None = None\n",
+  "app/conversions/__init__.py": "",
+  "app/conversions/order.py": "\"\"\"Conversions between the application models and the \"orders\" table: what the service takes and returns.\"\"\"\n\nfrom __future__ import annotations\n\nfrom app.application_models import OrderSummary\nfrom app.dtos.order import OrderCreate, OrderRead\n\n\ndef order_summary_to_order_create(model: OrderSummary) -> OrderCreate:\n    \"\"\"An OrderSummary as the orders table takes it.\"\"\"\n    return OrderCreate(\n        # TODO: customer_id: no field of the model gives it\n        total_cents=round(model.total * 100),\n        # TODO: note: Mapper's relation only goes the other way (label)\n    )\n\n\ndef order_read_to_order_summary(row: OrderRead) -> OrderSummary:\n    \"\"\"A row of the orders table as an OrderSummary.\"\"\"\n    return OrderSummary(\n        id=row.id,\n        total=row.total_cents / 100,\n        placedAt=row.placed_at,\n        # TODO: label: DB2CRUD does not write this conversion ('#' + id + ' ' + note)\n        label=None,\n    )\n",
+  "app/db.py": "\"\"\"Database engine, sessions and the declarative base of the entities (SQLAlchemy 2).\n\nThe URL comes from DATABASE_URL; see .env.example.\n\"\"\"\n\nimport os\n\nfrom sqlalchemy import Engine, create_engine, event\nfrom sqlalchemy.orm import DeclarativeBase, Session, sessionmaker\n\nDATABASE_URL = os.environ.get(\"DATABASE_URL\", \"mysql+pymysql://app:app@localhost:3306/app\")\n\n\nclass Base(DeclarativeBase):\n    \"\"\"Base of every entity.\"\"\"\n\n\n\ndef create_db_engine(url: str = DATABASE_URL) -> Engine:\n    \"\"\"An engine for the database at `url`. SQLite gets foreign keys turned on, as other databases have them.\"\"\"\n    engine = create_engine(url, pool_pre_ping=not url.startswith(\"sqlite\"))\n    if url.startswith(\"sqlite\"):\n\n        @event.listens_for(engine, \"connect\")\n        def _foreign_keys(connection, _record) -> None:  # type: ignore[no-untyped-def]\n            cursor = connection.cursor()\n            cursor.execute(\"PRAGMA foreign_keys=ON\")\n            cursor.close()\n\n    return engine\n\n\ndef create_session_factory(engine: Engine) -> sessionmaker[Session]:\n    \"\"\"Sessions that keep loaded rows readable after a commit.\"\"\"\n    return sessionmaker(engine, expire_on_commit=False)\n",
+  "app/dtos/__init__.py": "",
+  "app/dtos/order.py": "\"\"\"What services take and return for the \"orders\" table.\"\"\"\n\nfrom datetime import datetime\n\nfrom pydantic import BaseModel, ConfigDict\n\n\nclass OrderCreate(BaseModel):\n    \"\"\"The values of a new Order. Optional fields left out take the database's default.\"\"\"\n\n    customer_id: int\n    total_cents: int\n    note: str | None = None\n\n\nclass OrderUpdate(BaseModel):\n    \"\"\"The values of a Order that change; fields left out keep their value.\"\"\"\n\n    customer_id: int | None = None\n    total_cents: int | None = None\n    note: str | None = None\n\n\nclass OrderRead(BaseModel):\n    \"\"\"A Order as services return it.\"\"\"\n\n    model_config = ConfigDict(from_attributes=True)\n\n    id: int\n    customer_id: int\n    total_cents: int\n    placed_at: datetime\n    note: str | None = None\n",
+  "app/entities/__init__.py": "",
+  "app/entities/order.py": "\"\"\"Entity of the \"orders\" table.\"\"\"\n\nfrom datetime import datetime\n\nfrom sqlalchemy import DateTime, Integer, Text, func\nfrom sqlalchemy.orm import Mapped, mapped_column\n\nfrom app.db import Base\n\n\nclass Order(Base):\n    \"\"\"A row of the \"orders\" table.\"\"\"\n\n    __tablename__ = \"orders\"\n\n    id: Mapped[int] = mapped_column(Integer(), primary_key=True, autoincrement=True)\n    customer_id: Mapped[int] = mapped_column(Integer(), nullable=False)\n    total_cents: Mapped[int] = mapped_column(Integer(), nullable=False)\n    placed_at: Mapped[datetime] = mapped_column(DateTime(timezone=False), server_default=func.now(), nullable=False)\n    note: Mapped[str | None] = mapped_column(Text(), nullable=True)\n",
+  "app/errors.py": "\"\"\"Errors of the data access layer. They carry no HTTP codes: whoever calls the services translates them.\"\"\"\n\nfrom dataclasses import dataclass, field\n\n\nclass DomainError(Exception):\n    \"\"\"Base of every error a service raises on purpose.\"\"\"\n\n\nclass NotFoundError(DomainError):\n    \"\"\"No row has this key.\"\"\"\n\n    def __init__(self, entity: str, key: object) -> None:\n        super().__init__(f\"No {entity} has the key {key!r}\")\n        self.entity = entity\n        self.key = key\n\n\nclass ConflictError(DomainError):\n    \"\"\"The change clashes with what is stored: a unique value, a newer version, rows that depend on it.\"\"\"\n\n    def __init__(self, entity: str, reason: str, fields: tuple[str, ...] = ()) -> None:\n        super().__init__(f\"{entity}: {reason}\")\n        self.entity = entity\n        self.reason = reason\n        self.fields = fields\n\n\n@dataclass(frozen=True)\nclass FieldError:\n    \"\"\"What is wrong with one field.\"\"\"\n\n    field: str\n    message: str\n\n\n@dataclass\nclass ValidationFailedError(DomainError):\n    \"\"\"The values break the rules of the table: missing, too long, out of range, pointing nowhere.\"\"\"\n\n    entity: str\n    errors: list[FieldError] = field(default_factory=list)\n\n    def __post_init__(self) -> None:\n        super().__init__(f\"{self.entity}: \" + \"; \".join(f\"{error.field}: {error.message}\" for error in self.errors))\n",
+  "app/paging.py": "\"\"\"A page of a list: the rows from an offset, and how many there are in all.\"\"\"\n\nfrom dataclasses import dataclass\n\n\n@dataclass(frozen=True)\nclass Page[T]:\n    items: list[T]\n    total: int\n    offset: int\n    limit: int\n",
+  "app/repositories/__init__.py": "",
+  "app/repositories/order.py": "\"\"\"Repository of the \"orders\" table: reads and writes rows, and decides nothing.\"\"\"\n\nfrom __future__ import annotations\n\nfrom datetime import UTC, datetime\nfrom typing import Any, Protocol\n\nfrom sqlalchemy import func, select\nfrom sqlalchemy.exc import IntegrityError\nfrom sqlalchemy.orm import Session\n\nfrom app.entities.order import Order\nfrom app.errors import ConflictError\nfrom app.paging import Page\n\n\nclass OrderRepository(Protocol):\n    \"\"\"Where orders rows are kept. Services depend only on this interface.\"\"\"\n\n    def find_by_id(self, id: int) -> Order | None:\n        \"\"\"The row with this primary key, or None.\"\"\"\n        ...\n\n    def list(self, offset: int = 0, limit: int = 50) -> Page[Order]:\n        \"\"\"At most `limit` rows from `offset`, by primary key, and how many there are.\"\"\"\n        ...\n\n    def insert(self, entity: Order) -> Order:\n        \"\"\"Stores a new row; the values the database fills are read back.\"\"\"\n        ...\n\n    def update(self, entity: Order) -> Order:\n        \"\"\"Stores the changes made to a row read from this repository.\"\"\"\n        ...\n\n    def delete(self, entity: Order) -> None:\n        \"\"\"Removes a row read from this repository.\"\"\"\n        ...\n\n\nclass SqlOrderRepository:\n    \"\"\"Keeps orders rows in the database, through a Session. It never commits: the transaction belongs to whoever holds the session.\"\"\"\n\n    def __init__(self, session: Session) -> None:\n        self._session = session\n\n    def find_by_id(self, id: int) -> Order | None:\n        \"\"\"The row with this primary key, or None.\"\"\"\n        return (self._session.scalars(select(Order).where(Order.id == id))).first()\n\n    def list(self, offset: int = 0, limit: int = 50) -> Page[Order]:\n        \"\"\"At most `limit` rows from `offset`, by primary key, and how many there are.\"\"\"\n        query = select(Order)\n        total = self._session.scalar(select(func.count()).select_from(query.subquery())) or 0\n        rows = (self._session.scalars(query.order_by(Order.id).offset(offset).limit(limit))).all()\n        return Page(items=list(rows), total=total, offset=offset, limit=limit)\n\n    def insert(self, entity: Order) -> Order:\n        \"\"\"Stores a new row; the values the database fills are read back.\"\"\"\n        self._session.add(entity)\n        try:\n            self._session.flush()\n        except IntegrityError as error:\n            self._session.rollback()\n            raise ConflictError(\"Order\", \"the database refused the change: \" + str(error.orig)) from error\n        self._session.refresh(entity)\n        return entity\n\n    def update(self, entity: Order) -> Order:\n        \"\"\"Stores the changes made to a row read from this repository.\"\"\"\n        self._session.add(entity)\n        try:\n            self._session.flush()\n        except IntegrityError as error:\n            self._session.rollback()\n            raise ConflictError(\"Order\", \"the database refused the change: \" + str(error.orig)) from error\n        self._session.refresh(entity)\n        return entity\n\n    def delete(self, entity: Order) -> None:\n        \"\"\"Removes a row read from this repository.\"\"\"\n        self._session.delete(entity)\n        try:\n            self._session.flush()\n        except IntegrityError as error:\n            self._session.rollback()\n            raise ConflictError(\"Order\", \"the database refused the change: \" + str(error.orig)) from error\n\n\nclass MemoryOrderRepository:\n    \"\"\"Keeps orders rows in memory, for tests and for trying the services without a database.\"\"\"\n\n    def __init__(self) -> None:\n        self._rows: dict[tuple[Any, ...], Order] = {}\n        self._next_id = 1\n\n    @staticmethod\n    def _key(row: Order) -> tuple[Any, ...]:\n        return (row.id,)\n\n    def find_by_id(self, id: int) -> Order | None:\n        \"\"\"The row with this primary key, or None.\"\"\"\n        return next((row for row in [row for row in sorted(self._rows.values(), key=self._key) if True] if row.id == id), None)\n\n    def list(self, offset: int = 0, limit: int = 50) -> Page[Order]:\n        \"\"\"At most `limit` rows from `offset`, by primary key, and how many there are.\"\"\"\n        rows = [row for row in sorted(self._rows.values(), key=self._key) if True]\n        return Page(items=rows[offset : offset + limit], total=len(rows), offset=offset, limit=limit)\n\n    def insert(self, entity: Order) -> Order:\n        \"\"\"Stores a new row; the values the database fills are read back.\"\"\"\n        if entity.id is None:\n            entity.id = self._next_id\n            self._next_id += 1\n        if entity.placed_at is None:\n            entity.placed_at = datetime.now(UTC)\n        self._rows[(entity.id,)] = entity\n        return entity\n\n    def update(self, entity: Order) -> Order:\n        \"\"\"Stores the changes made to a row read from this repository.\"\"\"\n        self._rows[(entity.id,)] = entity\n        return entity\n\n    def delete(self, entity: Order) -> None:\n        \"\"\"Removes a row read from this repository.\"\"\"\n        self._rows.pop((entity.id,), None)\n",
+  "app/services/__init__.py": "",
+  "app/services/order.py": "\"\"\"Operations on orders: what each one checks before it writes.\"\"\"\n\nfrom typing import Any\n\nfrom app.dtos.order import OrderCreate, OrderRead, OrderUpdate\nfrom app.entities.order import Order\nfrom app.errors import FieldError, NotFoundError, ValidationFailedError\nfrom app.paging import Page\nfrom app.unit_of_work import UnitOfWork\n\n# Columns a client may send: the database fills the others\n_FIELDS = frozenset({\"customer_id\", \"total_cents\", \"note\"})\n\n\nclass OrderService:\n    \"\"\"Operations on orders. Each write runs in its own transaction.\"\"\"\n\n    def __init__(self, uow: UnitOfWork) -> None:\n        self._uow = uow\n\n    def _validate_all(self, values: dict[str, Any], current: Order | None) -> None:\n        \"\"\"Checks the values against the rules of the \"orders\" table; raises ValidationFailedError with every problem.\"\"\"\n        creating = current is None\n        errors: list[FieldError] = []\n        for name in values.keys() - _FIELDS:\n            errors.append(FieldError(name, \"is not a field of Order\"))\n        if not creating:\n            for name in values.keys() & {\"id\", \"placed_at\"}:\n                errors.append(FieldError(name, \"cannot be changed\"))\n        value = values.get(\"customer_id\")\n        if value is None:\n            if creating or \"customer_id\" in values:\n                errors.append(FieldError(\"customer_id\", \"is required\"))\n        value = values.get(\"total_cents\")\n        if value is None:\n            if creating or \"total_cents\" in values:\n                errors.append(FieldError(\"total_cents\", \"is required\"))\n        if errors:\n            raise ValidationFailedError(\"Order\", errors)\n\n    def _check(self, values: dict[str, Any], current: Order | None) -> None:\n        \"\"\"Every check before a write: the values, the rows they point to, the unique values.\"\"\"\n        self._validate_all(values, current)\n\n    def _find(self, id: int) -> Order:\n        \"\"\"The Order with this key; NotFoundError when there is none.\"\"\"\n        entity = self._uow.orders.find_by_id(id)\n        if entity is None:\n            raise NotFoundError(\"Order\", id)\n        return entity\n\n    @staticmethod\n    def _read(entity: Order) -> OrderRead:\n        \"\"\"The Order as services return it.\"\"\"\n        return OrderRead.model_validate(entity)\n\n    def create_order(self, data: OrderCreate) -> OrderRead:\n        \"\"\"Stores a new Order after checking it.\"\"\"\n        values = data.model_dump(exclude_unset=True)\n        with self._uow.transaction():\n            self._check(values, None)\n            created = self._uow.orders.insert(Order(**values))\n            return self._read(created)\n\n    def get_order(self, id: int) -> OrderRead:\n        \"\"\"The Order with this key; NotFoundError when there is none.\"\"\"\n        return self._read(self._find(id))\n\n    def list_orders(self, offset: int = 0, limit: int = 50) -> Page[OrderRead]:\n        \"\"\"A page of orders, by primary key.\"\"\"\n        page = self._uow.orders.list(offset, limit)\n        return Page(items=[self._read(entity) for entity in page.items], total=page.total, offset=page.offset, limit=page.limit)\n\n    def update_order(self, id: int, data: OrderUpdate) -> OrderRead:\n        \"\"\"Changes the given values of a Order.\"\"\"\n        values = data.model_dump(exclude_unset=True)\n        with self._uow.transaction():\n            current = self._find(id)\n            self._check(values, current)\n            for name, value in values.items():\n                setattr(current, name, value)\n            updated = self._uow.orders.update(current)\n            return self._read(updated)\n\n    def delete_order(self, id: int) -> None:\n        \"\"\"Deletes a Order.\"\"\"\n        with self._uow.transaction():\n            current = self._find(id)\n            self._uow.orders.delete(current)\n",
+  "app/unit_of_work.py": "\"\"\"The repositories of every table, and the transaction of each service operation. Each service operation runs in `transaction()`: committed when it ends, rolled back when it fails.\"\"\"\n\nfrom collections.abc import Iterator\nfrom contextlib import AbstractContextManager, contextmanager\nfrom typing import Protocol\n\nfrom sqlalchemy.orm import Session\n\nfrom app.repositories.order import MemoryOrderRepository, OrderRepository, SqlOrderRepository\n\n\nclass UnitOfWork(Protocol):\n    \"\"\"What services depend on: a repository per table and a transaction.\"\"\"\n\n    orders: OrderRepository\n\n    def transaction(self) -> AbstractContextManager[None]:\n        \"\"\"Commits what runs inside it, or rolls it back if it fails.\"\"\"\n        ...\n\n\nclass SqlUnitOfWork:\n    \"\"\"The repositories over one Session.\"\"\"\n\n    def __init__(self, session: Session) -> None:\n        self.session = session\n        self.orders = SqlOrderRepository(session)\n\n    @contextmanager\n    def transaction(self) -> Iterator[None]:\n        \"\"\"Commits what runs inside it, or rolls it back if it fails.\"\"\"\n        try:\n            yield\n        except BaseException:\n            self.session.rollback()\n            raise\n        self.session.commit()\n\n\nclass MemoryUnitOfWork:\n    \"\"\"The in-memory repositories, for tests and for trying the services without a database.\"\"\"\n\n    def __init__(self) -> None:\n        self.orders = MemoryOrderRepository()\n\n    @contextmanager\n    def transaction(self) -> Iterator[None]:\n        \"\"\"Memory has no transactions: changes are kept as they are made.\"\"\"\n        yield\n",
+  "crud-contract.json": "{\n  \"format\": \"crud-contract\",\n  \"version\": 1,\n  \"stack\": {\n    \"language\": \"python\",\n    \"orm\": \"sqlalchemy\",\n    \"database\": \"mysql\",\n    \"execution\": \"sync\"\n  },\n  \"transactions\": \"operation\",\n  \"paging\": \"offset\",\n  \"types\": [\n    {\n      \"name\": \"Order\",\n      \"module\": \"app.entities.order\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"customer_id\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"total_cents\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"placed_at\",\n          \"type\": {\n            \"kind\": \"datetime\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"note\",\n          \"type\": {\n            \"kind\": \"text\"\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"OrderCreate\",\n      \"module\": \"app.dtos.order\",\n      \"kind\": \"create\",\n      \"fields\": [\n        {\n          \"name\": \"customer_id\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"total_cents\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"note\",\n          \"type\": {\n            \"kind\": \"text\"\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"OrderUpdate\",\n      \"module\": \"app.dtos.order\",\n      \"kind\": \"update\",\n      \"fields\": [\n        {\n          \"name\": \"customer_id\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"total_cents\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"note\",\n          \"type\": {\n            \"kind\": \"text\"\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"OrderRead\",\n      \"module\": \"app.dtos.order\",\n      \"kind\": \"read\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"customer_id\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"total_cents\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"placed_at\",\n          \"type\": {\n            \"kind\": \"datetime\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"note\",\n          \"type\": {\n            \"kind\": \"text\"\n          },\n          \"nullable\": true\n        }\n      ]\n    }\n  ],\n  \"errors\": [\n    {\n      \"kind\": \"notFound\",\n      \"name\": \"NotFoundError\",\n      \"module\": \"app.errors\"\n    },\n    {\n      \"kind\": \"conflict\",\n      \"name\": \"ConflictError\",\n      \"module\": \"app.errors\"\n    },\n    {\n      \"kind\": \"validation\",\n      \"name\": \"ValidationFailedError\",\n      \"module\": \"app.errors\"\n    }\n  ],\n  \"services\": [\n    {\n      \"name\": \"OrderService\",\n      \"module\": \"app.services.order\",\n      \"operations\": [\n        {\n          \"name\": \"create_order\",\n          \"kind\": \"create\",\n          \"errors\": [\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"get_order\",\n          \"kind\": \"get\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"list_orders\",\n          \"kind\": \"list\",\n          \"errors\": []\n        },\n        {\n          \"name\": \"update_order\",\n          \"kind\": \"update\",\n          \"errors\": [\n            \"notFound\",\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"delete_order\",\n          \"kind\": \"delete\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        }\n      ]\n    }\n  ]\n}\n",
+  "pyproject.toml": "[project]\nname = \"sqlalchemy-mysql-conversions-mapper\"\nversion = \"0.1.0\"\ndescription = \"Data access layer (entities, repositories and services) generated by DB2CRUD.\"\nrequires-python = \">=3.12\"\ndependencies = [\n    \"sqlalchemy>=2.0.36,<2.1\",\n    \"pymysql>=1.1,<2\",\n    \"cryptography>=43\",\n    \"pydantic>=2.9,<3\",\n]\n\n[project.optional-dependencies]\ndev = [\n    \"pytest>=8.3,<9\",\n]\n\n[tool.pytest.ini_options]\ntestpaths = [\"tests\"]\npythonpath = [\".\"]\n",
+  "requirements-dev.txt": "-r requirements.txt\npytest>=8.3,<9\n",
+  "requirements.txt": "sqlalchemy>=2.0.36,<2.1\npymysql>=1.1,<2\ncryptography>=43\npydantic>=2.9,<3\n",
+  "tests/__init__.py": "",
+  "tests/conftest.py": "\"\"\"Fixtures of the tests: a database created from the entities, and the units of work.\"\"\"\n\nfrom collections.abc import Iterator\nimport os\n\nimport pytest\n\nfrom app.db import Base, create_db_engine, create_session_factory\nfrom app.entities.order import Order\nfrom app.unit_of_work import MemoryUnitOfWork, SqlUnitOfWork\n\n# Every entity is imported above, so the metadata knows every table\n\n\n@pytest.fixture\ndef engine(tmp_path):  # type: ignore[no-untyped-def]\n    \"\"\"The test database, empty: TEST_DATABASE_URL, or SQLite in a temporary file.\"\"\"\n    url = os.environ.get(\"TEST_DATABASE_URL\") or f\"sqlite:///{tmp_path / 'test.db'}\"\n    engine = create_db_engine(url)\n    Base.metadata.drop_all(engine)\n    Base.metadata.create_all(engine)\n    yield engine\n    Base.metadata.drop_all(engine)\n    engine.dispose()\n\n\n@pytest.fixture\ndef sql_uow(engine) -> Iterator[SqlUnitOfWork]:  # type: ignore[no-untyped-def]\n    \"\"\"The repositories over a session of the test database.\"\"\"\n    with create_session_factory(engine)() as session:\n        yield SqlUnitOfWork(session)\n\n\n@pytest.fixture\ndef memory_uow() -> MemoryUnitOfWork:\n    \"\"\"The in-memory repositories.\"\"\"\n    return MemoryUnitOfWork()\n",
+  "tests/factories.py": "\"\"\"Rows for the tests: valid values for every column, and the rows they point to.\"\"\"\n\nfrom typing import Any\n\nfrom app.entities.order import Order\nfrom app.unit_of_work import UnitOfWork\n\n\ndef new_order(n: int = 1, **values: Any) -> Order:\n    \"\"\"A valid Order that is not stored yet; `n` makes its unique values differ, `values` replace any of them.\"\"\"\n    defaults: dict[str, Any] = {\"customer_id\": n, \"total_cents\": n, \"note\": f\"note-{n}\"}\n    return Order(**(defaults | values))\n\n\ndef add_order(uow: UnitOfWork, n: int = 1) -> Order:\n    \"\"\"A stored Order.\"\"\"\n    return uow.orders.insert(new_order(n))\n",
+  "tests/test_database.py": "\"\"\"The tests run on the database they were asked to.\"\"\"\n\nimport os\n\n\ndef test_runs_on_the_database_asked(engine) -> None:  # type: ignore[no-untyped-def]\n    url = os.environ.get(\"TEST_DATABASE_URL\")\n    expected = url.split(\":\", 1)[0].split(\"+\", 1)[0] if url else \"sqlite\"\n    assert engine.dialect.name == expected\n",
+  "tests/test_order.py": "\"\"\"Tests of the \"orders\" table.\"\"\"\n\nfrom dataclasses import fields\n\nimport pytest\nfrom tests.factories import add_order, new_order\n\nfrom app.dtos.order import OrderCreate, OrderUpdate\nfrom app.errors import NotFoundError, ValidationFailedError\nfrom app.services.order import OrderService\nfrom app.unit_of_work import MemoryUnitOfWork, SqlUnitOfWork\n\n\ndef test_order_is_stored_and_read_back(sql_uow: SqlUnitOfWork) -> None:\n    stored = add_order(sql_uow, 1)\n    found = sql_uow.orders.find_by_id(stored.id)\n    assert found is not None\n    assert found.id == stored.id\n\n\ndef test_order_lists_rows_by_key(sql_uow: SqlUnitOfWork) -> None:\n    add_order(sql_uow, 1)\n    add_order(sql_uow, 2)\n    page = sql_uow.orders.list(0, 1)\n    assert page.total == 2\n    assert len(page.items) == 1\n\n\ndef test_order_changes_are_stored(sql_uow: SqlUnitOfWork) -> None:\n    stored = add_order(sql_uow, 1)\n    stored.note = \"changed\"\n    sql_uow.orders.update(stored)\n    found = sql_uow.orders.find_by_id(stored.id)\n    assert found is not None and found.note == \"changed\"\n\n\ndef test_order_is_deleted(sql_uow: SqlUnitOfWork) -> None:\n    stored = add_order(sql_uow, 1)\n    sql_uow.orders.delete(stored)\n    assert sql_uow.orders.find_by_id(stored.id) is None\n\n\ndef test_order_service_creates_a_valid_row(memory_uow: MemoryUnitOfWork) -> None:\n    service = OrderService(memory_uow)\n    n = 100\n    created = service.create_order(OrderCreate(**_values(new_order(1), OrderCreate)))\n    found = service.get_order(created.id)\n    assert found.id == created.id\n\n\ndef test_order_service_refuses_a_missing_value(memory_uow: MemoryUnitOfWork) -> None:\n    service = OrderService(memory_uow)\n    n = 100\n    with pytest.raises(ValidationFailedError) as raised:\n        service.create_order(OrderCreate.model_construct(**(_values(new_order(1), OrderCreate) | {\"customer_id\": None})))\n    assert [error.field for error in raised.value.errors] == [\"customer_id\"]\n\n\ndef test_order_service_says_when_a_row_is_missing(memory_uow: MemoryUnitOfWork) -> None:\n    service = OrderService(memory_uow)\n    with pytest.raises(NotFoundError):\n        service.get_order(999999)\n\n\ndef test_order_service_changes_a_row(memory_uow: MemoryUnitOfWork) -> None:\n    service = OrderService(memory_uow)\n    n = 100\n    created = service.create_order(OrderCreate(**_values(new_order(1), OrderCreate)))\n    updated = service.update_order(created.id, OrderUpdate(note=\"changed\"))\n    assert updated.note == \"changed\"\n\n\ndef test_order_service_deletes_a_row(memory_uow: MemoryUnitOfWork) -> None:\n    service = OrderService(memory_uow)\n    n = 100\n    created = service.create_order(OrderCreate(**_values(new_order(1), OrderCreate)))\n    service.delete_order(created.id)\n    with pytest.raises(NotFoundError):\n        service.get_order(created.id)\n\n\ndef _values(entity: object, dto: type) -> dict[str, object]:\n    \"\"\"The values a DTO takes, from an entity that is not stored, for building the DTO from a factory row.\"\"\"\n    names = dto.model_fields if hasattr(dto, \"model_fields\") else {field.name for field in fields(dto)}\n    return {name: value for name, value in vars(entity).items() if name in names}\n"
+ }
+}

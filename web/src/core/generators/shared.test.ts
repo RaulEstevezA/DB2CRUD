@@ -1,7 +1,8 @@
 /**
  * The projects in shared/test-cases/outputs/, which the desktop version's generators must write too: one file
  * per verification scenario (verification/scenarios/index.mjs), with the schema, the decisions taken, the
- * settings and every file written. The same scenarios run in Docker, so these outputs are known to work.
+ * settings, the application models of a scenario that has them, and every file written. The same scenarios run in
+ * Docker, so these outputs are known to work.
  *
  * `UPDATE_SHARED=1 npx vitest run src/core/generators/shared.test.ts` writes them again from what the web
  * version does now; the desktop version then has to match them.
@@ -13,6 +14,7 @@ import { decidePolicy } from '../crud/edit.ts'
 import { SHOP } from '../crud/fixtures.ts'
 import { proposeCrud } from '../crud/propose.ts'
 import type { DbSchema } from '../schema/types.ts'
+import { MATCHING_CASES, readCase } from '../matching/test/cases.ts'
 import { generateProject } from './registry.ts'
 
 // Tests run from web/
@@ -21,21 +23,31 @@ const UPDATE = process.env.UPDATE_SHARED === '1'
 
 interface Scenario {
   id: string
-  schema: 'shop'
+  schema?: 'shop'
+  /** A shared case of the matching, with its database and application models */
+  case?: string
   settings: Record<string, unknown>
   decisions?: { table: string; decision: 'role' | 'delete' | 'concurrency' | 'children' | 'hidden'; value: unknown }[]
 }
 
-const SCHEMAS: Record<Scenario['schema'], DbSchema> = { shop: SHOP }
+const SCHEMAS: Record<'shop', DbSchema> = { shop: SHOP }
 const { SCENARIOS } = (await import(resolve(process.cwd(), '../verification/scenarios/index.mjs'))) as { SCENARIOS: Scenario[] }
 
 function project(scenario: Scenario) {
-  const schema = SCHEMAS[scenario.schema]
-  let design = proposeCrud(schema)
-  for (const item of scenario.decisions ?? []) design = proposeCrud(schema, decidePolicy(design, item.table, item.decision, item.value))
+  const shared = scenario.case ? readCase(join(MATCHING_CASES, scenario.case)) : null
+  const schema = shared ? shared.database : SCHEMAS[scenario.schema ?? 'shop']
+  const models = shared ? { schema: shared.models, project: shared.project } : null
+  let design = proposeCrud(schema, null, models?.schema ?? null, models?.project ?? null)
+  for (const item of scenario.decisions ?? [])
+    design = proposeCrud(
+      schema,
+      decidePolicy(design, item.table, item.decision, item.value),
+      models?.schema ?? null,
+      models?.project ?? null,
+    )
   const settings = { name: scenario.id, ...scenario.settings }
-  const files = Object.fromEntries(generateProject(schema, design, settings).map((file) => [file.path, file.content]))
-  return { schema, decisions: scenario.decisions ?? [], settings, files }
+  const files = Object.fromEntries(generateProject(schema, design, settings, models).map((file) => [file.path, file.content]))
+  return { schema, decisions: scenario.decisions ?? [], settings, ...(models ? { models } : {}), files }
 }
 
 describe('shared outputs', () => {
