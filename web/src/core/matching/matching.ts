@@ -16,9 +16,10 @@
  */
 import { readConstraints } from '../analysis/constraints.ts'
 import { decision, keep, reason, type Decision, type Reason } from '../decisions/decision.ts'
-import { nameWords, singularize } from '../model/naming.ts'
-import type { FieldDef, ModelDef, ModelSchema, TypeRef } from '../model/schema.ts'
+import { nameWords } from '../model/naming.ts'
+import type { FieldDef, ModelSchema, TypeRef } from '../model/schema.ts'
 import type { DbColumn, DbSchema, DbTable } from '../schema/types.ts'
+import { DIRECTIONS, fieldFor, fieldsOf, key, modelName, namesTable, sameWords, singularWords, type Direction } from './names.ts'
 
 export type ColumnSource =
   | { kind: 'field'; field: string }
@@ -49,8 +50,7 @@ export interface ChildrenMatch {
   table: Decision<string | null>
 }
 
-/** Which way a model goes: both, only into the table (a request) or only out of it (a response). */
-export type Direction = 'both' | 'input' | 'output'
+export type { Direction } from './names.ts'
 
 export interface ModelMatch {
   direction: Direction
@@ -70,36 +70,6 @@ export interface TableMatch {
 export interface Matching {
   tables: TableMatch[]
 }
-
-// Names
-
-const SUFFIX_DIRECTIONS: Record<string, Direction> = {
-  entity: 'both',
-  model: 'both',
-  dto: 'both',
-  record: 'both',
-  request: 'input',
-  input: 'input',
-  command: 'input',
-  response: 'output',
-  output: 'output',
-}
-const DIRECTIONS: Direction[] = ['both', 'input', 'output']
-
-/** The words a model name is compared by (without its suffixes, the last one singular) and its direction. */
-function modelName(name: string): { words: string[]; direction: Direction } {
-  const words = nameWords(name)
-  let direction: Direction = 'both'
-  while (words.length > 1 && SUFFIX_DIRECTIONS[words.at(-1)!]) {
-    const found = SUFFIX_DIRECTIONS[words.pop()!]
-    if (direction === 'both') direction = found
-  }
-  return { words: singularWords(words), direction }
-}
-
-const singularWords = (words: string[]) => (words.length > 0 ? [...words.slice(0, -1), singularize(words.at(-1)!)] : words)
-const sameWords = (a: string[], b: string[]) => a.length === b.length && a.every((word, index) => word === b[index])
-const key = (words: string[]) => words.join(' ')
 
 // Types
 
@@ -212,24 +182,13 @@ function conflictsOf(
 
 // Rules
 
-/** All fields of a model, with those of the models it extends first. */
-function fieldsOf(model: ModelDef, schema: ModelSchema, seen = new Set<string>()): FieldDef[] {
-  seen.add(model.name)
-  const inherited = (model.extends ?? []).flatMap((name) => {
-    const parent = schema.models.find((item) => item.name === name)
-    return parent && !seen.has(parent.name) ? fieldsOf(parent, schema, seen) : []
-  })
-  return [...inherited, ...model.fields]
-}
-
 /**
  * The models of a table: those whose name, without its suffixes and plural, is the table's or its entity's, one per
  * direction (exact), or several of one direction for review.
  */
 function matchModel(table: DbTable, schema: ModelSchema): { direction: Direction; model: Decision<string | null> }[] {
-  const targets = [table.name, ...(table.entity ? [table.entity] : [])].map((name) => key(singularWords(nameWords(name))))
   const named = schema.models.map((model) => ({ model, ...modelName(model.name) }))
-  const found = named.filter((item) => targets.includes(key(item.words)))
+  const found = named.filter((item) => namesTable(item.words, table))
   if (found.length === 0)
     return [{ direction: 'both', model: decision(null, 'none', [reason('noModel')], [...schema.models.map((model) => model.name), null]) }]
   return DIRECTIONS.flatMap((direction) => {
@@ -246,20 +205,6 @@ function matchModel(table: DbTable, schema: ModelSchema): { direction: Direction
       },
     ]
   })
-}
-
-/** The names a field answers to: its own, its name on the wire and its aliases. */
-const fieldNames = (field: FieldDef) => [field.name, ...(field.serializedName ? [field.serializedName] : []), ...(field.aliases ?? [])]
-
-/** The field a column comes from: the same name, or the same words in another convention (both exact). */
-function fieldFor(column: DbColumn, fields: FieldDef[], taken: Set<string>): { field: FieldDef; sameName: boolean } | null {
-  const names = [column.name, ...(column.attribute ? [column.attribute] : [])]
-  const free = fields.filter((field) => !taken.has(field.name))
-  const exact = free.find((field) => fieldNames(field).some((name) => names.includes(name)))
-  if (exact) return { field: exact, sameName: true }
-  const words = names.map((name) => key(nameWords(name)))
-  const close = free.find((field) => fieldNames(field).some((name) => words.includes(key(nameWords(name)))))
-  return close ? { field: close, sameName: false } : null
 }
 
 /** A lookup: a field `<x><Column>` (`categoryName`) for a foreign key `<x>_id` to a table with that column. */
