@@ -166,6 +166,13 @@ def _read_value(field: dict, columns: list[dict], table: dict, models: dict) -> 
     return None if field.get("optional") or field.get("nullable") else _todo("noField", name)
 
 
+def _fills(table: dict, name: str) -> bool:
+    """Whether the database fills a column on insert: a write never sends it."""
+    column = next((item for item in table["columns"] if item["name"] == name), None)
+    generated = column.get("generated") if column else None
+    return generated is not None and generated != "onUpdateNow"
+
+
 def _children_value(child: dict, table: dict, schema: dict) -> dict | None:
     """A list field read from a join table: the keys of the other table its rows link this row with."""
     name = child["table"]["value"]
@@ -206,6 +213,9 @@ def plan_conversions(schema: dict, design: dict, models: dict) -> list[dict]:
             if match["direction"] != "output":
                 write = []
                 for column in match["columns"]:
+                    # What the database fills is never written (a key it numbers, a computed column, a creation time)
+                    if _fills(table, column["column"]):
+                        continue
                     value = _write_value(column, table, models)
                     if value is not None:
                         write.append({"column": column["column"], "value": value})

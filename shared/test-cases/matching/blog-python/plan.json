@@ -5,29 +5,11 @@
   "direction": "both",
   "write": [
    {
-    "column": "id",
-    "value": {
-     "kind": "field",
-     "path": [
-      "id"
-     ]
-    }
-   },
-   {
     "column": "name",
     "value": {
      "kind": "field",
      "path": [
       "name"
-     ]
-    }
-   },
-   {
-    "column": "created_at",
-    "value": {
-     "kind": "field",
-     "path": [
-      "created_at"
      ]
     }
    }
@@ -61,15 +43,6 @@
   "model": "Posts",
   "direction": "both",
   "write": [
-   {
-    "column": "id",
-    "value": {
-     "kind": "field",
-     "path": [
-      "id"
-     ]
-    }
-   },
    {
     "column": "author_id",
     "value": {

@@ -5,15 +5,6 @@
   "direction": "both",
   "write": [
    {
-    "column": "id",
-    "value": {
-     "kind": "field",
-     "path": [
-      "id"
-     ]
-    }
-   },
-   {
     "column": "email",
     "value": {
      "kind": "field",
@@ -28,15 +19,6 @@
      "kind": "field",
      "path": [
       "passwordHash"
-     ]
-    }
-   },
-   {
-    "column": "created_at",
-    "value": {
-     "kind": "field",
-     "path": [
-      "createdAt"
      ]
     }
    }
@@ -78,15 +60,6 @@
   "direction": "both",
   "write": [
    {
-    "column": "id",
-    "value": {
-     "kind": "field",
-     "path": [
-      "id"
-     ]
-    }
-   },
-   {
     "column": "name",
     "value": {
      "kind": "field",
@@ -118,15 +91,6 @@
   "model": "Product",
   "direction": "both",
   "write": [
-   {
-    "column": "id",
-    "value": {
-     "kind": "field",
-     "path": [
-      "id"
-     ]
-    }
-   },
    {
     "column": "category_id",
     "value": {
@@ -223,15 +187,6 @@
   "model": "TagEntity",
   "direction": "both",
   "write": [
-   {
-    "column": "id",
-    "value": {
-     "kind": "field",
-     "path": [
-      "id"
-     ]
-    }
-   },
    {
     "column": "label",
     "value": {

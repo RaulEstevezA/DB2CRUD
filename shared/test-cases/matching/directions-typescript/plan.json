@@ -5,15 +5,6 @@
   "direction": "both",
   "write": [
    {
-    "column": "id",
-    "value": {
-     "kind": "field",
-     "path": [
-      "id"
-     ]
-    }
-   },
-   {
     "column": "email",
     "value": {
      "kind": "field",

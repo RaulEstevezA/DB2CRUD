@@ -195,6 +195,12 @@ function readValue(field: FieldDef, columns: ColumnMatch[], table: DbTable, mode
   return field.optional || field.nullable ? null : todo('noField', field.name)
 }
 
+/** Whether the database fills a column on insert: a write never sends it. */
+function fills(table: DbTable, name: string): boolean {
+  const generated = table.columns.find((column) => column.name === name)?.generated
+  return generated !== undefined && generated !== 'onUpdateNow'
+}
+
 /** A list field read from a join table: the keys of the other table its rows link this row with. */
 function childrenValue(child: ChildrenMatch, table: DbTable, schema: DbSchema): ReadValue | null {
   const name = child.table.value
@@ -221,6 +227,8 @@ export function planConversions(schema: DbSchema, design: CrudDesign, models: Ap
       const reads = match.direction !== 'input'
       const write = writes
         ? match.columns.flatMap((column) => {
+            // What the database fills is never written (a key it numbers, a computed column, a creation time)
+            if (fills(table, column.column)) return []
             const value = writeValue(column, table, models)
             return value ? [{ column: column.column, value }] : []
           })
