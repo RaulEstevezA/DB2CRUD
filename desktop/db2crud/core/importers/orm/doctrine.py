@@ -14,165 +14,10 @@ import re
 
 from ...js import is_number, number_text
 from ...schema.checks import check_of
-from ..code.lexer import Cursor, LexError, tokenize
-from ..code.php import PHP_LEXER
-from .expressions import boolean_of, literal_of, name_of, number_of, read_expression, string_of
+from .expressions import boolean_of, literal_of, name_of, number_of, string_of
+from .php import class_of, entries_of, read_classes
 from .sql_types import sql_type_of
 from .types import OrmReader
-
-# PHP names its arguments with `name: value`
-_NAMED = ":"
-
-# Reading the declarations
-
-
-def _read_attribute_group(cursor: Cursor, source: str) -> list[dict]:
-    """The attributes of a `#[…]` group, after its `#[`."""
-    attributes: list[dict] = []
-    while not cursor.done and not cursor.is_("]"):
-        attributes.append(read_expression(cursor, source, _NAMED))
-        if not cursor.eat(","):
-            break
-    cursor.eat("]")
-    return attributes
-
-
-_MODIFIERS = {"public", "private", "protected", "static", "readonly", "var", "final", "abstract"}
-_DECLARATIONS = {"class", "interface", "trait", "enum"}
-
-
-def _is_variable(cursor: Cursor) -> bool:
-    return cursor.is_ident() and cursor.value().startswith("$")
-
-
-def _read_declaration(cursor: Cursor, source: str, kind: str, attributes: list, classes: list) -> None:
-    token = cursor.peek()
-    line = token.line if token is not None else 1
-    declaration = {
-        "name": cursor.next().value,
-        "kind": kind,
-        "attributes": attributes,
-        "base": None,
-        "properties": [],
-        "constants": {},
-        "cases": [],
-        "line": line,
-    }
-    while not cursor.done and not cursor.is_("{"):
-        if cursor.is_("extends") and cursor.is_ident(1):
-            cursor.next()
-            while cursor.is_("\\"):
-                cursor.next()
-            base = cursor.next().value
-            while cursor.is_("\\") and cursor.is_ident(1):
-                cursor.next()
-                base = cursor.next().value
-            declaration["base"] = base
-        else:
-            cursor.next()
-    classes.append(declaration)
-    cursor.next()
-    pending: list = []
-    while not cursor.done and not cursor.is_("}"):
-        if cursor.is_("#["):
-            cursor.next()
-            pending.extend(_read_attribute_group(cursor, source))
-            continue
-        if cursor.value() in _MODIFIERS and cursor.is_ident():
-            cursor.next()
-            continue
-        if cursor.is_("case") and cursor.is_ident(1):
-            cursor.next()
-            name = cursor.next().value
-            value = literal_of(read_expression(cursor, source, _NAMED)) if cursor.eat("=") else None
-            kept = isinstance(value, str) or is_number(value)
-            declaration["cases"].append({"name": name, **({"value": value} if kept else {})})
-            cursor.skip_until([";"])
-            cursor.eat(";")
-            pending = []
-            continue
-        if cursor.is_("const"):
-            cursor.next()
-            # `const string NAME = …` (PHP 8.3 typed constants)
-            if cursor.is_ident(1) and not cursor.is_("=", 1):
-                cursor.next()
-            name = cursor.next().value
-            if cursor.eat("="):
-                declaration["constants"][name] = read_expression(cursor, source, _NAMED)
-            cursor.skip_until([";"])
-            cursor.eat(";")
-            pending = []
-            continue
-        if cursor.is_("function"):
-            # A method: its parameters, its return type and its body
-            while not cursor.done and not cursor.is_("("):
-                cursor.next()
-            cursor.skip_group()
-            while not cursor.done and not cursor.is_("{") and not cursor.is_(";") and not cursor.is_("}"):
-                cursor.next()
-            if cursor.is_("{"):
-                cursor.skip_group()
-            else:
-                cursor.eat(";")
-            pending = []
-            continue
-        if cursor.is_("use"):
-            cursor.skip_until([";"])
-            cursor.eat(";")
-            continue
-        # A property: an optional type, then `$name`
-        type_start = cursor.index
-        while not cursor.done and not _is_variable(cursor) and not cursor.is_(";") and not cursor.is_("}"):
-            cursor.next()
-        if not _is_variable(cursor):
-            cursor.eat(";")
-            pending = []
-            continue
-        written = re.sub(r"\s+", "", cursor.text_between(source, type_start, cursor.index))
-        name = cursor.next()
-        initializer = read_expression(cursor, source, _NAMED) if cursor.eat("=") else None
-        cursor.skip_until([";"])
-        cursor.eat(";")
-        declaration["properties"].append(
-            {
-                "name": name.value[1:],
-                "type": written,
-                "attributes": pending,
-                **({"initializer": initializer} if initializer is not None else {}),
-                "line": name.line,
-            }
-        )
-        pending = []
-    cursor.eat("}")
-
-
-_OPEN_TAG = re.compile(r"^\s*<\?php")
-
-
-def _read_classes(files: list[dict]) -> list[dict]:
-    classes: list[dict] = []
-    for file in files:
-        try:
-            tokens = tokenize(_OPEN_TAG.sub(lambda match: " " * len(match.group(0)), file["text"], count=1), PHP_LEXER)
-        except LexError:
-            continue
-        cursor = Cursor(tokens)
-        attributes: list = []
-        while not cursor.done:
-            if cursor.is_("#["):
-                cursor.next()
-                attributes.extend(_read_attribute_group(cursor, file["text"]))
-            elif cursor.value() in _DECLARATIONS and cursor.is_ident() and cursor.is_ident(1):
-                kind = cursor.next().value
-                _read_declaration(cursor, file["text"], kind, attributes, classes)
-                attributes = []
-            elif cursor.value() in _MODIFIERS and cursor.is_ident():
-                cursor.next()
-            else:
-                cursor.next()
-                attributes = []
-    return classes
-
 
 # Reading the attributes
 
@@ -188,28 +33,6 @@ def _argument_of(attribute: dict | None, name: str, position: int | None = None)
     if found is None and position is not None and len(attribute["args"]) > position:
         found = attribute["args"][position]
     return found
-
-
-def _class_of(expr: dict | None) -> str | None:
-    """`Order::class` or `'App\\Entity\\Order'`: the class it names, without its namespace."""
-    if expr is None:
-        return None
-    if expr["kind"] == "name" and expr["path"][-1] == "class":
-        return expr["path"][-2] if len(expr["path"]) > 1 else None
-    text = string_of(expr)
-    return text.split("\\")[-1] if text is not None else None
-
-
-def _entries_of(expr: dict | None) -> dict:
-    """The entries of a PHP array with keys: `['default' => 1]`."""
-    entries: dict = {}
-    if expr is not None and expr["kind"] == "dict":
-        for entry in expr["entries"]:
-            key = string_of(entry["key"])
-            key = key if key is not None else name_of(entry["key"])
-            if key:
-                entries[key] = entry["value"]
-    return entries
 
 
 def _strings_of(expr: dict | None) -> list[str]:
@@ -229,7 +52,7 @@ def _simple_type(written: str) -> str:
 def _type_of_name(name: str, column: dict | None, dialect: str | None) -> dict | None:
     """The type a DBAL type name stands for: `datetimetz_immutable`, `string`."""
     kind = re.sub(r"_(im)?mutable$", "", name.lower())
-    options = _entries_of(_argument_of(column, "options"))
+    options = entries_of(_argument_of(column, "options"))
     length = number_of(_argument_of(column, "length"))
     sql = name
     if kind == "integer":
@@ -363,7 +186,7 @@ _RELATIONS = ("ManyToOne", "OneToOne", "OneToMany", "ManyToMany")
 
 def _read_doctrine(files: list[dict]) -> dict:
     notes: list[dict] = []
-    classes = _read_classes(files)
+    classes = read_classes(files)
     by_name = {cls["name"]: cls for cls in classes}
     text = "\n".join(file["text"] for file in files)
     found = [dialect for pattern, dialect in _DRIVERS if pattern.search(text)]
@@ -411,7 +234,7 @@ def _read_doctrine(files: list[dict]) -> dict:
         schema = string_of(_argument_of(table_attribute, "schema"))
         if schema:
             table["schema"] = schema
-        comment = string_of(_entries_of(_argument_of(table_attribute, "options")).get("comment"))
+        comment = string_of(entries_of(_argument_of(table_attribute, "options")).get("comment"))
         if comment:
             table["comment"] = comment
         model = {"cls": cls, "table": table, "columns": {}, "properties": properties_of(cls)}
@@ -427,7 +250,7 @@ def _read_doctrine(files: list[dict]) -> dict:
         ) -> None:
             embedded = _attribute_of(prop["attributes"], "Embedded")
             if embedded is not None:
-                part = by_name.get(_class_of(_argument_of(embedded, "class", 0)) or _simple_type(prop["type"]))
+                part = by_name.get(class_of(_argument_of(embedded, "class", 0)) or _simple_type(prop["type"]))
                 if part is None:
                     return
                 given = _argument_of(embedded, "columnPrefix")
@@ -444,10 +267,10 @@ def _read_doctrine(files: list[dict]) -> dict:
                 return
             given_name = string_of(_argument_of(column, "name"))
             name = f"{prefix}{given_name if given_name is not None else prop['name']}"
-            options = _entries_of(_argument_of(column, "options"))
+            options = entries_of(_argument_of(column, "options"))
             definition = string_of(_argument_of(column, "columnDefinition"))
             type_expr = _argument_of(column, "type", 0)
-            enum_class = by_name.get(_class_of(_argument_of(column, "enumType")) or "")
+            enum_class = by_name.get(class_of(_argument_of(column, "enumType")) or "")
             if enum_class is None:
                 candidate = by_name.get(_simple_type(prop["type"]))
                 enum_class = candidate if candidate is not None and candidate["kind"] == "enum" else None
@@ -614,7 +437,7 @@ def _read_doctrine(files: list[dict]) -> dict:
             relation = _attribute_of(prop["attributes"], "ManyToOne", "OneToOne", "ManyToMany")
             if relation is None or _argument_of(relation, "mappedBy") is not None:
                 continue
-            target = by_class.get(_class_of(_argument_of(relation, "targetEntity", 0)) or _simple_type(prop["type"]))
+            target = by_class.get(class_of(_argument_of(relation, "targetEntity", 0)) or _simple_type(prop["type"]))
             if target is None:
                 continue
             kind = name_of(relation)
@@ -680,7 +503,7 @@ def _read_doctrine(files: list[dict]) -> dict:
             mapped_by = string_of(_argument_of(relation, "mappedBy"))
             if relation is None or not mapped_by:
                 continue
-            target = by_class.get(_class_of(_argument_of(relation, "targetEntity", 0)) or _simple_type(prop["type"]))
+            target = by_class.get(class_of(_argument_of(relation, "targetEntity", 0)) or _simple_type(prop["type"]))
             key = (
                 next((item for item in target["table"]["foreignKeys"] if item.get("attribute") == mapped_by), None)
                 if target is not None
