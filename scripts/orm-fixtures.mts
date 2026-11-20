@@ -39,6 +39,7 @@ const ORMS: [string, string][] = [
   ["hibernate", "jpa.hibernate"],
   ["spring-data-jpa", "jpa.spring"],
   ["efcore", "efcore"],
+  ["doctrine", "doctrine"],
 ];
 
 const out = join(root, "shared/test-cases/orm/model2db");
@@ -72,7 +73,8 @@ for (const example of EXAMPLES) {
       naming: output.naming.relational,
       strings: output.strings,
       engine: output.engine,
-      migrations: false,
+      // Eloquent's models say nothing of the columns: the schema is in its migrations
+      migrations: orm === "eloquent",
     };
     for (const file of generate(parsed.schema, design, generator, options)
       .files) {

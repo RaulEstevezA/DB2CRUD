@@ -1,0 +1,426 @@
+{
+ "format": "db-schema",
+ "version": 1,
+ "dialect": "postgresql",
+ "source": {
+  "kind": "orm",
+  "format": "doctrine"
+ },
+ "tables": [
+  {
+   "name": "products",
+   "columns": [
+    {
+     "name": "created_at",
+     "type": {
+      "sql": "datetimetz_immutable",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": false,
+     "generated": "now",
+     "attribute": "createdAt"
+    },
+    {
+     "name": "id",
+     "type": {
+      "sql": "integer",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false,
+     "generated": "identity"
+    },
+    {
+     "name": "sku",
+     "type": {
+      "sql": "string",
+      "kind": "text",
+      "length": 40
+     },
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": {
+      "sql": "text",
+      "kind": "text"
+     },
+     "nullable": true,
+     "comment": "Shown in the catalog"
+    },
+    {
+     "name": "priority",
+     "type": {
+      "sql": "integer",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": 1
+     }
+    },
+    {
+     "name": "kind",
+     "type": {
+      "sql": "string",
+      "kind": "text",
+      "length": 10
+     },
+     "nullable": false
+    },
+    {
+     "name": "active",
+     "type": {
+      "sql": "boolean",
+      "kind": "boolean"
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": true
+     }
+    },
+    {
+     "name": "tags",
+     "type": {
+      "sql": "json",
+      "kind": "json"
+     },
+     "nullable": false
+    },
+    {
+     "name": "skuLength",
+     "type": {
+      "sql": "INTEGER GENERATED ALWAYS AS (length(sku)) STORED",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false,
+     "generated": {
+      "computed": "length(sku)"
+     }
+    },
+    {
+     "name": "price_amount",
+     "type": {
+      "sql": "decimal",
+      "kind": "decimal",
+      "precision": 12,
+      "scale": 2
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": "0"
+     },
+     "attribute": "price.amount"
+    },
+    {
+     "name": "price_currency",
+     "type": {
+      "sql": "string",
+      "kind": "text",
+      "length": 3,
+      "fixed": true
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": "EUR"
+     },
+     "attribute": "price.currency"
+    },
+    {
+     "name": "amount",
+     "type": {
+      "sql": "decimal",
+      "kind": "decimal",
+      "precision": 12,
+      "scale": 2
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": "0"
+     },
+     "attribute": "cost.amount"
+    },
+    {
+     "name": "currency",
+     "type": {
+      "sql": "string",
+      "kind": "text",
+      "length": 3,
+      "fixed": true
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": "EUR"
+     },
+     "attribute": "cost.currency"
+    },
+    {
+     "name": "category_id",
+     "type": {
+      "sql": "guid",
+      "kind": "uuid"
+     },
+     "nullable": true
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "category_id"
+     ],
+     "references": {
+      "table": "Category",
+      "columns": [
+       "id"
+      ]
+     },
+     "onDelete": "set null",
+     "attribute": "category",
+     "inverse": "products"
+    }
+   ],
+   "uniques": [
+    {
+     "name": "uq_products_sku",
+     "columns": [
+      "sku"
+     ]
+    }
+   ],
+   "indexes": [
+    {
+     "columns": [
+      "name",
+      "kind"
+     ]
+    }
+   ],
+   "checks": [
+    {
+     "sql": "priority IN (1, 9)",
+     "parsed": {
+      "kind": "in",
+      "column": "priority",
+      "values": [
+       1,
+       9
+      ]
+     }
+    },
+    {
+     "sql": "kind IN ('Physical', 'Digital')",
+     "parsed": {
+      "kind": "in",
+      "column": "kind",
+      "values": [
+       "Physical",
+       "Digital"
+      ]
+     }
+    }
+   ],
+   "entity": "Product",
+   "origin": {
+    "line": 45,
+    "column": 1
+   },
+   "schema": "catalog",
+   "comment": "What the shop sells"
+  },
+  {
+   "name": "Category",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "guid",
+      "kind": "uuid"
+     },
+     "nullable": false
+    },
+    {
+     "name": "parent_id",
+     "type": {
+      "sql": "guid",
+      "kind": "uuid"
+     },
+     "nullable": true
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "parent_id"
+     ],
+     "references": {
+      "table": "Category",
+      "columns": [
+       "id"
+      ]
+     },
+     "onDelete": "cascade",
+     "attribute": "parent"
+    }
+   ],
+   "uniques": [
+    {
+     "columns": [
+      "parent_id"
+     ]
+    }
+   ],
+   "indexes": [],
+   "checks": [],
+   "entity": "Category",
+   "origin": {
+    "line": 91,
+    "column": 1
+   }
+  },
+  {
+   "name": "suppliers",
+   "columns": [
+    {
+     "name": "id",
+     "type": {
+      "sql": "bigint",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false,
+     "generated": "identity"
+    },
+    {
+     "name": "since",
+     "type": {
+      "sql": "date",
+      "kind": "date"
+     },
+     "nullable": true
+    }
+   ],
+   "primaryKey": [
+    "id"
+   ],
+   "foreignKeys": [],
+   "uniques": [],
+   "indexes": [],
+   "checks": [],
+   "entity": "Supplier",
+   "origin": {
+    "line": 108,
+    "column": 1
+   }
+  },
+  {
+   "name": "product_supplier",
+   "columns": [
+    {
+     "name": "product_id",
+     "type": {
+      "sql": "integer",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false
+    },
+    {
+     "name": "supplier_id",
+     "type": {
+      "sql": "bigint",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": [
+    "product_id",
+    "supplier_id"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "product_id"
+     ],
+     "references": {
+      "table": "products",
+      "schema": "catalog",
+      "columns": [
+       "id"
+      ]
+     },
+     "onDelete": "cascade"
+    },
+    {
+     "columns": [
+      "supplier_id"
+     ],
+     "references": {
+      "table": "suppliers",
+      "columns": [
+       "id"
+      ]
+     },
+     "onDelete": "cascade"
+    }
+   ],
+   "uniques": [],
+   "indexes": [
+    {
+     "columns": [
+      "product_id"
+     ]
+    },
+    {
+     "columns": [
+      "supplier_id"
+     ]
+    }
+   ],
+   "checks": [],
+   "origin": {
+    "line": 82,
+    "column": 1
+   }
+  }
+ ],
+ "enums": [
+  {
+   "name": "priority",
+   "values": [
+    "1",
+    "9"
+   ],
+   "storage": "check"
+  },
+  {
+   "name": "kind",
+   "values": [
+    "Physical",
+    "Digital"
+   ],
+   "storage": "check"
+  }
+ ],
+ "notes": [
+  {
+   "code": "orm.checksNotKept"
+  }
+ ]
+}

@@ -169,6 +169,7 @@ describe('ORM code written by DB2CRUD', () => {
     django: (path, text) => path.endsWith('.py') && text.includes('models.Model'),
     prisma: (path) => path.endsWith('.prisma'),
     typeorm: (path, text) => path.endsWith('.ts') && text.includes('@Entity('),
+    doctrine: (path) => path.endsWith('.php') && !path.startsWith('tests/'),
     efcore: (path) => path.endsWith('.cs') && !path.startsWith('tests/'),
     jpa: (path, text) => path.endsWith('.java') && (text.includes('@Entity') || text.includes('jdbc:')),
     drizzle: (path, text) => path.endsWith('.ts') && !path.startsWith('test') && text.includes("from 'drizzle-orm/"),
@@ -206,6 +207,13 @@ describe('ORM code written by DB2CRUD', () => {
             table.primaryKey?.length === table.columns.length
           )
             table.primaryKey = null
+      // DB2CRUD's Doctrine entities keep foreign keys as plain columns (the keys are in a comment), and give a table
+      // without a key the one Doctrine needs
+      if (name.startsWith('doctrine-')) {
+        for (const table of project.schema.tables) table.foreignKeys = []
+        for (const table of read.schema.tables)
+          if (project.schema.tables.find((item) => item.name === table.name)?.primaryKey === null) table.primaryKey = null
+      }
       // Prisma keeps no CHECK constraints (DB2CRUD leaves them in a comment), and without migrations they are not read
       const expected = structuredClone(project.schema)
       if (read.schema.notes.some((note) => note.code === 'orm.checksNotKept')) for (const table of expected.tables) table.checks = []
