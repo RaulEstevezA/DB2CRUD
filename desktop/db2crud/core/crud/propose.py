@@ -5,7 +5,8 @@ its confidence and its reasons. Mirrors web/src/core/crud/propose.ts.
 Given the previous design, the proposal keeps every choice the user made where it still applies.
 """
 
-from ..decisions.decision import decision, reason, same_value
+from ..decisions.decision import decision, keep, reason
+from ..matching.matching import match_models
 from ..model.naming import pluralize, singularize, split_words, to_pascal_case
 from ..schema.types import find_table, is_unique_key
 from .types import find_policy, find_repository, find_service
@@ -40,15 +41,6 @@ def _plural_name(entity: str) -> str:
 
 def _by_columns(columns: list[str]) -> str:
     return "And".join(to_pascal_case(column) for column in columns)
-
-
-def _keep(previous: dict | None, proposed: dict) -> dict:
-    """A new proposal that keeps the user's earlier choice when it is still one of the options."""
-    if not previous or not previous.get("manual"):
-        return proposed
-    if not any(same_value(option, previous["value"]) for option in proposed["options"]):
-        return proposed
-    return {**proposed, "value": previous["value"], "status": "active", "manual": True}
 
 
 def _include(confidence: str, reasons: list[dict]) -> dict:
@@ -143,11 +135,11 @@ def _propose_policy(schema: dict, table: dict, previous: dict | None) -> dict:
     children = _propose_children(schema, table)
     return {
         "table": table["name"],
-        "role": _keep(previous and previous["role"], _propose_role(table)),
-        "delete": _keep(previous and previous["delete"], _propose_delete(table)),
-        "concurrency": _keep(previous and previous["concurrency"], _propose_concurrency(table)),
-        "children": _keep(previous and previous["children"], children) if children else None,
-        "hidden": _keep(previous and previous["hidden"], _propose_hidden(table)),
+        "role": keep(previous and previous["role"], _propose_role(table)),
+        "delete": keep(previous and previous["delete"], _propose_delete(table)),
+        "concurrency": keep(previous and previous["concurrency"], _propose_concurrency(table)),
+        "children": keep(previous and previous["children"], children) if children else None,
+        "hidden": keep(previous and previous["hidden"], _propose_hidden(table)),
     }
 
 
@@ -169,7 +161,7 @@ def _propose_queries(table: dict, role: str, previous: dict | None) -> list[dict
 
     def add(query: dict) -> None:
         before = next((item for item in previous["queries"] if item["id"] == query["id"]), None) if previous else None
-        queries.append({**query, "include": _keep(before and before["include"], query["include"])})
+        queries.append({**query, "include": keep(before and before["include"], query["include"])})
 
     def entry(query_id, kind, name, columns, returns, proposal) -> dict:
         return {"id": query_id, "kind": kind, "name": name, "columns": columns, "returns": returns, "include": proposal}
@@ -251,7 +243,7 @@ def _propose_operations(schema: dict, table: dict, policy: dict, previous: dict 
         )
         operation = {"id": operation_id, "kind": kind, "name": name, "columns": []}
         operation.update(extra or {})
-        operation["include"] = _keep(before and before["include"], proposal or _include("exact", []))
+        operation["include"] = keep(before and before["include"], proposal or _include("exact", []))
         operation["checks"] = [check for check in checks if check]
         operation["errors"] = [error for error in errors if error]
         operations.append(operation)
@@ -333,8 +325,9 @@ def _propose_operations(schema: dict, table: dict, policy: dict, previous: dict 
     return operations
 
 
-def propose_crud(schema: dict, previous: dict | None = None) -> dict:
-    """The CRUD design of the schema, keeping the user's earlier choices from `previous`."""
+def propose_crud(schema: dict, previous: dict | None = None, models: dict | None = None) -> dict:
+    """The CRUD design of the schema, keeping the user's earlier choices from `previous`; with application models, also
+    how they match the tables."""
     policies = [
         _propose_policy(schema, table, find_policy(previous, table["name"]) if previous else None)
         for table in schema["tables"]
@@ -371,4 +364,7 @@ def propose_crud(schema: dict, previous: dict | None = None) -> dict:
                 ),
             }
         )
-    return {"policies": policies, "repositories": repositories, "services": services}
+    design = {"policies": policies, "repositories": repositories, "services": services}
+    if models is not None:
+        design["matching"] = match_models(schema, models, (previous or {}).get("matching"))
+    return design

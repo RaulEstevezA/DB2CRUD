@@ -89,8 +89,6 @@ def test_a_folder_with_nothing_to_read_says_so(window, tmp_path):
 
 
 def test_the_application_models_are_matched_with_the_tables(window):
-    from PySide6.QtWidgets import QLabel
-
     window.load_example("store")
     pane = window.database_pane
     pane.source_tabs.setCurrentIndex(1)
@@ -98,10 +96,19 @@ def test_the_application_models_are_matched_with_the_tables(window):
     session = window.session
     assert session.models_read["ok"]
     assert pane.status.text() == EN.models_summary("TypeScript", 1)
-    match = next(item for item in session.matching["tables"] if item["table"] == "customers")
+    match = next(item for item in session.design["matching"]["tables"] if item["table"] == "customers")
     assert match["models"][0]["model"]["value"] == "Customer"
-    texts = [label.text() for label in window.design_pane.findChildren(QLabel)]
-    assert "← email" in texts
+    # Where a column comes from is a decision: it can be changed and undone
+    key = "source:customers:both:phone"
+    select = window.design_pane._controls[key].select
+    assert select.currentText() == "← phone"
+    select.setCurrentIndex(select.count() - 1)
+    select.activated.emit(select.count() - 1)
+    match = next(item for item in session.design["matching"]["tables"] if item["table"] == "customers")
+    column = next(item for item in match["models"][0]["columns"] if item["column"] == "phone")
+    assert column["source"]["value"] is None and column["source"]["manual"]
+    window.design_pane.undo_button.click()
+    assert window.design_pane._controls[key].select.currentText() == "← phone"
     # The database tab keeps its own text
     pane.source_tabs.setCurrentIndex(0)
     assert pane.editor.toPlainText() == session.input["text"]

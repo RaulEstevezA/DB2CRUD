@@ -10,7 +10,7 @@ A matching is {"tables": [{table, models: [{direction, model, columns, children,
 source, conflicts}; a source {kind: field, field} | {kind: lookup, field, table, by} | {kind: database}."""
 
 from ..analysis.constraints import read_constraints
-from ..decisions.decision import decision, reason
+from ..decisions.decision import decision, keep, reason
 from ..js import js_string
 from ..model.naming import name_words, singularize
 
@@ -308,15 +308,21 @@ def _children_for(field: dict, table: dict, database: dict) -> list[dict]:
     return found
 
 
-def _match_table(table: dict, database: dict, schema: dict) -> dict:
-    models = [
-        _match_columns(table, direction, model, database, schema) for direction, model in _match_model(table, schema)
-    ]
+def _match_table(table: dict, database: dict, schema: dict, previous: dict | None) -> dict:
+    models = []
+    for direction, model in _match_model(table, schema):
+        before = next((item for item in (previous or {}).get("models", []) if item["direction"] == direction), None)
+        chosen = keep(before["model"] if before else None, model)
+        models.append(_match_columns(table, direction, chosen, database, schema, before))
     return {"table": table["name"], "models": models}
 
 
-def _match_columns(table: dict, direction: str, model: dict, database: dict, schema: dict) -> dict:
+def _match_columns(
+    table: dict, direction: str, model: dict, database: dict, schema: dict, previous: dict | None
+) -> dict:
     """Where each column of a table comes from (or goes to) in one of its models."""
+    # The choices made on the columns of another model do not apply to this one
+    before = previous if previous is not None and previous["model"]["value"] == model["value"] else None
     definition = next((item for item in schema["models"] if item["name"] == model["value"]), None)
     fields = _fields_of(definition, schema) if definition is not None else []
     taken: set[str] = set()
@@ -402,11 +408,54 @@ def _match_columns(table: dict, direction: str, model: dict, database: dict, sch
         else:
             params = {"field": field["name"], "tables": ", ".join(item["name"] for item in found_tables)}
             choice = decision(found_tables[0]["name"], "review", [reason("childTables", params)], options)
-        children.append({"field": field["name"], "table": choice})
-    unused = [field["name"] for field in fields if field["name"] not in taken and not field.get("generated")]
+        chosen = (
+            next((item["table"] for item in before["children"] if item["field"] == field["name"]), None)
+            if before
+            else None
+        )
+        children.append({"field": field["name"], "table": keep(chosen, choice)})
+    _keep_sources(columns, before, fields, table, database, schema, direction)
+    # Unused: what no column or child table takes once the user's choices are applied
+    used = {
+        item["source"]["value"]["field"]
+        for item in columns
+        if item["source"]["value"] and item["source"]["value"]["kind"] != "database"
+    }
+    used.update(item["field"] for item in children if item["table"]["value"] is not None)
+    unused = [field["name"] for field in fields if field["name"] not in used and not field.get("generated")]
     return {"direction": direction, "model": model, "columns": columns, "children": children, "unused": unused}
 
 
-def match_models(database: dict, schema: dict) -> dict:
-    """The matching of every table of the database with the application models."""
-    return {"tables": [_match_table(table, database, schema) for table in database["tables"]]}
+def _keep_sources(
+    columns: list[dict],
+    before: dict | None,
+    fields: list[dict],
+    table: dict,
+    database: dict,
+    schema: dict,
+    direction: str,
+) -> None:
+    """Keeps the sources the user chose, with the conflicts of the field chosen."""
+    if before is None:
+        return
+    fields_by_name = {field["name"]: field for field in fields}
+    columns_by_name = {column["name"]: column for column in table["columns"]}
+    for index, item in enumerate(columns):
+        previous = next((other["source"] for other in before["columns"] if other["column"] == item["column"]), None)
+        source = keep(previous, item["source"])
+        if source is item["source"]:
+            continue
+        value = source["value"]
+        chosen = fields_by_name.get(value["field"]) if value and value["kind"] == "field" else None
+        column = columns_by_name[item["column"]]
+        conflicts = _conflicts_of(chosen, column, table, database, schema, direction) if chosen else []
+        columns[index] = {**item, "source": source, "conflicts": conflicts}
+
+
+def match_models(database: dict, schema: dict, previous: dict | None = None) -> dict:
+    """The matching of every table of the database with the application models, keeping the choices of `previous`."""
+    tables = []
+    for table in database["tables"]:
+        before = next((item for item in (previous or {}).get("tables", []) if item["table"] == table["name"]), None)
+        tables.append(_match_table(table, database, schema, before))
+    return {"tables": tables}

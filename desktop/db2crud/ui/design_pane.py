@@ -17,7 +17,15 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ..core.crud.edit import accept, decide_policy, set_operation_include, set_query_include
+from ..core.crud.edit import (
+    accept,
+    choose_child_table,
+    choose_model,
+    choose_source,
+    decide_policy,
+    set_operation_include,
+    set_query_include,
+)
 from .i18n import I18n
 from .pane import Pane
 from .session import Session
@@ -81,13 +89,28 @@ class DesignPane(Pane):
 
     @staticmethod
     def _key(ref: dict) -> str:
-        subject = ref["decision"] if ref["kind"] == "policy" else ref["id"]
+        if ref["kind"] == "policy":
+            subject = ref["decision"]
+        elif ref["kind"] == "model":
+            subject = ref["direction"]
+        elif ref["kind"] == "source":
+            subject = f"{ref['direction']}:{ref['column']}"
+        elif ref["kind"] == "childTable":
+            subject = f"{ref['direction']}:{ref['field']}"
+        else:
+            subject = ref["id"]
         return f"{ref['kind']}:{ref['table']}:{subject}"
 
     def _subject(self, ref: dict) -> str:
         t = self._i18n.t
         if ref["kind"] == "policy":
             return t.policy_subject(ref["table"], t.policy_kinds[ref["decision"]])
+        if ref["kind"] == "model":
+            return t.policy_subject(ref["table"], t.model_titles[ref["direction"]])
+        if ref["kind"] == "source":
+            return t.field_subject(ref["table"], ref["column"], t.model_titles[ref["direction"]])
+        if ref["kind"] == "childTable":
+            return t.field_subject(ref["table"], ref["field"], t.model_titles[ref["direction"]])
         return t.item_subject(ref["table"], ref["id"].split(":")[0], ref["id"])
 
     def refresh(self) -> None:
@@ -194,9 +217,10 @@ class DesignPane(Pane):
             grid.setColumnStretch(column, 1)
         layout.addLayout(grid)
 
-        match = next((item for item in (session.matching or {}).get("tables", []) if item["table"] == table), None)
+        tables = (design.get("matching") or {}).get("tables", [])
+        match = next((item for item in tables if item["table"] == table), None)
         for item in match["models"] if match is not None else []:
-            self._model_match(layout, item)
+            self._model_match(layout, table, item)
 
         if repository:
             layout.addWidget(field_label(t.queries_title))
@@ -222,21 +246,39 @@ class DesignPane(Pane):
                 )
         return card
 
-    def _model_match(self, layout: QVBoxLayout, match: dict) -> None:
-        """A model of a table (read, written or both) and where each column comes from or goes, with their conflicts."""
+    def _model_match(self, layout: QVBoxLayout, table: str, match: dict) -> None:
+        """A model of a table (read, written or both) and where each column comes from or goes, each a decision."""
         t = self._i18n.t
+        session = self._session
         model = match["model"]
         direction = match["direction"]
         output = direction == "output"
-        title = QHBoxLayout()
-        title.addWidget(field_label(t.model_titles[direction]))
-        title.addWidget(mono(model["value"] if model["value"] is not None else t.no_model, "type"))
-        if model["confidence"] != "none":
-            badge = confidence_badge(t, model["confidence"])
-            badge.setToolTip(" ".join(t.reason(reason) for reason in model["reasons"]))
-            title.addWidget(badge)
-        title.addStretch()
-        layout.addLayout(title)
+        title = t.model_titles[direction]
+
+        def control(ref: dict, subject: str, decision: dict, label, choose) -> DecisionControl:
+            widget = DecisionControl(
+                t,
+                subject,
+                decision,
+                label,
+                lambda value: session.change(lambda current: choose(current, value)),
+                lambda: session.change(lambda current: accept(current, ref)),
+                compact=True,
+            )
+            self._controls[self._key(ref)] = widget
+            return widget
+
+        layout.addWidget(field_label(title))
+        model_ref = {"kind": "model", "table": table, "direction": direction}
+        layout.addWidget(
+            control(
+                model_ref,
+                t.policy_subject(table, title),
+                model,
+                lambda value: value if value is not None else t.no_model,
+                lambda current, value: choose_model(current, table, direction, value),
+            )
+        )
         if model["value"] is None:
             return
 
@@ -260,30 +302,42 @@ class DesignPane(Pane):
                 return t.conflict_unknown_values(conflict["values"])
             return t.conflict_values(conflict["missing"])
 
-        rows = [
-            (column["column"], describe(column["source"]["value"]), column["source"], column["conflicts"])
-            for column in match["columns"]
-        ]
-        rows += [
-            (child["field"], t.source_children(child["table"]["value"]), child["table"], [])
-            for child in match["children"]
-        ]
-        for name, description, decision, conflicts in rows:
-            row = QWidget()
-            row_layout = QHBoxLayout(row)
-            row_layout.setContentsMargins(0, 0, 0, 0)
-            row_layout.setSpacing(8)
-            row_layout.addWidget(mono(name))
-            row_layout.addWidget(muted(description), 1)
-            for conflict in conflicts:
-                label = QLabel(conflict_text(conflict))
+        def row(name: str, widget: QWidget, conflicts: list[dict]) -> None:
+            line = QWidget()
+            line_layout = QHBoxLayout(line)
+            line_layout.setContentsMargins(0, 0, 0, 0)
+            line_layout.setSpacing(8)
+            line_layout.addWidget(mono(name))
+            line_layout.addWidget(widget, 1)
+            layout.addWidget(line)
+            if conflicts:
+                label = QLabel(" · ".join(conflict_text(conflict) for conflict in conflicts))
+                label.setWordWrap(True)
                 set_role(label, "error")
-                row_layout.addWidget(label)
-            if decision["confidence"] not in ("exact", "none"):
-                badge = confidence_badge(t, decision["confidence"])
-                badge.setToolTip(" ".join(t.reason(reason) for reason in decision["reasons"]))
-                row_layout.addWidget(badge)
-            layout.addWidget(row)
+                layout.addWidget(label)
+
+        for column in match["columns"]:
+            name = column["column"]
+            ref = {"kind": "source", "table": table, "direction": direction, "column": name}
+            widget = control(
+                ref,
+                t.field_subject(table, name, title),
+                column["source"],
+                describe,
+                lambda current, value, name=name: choose_source(current, table, direction, name, value),
+            )
+            row(name, widget, column["conflicts"])
+        for child in match["children"]:
+            field = child["field"]
+            ref = {"kind": "childTable", "table": table, "direction": direction, "field": field}
+            widget = control(
+                ref,
+                t.field_subject(table, field, title),
+                child["table"],
+                t.source_children,
+                lambda current, value, field=field: choose_child_table(current, table, direction, field, value),
+            )
+            row(field, widget, [])
         if match["unused"]:
             layout.addWidget(muted(t.unused_fields(match["unused"], direction)))
 

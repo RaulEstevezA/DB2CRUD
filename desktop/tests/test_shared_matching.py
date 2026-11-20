@@ -5,6 +5,8 @@ import json
 
 import pytest
 
+from db2crud.core.crud.edit import accept, choose_model, choose_source, find_decision, pending_decisions
+from db2crud.core.crud.propose import propose_crud
 from db2crud.core.importers.ddl.ddl import read_ddl
 from db2crud.core.importers.registry import detect_format, parse_input
 from db2crud.core.matching.matching import match_models
@@ -14,12 +16,62 @@ from .conftest import SHARED_CASES
 CASES = sorted(path for path in (SHARED_CASES / "matching").iterdir() if path.is_dir())
 
 
-@pytest.mark.parametrize("folder", CASES, ids=lambda folder: folder.name)
-def test_matches_like_the_web_version(folder):
+def read_case(folder):
+    """The database and the models of a case."""
     database = read_ddl((folder / "schema.sql").read_text(encoding="utf-8"))
     models_file = next(path for path in folder.iterdir() if path.name.startswith("models."))
     text = models_file.read_text(encoding="utf-8")
     models = parse_input(text, detect_format(text, models_file.name))
     assert models["ok"], models
-    matching = match_models(database, models["schema"])
+    return database, models["schema"]
+
+
+@pytest.mark.parametrize("folder", CASES, ids=lambda folder: folder.name)
+def test_matches_like_the_web_version(folder):
+    database, models = read_case(folder)
+    matching = match_models(database, models)
     assert matching == json.loads((folder / "expected.json").read_text(encoding="utf-8"))
+
+
+# The matching as decisions of the design (mirrors web/src/core/crud/edit.test.ts)
+
+DATABASE, MODELS = read_case(SHARED_CASES / "matching" / "directions-typescript")
+START = propose_crud(DATABASE, None, MODELS)
+
+
+def _models(design, table):
+    return next(item for item in design["matching"]["tables"] if item["table"] == table)["models"]
+
+
+def test_the_models_and_columns_wait_for_the_user_with_the_other_decisions():
+    pending = pending_decisions(START)
+    assert {"kind": "model", "table": "products", "direction": "input"} in pending
+    assert {"kind": "source", "table": "orders", "direction": "output", "column": "status"} in pending
+
+
+def test_a_chosen_source_is_kept_when_the_design_is_proposed_again():
+    edited = propose_crud(DATABASE, choose_source(START, "orders", "input", "status", None), MODELS)
+    written = next(item for item in _models(edited, "orders") if item["direction"] == "input")
+    status = next(item for item in written["columns"] if item["column"] == "status")
+    assert status["source"]["value"] is None and status["source"]["manual"]
+
+
+def test_another_model_matches_the_columns_again():
+    edited = propose_crud(DATABASE, choose_model(START, "products", "input", "ProductCommand"), MODELS)
+    match = _models(edited, "products")[0]
+    assert match["model"]["value"] == "ProductCommand" and match["model"]["manual"]
+    assert next(item for item in match["columns"] if item["column"] == "price")["source"]["confidence"] == "conflict"
+
+
+def test_the_field_chosen_brings_its_conflicts_and_leaves_the_other_unused():
+    source = {"kind": "field", "field": "email"}
+    edited = propose_crud(DATABASE, choose_source(START, "customers", "both", "full_name", source), MODELS)
+    match = _models(edited, "customers")[0]
+    assert next(item for item in match["columns"] if item["column"] == "full_name")["conflicts"] == []
+    assert match["unused"] == ["fullName"]
+
+
+def test_a_pending_model_is_confirmed_as_it_is():
+    ref = {"kind": "model", "table": "products", "direction": "input"}
+    decision = find_decision(accept(START, ref), ref)
+    assert decision["status"] == "active" and decision["manual"]

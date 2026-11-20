@@ -14,7 +14,6 @@ from ..core.crud.edit import pending_decisions
 from ..core.crud.propose import propose_crud
 from ..core.generators.registry import generate_project
 from ..core.js import trim
-from ..core.matching.matching import match_models
 from ..core.settings.settings import DEFAULT_SETTINGS, normalize_settings
 from ..examples import find_example
 from ..workspace import EMPTY_INPUT, read_database, read_models
@@ -42,10 +41,9 @@ class Session(QObject):
         self._settings = settings
         self.input = dict(EMPTY_INPUT)
         self.read = read_database(self.input)
-        # The application models are optional: each table gets the model it corresponds to
+        # The application models are optional: the design then says how they match the tables
         self.models = dict(EMPTY_INPUT)
         self.models_read = read_models(self.models)
-        self.matching: dict | None = None
         self._schema_key = ""
         # The design as the user left it; what the panes show is this design proposed again on the current schema
         self._present: dict | None = None
@@ -83,12 +81,13 @@ class Session(QObject):
         self.models = state
         self.models_read = read_models(state)
         self.input_changed.emit()
-        self._match()
-        self.design_changed.emit()
+        self._update()
 
-    def _match(self) -> None:
+    @property
+    def model_schema(self) -> dict | None:
+        """The application models read, or None when there are none or they cannot be read."""
         models = self.models_read
-        self.matching = match_models(self.schema, models["schema"]) if self.schema and models and models["ok"] else None
+        return models["schema"] if models and models["ok"] else None
 
     def _schema_changed(self) -> None:
         """The design follows the schema only when what was read changes, not on every keystroke."""
@@ -112,7 +111,7 @@ class Session(QObject):
         """Applies an edit (a function of the design that returns the new design); it can be undone."""
         if not self.schema or not self.design:
             return
-        changed = propose_crud(self.schema, edit(self.design))
+        changed = propose_crud(self.schema, edit(self.design), self.model_schema)
         if changed == self.design:
             return
         self._past.append(self._present)
@@ -124,7 +123,7 @@ class Session(QObject):
     def reset_design(self) -> None:
         """Back to the proposal, keeping nothing the user decided; it can be undone."""
         if self.schema:
-            self.change(lambda _design: propose_crud(self.schema))
+            self.change(lambda _design: propose_crud(self.schema, None, self.model_schema))
 
     def undo(self) -> None:
         if self._past:
@@ -146,8 +145,7 @@ class Session(QObject):
 
     def _update(self) -> None:
         schema = self.schema
-        self._match()
-        self.design = propose_crud(schema, self._present) if schema else None
+        self.design = propose_crud(schema, self._present, self.model_schema) if schema else None
         self.pending = pending_decisions(self.design) if self.design else []
         self.design_changed.emit()
         self._generate()

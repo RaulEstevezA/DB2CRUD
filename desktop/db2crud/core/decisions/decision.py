@@ -15,6 +15,15 @@ def same_value(a, b) -> bool:
     return json.dumps(a) == json.dumps(b)
 
 
+def keep(previous: dict | None, proposed: dict) -> dict:
+    """A new proposal that keeps the user's earlier choice when it is still one of the options."""
+    if not previous or not previous.get("manual"):
+        return proposed
+    if not any(same_value(option, previous["value"]) for option in proposed["options"]):
+        return proposed
+    return {**proposed, "value": previous["value"], "status": "active", "manual": True}
+
+
 def decision(value, confidence: str, reasons: list[dict], options: list) -> dict:
     """A proposal: review and conflict wait for the user, the others are applied."""
     status = "pending" if confidence in ("review", "conflict") else "active"
