@@ -101,7 +101,12 @@ describe('ORM code written by DB2CRUD', () => {
     prisma: (path) => path.endsWith('.prisma'),
     typeorm: (path, text) => path.endsWith('.ts') && text.includes('@Entity('),
     doctrine: (path) => path.endsWith('.php') && !path.startsWith('tests/'),
-    efcore: (path) => path.endsWith('.cs') && !path.startsWith('tests/'),
+    // The copy of the application models is not part of the ORM code
+    efcore: (path) =>
+      path.endsWith('.cs') &&
+      !path.startsWith('tests/') &&
+      !path.startsWith('application-models/') &&
+      !path.includes('/ApplicationModels/'),
     jpa: (path, text) => path.endsWith('.java') && (text.includes('@Entity') || text.includes('jdbc:')),
     drizzle: (path, text) => path.endsWith('.ts') && !path.startsWith('test') && text.includes("from 'drizzle-orm/"),
     sequelize: (path, text) => path.endsWith('.ts') && !path.startsWith('test') && text.includes("from 'sequelize'"),
