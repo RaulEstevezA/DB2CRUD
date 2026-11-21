@@ -38,7 +38,8 @@ const DRIVERS: Record<string, string> = {
 
 const tests = (context: Context) => context.settings.tests !== 'none' && writesEntities(context)
 
-export function gradleFiles(context: Context): GeneratedFile[] {
+/** The Gradle files; `modelsFolder` when the copy of the imported application models is in application-models/. */
+export function gradleFiles(context: Context, modelsFolder = false): GeneratedFile[] {
   const driver = DRIVERS[context.settings.database] ?? DRIVERS.postgresql
   // The column type of PostgreSQL's enums sends a PGobject: the driver is needed to compile, not only to run
   const driverScope = usesEnumColumns(context) ? 'implementation' : 'runtimeOnly'
@@ -70,6 +71,10 @@ export function gradleFiles(context: Context): GeneratedFile[] {
         '',
         'kotlin {',
         '    jvmToolchain(21)',
+        modelsFolder && [
+          '    // The copy of the application models, while the project runs on its own: delete the folder inside the application',
+          '    if (file("application-models").exists()) sourceSets.getByName("main").kotlin.srcDir("application-models/src/main/kotlin")',
+        ],
         '}',
         tests(context) && [
           '',
