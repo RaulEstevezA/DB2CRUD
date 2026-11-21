@@ -34,7 +34,8 @@ const PROVIDERS: Record<string, [string, string]> = {
 
 const tests = (context: Context) => context.settings.tests !== 'none' && writesEntities(context)
 
-export function projectFiles(context: Context): GeneratedFile[] {
+/** The project files; `modelsFolder` when the copy of the imported application models is in application-models/. */
+export function projectFiles(context: Context, modelsFolder = false): GeneratedFile[] {
   const [provider, version] = PROVIDERS[context.settings.database] ?? PROVIDERS.postgresql
   const files: GeneratedFile[] = [
     {
@@ -65,6 +66,12 @@ export function projectFiles(context: Context): GeneratedFile[] {
         `    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="${VERSIONS.efCore}" />`,
         `    <PackageReference Include="${provider}" Version="${version}" />`,
         '  </ItemGroup>',
+        // The copy of the application models, while the project runs on its own: delete the folder inside the application
+        modelsFolder && [
+          `  <ItemGroup Condition="Exists('../../application-models')">`,
+          '    <Compile Include="../../application-models/**/*.cs" />',
+          '  </ItemGroup>',
+        ],
         '</Project>',
         '',
       ),
