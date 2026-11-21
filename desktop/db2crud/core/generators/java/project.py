@@ -38,7 +38,48 @@ def _dependency(group: str, artifact: str, version: str, scope: str | None = Non
     ]
 
 
-def pom_file(context: dict) -> dict:
+# The profile that adds the copy of the application models (application-models/) to the sources while the folder
+# exists, so the project compiles on its own; inside the application, the folder is deleted and its classes are used.
+_MODELS_PROFILE = [
+    "",
+    "  <profiles>",
+    "    <profile>",
+    "      <id>application-models</id>",
+    "      <activation>",
+    "        <file>",
+    "          <exists>${basedir}/application-models</exists>",
+    "        </file>",
+    "      </activation>",
+    "      <build>",
+    "        <plugins>",
+    "          <plugin>",
+    "            <groupId>org.codehaus.mojo</groupId>",
+    "            <artifactId>build-helper-maven-plugin</artifactId>",
+    "            <version>3.6.0</version>",
+    "            <executions>",
+    "              <execution>",
+    "                <id>application-models</id>",
+    "                <phase>generate-sources</phase>",
+    "                <goals>",
+    "                  <goal>add-source</goal>",
+    "                </goals>",
+    "                <configuration>",
+    "                  <sources>",
+    "                    <source>application-models/src/main/java</source>",
+    "                  </sources>",
+    "                </configuration>",
+    "              </execution>",
+    "            </executions>",
+    "          </plugin>",
+    "        </plugins>",
+    "      </build>",
+    "    </profile>",
+    "  </profiles>",
+]
+
+
+def pom_file(context: dict, models_folder: bool = False) -> dict:
+    """pom.xml; `models_folder` when the copy of the imported application models is in application-models/."""
     database = context["settings"]["database"]
     group, artifact, version = DRIVERS.get(database, DRIVERS["postgresql"])
     uses_json = any(
@@ -82,6 +123,7 @@ def pom_file(context: dict) -> dict:
         "      </plugin>",
         "    </plugins>",
         "  </build>",
+        *(_MODELS_PROFILE if models_folder else []),
         "</project>",
         "",
     )
