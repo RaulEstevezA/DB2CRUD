@@ -201,6 +201,7 @@ export function repositoryFile(context: Context, info: TableInfo): GeneratedFile
   const identity = info.columns.some((column) => column.column.generated === 'identity')
   // Written before the imports, which they may add to
   const constructorLines = context.orm.repository.init(context, imports)
+  const helperLines = context.orm.repository.helpers?.(context, info, imports) ?? []
   const content = lines(
     `"""Repository of the "${info.name}" table: reads and writes rows, and decides nothing."""`,
     '',
@@ -219,6 +220,7 @@ export function repositoryFile(context: Context, info: TableInfo): GeneratedFile
     '',
     ...constructorLines.map((line) => (typeof line === 'string' ? `    ${line}` : line)),
     ...sqlMethods.flatMap((block) => ['', indent(block)]),
+    ...helperLines,
     context.settings.memoryRepositories && [
       '',
       '',

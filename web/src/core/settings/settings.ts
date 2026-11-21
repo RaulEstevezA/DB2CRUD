@@ -24,6 +24,8 @@ export type OrmId =
   | 'exposed'
   | 'seaorm'
   | 'fluent'
+  /** No ORM: SQL through each database's driver */
+  | 'sql'
 
 /** Where the application model classes come from: a copy written into the project, or the user's module. */
 export type ModelsSource = 'copy' | 'import'
@@ -107,6 +109,17 @@ export const STACKS: readonly StackInfo[] = [
     label: 'Django 5.2',
     databases: ['postgresql', 'mysql', 'mariadb', 'sqlite'],
     // Django's asynchronous ORM cannot hold a transaction (transaction.atomic is synchronous only)
+    execution: ['sync'],
+    errors: ['exceptions'],
+    dtoKinds: ['pydantic', 'dataclass'],
+    updates: ['partial'],
+  },
+  {
+    language: 'python',
+    orm: 'sql',
+    label: 'SQL (psycopg · MySQL Connector · sqlite3)',
+    databases: ['postgresql', 'mysql', 'mariadb', 'sqlite'],
+    // The drivers are synchronous
     execution: ['sync'],
     errors: ['exceptions'],
     dtoKinds: ['pydantic', 'dataclass'],

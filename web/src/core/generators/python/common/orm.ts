@@ -30,6 +30,8 @@ export interface PythonOrm {
     doc(context: Context, info: TableInfo): string
     init(context: Context, imports: Imports): Line[]
     body(context: Context, info: TableInfo, method: RepositoryMethod, imports: Imports): Line[]
+    /** Module-level helpers the bodies use, written after the database repository */
+    helpers?(context: Context, info: TableInfo, imports: Imports): Line[]
   }
   /** A condition that is true while an attribute of a new entity has no value of its own (the in-memory
    * repositories then fill it as the database would): `entity.x is None`, plus what the ORM puts there instead */

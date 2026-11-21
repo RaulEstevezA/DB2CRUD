@@ -18,6 +18,7 @@ import { eloquentOrm } from './php/eloquent/index.ts'
 import { pythonGenerator } from './python/common/generator.ts'
 import { djangoOrm } from './python/django/index.ts'
 import { sqlalchemyOrm } from './python/sqlalchemy/index.ts'
+import { sqlOrm as pythonSqlOrm } from './python/sql/index.ts'
 import type { Generator } from './types.ts'
 import { typescriptGenerator } from './typescript/common/generator.ts'
 import { drizzleOrm } from './typescript/drizzle/index.ts'
@@ -28,6 +29,7 @@ import { typeormOrm } from './typescript/typeorm/index.ts'
 export const GENERATORS: readonly Generator[] = [
   pythonGenerator(sqlalchemyOrm),
   pythonGenerator(djangoOrm),
+  pythonGenerator(pythonSqlOrm),
   typescriptGenerator(typeormOrm),
   typescriptGenerator(prismaOrm),
   typescriptGenerator(drizzleOrm),
