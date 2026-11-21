@@ -37,6 +37,8 @@ export type TodoReason =
   /** A Mapper transformation the generators do not write (`expression`, `object`, `collection`), or a list of
    * rows that are not keys */
   | 'unsupported'
+  /** A column the service never returns (one of the table's hidden columns), so the model cannot be read from it */
+  | 'hidden'
 
 export interface Todo {
   kind: 'todo'
@@ -77,6 +79,35 @@ export interface ConversionPlan {
   write: { column: string; value: WriteValue }[] | null
   /** Table → model: one value per field of the model it can fill; null for a model that only writes */
   read: { field: string; value: ReadValue }[] | null
+}
+
+/** The columns a value read from a row uses. */
+function readColumns(value: ReadValue): string[] {
+  switch (value.kind) {
+    case 'column':
+    case 'lookup':
+    case 'inverse':
+      return [value.column]
+    case 'mapper':
+      return value.columns
+    case 'children':
+      return [value.key]
+    case 'todo':
+      return []
+  }
+}
+
+/**
+ * A plan read from what the service returns, which leaves out the hidden columns: the fields that need one of them
+ * are left to the user.
+ */
+export function withoutHidden(plan: ConversionPlan, hidden: string[]): ConversionPlan {
+  if (!plan.read || hidden.length === 0) return plan
+  const read = plan.read.map((item) => {
+    const used = readColumns(item.value).filter((column) => hidden.includes(column))
+    return used.length > 0 ? { ...item, value: { kind: 'todo', reason: 'hidden', detail: used.join(', ') } satisfies Todo } : item
+  })
+  return { ...plan, read }
 }
 
 /** The language the models are written in, or null for a format of no language. */

@@ -8,7 +8,7 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { proposeCrud } from '../../crud/propose.ts'
 import { MATCHING_CASES, readCase } from '../../matching/test/cases.ts'
-import { conversionsAvailable, planConversions } from '../plan.ts'
+import { conversionsAvailable, planConversions, withoutHidden, type ConversionPlan } from '../plan.ts'
 
 const UPDATE = process.env.UPDATE_SHARED === '1'
 
@@ -34,5 +34,23 @@ describe('conversion plans', () => {
       project: 'python',
     })
     expect(conversionsAvailable({ schema: { ...models, origin: { format: 'json' } } }, 'python')).toEqual({ ok: true })
+  })
+
+  it('leave to the user the fields read from a column the service never returns', () => {
+    const plan: ConversionPlan = {
+      table: 'customers',
+      model: 'Customer',
+      direction: 'both',
+      write: [{ column: 'password_hash', value: { kind: 'field', path: ['passwordHash'] } }],
+      read: [
+        { field: 'email', value: { kind: 'column', column: 'email' } },
+        { field: 'passwordHash', value: { kind: 'column', column: 'password_hash' } },
+      ],
+    }
+    expect(withoutHidden(plan, ['password_hash'])).toEqual({
+      ...plan,
+      read: [plan.read![0], { field: 'passwordHash', value: { kind: 'todo', reason: 'hidden', detail: 'password_hash' } }],
+    })
+    expect(withoutHidden(plan, [])).toBe(plan)
   })
 })

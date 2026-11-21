@@ -9,6 +9,7 @@ the project (`models_file`) as dataclasses, so the project runs on its own."""
 
 import re
 
+from ....conversions.plan import without_hidden
 from ...types import lines
 from ..python import Imports, py_literal, snake_name
 from .context import aw, def_, find_info, module_of, path_of, query, query_name
@@ -31,6 +32,15 @@ def _uses_dtos(context: dict, info: dict) -> bool:
         and info["service"] is not None
         and info["role"] == "entity"
     )
+
+
+def service_plans(context: dict, plans: list[dict]) -> list[dict]:
+    """The plans as the services serve them: a read DTO leaves out the hidden columns, so no field is read from them."""
+    result = []
+    for plan in plans:
+        info = find_info(context, plan["table"])
+        result.append(without_hidden(plan, info["hidden"]) if info and _uses_dtos(context, info) else plan)
+    return result
 
 
 def conversion_names(context: dict, plan: dict) -> dict:
@@ -220,6 +230,7 @@ _WHY = {
     "noField": "no field of the model gives it",
     "oneWay": "Mapper's relation only goes the other way",
     "unsupported": "DB2CRUD does not write this conversion",
+    "hidden": "the service never returns it",
 }
 
 

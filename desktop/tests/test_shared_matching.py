@@ -6,7 +6,7 @@ import json
 
 import pytest
 
-from db2crud.core.conversions.plan import conversions_available, plan_conversions
+from db2crud.core.conversions.plan import conversions_available, plan_conversions, without_hidden
 from db2crud.core.crud.edit import accept, choose_model, choose_source, find_decision, pending_decisions
 from db2crud.core.crud.propose import propose_crud
 from db2crud.core.importers.ddl.ddl import read_ddl
@@ -98,3 +98,22 @@ def test_a_pending_model_is_confirmed_as_it_is():
     ref = {"kind": "model", "table": "products", "direction": "input"}
     decision = find_decision(accept(START, ref), ref)
     assert decision["status"] == "active" and decision["manual"]
+
+
+def test_the_fields_read_from_a_column_the_service_never_returns_are_left_to_the_user():
+    plan = {
+        "table": "customers",
+        "model": "Customer",
+        "direction": "both",
+        "write": [{"column": "password_hash", "value": {"kind": "field", "path": ["passwordHash"]}}],
+        "read": [
+            {"field": "email", "value": {"kind": "column", "column": "email"}},
+            {"field": "passwordHash", "value": {"kind": "column", "column": "password_hash"}},
+        ],
+    }
+    todo = {"kind": "todo", "reason": "hidden", "detail": "password_hash"}
+    assert without_hidden(plan, ["password_hash"]) == {
+        **plan,
+        "read": [plan["read"][0], {"field": "passwordHash", "value": todo}],
+    }
+    assert without_hidden(plan, []) is plan

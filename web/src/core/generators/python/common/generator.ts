@@ -6,7 +6,7 @@ import type { GeneratedFile } from '../../../export/files.ts'
 import type { Generator } from '../../types.ts'
 import { planConversions } from '../../../conversions/plan.ts'
 import { createContext, type Context } from './context.ts'
-import { conversionFiles, conversionTestFile, testsPackage } from './conversions.ts'
+import { conversionFiles, conversionTestFile, servicePlans, testsPackage } from './conversions.ts'
 import { dtosFile } from './dtos.ts'
 import type { PythonOrm } from './orm.ts'
 import { contractFile, envExampleFile, gitignoreFile, pyprojectFile, readmeFile, requirementsFiles } from './project.ts'
@@ -51,7 +51,7 @@ export function pythonGenerator(orm: PythonOrm): Generator {
     generate({ schema, design, settings, models }) {
       const context = createContext(orm, schema, design, settings)
       const app = code(context)
-      const plans = models ? planConversions(schema, design, models) : []
+      const plans = models ? servicePlans(context, planConversions(schema, design, models)) : []
       if (models) app.push(...conversionFiles(context, models.schema, plans))
       // With imported models, the tests package takes the copy in place of the user's module when it is missing
       const importsModels = plans.length > 0 && settings.modelsSource === 'import'

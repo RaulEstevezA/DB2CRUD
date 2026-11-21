@@ -3,7 +3,7 @@ of common/ and the ORM's own database layer. Mirrors web/src/core/generators/pyt
 
 from ....conversions.plan import plan_conversions
 from .context import create_context
-from .conversions import conversion_files, conversion_test_file, tests_package
+from .conversions import conversion_files, conversion_test_file, service_plans, tests_package
 from .dtos import dtos_file
 from .project import contract_file, env_example_file, gitignore_file, pyproject_file, readme_file, requirements_files
 from .repositories import repository_file
@@ -44,7 +44,7 @@ def python_generator(orm: dict) -> dict:
     def generate(schema: dict, design: dict, settings: dict, models: dict | None = None) -> list[dict]:
         context = create_context(orm, schema, design, settings)
         app = _code(context)
-        plans = plan_conversions(schema, design, models) if models else []
+        plans = service_plans(context, plan_conversions(schema, design, models)) if models else []
         if models:
             app.extend(conversion_files(context, models["schema"], plans))
         roots = _unique_roots(["app", settings["modelsModule"].split(".")[0]])

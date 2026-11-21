@@ -197,6 +197,30 @@ def _children_value(child: dict, table: dict, schema: dict) -> dict | None:
     }
 
 
+def _read_columns(value: dict) -> list[str]:
+    """The columns a value read from a row uses."""
+    kind = value["kind"]
+    if kind in ("column", "lookup", "inverse"):
+        return [value["column"]]
+    if kind == "mapper":
+        return value["columns"]
+    if kind == "children":
+        return [value["key"]]
+    return []
+
+
+def without_hidden(plan: dict, hidden: list[str]) -> dict:
+    """A plan read from what the service returns, which leaves out the hidden columns: the fields that need one of
+    them are left to the user."""
+    if plan["read"] is None or not hidden:
+        return plan
+    read = []
+    for item in plan["read"]:
+        used = [column for column in _read_columns(item["value"]) if column in hidden]
+        read.append({**item, "value": _todo("hidden", ", ".join(used))} if used else item)
+    return {**plan, "read": read}
+
+
 def plan_conversions(schema: dict, design: dict, models: dict) -> list[dict]:
     """The conversions of every table whose model the matching settled."""
     plans = []

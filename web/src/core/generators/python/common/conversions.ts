@@ -7,7 +7,14 @@
  * The model classes are imported from `settings.modelsModule`; with `modelsSource: 'copy'` that module is written
  * into the project (`modelsFile`) as dataclasses, so the project runs on its own.
  */
-import type { ConversionPlan, ModelPath, ReadValue, Todo, WriteValue } from '../../../conversions/plan.ts'
+import {
+  withoutHidden,
+  type ConversionPlan,
+  type ModelPath,
+  type ReadValue,
+  type Todo,
+  type WriteValue,
+} from '../../../conversions/plan.ts'
 import type { MapperTransform } from '../../../interop/mapper/read.ts'
 import type { EnumDef, FieldDef, ModelDef, ModelSchema, TypeRef } from '../../../model/schema.ts'
 import type { GeneratedFile } from '../../../export/files.ts'
@@ -43,6 +50,13 @@ export function conversionNames(
 
 const usesDtos = (context: Context, info: TableInfo) =>
   context.settings.services && context.settings.serviceTypes === 'dtos' && info.service !== null && info.role === 'entity'
+
+/** The plans as the services serve them: a read DTO leaves out the hidden columns, so no field is read from them. */
+export const servicePlans = (context: Context, plans: ConversionPlan[]) =>
+  plans.map((plan) => {
+    const info = findInfo(context, plan.table)
+    return info && usesDtos(context, info) ? withoutHidden(plan, info.hidden) : plan
+  })
 
 /** Module of the conversions of a table, by architecture. */
 export function conversionsModule(context: Context, info: TableInfo): string {
@@ -200,6 +214,7 @@ const todoComment = (todo: Todo, attr: string) => {
     noField: 'no field of the model gives it',
     oneWay: "Mapper's relation only goes the other way",
     unsupported: 'DB2CRUD does not write this conversion',
+    hidden: 'the service never returns it',
   }
   return `# TODO: ${attr}: ${why[todo.reason]}${todo.detail ? ` (${todo.detail})` : ''}`
 }
