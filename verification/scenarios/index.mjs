@@ -355,6 +355,18 @@ export const SCENARIOS = [
     settings: { language: 'php', orm: 'doctrine', database: 'sqlite', repositoryInterfaces: false, verbs: 'find', tests: 'services', entities: 'all', updates: 'partial' },
   },
   { id: 'doctrine-sqlite-repositories-only', schema: 'shop', settings: { language: 'php', orm: 'doctrine', database: 'sqlite', services: false } },
+  {
+    id: 'doctrine-postgresql-conversions-dtos',
+    case: 'shop-php',
+    settings: { language: 'php', orm: 'doctrine', database: 'postgresql', serviceTypes: 'dtos' },
+    service: 'postgresql',
+  },
+  {
+    id: 'doctrine-mysql-conversions-mapper',
+    case: 'mapper-php',
+    settings: { language: 'php', orm: 'doctrine', database: 'mysql', serviceTypes: 'dtos', dtoKind: 'class' },
+    service: 'mysql',
+  },
   { id: 'eloquent-sqlite-defaults', schema: 'shop', settings: { language: 'php', orm: 'eloquent', database: 'sqlite' } },
   {
     id: 'eloquent-postgresql-readonly-dtos-patch',
@@ -387,6 +399,12 @@ export const SCENARIOS = [
     settings: { language: 'php', orm: 'eloquent', database: 'sqlite', repositoryInterfaces: false, verbs: 'find', tests: 'services', entities: 'all', updates: 'partial' },
   },
   { id: 'eloquent-sqlite-repositories-only', schema: 'shop', settings: { language: 'php', orm: 'eloquent', database: 'sqlite', services: false } },
+  { id: 'eloquent-sqlite-conversions-import', case: 'shop-php', settings: { language: 'php', orm: 'eloquent', database: 'sqlite', modelsSource: 'import' } },
+  {
+    id: 'eloquent-sqlite-conversions-tables',
+    case: 'shop-php',
+    settings: { language: 'php', orm: 'eloquent', database: 'sqlite', memoryRepositories: false, architecture: 'table', transactions: 'caller' },
+  },
   { id: 'exposed-sqlite-defaults', schema: 'shop', settings: { language: 'kotlin', orm: 'exposed', database: 'sqlite' } },
   {
     id: 'exposed-postgresql-data-dtos-patch',
