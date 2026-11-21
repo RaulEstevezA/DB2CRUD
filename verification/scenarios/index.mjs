@@ -81,6 +81,27 @@ export const SCENARIOS = [
     settings: { language: 'python', orm: 'django', database: 'postgresql', transactions: 'repository', repositoryInterfaces: false, memoryRepositories: false, verbs: 'get' },
     service: 'postgresql',
   },
+  // Python without an ORM: SQL through each database's driver
+  { id: 'python-sql-sqlite-defaults', schema: 'shop', settings: { language: 'python', orm: 'sql', database: 'sqlite' } },
+  {
+    id: 'python-sql-postgresql-dtos-cursor',
+    schema: 'shop',
+    settings: { language: 'python', orm: 'sql', database: 'postgresql', serviceTypes: 'dtos', dtoKind: 'dataclass', paging: 'cursor' },
+    service: 'postgresql',
+  },
+  {
+    id: 'python-sql-mysql-offset-repository-commits',
+    schema: 'shop',
+    settings: { language: 'python', orm: 'sql', database: 'mysql', paging: 'offset', transactions: 'repository' },
+    decisions: OTHER_WAY,
+    service: 'mysql',
+  },
+  {
+    id: 'python-sql-mariadb-caller-by-table',
+    schema: 'shop',
+    settings: { language: 'python', orm: 'sql', database: 'mariadb', transactions: 'caller', architecture: 'table', memoryRepositories: false, serviceTypes: 'dtos' },
+    service: 'mariadb',
+  },
   { id: 'typeorm-sqlite-defaults', schema: 'shop', settings: { language: 'typescript', orm: 'typeorm', database: 'sqlite' } },
   {
     id: 'typeorm-postgresql-conversions-dtos',
