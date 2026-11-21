@@ -31,7 +31,8 @@ def _tests(context: dict) -> bool:
     return context["settings"]["tests"] != "none" and writes_entities(context)
 
 
-def project_files(context: dict) -> list[dict]:
+def project_files(context: dict, models_folder: bool = False) -> list[dict]:
+    """The project files; `models_folder` when the copy of the imported application models is in application-models/."""
     provider, version = PROVIDERS.get(context["settings"]["database"], PROVIDERS["postgresql"])
     files = [
         {
@@ -62,6 +63,14 @@ def project_files(context: dict) -> list[dict]:
                 f'    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="{VERSIONS["efCore"]}" />',
                 f'    <PackageReference Include="{provider}" Version="{version}" />',
                 "  </ItemGroup>",
+                # The copy of the application models, while the project runs on its own: delete the folder inside
+                # the application
+                models_folder
+                and [
+                    "  <ItemGroup Condition=\"Exists('../../application-models')\">",
+                    '    <Compile Include="../../application-models/**/*.cs" />',
+                    "  </ItemGroup>",
+                ],
                 "</Project>",
                 "",
             ),

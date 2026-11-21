@@ -1,14 +1,16 @@
 """The C# generator: .NET 10 + EF Core 9 data access layers over AppDbContext, with no web framework. Every file of the
 project, composed from the modules of this folder. Mirrors web/src/core/generators/csharp/generator.ts."""
 
+from ...conversions.plan import plan_conversions
 from .context import create_context
+from .conversions import conversion_files, conversion_test_file, service_plans
 from .dtos import dto_files
 from .entities import db_context_file, entity_file, pg_enums_file
 from .project import contract_file, env_example_file, gitignore_file, project_files, readme_file
 from .repositories import repository_files
 from .services import service_file
 from .support import common_files, database_file, error_files, unit_of_work_files
-from .tests import test_files
+from .tests import can_make, database_members, test_files
 
 
 def _code(context: dict) -> list[dict]:
@@ -32,14 +34,26 @@ def _code(context: dict) -> list[dict]:
 
 def _generate(schema: dict, design: dict, settings: dict, models: dict | None = None) -> list[dict]:
     context = create_context(schema, design, settings)
+    plans = service_plans(context, plan_conversions(schema, design, models)) if models else []
+    conversions = conversion_files(context, models["schema"], plans) if models else []
+    tests = test_files(context)
+    conversion_tests = (
+        conversion_test_file(
+            context, plans, models["schema"], lambda info: can_make(context, info), database_members(context)
+        )
+        if models and tests and settings["tests"] in ("all", "services")
+        else None
+    )
     return [
         readme_file(context),
-        *project_files(context),
+        *project_files(context, bool(conversions) and settings["modelsSource"] == "import"),
         env_example_file(context),
         gitignore_file(),
         contract_file(context),
         *_code(context),
-        *test_files(context),
+        *conversions,
+        *tests,
+        *([conversion_tests] if conversion_tests else []),
     ]
 
 
