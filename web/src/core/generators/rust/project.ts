@@ -34,8 +34,9 @@ function crates(context: Context): Set<Crate> {
   )
 }
 
-export function cargoFile(context: Context): GeneratedFile {
-  const used = crates(context)
+/** Cargo.toml; `extra` are the crates the conversions and the copy of the application models name too. */
+export function cargoFile(context: Context, extra: Crate[] = []): GeneratedFile {
+  const used = new Set([...crates(context), ...extra])
   const features = [
     'macros',
     'runtime-tokio-rustls',
