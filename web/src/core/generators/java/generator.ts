@@ -11,7 +11,9 @@ import { contractFile, envExampleFile, gitignoreFile, pomFile, readmeFile } from
 import { repositoryFiles } from './repositories.ts'
 import { serviceFile } from './services.ts'
 import { commonFiles, databaseFile, errorFiles, unitOfWorkFiles } from './support.ts'
-import { testFiles } from './tests.ts'
+import { canMake, testFiles } from './tests.ts'
+import { planConversions } from '../../conversions/plan.ts'
+import { conversionFiles, conversionTestFile, servicePlans } from './conversions.ts'
 
 function code(context: Context): GeneratedFile[] {
   const files: (GeneratedFile | null)[] = [
@@ -34,16 +36,25 @@ function code(context: Context): GeneratedFile[] {
 export const javaGenerator: Generator = {
   language: 'java',
   orm: 'jpa',
-  generate({ schema, design, settings }) {
+  generate({ schema, design, settings, models }) {
     const context = createContext(schema, design, settings)
+    const plans = models ? servicePlans(context, planConversions(schema, design, models)) : []
+    const conversions = models ? conversionFiles(context, models.schema, plans) : []
+    const tests = testFiles(context)
+    const conversionTests =
+      models && tests.length > 0 && (settings.tests === 'all' || settings.tests === 'services')
+        ? conversionTestFile(context, plans, models.schema, (info) => canMake(context, info))
+        : null
     return [
       readmeFile(context),
-      pomFile(context),
+      pomFile(context, conversions.length > 0 && settings.modelsSource === 'import'),
       envExampleFile(context),
       gitignoreFile(),
       contractFile(context),
       ...code(context),
-      ...testFiles(context),
+      ...conversions,
+      ...tests,
+      ...(conversionTests ? [conversionTests] : []),
     ]
   },
 }

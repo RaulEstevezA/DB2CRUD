@@ -45,7 +45,49 @@ const dependency = (group: string, artifact: string, version: string, scope?: st
     '    </dependency>',
   ].filter((line): line is string => typeof line === 'string')
 
-export function pomFile(context: Context): GeneratedFile {
+/**
+ * The profile that adds the copy of the application models (application-models/) to the sources while the folder
+ * exists, so the project compiles on its own; inside the application, the folder is deleted and its classes are used.
+ */
+const MODELS_PROFILE = [
+  '',
+  '  <profiles>',
+  '    <profile>',
+  '      <id>application-models</id>',
+  '      <activation>',
+  '        <file>',
+  '          <exists>${basedir}/application-models</exists>',
+  '        </file>',
+  '      </activation>',
+  '      <build>',
+  '        <plugins>',
+  '          <plugin>',
+  '            <groupId>org.codehaus.mojo</groupId>',
+  '            <artifactId>build-helper-maven-plugin</artifactId>',
+  `            <version>${'3.6.0'}</version>`,
+  '            <executions>',
+  '              <execution>',
+  '                <id>application-models</id>',
+  '                <phase>generate-sources</phase>',
+  '                <goals>',
+  '                  <goal>add-source</goal>',
+  '                </goals>',
+  '                <configuration>',
+  '                  <sources>',
+  '                    <source>application-models/src/main/java</source>',
+  '                  </sources>',
+  '                </configuration>',
+  '              </execution>',
+  '            </executions>',
+  '          </plugin>',
+  '        </plugins>',
+  '      </build>',
+  '    </profile>',
+  '  </profiles>',
+]
+
+/** pom.xml; `modelsFolder` when the copy of the imported application models is in application-models/. */
+export function pomFile(context: Context, modelsFolder = false): GeneratedFile {
   const database = context.settings.database
   const driver = DRIVERS[database] ?? DRIVERS.postgresql
   const json = context.tables.some((info) =>
@@ -86,6 +128,7 @@ export function pomFile(context: Context): GeneratedFile {
     '      </plugin>',
     '    </plugins>',
     '  </build>',
+    ...(modelsFolder ? MODELS_PROFILE : []),
     '</project>',
     '',
   )
