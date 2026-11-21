@@ -37,7 +37,9 @@ def _json(value, spaces: int) -> str:
     return json.dumps(value, indent=spaces, ensure_ascii=False)
 
 
-def composer_file(context: dict) -> dict:
+def composer_file(context: dict, models_namespace: str | None = None) -> dict:
+    """composer.json; `models_namespace` when the copy of the imported application models is in
+    application-models/: Composer loads it for that namespace too, while the folder exists."""
     tests = _tests(context)
     composer = {
         "name": f"app/{context['settings']['name']}",
@@ -46,7 +48,9 @@ def composer_file(context: dict) -> dict:
         "license": "proprietary",
         "require": {"php": VERSIONS["php"], "ext-mbstring": "*", **context["orm"]["require"](context)},
         **({"require-dev": {"phpunit/phpunit": VERSIONS["phpunit"]}} if tests else {}),
-        "autoload": {"psr-4": {"App\\": "src/"}},
+        "autoload": {
+            "psr-4": {"App\\": "src/", **({f"{models_namespace}\\": "application-models/"} if models_namespace else {})}
+        },
         **({"autoload-dev": {"psr-4": {"Tests\\": "tests/"}}} if tests else {}),
         **({"scripts": {"test": "phpunit"}} if tests else {}),
         "config": {"sort-packages": True},

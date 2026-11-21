@@ -30,7 +30,7 @@ def _is_nullable_key(info: dict, key: dict) -> bool:
     return all(column_of(info, name)["column"]["nullable"] for name in key["columns"])
 
 
-def _can_make(context: dict, info: dict, seen: frozenset = frozenset()) -> bool:
+def can_make(context: dict, info: dict, seen: frozenset = frozenset()) -> bool:
     """Tables whose rows the tests can make: they can be inserted, and so can the parents they need."""
     if info["name"] in seen or not query(info, "insert"):
         return False
@@ -39,7 +39,7 @@ def _can_make(context: dict, info: dict, seen: frozenset = frozenset()) -> bool:
         if _is_nullable_key(info, key):
             continue
         parent = find_info(context, key["references"]["table"])
-        if parent is None or not _can_make(context, parent, following):
+        if parent is None or not can_make(context, parent, following):
             return False
     return True
 
@@ -329,7 +329,7 @@ def _service_tests(context: dict, info: dict, uses: PhpUses) -> list[list]:
     parents_first, overrides = [], []
     for index, key in enumerate(info["table"]["foreignKeys"]):
         parent = find_info(context, key["references"]["table"])
-        if not parent or not _can_make(context, parent):
+        if not parent or not can_make(context, parent):
             continue
         parents_first.append(f"$parent{index} = Factories::{_add_name(parent)}($uow, $n);")
         for position, column in enumerate(key["columns"]):
@@ -566,7 +566,7 @@ def _create_of_helper(context: dict, info: dict, uses: PhpUses) -> list[str]:
     ]
 
 
-def _database_members(context: dict, uses: PhpUses) -> list:
+def database_members(context: dict, uses: PhpUses) -> list:
     """The property, setup and teardown of a test class over the test database."""
     uses.add(root_class(context, "SqlUnitOfWork"))
     caller = context["settings"]["transactions"] == "caller"
@@ -593,14 +593,14 @@ def test_files(context: dict) -> list[dict]:
     tests = context["settings"]["tests"]
     if tests == "none" or not writes_entities(context):
         return []
-    makeable = [info for info in context["tables"] if _can_make(context, info)]
+    makeable = [info for info in context["tables"] if can_make(context, info)]
     files = [*context["orm"]["testDatabase"](context), _factories_file(context, makeable)]
     memory = context["settings"]["memoryRepositories"]
     for info in makeable:
         entity_class = class_name(namespace_of(context, info, "entity"), info["entity"])
         if tests in ("all", "repositories"):
             uses = PhpUses(TESTS_NS).add("PHPUnit\\Framework\\TestCase")
-            members = _database_members(context, uses)
+            members = database_members(context, uses)
             blocks = _repository_tests(context, info)
             files.append(
                 test_file(
@@ -639,7 +639,7 @@ def test_files(context: dict) -> list[dict]:
                     "    }",
                 ]
             else:
-                members = _database_members(context, uses)
+                members = database_members(context, uses)
             helper = _create_of_helper(context, info, uses) if dtos_helper else []
             where = "the in-memory repositories" if memory else "the test database"
             files.append(
