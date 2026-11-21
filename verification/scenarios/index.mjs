@@ -437,6 +437,24 @@ export const SCENARIOS = [
     settings: { language: 'kotlin', orm: 'exposed', database: 'sqlite', repositoryInterfaces: false, verbs: 'find', tests: 'services', entities: 'all', updates: 'full' },
   },
   { id: 'exposed-sqlite-repositories-only', schema: 'shop', settings: { language: 'kotlin', orm: 'exposed', database: 'sqlite', services: false } },
+  {
+    id: 'exposed-postgresql-conversions-dtos',
+    case: 'shop-kotlin',
+    settings: { language: 'kotlin', orm: 'exposed', database: 'postgresql', serviceTypes: 'dtos' },
+    service: 'postgresql',
+  },
+  { id: 'exposed-sqlite-conversions-import', case: 'shop-kotlin', settings: { language: 'kotlin', orm: 'exposed', database: 'sqlite', modelsSource: 'import' } },
+  {
+    id: 'exposed-mysql-conversions-mapper',
+    case: 'mapper-kotlin',
+    settings: { language: 'kotlin', orm: 'exposed', database: 'mysql', serviceTypes: 'dtos', dtoKind: 'class' },
+    service: 'mysql',
+  },
+  {
+    id: 'exposed-sqlite-conversions-tables',
+    case: 'shop-kotlin',
+    settings: { language: 'kotlin', orm: 'exposed', database: 'sqlite', memoryRepositories: false, architecture: 'table', transactions: 'caller' },
+  },
   { id: 'seaorm-sqlite-defaults', schema: 'shop', settings: { language: 'rust', orm: 'seaorm', database: 'sqlite' } },
   {
     id: 'seaorm-postgresql-dtos-patch',

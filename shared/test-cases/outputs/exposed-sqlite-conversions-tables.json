@@ -1,0 +1,586 @@
+{
+ "schema": {
+  "format": "db-schema",
+  "version": 1,
+  "dialect": "postgresql",
+  "source": {
+   "kind": "ddl",
+   "format": "postgresql-ddl"
+  },
+  "tables": [
+   {
+    "name": "customers",
+    "columns": [
+     {
+      "name": "id",
+      "type": {
+       "sql": "BIGSERIAL",
+       "kind": "integer",
+       "bits": 64
+      },
+      "nullable": false,
+      "generated": "identity"
+     },
+     {
+      "name": "email",
+      "type": {
+       "sql": "VARCHAR(120)",
+       "kind": "text",
+       "length": 120
+      },
+      "nullable": false
+     },
+     {
+      "name": "password_hash",
+      "type": {
+       "sql": "TEXT",
+       "kind": "text"
+      },
+      "nullable": false
+     },
+     {
+      "name": "created_at",
+      "type": {
+       "sql": "TIMESTAMPTZ",
+       "kind": "datetime",
+       "timezone": true
+      },
+      "nullable": false,
+      "generated": "now"
+     }
+    ],
+    "primaryKey": [
+     "id"
+    ],
+    "foreignKeys": [],
+    "uniques": [
+     {
+      "columns": [
+       "email"
+      ]
+     }
+    ],
+    "indexes": [],
+    "checks": [],
+    "origin": {
+     "line": 1,
+     "column": 1
+    }
+   },
+   {
+    "name": "categories",
+    "columns": [
+     {
+      "name": "id",
+      "type": {
+       "sql": "SERIAL",
+       "kind": "integer",
+       "bits": 32
+      },
+      "nullable": false,
+      "generated": "identity"
+     },
+     {
+      "name": "name",
+      "type": {
+       "sql": "VARCHAR(60)",
+       "kind": "text",
+       "length": 60
+      },
+      "nullable": false
+     }
+    ],
+    "primaryKey": [
+     "id"
+    ],
+    "foreignKeys": [],
+    "uniques": [
+     {
+      "columns": [
+       "name"
+      ]
+     }
+    ],
+    "indexes": [],
+    "checks": [],
+    "origin": {
+     "line": 7,
+     "column": 1
+    }
+   },
+   {
+    "name": "products",
+    "columns": [
+     {
+      "name": "id",
+      "type": {
+       "sql": "BIGSERIAL",
+       "kind": "integer",
+       "bits": 64
+      },
+      "nullable": false,
+      "generated": "identity"
+     },
+     {
+      "name": "category_id",
+      "type": {
+       "sql": "INTEGER",
+       "kind": "integer",
+       "bits": 32
+      },
+      "nullable": false
+     },
+     {
+      "name": "name",
+      "type": {
+       "sql": "VARCHAR(100)",
+       "kind": "text",
+       "length": 100
+      },
+      "nullable": false
+     },
+     {
+      "name": "price",
+      "type": {
+       "sql": "NUMERIC(10, 2)",
+       "kind": "decimal",
+       "precision": 10,
+       "scale": 2
+      },
+      "nullable": false
+     },
+     {
+      "name": "status",
+      "type": {
+       "sql": "VARCHAR(10)",
+       "kind": "text",
+       "length": 10
+      },
+      "nullable": false,
+      "default": {
+       "kind": "literal",
+       "value": "draft"
+      }
+     }
+    ],
+    "primaryKey": [
+     "id"
+    ],
+    "foreignKeys": [
+     {
+      "columns": [
+       "category_id"
+      ],
+      "references": {
+       "table": "categories",
+       "columns": [
+        "id"
+       ]
+      }
+     }
+    ],
+    "uniques": [],
+    "indexes": [],
+    "checks": [
+     {
+      "sql": "status IN ('draft', 'live')",
+      "parsed": {
+       "kind": "in",
+       "column": "status",
+       "values": [
+        "draft",
+        "live"
+       ]
+      }
+     }
+    ],
+    "origin": {
+     "line": 11,
+     "column": 1
+    }
+   },
+   {
+    "name": "tags",
+    "columns": [
+     {
+      "name": "id",
+      "type": {
+       "sql": "SERIAL",
+       "kind": "integer",
+       "bits": 32
+      },
+      "nullable": false,
+      "generated": "identity"
+     },
+     {
+      "name": "label",
+      "type": {
+       "sql": "VARCHAR(30)",
+       "kind": "text",
+       "length": 30
+      },
+      "nullable": false
+     }
+    ],
+    "primaryKey": [
+     "id"
+    ],
+    "foreignKeys": [],
+    "uniques": [],
+    "indexes": [],
+    "checks": [],
+    "origin": {
+     "line": 18,
+     "column": 1
+    }
+   },
+   {
+    "name": "product_tags",
+    "columns": [
+     {
+      "name": "product_id",
+      "type": {
+       "sql": "BIGINT",
+       "kind": "integer",
+       "bits": 64
+      },
+      "nullable": false
+     },
+     {
+      "name": "tag_id",
+      "type": {
+       "sql": "INTEGER",
+       "kind": "integer",
+       "bits": 32
+      },
+      "nullable": false
+     }
+    ],
+    "primaryKey": [
+     "product_id",
+     "tag_id"
+    ],
+    "foreignKeys": [
+     {
+      "columns": [
+       "product_id"
+      ],
+      "references": {
+       "table": "products",
+       "columns": [
+        "id"
+       ]
+      }
+     },
+     {
+      "columns": [
+       "tag_id"
+      ],
+      "references": {
+       "table": "tags",
+       "columns": [
+        "id"
+       ]
+      }
+     }
+    ],
+    "uniques": [],
+    "indexes": [],
+    "checks": [],
+    "origin": {
+     "line": 22,
+     "column": 1
+    }
+   }
+  ],
+  "enums": [],
+  "notes": []
+ },
+ "decisions": [],
+ "settings": {
+  "name": "exposed-sqlite-conversions-tables",
+  "language": "kotlin",
+  "orm": "exposed",
+  "database": "sqlite",
+  "memoryRepositories": false,
+  "architecture": "table",
+  "transactions": "caller"
+ },
+ "models": {
+  "schema": {
+   "format": "model-schema",
+   "version": 1,
+   "origin": {
+    "format": "kotlin",
+    "language": "kotlin"
+   },
+   "models": [
+    {
+     "name": "Customer",
+     "kind": "record",
+     "fields": [
+      {
+       "name": "id",
+       "type": {
+        "kind": "primitive",
+        "name": "integer",
+        "bits": 64
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "Long"
+      },
+      {
+       "name": "email",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String"
+      },
+      {
+       "name": "passwordHash",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String"
+      },
+      {
+       "name": "createdAt",
+       "type": {
+        "kind": "primitive",
+        "name": "datetime"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "OffsetDateTime"
+      }
+     ],
+     "namespace": "shop.models",
+     "construction": "named",
+     "description": "A customer of the shop"
+    },
+    {
+     "name": "CategoryDto",
+     "kind": "record",
+     "fields": [
+      {
+       "name": "id",
+       "type": {
+        "kind": "primitive",
+        "name": "integer",
+        "bits": 32
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "Int"
+      },
+      {
+       "name": "name",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String"
+      }
+     ],
+     "namespace": "shop.models",
+     "construction": "named"
+    },
+    {
+     "name": "Product",
+     "kind": "class",
+     "fields": [
+      {
+       "name": "id",
+       "type": {
+        "kind": "primitive",
+        "name": "integer",
+        "bits": 64
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "Long",
+       "defaultValue": 0
+      },
+      {
+       "name": "name",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String",
+       "defaultValue": ""
+      },
+      {
+       "name": "price",
+       "type": {
+        "kind": "primitive",
+        "name": "decimal"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "BigDecimal"
+      },
+      {
+       "name": "status",
+       "type": {
+        "kind": "enum",
+        "name": "ProductStatus"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "ProductStatus"
+      },
+      {
+       "name": "categoryName",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String",
+       "defaultValue": ""
+      },
+      {
+       "name": "tagIds",
+       "type": {
+        "kind": "array",
+        "items": {
+         "kind": "primitive",
+         "name": "integer",
+         "bits": 32
+        }
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "List<Int>"
+      }
+     ],
+     "namespace": "shop.models",
+     "construction": "properties"
+    },
+    {
+     "name": "TagEntity",
+     "kind": "record",
+     "fields": [
+      {
+       "name": "id",
+       "type": {
+        "kind": "primitive",
+        "name": "integer",
+        "bits": 32
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "Int"
+      },
+      {
+       "name": "label",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String"
+      }
+     ],
+     "namespace": "shop.models",
+     "construction": "named"
+    }
+   ],
+   "enums": [
+    {
+     "name": "ProductStatus",
+     "values": [
+      {
+       "name": "DRAFT",
+       "value": "draft"
+      },
+      {
+       "name": "LIVE",
+       "value": "live"
+      }
+     ],
+     "namespace": "shop.models"
+    }
+   ]
+  },
+  "project": null
+ },
+ "files": {
+  ".env.example": "# Where the database is (a JDBC URL), and who connects\nDATABASE_URL=jdbc:sqlite:app.db\n# The tests use SQLite in a temporary file unless this names another database (it is emptied by the tests)\n# TEST_DATABASE_URL=\n",
+  ".gitignore": "build/\n.gradle/\n.kotlin/\n.env\n*.db\n",
+  "README.md": "# exposed-sqlite-conversions-tables\n\nData access layer generated by [DB2CRUD](https://github.com/RaulEstevezA/DB2CRUD) for a database that already exists: entities and table objects for Exposed 1.6.1, repositories and services, in Kotlin on the JVM. It does not create or migrate the database, and it depends on no web framework.\n\n## Settings\n\n- Database: sqlite.\n- Entities: written for the tables the input had no class for.\n- Services: take and return the entities; updates take a Patch per field: absent, or a value that may be null.\n- Transactions: the caller owns the transaction: nothing commits.\n- Lists: lists return pages by offset and limit.\n\n## Layout\n\n```text\nsrc/main/kotlin/app/AppDatabase.kt      the connection of DATABASE_URL\nsrc/main/kotlin/app/UnitOfWork.kt       the repositories of every table, and the transaction of each operation\nsrc/main/kotlin/app/errors/             NotFoundException, ConflictException, ValidationFailedException: no HTTP codes\nsrc/main/kotlin/app/<table>/            entity, table object, repositories and service of each table\nsrc/test/kotlin/app/                    repositories against a database, services on the in-memory repositories\ncrud-contract.json                      what was written, for CRUD2Controller\n```\n\n## Running the tests\n\n```bash\ngradle test                                       # SQLite in a temporary file\nTEST_DATABASE_URL=\"jdbc:sqlite:app.db\" gradle test   # a real, disposable database: it is emptied\n```\n\nLook for `TODO` in the code: each one marks a decision the input did not settle.\n",
+  "build.gradle.kts": "plugins {\n    kotlin(\"jvm\") version \"2.4.21\"\n}\n\nrepositories {\n    mavenCentral()\n}\n\ndependencies {\n    implementation(\"org.jetbrains.exposed:exposed-core:1.6.1\")\n    implementation(\"org.jetbrains.exposed:exposed-jdbc:1.6.1\")\n    implementation(\"org.jetbrains.exposed:exposed-java-time:1.6.1\")\n    runtimeOnly(\"org.xerial:sqlite-jdbc:3.54.1.0\")\n    testImplementation(kotlin(\"test\"))\n    testImplementation(platform(\"org.junit:junit-bom:6.1.3\"))\n    testImplementation(\"org.junit.jupiter:junit-jupiter\")\n    testRuntimeOnly(\"org.junit.platform:junit-platform-launcher\")\n}\n\nkotlin {\n    jvmToolchain(21)\n}\n\ntasks.test {\n    useJUnitPlatform()\n    // Every test empties the same database: they run one after another\n    maxParallelForks = 1\n}\n",
+  "crud-contract.json": "{\n  \"format\": \"crud-contract\",\n  \"version\": 1,\n  \"stack\": {\n    \"language\": \"kotlin\",\n    \"orm\": \"exposed\",\n    \"database\": \"sqlite\",\n    \"execution\": \"sync\"\n  },\n  \"transactions\": \"caller\",\n  \"paging\": \"offset\",\n  \"types\": [\n    {\n      \"name\": \"Customer\",\n      \"module\": \"app.customers\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"integer\",\n            \"kotlin\": \"Long\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"email\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"kotlin\": \"String\",\n            \"length\": 120\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"passwordHash\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"kotlin\": \"String\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"createdAt\",\n          \"type\": {\n            \"kind\": \"datetime\",\n            \"kotlin\": \"OffsetDateTime\"\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"CustomerChanges\",\n      \"module\": \"app.customers\",\n      \"kind\": \"update\",\n      \"updates\": \"patch\",\n      \"fields\": [\n        {\n          \"name\": \"email\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"kotlin\": \"String\",\n            \"length\": 120\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"passwordHash\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"kotlin\": \"String\"\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"Category\",\n      \"module\": \"app.categories\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"integer\",\n            \"kotlin\": \"Int\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"name\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"kotlin\": \"String\",\n            \"length\": 60\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"CategoryChanges\",\n      \"module\": \"app.categories\",\n      \"kind\": \"update\",\n      \"updates\": \"patch\",\n      \"fields\": [\n        {\n          \"name\": \"name\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"kotlin\": \"String\",\n            \"length\": 60\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"Product\",\n      \"module\": \"app.products\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"integer\",\n            \"kotlin\": \"Long\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"categoryId\",\n          \"type\": {\n            \"kind\": \"integer\",\n            \"kotlin\": \"Int\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"name\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"kotlin\": \"String\",\n            \"length\": 100\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"price\",\n          \"type\": {\n            \"kind\": \"decimal\",\n            \"kotlin\": \"BigDecimal\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"status\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"kotlin\": \"String\",\n            \"length\": 10\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"ProductChanges\",\n      \"module\": \"app.products\",\n      \"kind\": \"update\",\n      \"updates\": \"patch\",\n      \"fields\": [\n        {\n          \"name\": \"categoryId\",\n          \"type\": {\n            \"kind\": \"integer\",\n            \"kotlin\": \"Int\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"name\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"kotlin\": \"String\",\n            \"length\": 100\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"price\",\n          \"type\": {\n            \"kind\": \"decimal\",\n            \"kotlin\": \"BigDecimal\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"status\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"kotlin\": \"String\",\n            \"length\": 10\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"Tag\",\n      \"module\": \"app.tags\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"integer\",\n            \"kotlin\": \"Int\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"label\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"kotlin\": \"String\",\n            \"length\": 30\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"TagChanges\",\n      \"module\": \"app.tags\",\n      \"kind\": \"update\",\n      \"updates\": \"patch\",\n      \"fields\": [\n        {\n          \"name\": \"label\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"kotlin\": \"String\",\n            \"length\": 30\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"ProductTag\",\n      \"module\": \"app.producttags\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"productId\",\n          \"type\": {\n            \"kind\": \"integer\",\n            \"kotlin\": \"Long\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"tagId\",\n          \"type\": {\n            \"kind\": \"integer\",\n            \"kotlin\": \"Int\"\n          },\n          \"nullable\": true\n        }\n      ]\n    }\n  ],\n  \"errors\": [\n    {\n      \"kind\": \"notFound\",\n      \"name\": \"NotFoundException\",\n      \"module\": \"app.errors\"\n    },\n    {\n      \"kind\": \"conflict\",\n      \"name\": \"ConflictException\",\n      \"module\": \"app.errors\"\n    },\n    {\n      \"kind\": \"validation\",\n      \"name\": \"ValidationFailedException\",\n      \"module\": \"app.errors\"\n    }\n  ],\n  \"common\": \"app.common\",\n  \"services\": [\n    {\n      \"name\": \"CustomerService\",\n      \"module\": \"app.customers\",\n      \"operations\": [\n        {\n          \"name\": \"createCustomer\",\n          \"kind\": \"create\",\n          \"errors\": [\n            \"validation\",\n            \"conflict\"\n          ]\n        },\n        {\n          \"name\": \"getCustomer\",\n          \"kind\": \"get\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"listCustomers\",\n          \"kind\": \"list\",\n          \"errors\": []\n        },\n        {\n          \"name\": \"updateCustomer\",\n          \"kind\": \"update\",\n          \"errors\": [\n            \"notFound\",\n            \"validation\",\n            \"conflict\"\n          ]\n        },\n        {\n          \"name\": \"deleteCustomer\",\n          \"kind\": \"delete\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"findCustomerByEmail\",\n          \"kind\": \"find\",\n          \"by\": [\n            \"email\"\n          ],\n          \"errors\": []\n        }\n      ]\n    },\n    {\n      \"name\": \"CategoryService\",\n      \"module\": \"app.categories\",\n      \"operations\": [\n        {\n          \"name\": \"createCategory\",\n          \"kind\": \"create\",\n          \"errors\": [\n            \"validation\",\n            \"conflict\"\n          ]\n        },\n        {\n          \"name\": \"getCategory\",\n          \"kind\": \"get\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"listCategories\",\n          \"kind\": \"list\",\n          \"errors\": []\n        },\n        {\n          \"name\": \"updateCategory\",\n          \"kind\": \"update\",\n          \"errors\": [\n            \"notFound\",\n            \"validation\",\n            \"conflict\"\n          ]\n        },\n        {\n          \"name\": \"deleteCategory\",\n          \"kind\": \"delete\",\n          \"errors\": [\n            \"notFound\",\n            \"conflict\"\n          ]\n        },\n        {\n          \"name\": \"findCategoryByName\",\n          \"kind\": \"find\",\n          \"by\": [\n            \"name\"\n          ],\n          \"errors\": []\n        }\n      ]\n    },\n    {\n      \"name\": \"ProductService\",\n      \"module\": \"app.products\",\n      \"operations\": [\n        {\n          \"name\": \"createProduct\",\n          \"kind\": \"create\",\n          \"errors\": [\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"getProduct\",\n          \"kind\": \"get\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"listProducts\",\n          \"kind\": \"list\",\n          \"errors\": []\n        },\n        {\n          \"name\": \"updateProduct\",\n          \"kind\": \"update\",\n          \"errors\": [\n            \"notFound\",\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"deleteProduct\",\n          \"kind\": \"delete\",\n          \"errors\": [\n            \"notFound\",\n            \"conflict\"\n          ]\n        },\n        {\n          \"name\": \"listProductsByCategoryId\",\n          \"kind\": \"listByParent\",\n          \"by\": [\n            \"category_id\"\n          ],\n          \"errors\": []\n        },\n        {\n          \"name\": \"addTag\",\n          \"kind\": \"link\",\n          \"through\": \"product_tags\",\n          \"errors\": [\n            \"notFound\",\n            \"conflict\"\n          ]\n        },\n        {\n          \"name\": \"removeTag\",\n          \"kind\": \"unlink\",\n          \"through\": \"product_tags\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        }\n      ]\n    },\n    {\n      \"name\": \"TagService\",\n      \"module\": \"app.tags\",\n      \"operations\": [\n        {\n          \"name\": \"createTag\",\n          \"kind\": \"create\",\n          \"errors\": [\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"getTag\",\n          \"kind\": \"get\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"listTags\",\n          \"kind\": \"list\",\n          \"errors\": []\n        },\n        {\n          \"name\": \"updateTag\",\n          \"kind\": \"update\",\n          \"errors\": [\n            \"notFound\",\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"deleteTag\",\n          \"kind\": \"delete\",\n          \"errors\": [\n            \"notFound\",\n            \"conflict\"\n          ]\n        },\n        {\n          \"name\": \"addProduct\",\n          \"kind\": \"link\",\n          \"through\": \"product_tags\",\n          \"errors\": [\n            \"notFound\",\n            \"conflict\"\n          ]\n        },\n        {\n          \"name\": \"removeProduct\",\n          \"kind\": \"unlink\",\n          \"through\": \"product_tags\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        }\n      ]\n    }\n  ]\n}\n",
+  "settings.gradle.kts": "rootProject.name = \"exposed-sqlite-conversions-tables\"\n",
+  "src/main/kotlin/app/AppDatabase.kt": "package app\n\nimport org.jetbrains.exposed.v1.jdbc.Database\n\n/** The database DATABASE_URL names (a JDBC URL), through Exposed. It never migrates: the database already exists. */\nobject AppDatabase {\n    const val DEFAULT_URL = \"jdbc:sqlite:app.db\"\n\n    /** A connection to the database at url (DATABASE_URL, with DATABASE_USER and DATABASE_PASSWORD, by default). */\n    fun connect(\n        url: String = System.getenv(\"DATABASE_URL\") ?: DEFAULT_URL,\n        user: String = System.getenv(\"DATABASE_USER\") ?: \"\",\n        password: String = System.getenv(\"DATABASE_PASSWORD\") ?: \"\",\n    ): Database = Database.connect(url, user = user, password = password)\n}\n",
+  "src/main/kotlin/app/SqlUnitOfWork.kt": "package app\n\nimport app.categories.CategoryRepository\nimport app.categories.SqlCategoryRepository\nimport app.customers.CustomerRepository\nimport app.customers.SqlCustomerRepository\nimport app.products.ProductRepository\nimport app.products.SqlProductRepository\nimport app.producttags.ProductTagRepository\nimport app.producttags.SqlProductTagRepository\nimport app.tags.SqlTagRepository\nimport app.tags.TagRepository\nimport org.jetbrains.exposed.v1.jdbc.Database\n\n/** The repositories over one database, and its transaction. */\nclass SqlUnitOfWork(val db: Database) : UnitOfWork {\n    override val customers: CustomerRepository = SqlCustomerRepository(db)\n    override val categories: CategoryRepository = SqlCategoryRepository(db)\n    override val products: ProductRepository = SqlProductRepository(db)\n    override val tags: TagRepository = SqlTagRepository(db)\n    override val productTags: ProductTagRepository = SqlProductTagRepository(db)\n\n    /** The transaction belongs to whoever holds the database: this only groups the code. */\n    override fun <T> transaction(work: (UnitOfWork) -> T): T = work(this)\n}\n",
+  "src/main/kotlin/app/UnitOfWork.kt": "package app\n\nimport app.categories.CategoryRepository\nimport app.customers.CustomerRepository\nimport app.products.ProductRepository\nimport app.producttags.ProductTagRepository\nimport app.tags.TagRepository\n\n/** What services depend on: a repository per table and a transaction. Services never commit: whoever holds the database opens and ends its transaction; transaction() only groups the code. */\ninterface UnitOfWork {\n    val customers: CustomerRepository\n    val categories: CategoryRepository\n    val products: ProductRepository\n    val tags: TagRepository\n    val productTags: ProductTagRepository\n\n    /** Runs work with the repositories of the transaction; commits when it ends, rolls back when it throws. */\n    fun <T> transaction(work: (UnitOfWork) -> T): T\n}\n",
+  "src/main/kotlin/app/application_models/CategoryDto.kt": "package app.application_models\n\n/** CategoryDto, as the application has it. */\ndata class CategoryDto(\n    val id: Int,\n    val name: String,\n)\n",
+  "src/main/kotlin/app/application_models/Customer.kt": "package app.application_models\n\nimport java.time.OffsetDateTime\n\n/** Customer, as the application has it. */\ndata class Customer(\n    val id: Long,\n    val email: String,\n    val passwordHash: String,\n    val createdAt: OffsetDateTime,\n)\n",
+  "src/main/kotlin/app/application_models/Product.kt": "package app.application_models\n\nimport java.math.BigDecimal\n\n/** Product, as the application has it. */\nclass Product {\n    var id: Long = 0L\n    var name: String = \"\"\n    var price: BigDecimal = BigDecimal.ZERO\n    var status: ProductStatus = ProductStatus.DRAFT\n    var categoryName: String = \"\"\n    var tagIds: List<Int> = emptyList()\n}\n",
+  "src/main/kotlin/app/application_models/ProductStatus.kt": "package app.application_models\n\n/** ProductStatus, as the application has it. */\nenum class ProductStatus {\n    DRAFT,\n    LIVE,\n}\n",
+  "src/main/kotlin/app/application_models/TagEntity.kt": "package app.application_models\n\n/** TagEntity, as the application has it. */\ndata class TagEntity(\n    val id: Int,\n    val label: String,\n)\n",
+  "src/main/kotlin/app/categories/Category.kt": "package app.categories\n\n/** A row of the \"categories\" table. Its mapping is CategoryTable; a property stays null until it is set or read. */\nclass Category(\n    var id: Int? = null,\n    var name: String? = null,\n)\n",
+  "src/main/kotlin/app/categories/CategoryChanges.kt": "package app.categories\n\nimport app.common.Patch\n\n/** The values of a Category that change: fields left absent keep their value; Patch.of(null) empties one. */\ndata class CategoryChanges(\n    val name: Patch<String?> = Patch.absent(),\n)\n",
+  "src/main/kotlin/app/categories/CategoryConversions.kt": "package app.categories\n\nimport app.application_models.CategoryDto\n\n/** Conversions between the application models and the \"categories\" table: what the service takes and returns. */\nobject CategoryConversions {\n    /** A CategoryDto as the categories table takes it. */\n    fun categoryDtoToCategory(model: CategoryDto): Category {\n        return Category(\n            name = model.name,\n        )\n    }\n\n    /** A row of the categories table as a CategoryDto. */\n    fun categoryToCategoryDto(row: Category): CategoryDto {\n        return CategoryDto(\n            id = row.id!!,\n            name = row.name!!,\n        )\n    }\n}\n",
+  "src/main/kotlin/app/categories/CategoryRepository.kt": "package app.categories\n\nimport app.common.Page\n\n/** Where categories rows are kept. Services depend only on this interface. */\ninterface CategoryRepository {\n    /** The row with this primary key, or null. */\n    fun findById(id: Int): Category?\n\n    /** At most limit rows from offset, by primary key, and how many there are. */\n    fun list(offset: Int, limit: Int): Page<Category>\n\n    /** The row with this name, or null. */\n    fun findByName(name: String): Category?\n\n    /** Stores a new row; the values the database fills are read back. */\n    fun insert(entity: Category): Category\n\n    /** Stores the changes made to a row. */\n    fun update(entity: Category): Category\n\n    /** Removes a row. */\n    fun delete(entity: Category): Unit\n}\n",
+  "src/main/kotlin/app/categories/CategoryService.kt": "package app.categories\n\nimport app.UnitOfWork\nimport app.common.Page\nimport app.errors.ConflictException\nimport app.errors.FieldError\nimport app.errors.NotFoundException\nimport app.errors.ValidationFailedException\n\n/** Operations on categories. It never commits: the caller owns the transaction. */\nclass CategoryService(private val unitOfWork: UnitOfWork) {\n    /** Stores a new Category after checking it. */\n    fun createCategory(category: Category): Category {\n        val values = mapOf(\n            \"name\" to category.name,\n        ).filterValues { it != null }\n        return unitOfWork.transaction { uow ->\n            checkValues(uow, values, null)\n            uow.categories.insert(category)\n        }\n    }\n\n    /** The Category with this key; NotFoundException when there is none. */\n    fun getCategory(id: Int): Category = find(unitOfWork, id)\n\n    /** A page of categories, by primary key. */\n    fun listCategories(offset: Int, limit: Int): Page<Category> = unitOfWork.categories.list(offset, limit)\n\n    /** Changes the given values of a Category. */\n    fun updateCategory(id: Int, changes: CategoryChanges): Category {\n        val values = given(changes)\n        return unitOfWork.transaction { uow ->\n            val current = find(uow, id)\n            checkValues(uow, values, current)\n            applyValues(current, values)\n            uow.categories.update(current)\n        }\n    }\n\n    /** Deletes a Category. */\n    fun deleteCategory(id: Int) {\n        unitOfWork.transaction { uow ->\n            val current = find(uow, id)\n            if (uow.products.listByCategoryId(current.id!!).isNotEmpty())\n                throw ConflictException(\"Category\", \"rows of products still point to it\", listOf(\"products\"))\n            uow.categories.delete(current)\n        }\n    }\n\n    /** The Category with this name, or null. */\n    fun findCategoryByName(name: String): Category? = unitOfWork.categories.findByName(name)\n\n    /** Checks the values against the rules of the \"categories\" table, and the rows they point to; throws ValidationFailedException with every problem. */\n    private fun validate(uow: UnitOfWork, values: Map<String, Any?>, current: Category?) {\n        val creating = current == null\n        val errors = mutableListOf<FieldError>()\n        run {\n            val value = values[\"name\"]\n            if (value == null) {\n                if (creating || \"name\" in values) errors += FieldError(\"name\", \"is required\")\n            } else {\n                if (value is String && value.length > 60) errors += FieldError(\"name\", \"is longer than 60 characters\")\n            }\n        }\n        if (errors.isNotEmpty()) throw ValidationFailedException(\"Category\", errors)\n    }\n\n    /** Values that must be unique are not taken by another row. */\n    private fun checkUnique(uow: UnitOfWork, values: Map<String, Any?>, current: Category?) {\n        run {\n            val name = if (\"name\" in values) values[\"name\"] as String? else current?.name\n            if (name != null) {\n                val other = uow.categories.findByName(name)\n                if (other != null && (current == null || other.id != current.id))\n                    throw ConflictException(\"Category\", \"name is already taken\", listOf(\"name\"))\n            }\n        }\n    }\n\n    /** Every check before a write: the values, the rows they point to, the unique values. */\n    private fun checkValues(uow: UnitOfWork, values: Map<String, Any?>, current: Category?) {\n        validate(uow, values, current)\n        checkUnique(uow, values, current)\n    }\n\n    /** Sets the given values on the entity. */\n    private fun applyValues(entity: Category, values: Map<String, Any?>) {\n        if (\"name\" in values) entity.name = values[\"name\"] as String?\n    }\n\n    /** The Category with this key; NotFoundException when there is none. */\n    private fun find(uow: UnitOfWork, id: Int): Category =\n        uow.categories.findById(id) ?: throw NotFoundException(\"Category\", id)\n\n    /** The values an update gives, by field. */\n    private fun given(changes: CategoryChanges): Map<String, Any?> {\n        val values = mutableMapOf<String, Any?>()\n        if (changes.name.isPresent) values[\"name\"] = changes.name.value\n        return values\n    }\n}\n",
+  "src/main/kotlin/app/categories/CategoryTable.kt": "package app.categories\n\nimport org.jetbrains.exposed.v1.core.Table\n\n/**\n * The \"categories\" table, as the database has it. Exposed never creates or changes it: the database already exists.\n */\nobject CategoryTable : Table(\"categories\") {\n    val id = integer(\"id\").autoIncrement()\n    val name = varchar(\"name\", 60)\n\n    override val primaryKey = PrimaryKey(id)\n\n    init {\n        uniqueIndex(null, name)\n    }\n}\n",
+  "src/main/kotlin/app/categories/SqlCategoryRepository.kt": "package app.categories\n\nimport app.common.Page\nimport app.errors.ConflictException\nimport org.jetbrains.exposed.v1.core.ResultRow\nimport org.jetbrains.exposed.v1.core.SortOrder\nimport org.jetbrains.exposed.v1.core.eq\nimport org.jetbrains.exposed.v1.exceptions.ExposedSQLException\nimport org.jetbrains.exposed.v1.jdbc.Database\nimport org.jetbrains.exposed.v1.jdbc.deleteWhere\nimport org.jetbrains.exposed.v1.jdbc.insert\nimport org.jetbrains.exposed.v1.jdbc.selectAll\nimport org.jetbrains.exposed.v1.jdbc.transactions.transaction as exposedTransaction\nimport org.jetbrains.exposed.v1.jdbc.update\n\n/** Keeps categories rows in the database, through Exposed. Every call joins the transaction of whoever holds the database, when there is one. */\nclass SqlCategoryRepository(private val db: Database) : CategoryRepository {\n    override fun findById(id: Int): Category? {\n        return exposedTransaction(db) {\n            CategoryTable.selectAll().where { CategoryTable.id eq id }.map { toEntity(it) }.singleOrNull()\n        }\n    }\n\n    override fun list(offset: Int, limit: Int): Page<Category> {\n        return exposedTransaction(db) {\n            val query = CategoryTable.selectAll()\n            val total = query.count()\n            val items = query.orderBy(CategoryTable.id to SortOrder.ASC).limit(limit).offset(offset.toLong()).map { toEntity(it) }\n            Page(items, total, offset, limit)\n        }\n    }\n\n    override fun findByName(name: String): Category? {\n        return exposedTransaction(db) {\n            CategoryTable.selectAll().where { CategoryTable.name eq name }.map { toEntity(it) }.singleOrNull()\n        }\n    }\n\n    override fun insert(entity: Category): Category {\n        return write {\n            val statement = CategoryTable.insert { row ->\n                entity.name?.let { row[CategoryTable.name] = it }\n            }\n            entity.id = statement[CategoryTable.id]\n            fill(entity, CategoryTable.selectAll().where { CategoryTable.id eq entity.id!! }.single())\n            entity\n        }\n    }\n\n    override fun update(entity: Category): Category {\n        return write {\n            CategoryTable.update({ CategoryTable.id eq entity.id!! }) { row ->\n                entity.name?.let { row[CategoryTable.name] = it }\n            }\n            entity\n        }\n    }\n\n    override fun delete(entity: Category): Unit {\n        write {\n            CategoryTable.deleteWhere { CategoryTable.id eq entity.id!! }\n        }\n    }\n\n    private fun toEntity(row: ResultRow): Category = Category().also { fill(it, row) }\n\n    private fun fill(entity: Category, row: ResultRow) {\n        entity.id = row[CategoryTable.id]\n        entity.name = row[CategoryTable.name]\n    }\n\n    /** Runs a write in a transaction; a database refusal (a unique value, a row still pointed to) becomes a ConflictException. */\n    private fun <T> write(work: () -> T): T =\n        try {\n            exposedTransaction(db) { work() }\n        } catch (error: ExposedSQLException) {\n            // SQLSTATE class 23: the change breaks a constraint (SQLite says so in its message)\n            if (!error.sqlState.startsWith(\"23\") && error.cause?.message?.contains(\"SQLITE_CONSTRAINT\") != true) throw error\n            throw ConflictException(\"Category\", \"the database refused the change: ${error.cause?.message}\")\n        }\n}\n",
+  "src/main/kotlin/app/common/Page.kt": "package app.common\n\n/** A page of a list: the rows from an offset, and how many there are in all. */\ndata class Page<T>(val items: List<T>, val total: Long, val offset: Int, val limit: Int) {\n    /** The same page with every row turned into something else. */\n    fun <R> map(mapper: (T) -> R): Page<R> = Page(items.map(mapper), total, offset, limit)\n}\n",
+  "src/main/kotlin/app/common/Patch.kt": "package app.common\n\n/** A field of an update: absent (it keeps its value), or present with a value, which may be null. */\nclass Patch<out T> private constructor(val isPresent: Boolean, val value: T?) {\n    override fun toString(): String = if (isPresent) \"Patch[$value]\" else \"Patch.absent\"\n\n    companion object {\n        private val ABSENT = Patch<Nothing>(false, null)\n\n        /** The field keeps its value. */\n        fun <T> absent(): Patch<T> = ABSENT\n\n        /** The field takes this value, which may be null. */\n        fun <T> of(value: T?): Patch<T> = Patch(true, value)\n    }\n}\n",
+  "src/main/kotlin/app/customers/Customer.kt": "package app.customers\n\nimport java.time.OffsetDateTime\n\n/** A row of the \"customers\" table. Its mapping is CustomerTable; a property stays null until it is set or read. */\nclass Customer(\n    var id: Long? = null,\n    var email: String? = null,\n    var passwordHash: String? = null,\n    var createdAt: OffsetDateTime? = null,\n)\n",
+  "src/main/kotlin/app/customers/CustomerChanges.kt": "package app.customers\n\nimport app.common.Patch\n\n/** The values of a Customer that change: fields left absent keep their value; Patch.of(null) empties one. */\ndata class CustomerChanges(\n    val email: Patch<String?> = Patch.absent(),\n    val passwordHash: Patch<String?> = Patch.absent(),\n)\n",
+  "src/main/kotlin/app/customers/CustomerConversions.kt": "package app.customers\n\nimport app.application_models.Customer as CustomerModel\n\n/** Conversions between the application models and the \"customers\" table: what the service takes and returns. */\nobject CustomerConversions {\n    /** A Customer as the customers table takes it. */\n    fun customerModelToCustomer(model: CustomerModel): Customer {\n        return Customer(\n            email = model.email,\n            passwordHash = model.passwordHash,\n        )\n    }\n\n    /** A row of the customers table as a Customer. */\n    fun customerToCustomerModel(row: Customer): CustomerModel {\n        return CustomerModel(\n            id = row.id!!,\n            email = row.email!!,\n            passwordHash = row.passwordHash!!,\n            createdAt = row.createdAt!!,\n        )\n    }\n}\n",
+  "src/main/kotlin/app/customers/CustomerRepository.kt": "package app.customers\n\nimport app.common.Page\n\n/** Where customers rows are kept. Services depend only on this interface. */\ninterface CustomerRepository {\n    /** The row with this primary key, or null. */\n    fun findById(id: Long): Customer?\n\n    /** At most limit rows from offset, by primary key, and how many there are. */\n    fun list(offset: Int, limit: Int): Page<Customer>\n\n    /** The row with this email, or null. */\n    fun findByEmail(email: String): Customer?\n\n    /** Stores a new row; the values the database fills are read back. */\n    fun insert(entity: Customer): Customer\n\n    /** Stores the changes made to a row. */\n    fun update(entity: Customer): Customer\n\n    /** Removes a row. */\n    fun delete(entity: Customer): Unit\n}\n",
+  "src/main/kotlin/app/customers/CustomerService.kt": "package app.customers\n\nimport app.UnitOfWork\nimport app.common.Page\nimport app.errors.ConflictException\nimport app.errors.FieldError\nimport app.errors.NotFoundException\nimport app.errors.ValidationFailedException\n\n/** Operations on customers. It never commits: the caller owns the transaction. */\nclass CustomerService(private val unitOfWork: UnitOfWork) {\n    // TODO: password_hash is returned with the entity; use DTOs to leave it out\n\n    /** Stores a new Customer after checking it. */\n    fun createCustomer(customer: Customer): Customer {\n        val values = mapOf(\n            \"email\" to customer.email,\n            \"passwordHash\" to customer.passwordHash,\n        ).filterValues { it != null }\n        return unitOfWork.transaction { uow ->\n            checkValues(uow, values, null)\n            uow.customers.insert(customer)\n        }\n    }\n\n    /** The Customer with this key; NotFoundException when there is none. */\n    fun getCustomer(id: Long): Customer = find(unitOfWork, id)\n\n    /** A page of customers, by primary key. */\n    fun listCustomers(offset: Int, limit: Int): Page<Customer> = unitOfWork.customers.list(offset, limit)\n\n    /** Changes the given values of a Customer. */\n    fun updateCustomer(id: Long, changes: CustomerChanges): Customer {\n        val values = given(changes)\n        return unitOfWork.transaction { uow ->\n            val current = find(uow, id)\n            checkValues(uow, values, current)\n            applyValues(current, values)\n            uow.customers.update(current)\n        }\n    }\n\n    /** Deletes a Customer. */\n    fun deleteCustomer(id: Long) {\n        unitOfWork.transaction { uow ->\n            val current = find(uow, id)\n            uow.customers.delete(current)\n        }\n    }\n\n    /** The Customer with this email, or null. */\n    fun findCustomerByEmail(email: String): Customer? = unitOfWork.customers.findByEmail(email)\n\n    /** Checks the values against the rules of the \"customers\" table, and the rows they point to; throws ValidationFailedException with every problem. */\n    private fun validate(uow: UnitOfWork, values: Map<String, Any?>, current: Customer?) {\n        val creating = current == null\n        val errors = mutableListOf<FieldError>()\n        run {\n            val value = values[\"email\"]\n            if (value == null) {\n                if (creating || \"email\" in values) errors += FieldError(\"email\", \"is required\")\n            } else {\n                if (value is String && value.length > 120) errors += FieldError(\"email\", \"is longer than 120 characters\")\n            }\n        }\n        run {\n            val value = values[\"passwordHash\"]\n            if (value == null) {\n                if (creating || \"passwordHash\" in values) errors += FieldError(\"password_hash\", \"is required\")\n            }\n        }\n        if (errors.isNotEmpty()) throw ValidationFailedException(\"Customer\", errors)\n    }\n\n    /** Values that must be unique are not taken by another row. */\n    private fun checkUnique(uow: UnitOfWork, values: Map<String, Any?>, current: Customer?) {\n        run {\n            val email = if (\"email\" in values) values[\"email\"] as String? else current?.email\n            if (email != null) {\n                val other = uow.customers.findByEmail(email)\n                if (other != null && (current == null || other.id != current.id))\n                    throw ConflictException(\"Customer\", \"email is already taken\", listOf(\"email\"))\n            }\n        }\n    }\n\n    /** Every check before a write: the values, the rows they point to, the unique values. */\n    private fun checkValues(uow: UnitOfWork, values: Map<String, Any?>, current: Customer?) {\n        validate(uow, values, current)\n        checkUnique(uow, values, current)\n    }\n\n    /** Sets the given values on the entity. */\n    private fun applyValues(entity: Customer, values: Map<String, Any?>) {\n        if (\"email\" in values) entity.email = values[\"email\"] as String?\n        if (\"passwordHash\" in values) entity.passwordHash = values[\"passwordHash\"] as String?\n    }\n\n    /** The Customer with this key; NotFoundException when there is none. */\n    private fun find(uow: UnitOfWork, id: Long): Customer =\n        uow.customers.findById(id) ?: throw NotFoundException(\"Customer\", id)\n\n    /** The values an update gives, by field. */\n    private fun given(changes: CustomerChanges): Map<String, Any?> {\n        val values = mutableMapOf<String, Any?>()\n        if (changes.email.isPresent) values[\"email\"] = changes.email.value\n        if (changes.passwordHash.isPresent) values[\"passwordHash\"] = changes.passwordHash.value\n        return values\n    }\n}\n",
+  "src/main/kotlin/app/customers/CustomerTable.kt": "package app.customers\n\nimport org.jetbrains.exposed.v1.core.Table\nimport org.jetbrains.exposed.v1.javatime.CurrentTimestampWithTimeZone\nimport org.jetbrains.exposed.v1.javatime.timestampWithTimeZone\n\n/**\n * The \"customers\" table, as the database has it. Exposed never creates or changes it: the database already exists.\n */\nobject CustomerTable : Table(\"customers\") {\n    val id = long(\"id\").autoIncrement()\n    val email = varchar(\"email\", 120)\n    val passwordHash = text(\"password_hash\")\n    val createdAt = timestampWithTimeZone(\"created_at\").defaultExpression(CurrentTimestampWithTimeZone)\n\n    override val primaryKey = PrimaryKey(id)\n\n    init {\n        uniqueIndex(null, email)\n    }\n}\n",
+  "src/main/kotlin/app/customers/SqlCustomerRepository.kt": "package app.customers\n\nimport app.common.Page\nimport app.errors.ConflictException\nimport org.jetbrains.exposed.v1.core.ResultRow\nimport org.jetbrains.exposed.v1.core.SortOrder\nimport org.jetbrains.exposed.v1.core.eq\nimport org.jetbrains.exposed.v1.exceptions.ExposedSQLException\nimport org.jetbrains.exposed.v1.jdbc.Database\nimport org.jetbrains.exposed.v1.jdbc.deleteWhere\nimport org.jetbrains.exposed.v1.jdbc.insert\nimport org.jetbrains.exposed.v1.jdbc.selectAll\nimport org.jetbrains.exposed.v1.jdbc.transactions.transaction as exposedTransaction\nimport org.jetbrains.exposed.v1.jdbc.update\n\n/** Keeps customers rows in the database, through Exposed. Every call joins the transaction of whoever holds the database, when there is one. */\nclass SqlCustomerRepository(private val db: Database) : CustomerRepository {\n    override fun findById(id: Long): Customer? {\n        return exposedTransaction(db) {\n            CustomerTable.selectAll().where { CustomerTable.id eq id }.map { toEntity(it) }.singleOrNull()\n        }\n    }\n\n    override fun list(offset: Int, limit: Int): Page<Customer> {\n        return exposedTransaction(db) {\n            val query = CustomerTable.selectAll()\n            val total = query.count()\n            val items = query.orderBy(CustomerTable.id to SortOrder.ASC).limit(limit).offset(offset.toLong()).map { toEntity(it) }\n            Page(items, total, offset, limit)\n        }\n    }\n\n    override fun findByEmail(email: String): Customer? {\n        return exposedTransaction(db) {\n            CustomerTable.selectAll().where { CustomerTable.email eq email }.map { toEntity(it) }.singleOrNull()\n        }\n    }\n\n    override fun insert(entity: Customer): Customer {\n        return write {\n            val statement = CustomerTable.insert { row ->\n                entity.email?.let { row[CustomerTable.email] = it }\n                entity.passwordHash?.let { row[CustomerTable.passwordHash] = it }\n            }\n            entity.id = statement[CustomerTable.id]\n            fill(entity, CustomerTable.selectAll().where { CustomerTable.id eq entity.id!! }.single())\n            entity\n        }\n    }\n\n    override fun update(entity: Customer): Customer {\n        return write {\n            CustomerTable.update({ CustomerTable.id eq entity.id!! }) { row ->\n                entity.email?.let { row[CustomerTable.email] = it }\n                entity.passwordHash?.let { row[CustomerTable.passwordHash] = it }\n            }\n            entity\n        }\n    }\n\n    override fun delete(entity: Customer): Unit {\n        write {\n            CustomerTable.deleteWhere { CustomerTable.id eq entity.id!! }\n        }\n    }\n\n    private fun toEntity(row: ResultRow): Customer = Customer().also { fill(it, row) }\n\n    private fun fill(entity: Customer, row: ResultRow) {\n        entity.id = row[CustomerTable.id]\n        entity.email = row[CustomerTable.email]\n        entity.passwordHash = row[CustomerTable.passwordHash]\n        entity.createdAt = row[CustomerTable.createdAt]\n    }\n\n    /** Runs a write in a transaction; a database refusal (a unique value, a row still pointed to) becomes a ConflictException. */\n    private fun <T> write(work: () -> T): T =\n        try {\n            exposedTransaction(db) { work() }\n        } catch (error: ExposedSQLException) {\n            // SQLSTATE class 23: the change breaks a constraint (SQLite says so in its message)\n            if (!error.sqlState.startsWith(\"23\") && error.cause?.message?.contains(\"SQLITE_CONSTRAINT\") != true) throw error\n            throw ConflictException(\"Customer\", \"the database refused the change: ${error.cause?.message}\")\n        }\n}\n",
+  "src/main/kotlin/app/errors/Errors.kt": "package app.errors\n\n/** Base of every error a service throws on purpose. They carry no HTTP codes: whoever calls the services translates them. */\nabstract class DomainException(message: String) : RuntimeException(message)\n\n/** No row has this key. */\nclass NotFoundException(val entity: String, val key: Any) :\n    DomainException(\"No $entity has the key ${if (key is List<*>) key.joinToString(\", \") else key}\")\n\n/** The change clashes with what is stored: a unique value, a newer version, rows that depend on it. */\nclass ConflictException(val entity: String, val reason: String, val fields: List<String> = emptyList()) :\n    DomainException(\"$entity: $reason\")\n\n/** What is wrong with one field. */\ndata class FieldError(val field: String, val message: String)\n\n/** The values break the rules of the table: missing, too long, out of range, pointing nowhere. */\nclass ValidationFailedException(val entity: String, val errors: List<FieldError>) :\n    DomainException(\"$entity: \" + errors.joinToString(\"; \") { \"${it.field}: ${it.message}\" })\n",
+  "src/main/kotlin/app/products/Product.kt": "package app.products\n\nimport java.math.BigDecimal\n\n/** A row of the \"products\" table. Its mapping is ProductTable; a property stays null until it is set or read. */\nclass Product(\n    var id: Long? = null,\n    var categoryId: Int? = null,\n    var name: String? = null,\n    var price: BigDecimal? = null,\n    var status: String? = null,\n)\n",
+  "src/main/kotlin/app/products/ProductChanges.kt": "package app.products\n\nimport app.common.Patch\nimport java.math.BigDecimal\n\n/** The values of a Product that change: fields left absent keep their value; Patch.of(null) empties one. */\ndata class ProductChanges(\n    val categoryId: Patch<Int?> = Patch.absent(),\n    val name: Patch<String?> = Patch.absent(),\n    val price: Patch<BigDecimal?> = Patch.absent(),\n    val status: Patch<String?> = Patch.absent(),\n)\n",
+  "src/main/kotlin/app/products/ProductConversions.kt": "package app.products\n\nimport app.UnitOfWork\nimport app.application_models.Product as ProductModel\nimport app.application_models.ProductStatus\nimport app.errors.NotFoundException\n\n/** Conversions between the application models and the \"products\" table: what the service takes and returns. */\nobject ProductConversions {\n    /** A Product as the products table takes it. */\n    fun productModelToProduct(model: ProductModel, uow: UnitOfWork): Product {\n        val category = uow.categories.findByName(model.categoryName)\n            ?: throw NotFoundException(\"Category\", model.categoryName)\n        return Product(\n            categoryId = category.id,\n            name = model.name,\n            price = model.price,\n            status = when (model.status) { ProductStatus.DRAFT -> \"draft\"; ProductStatus.LIVE -> \"live\" },\n        )\n    }\n\n    /** A row of the products table as a Product. */\n    fun productToProductModel(row: Product, uow: UnitOfWork): ProductModel {\n        val category = uow.categories.findById(row.categoryId!!)\n        return ProductModel().apply {\n            id = row.id!!\n            name = row.name!!\n            price = row.price!!\n            status = when (row.status!!) { \"draft\" -> ProductStatus.DRAFT; \"live\" -> ProductStatus.LIVE; else -> throw IllegalArgumentException(\"No ProductStatus for this value\") }\n            categoryName = (category?.name)!!\n            tagIds = uow.productTags.listByProductId(row.id!!).map { it.tagId!! }\n        }\n    }\n}\n",
+  "src/main/kotlin/app/products/ProductRepository.kt": "package app.products\n\nimport app.common.Page\n\n/** Where products rows are kept. Services depend only on this interface. */\ninterface ProductRepository {\n    /** The row with this primary key, or null. */\n    fun findById(id: Long): Product?\n\n    /** At most limit rows from offset, by primary key, and how many there are. */\n    fun list(offset: Int, limit: Int): Page<Product>\n\n    /** Rows with this category_id, by primary key. */\n    fun listByCategoryId(categoryId: Int): List<Product>\n\n    /** Stores a new row; the values the database fills are read back. */\n    fun insert(entity: Product): Product\n\n    /** Stores the changes made to a row. */\n    fun update(entity: Product): Product\n\n    /** Removes a row. */\n    fun delete(entity: Product): Unit\n}\n",
+  "src/main/kotlin/app/products/ProductService.kt": "package app.products\n\nimport app.UnitOfWork\nimport app.common.Page\nimport app.errors.ConflictException\nimport app.errors.FieldError\nimport app.errors.NotFoundException\nimport app.errors.ValidationFailedException\nimport app.producttags.ProductTag\nimport java.math.BigDecimal\n\n/** Operations on products. It never commits: the caller owns the transaction. */\nclass ProductService(private val unitOfWork: UnitOfWork) {\n    /** Stores a new Product after checking it. */\n    fun createProduct(product: Product): Product {\n        val values = mapOf(\n            \"categoryId\" to product.categoryId,\n            \"name\" to product.name,\n            \"price\" to product.price,\n            \"status\" to product.status,\n        ).filterValues { it != null }\n        return unitOfWork.transaction { uow ->\n            checkValues(uow, values, null)\n            uow.products.insert(product)\n        }\n    }\n\n    /** The Product with this key; NotFoundException when there is none. */\n    fun getProduct(id: Long): Product = find(unitOfWork, id)\n\n    /** A page of products, by primary key. */\n    fun listProducts(offset: Int, limit: Int): Page<Product> = unitOfWork.products.list(offset, limit)\n\n    /** Changes the given values of a Product. */\n    fun updateProduct(id: Long, changes: ProductChanges): Product {\n        val values = given(changes)\n        return unitOfWork.transaction { uow ->\n            val current = find(uow, id)\n            checkValues(uow, values, current)\n            applyValues(current, values)\n            uow.products.update(current)\n        }\n    }\n\n    /** Deletes a Product. */\n    fun deleteProduct(id: Long) {\n        unitOfWork.transaction { uow ->\n            val current = find(uow, id)\n            if (uow.productTags.listByProductId(current.id!!).isNotEmpty())\n                throw ConflictException(\"Product\", \"rows of product_tags still point to it\", listOf(\"product_tags\"))\n            uow.products.delete(current)\n        }\n    }\n\n    /** The products with this category_id. */\n    fun listProductsByCategoryId(categoryId: Int): List<Product> = unitOfWork.products.listByCategoryId(categoryId)\n\n    /** Links a Product and a Tag (product_tags). */\n    fun addTag(productId: Long, tagId: Int) {\n        unitOfWork.transaction { uow ->\n            find(uow, productId)\n            if (uow.tags.findById(tagId) == null)\n                throw NotFoundException(\"Tag\", tagId)\n            if (uow.productTags.findByProductIdAndTagId(productId, tagId) != null)\n                throw ConflictException(\"Product\", \"is already linked to this Tag\", listOf(\"tagId\"))\n            uow.productTags.insert(ProductTag(productId = productId, tagId = tagId))\n        }\n    }\n\n    /** Removes the link between a Product and a Tag (product_tags). */\n    fun removeTag(productId: Long, tagId: Int) {\n        unitOfWork.transaction { uow ->\n            val link = uow.productTags.findByProductIdAndTagId(productId, tagId) ?: throw NotFoundException(\"ProductTag\", listOf(productId, tagId))\n            uow.productTags.delete(link)\n        }\n    }\n\n    /** Checks the values against the rules of the \"products\" table, and the rows they point to; throws ValidationFailedException with every problem. */\n    private fun validate(uow: UnitOfWork, values: Map<String, Any?>, current: Product?) {\n        val creating = current == null\n        val errors = mutableListOf<FieldError>()\n        run {\n            val value = values[\"categoryId\"]\n            if (value == null) {\n                if (creating || \"categoryId\" in values) errors += FieldError(\"category_id\", \"is required\")\n            }\n        }\n        run {\n            val value = values[\"name\"]\n            if (value == null) {\n                if (creating || \"name\" in values) errors += FieldError(\"name\", \"is required\")\n            } else {\n                if (value is String && value.length > 100) errors += FieldError(\"name\", \"is longer than 100 characters\")\n            }\n        }\n        run {\n            val value = values[\"price\"]\n            if (value == null) {\n                if (creating || \"price\" in values) errors += FieldError(\"price\", \"is required\")\n            }\n        }\n        run {\n            val value = values[\"status\"]\n            if (value == null) {\n                if (!creating && \"status\" in values) errors += FieldError(\"status\", \"cannot be empty\")\n            } else {\n                if (value is String && value.length > 10) errors += FieldError(\"status\", \"is longer than 10 characters\")\n                if (value.toString() !in listOf(\"draft\", \"live\")) errors += FieldError(\"status\", \"must be one of: draft, live\")\n            }\n        }\n        run {\n            val categoryId = if (\"categoryId\" in values) values[\"categoryId\"] as Int? else current?.categoryId\n            if (categoryId != null && uow.categories.findById(categoryId) == null)\n                errors += FieldError(\"category_id\", \"no Category has this key\")\n        }\n        if (errors.isNotEmpty()) throw ValidationFailedException(\"Product\", errors)\n    }\n\n    /** Every check before a write: the values, the rows they point to, the unique values. */\n    private fun checkValues(uow: UnitOfWork, values: Map<String, Any?>, current: Product?) {\n        validate(uow, values, current)\n    }\n\n    /** Sets the given values on the entity. */\n    private fun applyValues(entity: Product, values: Map<String, Any?>) {\n        if (\"categoryId\" in values) entity.categoryId = values[\"categoryId\"] as Int?\n        if (\"name\" in values) entity.name = values[\"name\"] as String?\n        if (\"price\" in values) entity.price = values[\"price\"] as BigDecimal?\n        if (\"status\" in values) entity.status = values[\"status\"] as String?\n    }\n\n    /** The Product with this key; NotFoundException when there is none. */\n    private fun find(uow: UnitOfWork, id: Long): Product =\n        uow.products.findById(id) ?: throw NotFoundException(\"Product\", id)\n\n    /** The values an update gives, by field. */\n    private fun given(changes: ProductChanges): Map<String, Any?> {\n        val values = mutableMapOf<String, Any?>()\n        if (changes.categoryId.isPresent) values[\"categoryId\"] = changes.categoryId.value\n        if (changes.name.isPresent) values[\"name\"] = changes.name.value\n        if (changes.price.isPresent) values[\"price\"] = changes.price.value\n        if (changes.status.isPresent) values[\"status\"] = changes.status.value\n        return values\n    }\n}\n",
+  "src/main/kotlin/app/products/ProductTable.kt": "package app.products\n\nimport app.categories.CategoryTable\nimport org.jetbrains.exposed.v1.core.Table\n\n/**\n * The \"products\" table, as the database has it. Exposed never creates or changes it: the database already exists.\n *\n * CHECK (status IN ('draft', 'live')): the services check what they understand of it.\n */\nobject ProductTable : Table(\"products\") {\n    val id = long(\"id\").autoIncrement()\n    val categoryId = integer(\"category_id\")\n    val name = varchar(\"name\", 100)\n    val price = decimal(\"price\", 10, 2)\n    val status = varchar(\"status\", 10).default(\"draft\")\n\n    override val primaryKey = PrimaryKey(id)\n\n    init {\n        foreignKey(categoryId to CategoryTable.id)\n    }\n}\n",
+  "src/main/kotlin/app/products/SqlProductRepository.kt": "package app.products\n\nimport app.common.Page\nimport app.errors.ConflictException\nimport org.jetbrains.exposed.v1.core.ResultRow\nimport org.jetbrains.exposed.v1.core.SortOrder\nimport org.jetbrains.exposed.v1.core.eq\nimport org.jetbrains.exposed.v1.exceptions.ExposedSQLException\nimport org.jetbrains.exposed.v1.jdbc.Database\nimport org.jetbrains.exposed.v1.jdbc.deleteWhere\nimport org.jetbrains.exposed.v1.jdbc.insert\nimport org.jetbrains.exposed.v1.jdbc.selectAll\nimport org.jetbrains.exposed.v1.jdbc.transactions.transaction as exposedTransaction\nimport org.jetbrains.exposed.v1.jdbc.update\n\n/** Keeps products rows in the database, through Exposed. Every call joins the transaction of whoever holds the database, when there is one. */\nclass SqlProductRepository(private val db: Database) : ProductRepository {\n    override fun findById(id: Long): Product? {\n        return exposedTransaction(db) {\n            ProductTable.selectAll().where { ProductTable.id eq id }.map { toEntity(it) }.singleOrNull()\n        }\n    }\n\n    override fun list(offset: Int, limit: Int): Page<Product> {\n        return exposedTransaction(db) {\n            val query = ProductTable.selectAll()\n            val total = query.count()\n            val items = query.orderBy(ProductTable.id to SortOrder.ASC).limit(limit).offset(offset.toLong()).map { toEntity(it) }\n            Page(items, total, offset, limit)\n        }\n    }\n\n    override fun listByCategoryId(categoryId: Int): List<Product> {\n        return exposedTransaction(db) {\n            ProductTable.selectAll().where { ProductTable.categoryId eq categoryId }.orderBy(ProductTable.id to SortOrder.ASC).map { toEntity(it) }\n        }\n    }\n\n    override fun insert(entity: Product): Product {\n        return write {\n            val statement = ProductTable.insert { row ->\n                entity.categoryId?.let { row[ProductTable.categoryId] = it }\n                entity.name?.let { row[ProductTable.name] = it }\n                entity.price?.let { row[ProductTable.price] = it }\n                entity.status?.let { row[ProductTable.status] = it }\n            }\n            entity.id = statement[ProductTable.id]\n            fill(entity, ProductTable.selectAll().where { ProductTable.id eq entity.id!! }.single())\n            entity\n        }\n    }\n\n    override fun update(entity: Product): Product {\n        return write {\n            ProductTable.update({ ProductTable.id eq entity.id!! }) { row ->\n                entity.categoryId?.let { row[ProductTable.categoryId] = it }\n                entity.name?.let { row[ProductTable.name] = it }\n                entity.price?.let { row[ProductTable.price] = it }\n                entity.status?.let { row[ProductTable.status] = it }\n            }\n            entity\n        }\n    }\n\n    override fun delete(entity: Product): Unit {\n        write {\n            ProductTable.deleteWhere { ProductTable.id eq entity.id!! }\n        }\n    }\n\n    private fun toEntity(row: ResultRow): Product = Product().also { fill(it, row) }\n\n    private fun fill(entity: Product, row: ResultRow) {\n        entity.id = row[ProductTable.id]\n        entity.categoryId = row[ProductTable.categoryId]\n        entity.name = row[ProductTable.name]\n        entity.price = row[ProductTable.price]\n        entity.status = row[ProductTable.status]\n    }\n\n    /** Runs a write in a transaction; a database refusal (a unique value, a row still pointed to) becomes a ConflictException. */\n    private fun <T> write(work: () -> T): T =\n        try {\n            exposedTransaction(db) { work() }\n        } catch (error: ExposedSQLException) {\n            // SQLSTATE class 23: the change breaks a constraint (SQLite says so in its message)\n            if (!error.sqlState.startsWith(\"23\") && error.cause?.message?.contains(\"SQLITE_CONSTRAINT\") != true) throw error\n            throw ConflictException(\"Product\", \"the database refused the change: ${error.cause?.message}\")\n        }\n}\n",
+  "src/main/kotlin/app/producttags/ProductTag.kt": "package app.producttags\n\n/** A row of the \"product_tags\" table. Its mapping is ProductTagTable; a property stays null until it is set or read. */\nclass ProductTag(\n    var productId: Long? = null,\n    var tagId: Int? = null,\n)\n",
+  "src/main/kotlin/app/producttags/ProductTagRepository.kt": "package app.producttags\n\nimport app.common.Page\n\n/** Where product_tags rows are kept. Services depend only on this interface. */\ninterface ProductTagRepository {\n    /** The row with this primary key, or null. */\n    fun findByProductIdAndTagId(productId: Long, tagId: Int): ProductTag?\n\n    /** At most limit rows from offset, by primary key, and how many there are. */\n    fun list(offset: Int, limit: Int): Page<ProductTag>\n\n    /** Rows with this product_id, by primary key. */\n    fun listByProductId(productId: Long): List<ProductTag>\n\n    /** Rows with this tag_id, by primary key. */\n    fun listByTagId(tagId: Int): List<ProductTag>\n\n    /** Stores a new row; the values the database fills are read back. */\n    fun insert(entity: ProductTag): ProductTag\n\n    /** Removes a row. */\n    fun delete(entity: ProductTag): Unit\n}\n",
+  "src/main/kotlin/app/producttags/ProductTagTable.kt": "package app.producttags\n\nimport app.products.ProductTable\nimport app.tags.TagTable\nimport org.jetbrains.exposed.v1.core.Table\n\n/**\n * The \"product_tags\" table, as the database has it. Exposed never creates or changes it: the database already exists.\n */\nobject ProductTagTable : Table(\"product_tags\") {\n    val productId = long(\"product_id\")\n    val tagId = integer(\"tag_id\")\n\n    override val primaryKey = PrimaryKey(productId, tagId)\n\n    init {\n        foreignKey(productId to ProductTable.id)\n        foreignKey(tagId to TagTable.id)\n    }\n}\n",
+  "src/main/kotlin/app/producttags/SqlProductTagRepository.kt": "package app.producttags\n\nimport app.common.Page\nimport app.errors.ConflictException\nimport org.jetbrains.exposed.v1.core.ResultRow\nimport org.jetbrains.exposed.v1.core.SortOrder\nimport org.jetbrains.exposed.v1.core.and\nimport org.jetbrains.exposed.v1.core.eq\nimport org.jetbrains.exposed.v1.exceptions.ExposedSQLException\nimport org.jetbrains.exposed.v1.jdbc.Database\nimport org.jetbrains.exposed.v1.jdbc.deleteWhere\nimport org.jetbrains.exposed.v1.jdbc.insert\nimport org.jetbrains.exposed.v1.jdbc.selectAll\nimport org.jetbrains.exposed.v1.jdbc.transactions.transaction as exposedTransaction\n\n/** Keeps product_tags rows in the database, through Exposed. Every call joins the transaction of whoever holds the database, when there is one. */\nclass SqlProductTagRepository(private val db: Database) : ProductTagRepository {\n    override fun findByProductIdAndTagId(productId: Long, tagId: Int): ProductTag? {\n        return exposedTransaction(db) {\n            ProductTagTable.selectAll().where { (ProductTagTable.productId eq productId) and (ProductTagTable.tagId eq tagId) }.map { toEntity(it) }.singleOrNull()\n        }\n    }\n\n    override fun list(offset: Int, limit: Int): Page<ProductTag> {\n        return exposedTransaction(db) {\n            val query = ProductTagTable.selectAll()\n            val total = query.count()\n            val items = query.orderBy(ProductTagTable.productId to SortOrder.ASC, ProductTagTable.tagId to SortOrder.ASC).limit(limit).offset(offset.toLong()).map { toEntity(it) }\n            Page(items, total, offset, limit)\n        }\n    }\n\n    override fun listByProductId(productId: Long): List<ProductTag> {\n        return exposedTransaction(db) {\n            ProductTagTable.selectAll().where { ProductTagTable.productId eq productId }.orderBy(ProductTagTable.productId to SortOrder.ASC, ProductTagTable.tagId to SortOrder.ASC).map { toEntity(it) }\n        }\n    }\n\n    override fun listByTagId(tagId: Int): List<ProductTag> {\n        return exposedTransaction(db) {\n            ProductTagTable.selectAll().where { ProductTagTable.tagId eq tagId }.orderBy(ProductTagTable.productId to SortOrder.ASC, ProductTagTable.tagId to SortOrder.ASC).map { toEntity(it) }\n        }\n    }\n\n    override fun insert(entity: ProductTag): ProductTag {\n        return write {\n            ProductTagTable.insert { row ->\n                entity.productId?.let { row[ProductTagTable.productId] = it }\n                entity.tagId?.let { row[ProductTagTable.tagId] = it }\n            }\n            fill(entity, ProductTagTable.selectAll().where { (ProductTagTable.productId eq entity.productId!!) and (ProductTagTable.tagId eq entity.tagId!!) }.single())\n            entity\n        }\n    }\n\n    override fun delete(entity: ProductTag): Unit {\n        write {\n            ProductTagTable.deleteWhere { (ProductTagTable.productId eq entity.productId!!) and (ProductTagTable.tagId eq entity.tagId!!) }\n        }\n    }\n\n    private fun toEntity(row: ResultRow): ProductTag = ProductTag().also { fill(it, row) }\n\n    private fun fill(entity: ProductTag, row: ResultRow) {\n        entity.productId = row[ProductTagTable.productId]\n        entity.tagId = row[ProductTagTable.tagId]\n    }\n\n    /** Runs a write in a transaction; a database refusal (a unique value, a row still pointed to) becomes a ConflictException. */\n    private fun <T> write(work: () -> T): T =\n        try {\n            exposedTransaction(db) { work() }\n        } catch (error: ExposedSQLException) {\n            // SQLSTATE class 23: the change breaks a constraint (SQLite says so in its message)\n            if (!error.sqlState.startsWith(\"23\") && error.cause?.message?.contains(\"SQLITE_CONSTRAINT\") != true) throw error\n            throw ConflictException(\"ProductTag\", \"the database refused the change: ${error.cause?.message}\")\n        }\n}\n",
+  "src/main/kotlin/app/tags/SqlTagRepository.kt": "package app.tags\n\nimport app.common.Page\nimport app.errors.ConflictException\nimport org.jetbrains.exposed.v1.core.ResultRow\nimport org.jetbrains.exposed.v1.core.SortOrder\nimport org.jetbrains.exposed.v1.core.eq\nimport org.jetbrains.exposed.v1.exceptions.ExposedSQLException\nimport org.jetbrains.exposed.v1.jdbc.Database\nimport org.jetbrains.exposed.v1.jdbc.deleteWhere\nimport org.jetbrains.exposed.v1.jdbc.insert\nimport org.jetbrains.exposed.v1.jdbc.selectAll\nimport org.jetbrains.exposed.v1.jdbc.transactions.transaction as exposedTransaction\nimport org.jetbrains.exposed.v1.jdbc.update\n\n/** Keeps tags rows in the database, through Exposed. Every call joins the transaction of whoever holds the database, when there is one. */\nclass SqlTagRepository(private val db: Database) : TagRepository {\n    override fun findById(id: Int): Tag? {\n        return exposedTransaction(db) {\n            TagTable.selectAll().where { TagTable.id eq id }.map { toEntity(it) }.singleOrNull()\n        }\n    }\n\n    override fun list(offset: Int, limit: Int): Page<Tag> {\n        return exposedTransaction(db) {\n            val query = TagTable.selectAll()\n            val total = query.count()\n            val items = query.orderBy(TagTable.id to SortOrder.ASC).limit(limit).offset(offset.toLong()).map { toEntity(it) }\n            Page(items, total, offset, limit)\n        }\n    }\n\n    override fun insert(entity: Tag): Tag {\n        return write {\n            val statement = TagTable.insert { row ->\n                entity.label?.let { row[TagTable.label] = it }\n            }\n            entity.id = statement[TagTable.id]\n            fill(entity, TagTable.selectAll().where { TagTable.id eq entity.id!! }.single())\n            entity\n        }\n    }\n\n    override fun update(entity: Tag): Tag {\n        return write {\n            TagTable.update({ TagTable.id eq entity.id!! }) { row ->\n                entity.label?.let { row[TagTable.label] = it }\n            }\n            entity\n        }\n    }\n\n    override fun delete(entity: Tag): Unit {\n        write {\n            TagTable.deleteWhere { TagTable.id eq entity.id!! }\n        }\n    }\n\n    private fun toEntity(row: ResultRow): Tag = Tag().also { fill(it, row) }\n\n    private fun fill(entity: Tag, row: ResultRow) {\n        entity.id = row[TagTable.id]\n        entity.label = row[TagTable.label]\n    }\n\n    /** Runs a write in a transaction; a database refusal (a unique value, a row still pointed to) becomes a ConflictException. */\n    private fun <T> write(work: () -> T): T =\n        try {\n            exposedTransaction(db) { work() }\n        } catch (error: ExposedSQLException) {\n            // SQLSTATE class 23: the change breaks a constraint (SQLite says so in its message)\n            if (!error.sqlState.startsWith(\"23\") && error.cause?.message?.contains(\"SQLITE_CONSTRAINT\") != true) throw error\n            throw ConflictException(\"Tag\", \"the database refused the change: ${error.cause?.message}\")\n        }\n}\n",
+  "src/main/kotlin/app/tags/Tag.kt": "package app.tags\n\n/** A row of the \"tags\" table. Its mapping is TagTable; a property stays null until it is set or read. */\nclass Tag(\n    var id: Int? = null,\n    var label: String? = null,\n)\n",
+  "src/main/kotlin/app/tags/TagChanges.kt": "package app.tags\n\nimport app.common.Patch\n\n/** The values of a Tag that change: fields left absent keep their value; Patch.of(null) empties one. */\ndata class TagChanges(\n    val label: Patch<String?> = Patch.absent(),\n)\n",
+  "src/main/kotlin/app/tags/TagConversions.kt": "package app.tags\n\nimport app.application_models.TagEntity\n\n/** Conversions between the application models and the \"tags\" table: what the service takes and returns. */\nobject TagConversions {\n    /** A TagEntity as the tags table takes it. */\n    fun tagEntityToTag(model: TagEntity): Tag {\n        return Tag(\n            label = model.label,\n        )\n    }\n\n    /** A row of the tags table as a TagEntity. */\n    fun tagToTagEntity(row: Tag): TagEntity {\n        return TagEntity(\n            id = row.id!!,\n            label = row.label!!,\n        )\n    }\n}\n",
+  "src/main/kotlin/app/tags/TagRepository.kt": "package app.tags\n\nimport app.common.Page\n\n/** Where tags rows are kept. Services depend only on this interface. */\ninterface TagRepository {\n    /** The row with this primary key, or null. */\n    fun findById(id: Int): Tag?\n\n    /** At most limit rows from offset, by primary key, and how many there are. */\n    fun list(offset: Int, limit: Int): Page<Tag>\n\n    /** Stores a new row; the values the database fills are read back. */\n    fun insert(entity: Tag): Tag\n\n    /** Stores the changes made to a row. */\n    fun update(entity: Tag): Tag\n\n    /** Removes a row. */\n    fun delete(entity: Tag): Unit\n}\n",
+  "src/main/kotlin/app/tags/TagService.kt": "package app.tags\n\nimport app.UnitOfWork\nimport app.common.Page\nimport app.errors.ConflictException\nimport app.errors.FieldError\nimport app.errors.NotFoundException\nimport app.errors.ValidationFailedException\nimport app.producttags.ProductTag\n\n/** Operations on tags. It never commits: the caller owns the transaction. */\nclass TagService(private val unitOfWork: UnitOfWork) {\n    /** Stores a new Tag after checking it. */\n    fun createTag(tag: Tag): Tag {\n        val values = mapOf(\n            \"label\" to tag.label,\n        ).filterValues { it != null }\n        return unitOfWork.transaction { uow ->\n            checkValues(uow, values, null)\n            uow.tags.insert(tag)\n        }\n    }\n\n    /** The Tag with this key; NotFoundException when there is none. */\n    fun getTag(id: Int): Tag = find(unitOfWork, id)\n\n    /** A page of tags, by primary key. */\n    fun listTags(offset: Int, limit: Int): Page<Tag> = unitOfWork.tags.list(offset, limit)\n\n    /** Changes the given values of a Tag. */\n    fun updateTag(id: Int, changes: TagChanges): Tag {\n        val values = given(changes)\n        return unitOfWork.transaction { uow ->\n            val current = find(uow, id)\n            checkValues(uow, values, current)\n            applyValues(current, values)\n            uow.tags.update(current)\n        }\n    }\n\n    /** Deletes a Tag. */\n    fun deleteTag(id: Int) {\n        unitOfWork.transaction { uow ->\n            val current = find(uow, id)\n            if (uow.productTags.listByTagId(current.id!!).isNotEmpty())\n                throw ConflictException(\"Tag\", \"rows of product_tags still point to it\", listOf(\"product_tags\"))\n            uow.tags.delete(current)\n        }\n    }\n\n    /** Links a Tag and a Product (product_tags). */\n    fun addProduct(tagId: Int, productId: Long) {\n        unitOfWork.transaction { uow ->\n            find(uow, tagId)\n            if (uow.products.findById(productId) == null)\n                throw NotFoundException(\"Product\", productId)\n            if (uow.productTags.findByProductIdAndTagId(productId, tagId) != null)\n                throw ConflictException(\"Tag\", \"is already linked to this Product\", listOf(\"productId\"))\n            uow.productTags.insert(ProductTag(tagId = tagId, productId = productId))\n        }\n    }\n\n    /** Removes the link between a Tag and a Product (product_tags). */\n    fun removeProduct(tagId: Int, productId: Long) {\n        unitOfWork.transaction { uow ->\n            val link = uow.productTags.findByProductIdAndTagId(productId, tagId) ?: throw NotFoundException(\"ProductTag\", listOf(productId, tagId))\n            uow.productTags.delete(link)\n        }\n    }\n\n    /** Checks the values against the rules of the \"tags\" table, and the rows they point to; throws ValidationFailedException with every problem. */\n    private fun validate(uow: UnitOfWork, values: Map<String, Any?>, current: Tag?) {\n        val creating = current == null\n        val errors = mutableListOf<FieldError>()\n        run {\n            val value = values[\"label\"]\n            if (value == null) {\n                if (creating || \"label\" in values) errors += FieldError(\"label\", \"is required\")\n            } else {\n                if (value is String && value.length > 30) errors += FieldError(\"label\", \"is longer than 30 characters\")\n            }\n        }\n        if (errors.isNotEmpty()) throw ValidationFailedException(\"Tag\", errors)\n    }\n\n    /** Every check before a write: the values, the rows they point to, the unique values. */\n    private fun checkValues(uow: UnitOfWork, values: Map<String, Any?>, current: Tag?) {\n        validate(uow, values, current)\n    }\n\n    /** Sets the given values on the entity. */\n    private fun applyValues(entity: Tag, values: Map<String, Any?>) {\n        if (\"label\" in values) entity.label = values[\"label\"] as String?\n    }\n\n    /** The Tag with this key; NotFoundException when there is none. */\n    private fun find(uow: UnitOfWork, id: Int): Tag =\n        uow.tags.findById(id) ?: throw NotFoundException(\"Tag\", id)\n\n    /** The values an update gives, by field. */\n    private fun given(changes: TagChanges): Map<String, Any?> {\n        val values = mutableMapOf<String, Any?>()\n        if (changes.label.isPresent) values[\"label\"] = changes.label.value\n        return values\n    }\n}\n",
+  "src/main/kotlin/app/tags/TagTable.kt": "package app.tags\n\nimport org.jetbrains.exposed.v1.core.Table\n\n/**\n * The \"tags\" table, as the database has it. Exposed never creates or changes it: the database already exists.\n */\nobject TagTable : Table(\"tags\") {\n    val id = integer(\"id\").autoIncrement()\n    val label = varchar(\"label\", 30)\n\n    override val primaryKey = PrimaryKey(id)\n}\n",
+  "src/test/kotlin/app/CategoryRepositoryTest.kt": "package app\n\nimport kotlin.test.BeforeTest\nimport kotlin.test.Test\nimport kotlin.test.assertEquals\nimport kotlin.test.assertNotNull\nimport kotlin.test.assertNull\nimport kotlin.test.assertTrue\n\n/** The repository of the \"categories\" table, against the test database. */\nclass CategoryRepositoryTest {\n    /** The repositories over the test database, opened empty for every test */\n    private lateinit var uow: SqlUnitOfWork\n\n    @BeforeTest\n    fun open() {\n        uow = TestDatabase.open()\n    }\n\n    @Test\n    fun isStoredAndReadBack() {\n        val stored = Factories.addCategory(uow, 1)\n        val found = uow.categories.findById(stored.id!!)\n        assertNotNull(found)\n        assertEquals(stored.id, found.id)\n        assertNotNull(uow.categories.findByName(stored.name!!))\n    }\n\n    @Test\n    fun listsRowsByKey() {\n        Factories.addCategory(uow, 1)\n        Factories.addCategory(uow, 2)\n        val page = uow.categories.list(0, 1)\n        assertEquals(2L, page.total)\n        assertEquals(1, page.items.size)\n    }\n\n    @Test\n    fun isDeleted() {\n        val stored = Factories.addCategory(uow, 1)\n        uow.categories.delete(stored)\n        assertNull(uow.categories.findById(stored.id!!))\n    }\n}\n",
+  "src/test/kotlin/app/CategoryServiceTest.kt": "package app\n\nimport app.categories.CategoryChanges\nimport app.categories.CategoryService\nimport app.common.Patch\nimport app.errors.ConflictException\nimport app.errors.NotFoundException\nimport app.errors.ValidationFailedException\nimport kotlin.test.BeforeTest\nimport kotlin.test.Test\nimport kotlin.test.assertEquals\nimport kotlin.test.assertFailsWith\nimport kotlin.test.assertNotNull\nimport kotlin.test.assertNull\nimport kotlin.test.assertTrue\n\n/** The service of the \"categories\" table, on the test database. */\nclass CategoryServiceTest {\n    private lateinit var uow: SqlUnitOfWork\n\n    @BeforeTest\n    fun open() {\n        uow = TestDatabase.open()\n    }\n\n    @Test\n    fun createsAValidRow() {\n        val service = CategoryService(uow)\n        val row = Factories.newCategory(1)\n        val created = service.createCategory(row)\n        val found = service.getCategory(created.id!!)\n        assertEquals(created.id, found.id)\n    }\n\n    @Test\n    fun refusesAMissingValue() {\n        val service = CategoryService(uow)\n        val row = Factories.newCategory(1)\n        row.name = null\n        val error = assertFailsWith<ValidationFailedException> { service.createCategory(row) }\n        assertEquals(listOf(\"name\"), error.errors.map { it.field })\n    }\n\n    @Test\n    fun refusesARepeatedUniqueValue() {\n        val service = CategoryService(uow)\n        val row = Factories.newCategory(1)\n        val first = service.createCategory(row)\n        val again = Factories.newCategory(2)\n        again.name = first.name\n        assertFailsWith<ConflictException> { service.createCategory(again) }\n    }\n\n    @Test\n    fun keepsItsOwnUniqueValue() {\n        val service = CategoryService(uow)\n        val row = Factories.newCategory(1)\n        val created = service.createCategory(row)\n        val updated = service.updateCategory(created.id!!, CategoryChanges(name = Patch.of(created.name!!)))\n        assertEquals(created.name, updated.name)\n    }\n\n    @Test\n    fun saysWhenARowIsMissing() {\n        val service = CategoryService(uow)\n        assertFailsWith<NotFoundException> { service.getCategory(999999) }\n    }\n\n    @Test\n    fun deletesARow() {\n        val service = CategoryService(uow)\n        val row = Factories.newCategory(1)\n        val created = service.createCategory(row)\n        service.deleteCategory(created.id!!)\n        assertFailsWith<NotFoundException> { service.getCategory(created.id!!) }\n    }\n}\n",
+  "src/test/kotlin/app/ConversionTest.kt": "package app\n\nimport app.categories.CategoryConversions\nimport app.customers.CustomerConversions\nimport app.products.ProductConversions\nimport app.tags.TagConversions\nimport kotlin.test.BeforeTest\nimport kotlin.test.Test\nimport kotlin.test.assertEquals\nimport kotlin.test.assertNotNull\n\n/** Tests of the conversions between the application models and the tables. */\nclass ConversionTest {\n    /** The repositories over the test database, opened empty for every test */\n    private lateinit var uow: SqlUnitOfWork\n\n    @BeforeTest\n    fun open() {\n        uow = TestDatabase.open()\n    }\n\n    @Test\n    fun readsCustomerAndWritesItBack() {\n        val row = Factories.addCustomer(uow, 1)\n        val model = CustomerConversions.customerToCustomerModel(row)\n        val values = CustomerConversions.customerModelToCustomer(model)\n        assertEquals(row.email, values.email)\n        assertEquals(row.passwordHash, values.passwordHash)\n    }\n\n    @Test\n    fun readsCategoryDtoAndWritesItBack() {\n        val row = Factories.addCategory(uow, 1)\n        val model = CategoryConversions.categoryToCategoryDto(row)\n        val values = CategoryConversions.categoryDtoToCategory(model)\n        assertEquals(row.name, values.name)\n    }\n\n    @Test\n    fun readsProductAndWritesItBack() {\n        val row = Factories.addProduct(uow, 1)\n        val model = ProductConversions.productToProductModel(row, uow)\n        val values = ProductConversions.productModelToProduct(model, uow)\n        assertEquals(row.categoryId, values.categoryId)\n        assertEquals(row.name, values.name)\n        assertEquals(row.price, values.price)\n        assertEquals(row.status, values.status)\n    }\n\n    @Test\n    fun readsTagEntityAndWritesItBack() {\n        val row = Factories.addTag(uow, 1)\n        val model = TagConversions.tagToTagEntity(row)\n        val values = TagConversions.tagEntityToTag(model)\n        assertEquals(row.label, values.label)\n    }\n}\n",
+  "src/test/kotlin/app/CustomerRepositoryTest.kt": "package app\n\nimport kotlin.test.BeforeTest\nimport kotlin.test.Test\nimport kotlin.test.assertEquals\nimport kotlin.test.assertNotNull\nimport kotlin.test.assertNull\nimport kotlin.test.assertTrue\n\n/** The repository of the \"customers\" table, against the test database. */\nclass CustomerRepositoryTest {\n    /** The repositories over the test database, opened empty for every test */\n    private lateinit var uow: SqlUnitOfWork\n\n    @BeforeTest\n    fun open() {\n        uow = TestDatabase.open()\n    }\n\n    @Test\n    fun isStoredAndReadBack() {\n        val stored = Factories.addCustomer(uow, 1)\n        val found = uow.customers.findById(stored.id!!)\n        assertNotNull(found)\n        assertEquals(stored.id, found.id)\n        assertNotNull(uow.customers.findByEmail(stored.email!!))\n    }\n\n    @Test\n    fun listsRowsByKey() {\n        Factories.addCustomer(uow, 1)\n        Factories.addCustomer(uow, 2)\n        val page = uow.customers.list(0, 1)\n        assertEquals(2L, page.total)\n        assertEquals(1, page.items.size)\n    }\n\n    @Test\n    fun isDeleted() {\n        val stored = Factories.addCustomer(uow, 1)\n        uow.customers.delete(stored)\n        assertNull(uow.customers.findById(stored.id!!))\n    }\n}\n",
+  "src/test/kotlin/app/CustomerServiceTest.kt": "package app\n\nimport app.common.Patch\nimport app.customers.CustomerChanges\nimport app.customers.CustomerService\nimport app.errors.ConflictException\nimport app.errors.NotFoundException\nimport app.errors.ValidationFailedException\nimport kotlin.test.BeforeTest\nimport kotlin.test.Test\nimport kotlin.test.assertEquals\nimport kotlin.test.assertFailsWith\nimport kotlin.test.assertNotNull\nimport kotlin.test.assertNull\nimport kotlin.test.assertTrue\n\n/** The service of the \"customers\" table, on the test database. */\nclass CustomerServiceTest {\n    private lateinit var uow: SqlUnitOfWork\n\n    @BeforeTest\n    fun open() {\n        uow = TestDatabase.open()\n    }\n\n    @Test\n    fun createsAValidRow() {\n        val service = CustomerService(uow)\n        val row = Factories.newCustomer(1)\n        val created = service.createCustomer(row)\n        val found = service.getCustomer(created.id!!)\n        assertEquals(created.id, found.id)\n    }\n\n    @Test\n    fun refusesAMissingValue() {\n        val service = CustomerService(uow)\n        val row = Factories.newCustomer(1)\n        row.email = null\n        val error = assertFailsWith<ValidationFailedException> { service.createCustomer(row) }\n        assertEquals(listOf(\"email\"), error.errors.map { it.field })\n    }\n\n    @Test\n    fun refusesARepeatedUniqueValue() {\n        val service = CustomerService(uow)\n        val row = Factories.newCustomer(1)\n        val first = service.createCustomer(row)\n        val again = Factories.newCustomer(2)\n        again.email = first.email\n        assertFailsWith<ConflictException> { service.createCustomer(again) }\n    }\n\n    @Test\n    fun keepsItsOwnUniqueValue() {\n        val service = CustomerService(uow)\n        val row = Factories.newCustomer(1)\n        val created = service.createCustomer(row)\n        val updated = service.updateCustomer(created.id!!, CustomerChanges(email = Patch.of(created.email!!)))\n        assertEquals(created.email, updated.email)\n    }\n\n    @Test\n    fun saysWhenARowIsMissing() {\n        val service = CustomerService(uow)\n        assertFailsWith<NotFoundException> { service.getCustomer(999999L) }\n    }\n\n    @Test\n    fun deletesARow() {\n        val service = CustomerService(uow)\n        val row = Factories.newCustomer(1)\n        val created = service.createCustomer(row)\n        service.deleteCustomer(created.id!!)\n        assertFailsWith<NotFoundException> { service.getCustomer(created.id!!) }\n    }\n}\n",
+  "src/test/kotlin/app/DatabaseTest.kt": "package app\n\nimport kotlin.test.Test\nimport kotlin.test.assertEquals\nimport kotlin.test.assertTrue\nimport org.jetbrains.exposed.v1.jdbc.transactions.transaction as exposedTransaction\n\n/** The tests run on the database they were asked to. */\nclass DatabaseTest {\n    @Test\n    fun isSqlite() {\n        val uow = TestDatabase.open()\n        val value = exposedTransaction(uow.db) { exec(\"SELECT sqlite_version()\") { it.next(); it.getString(1) } }\n        assertTrue(value!!.startsWith(\"3.\"))\n    }\n}\n",
+  "src/test/kotlin/app/Factories.kt": "package app\n\nimport app.categories.Category\nimport app.customers.Customer\nimport app.products.Product\nimport app.producttags.ProductTag\nimport app.tags.Tag\nimport java.math.BigDecimal\n\n/** Rows for the tests: valid values for every column, and the rows they point to. */\nobject Factories {\n    /** A valid Customer that is not stored yet; n makes its unique values differ. */\n    fun newCustomer(n: Int): Customer =\n        Customer(\n            email = \"email-$n\",\n            passwordHash = \"passwordhash-$n\",\n        )\n\n    /** A stored Customer. */\n    fun addCustomer(uow: UnitOfWork, n: Int): Customer {\n        val entity = newCustomer(n)\n        return uow.customers.insert(entity)\n    }\n\n    /** A valid Category that is not stored yet; n makes its unique values differ. */\n    fun newCategory(n: Int): Category =\n        Category(\n            name = \"name-$n\",\n        )\n\n    /** A stored Category. */\n    fun addCategory(uow: UnitOfWork, n: Int): Category {\n        val entity = newCategory(n)\n        return uow.categories.insert(entity)\n    }\n\n    /** A valid Product that is not stored yet; n makes its unique values differ. */\n    fun newProduct(n: Int): Product =\n        Product(\n            name = \"name-$n\",\n            price = BigDecimal(\"${n % 10000}.50\"),\n            status = \"draft\",\n        )\n\n    /** A stored Product, with the rows it points to. */\n    fun addProduct(uow: UnitOfWork, n: Int): Product {\n        val parent0 = addCategory(uow, n)\n        val entity = newProduct(n)\n        entity.categoryId = parent0.id\n        return uow.products.insert(entity)\n    }\n\n    /** A valid Tag that is not stored yet; n makes its unique values differ. */\n    fun newTag(n: Int): Tag =\n        Tag(\n            label = \"label-$n\",\n        )\n\n    /** A stored Tag. */\n    fun addTag(uow: UnitOfWork, n: Int): Tag {\n        val entity = newTag(n)\n        return uow.tags.insert(entity)\n    }\n\n    /** A valid ProductTag that is not stored yet; n makes its unique values differ. */\n    fun newProductTag(n: Int): ProductTag =\n        ProductTag(\n        )\n\n    /** A stored ProductTag, with the rows it points to. */\n    fun addProductTag(uow: UnitOfWork, n: Int): ProductTag {\n        val parent0 = addProduct(uow, n)\n        val parent1 = addTag(uow, n)\n        val entity = newProductTag(n)\n        entity.productId = parent0.id\n        entity.tagId = parent1.id\n        return uow.productTags.insert(entity)\n    }\n}\n",
+  "src/test/kotlin/app/ProductRepositoryTest.kt": "package app\n\nimport kotlin.test.BeforeTest\nimport kotlin.test.Test\nimport kotlin.test.assertEquals\nimport kotlin.test.assertNotNull\nimport kotlin.test.assertNull\nimport kotlin.test.assertTrue\n\n/** The repository of the \"products\" table, against the test database. */\nclass ProductRepositoryTest {\n    /** The repositories over the test database, opened empty for every test */\n    private lateinit var uow: SqlUnitOfWork\n\n    @BeforeTest\n    fun open() {\n        uow = TestDatabase.open()\n    }\n\n    @Test\n    fun isStoredAndReadBack() {\n        val stored = Factories.addProduct(uow, 1)\n        val found = uow.products.findById(stored.id!!)\n        assertNotNull(found)\n        assertEquals(stored.id, found.id)\n        assertEquals(1, uow.products.listByCategoryId(stored.categoryId!!).size)\n    }\n\n    @Test\n    fun listsRowsByKey() {\n        Factories.addProduct(uow, 1)\n        Factories.addProduct(uow, 2)\n        val page = uow.products.list(0, 1)\n        assertEquals(2L, page.total)\n        assertEquals(1, page.items.size)\n    }\n\n    @Test\n    fun storesTheChanges() {\n        val stored = Factories.addProduct(uow, 1)\n        stored.name = \"changed\"\n        uow.products.update(stored)\n        assertEquals(\"changed\", uow.products.findById(stored.id!!)?.name)\n    }\n\n    @Test\n    fun isDeleted() {\n        val stored = Factories.addProduct(uow, 1)\n        uow.products.delete(stored)\n        assertNull(uow.products.findById(stored.id!!))\n    }\n}\n",
+  "src/test/kotlin/app/ProductServiceTest.kt": "package app\n\nimport app.common.Patch\nimport app.errors.NotFoundException\nimport app.errors.ValidationFailedException\nimport app.products.ProductChanges\nimport app.products.ProductService\nimport kotlin.test.BeforeTest\nimport kotlin.test.Test\nimport kotlin.test.assertEquals\nimport kotlin.test.assertFailsWith\nimport kotlin.test.assertNotNull\nimport kotlin.test.assertNull\nimport kotlin.test.assertTrue\n\n/** The service of the \"products\" table, on the test database. */\nclass ProductServiceTest {\n    private lateinit var uow: SqlUnitOfWork\n\n    @BeforeTest\n    fun open() {\n        uow = TestDatabase.open()\n    }\n\n    @Test\n    fun createsAValidRow() {\n        val service = ProductService(uow)\n        val parent0 = Factories.addCategory(uow, 100)\n        val row = Factories.newProduct(1)\n        row.categoryId = parent0.id\n        val created = service.createProduct(row)\n        val found = service.getProduct(created.id!!)\n        assertEquals(created.id, found.id)\n    }\n\n    @Test\n    fun refusesAMissingValue() {\n        val service = ProductService(uow)\n        val parent0 = Factories.addCategory(uow, 100)\n        val row = Factories.newProduct(1)\n        row.categoryId = parent0.id\n        row.name = null\n        val error = assertFailsWith<ValidationFailedException> { service.createProduct(row) }\n        assertEquals(listOf(\"name\"), error.errors.map { it.field })\n    }\n\n    @Test\n    fun refusesAMissingParent() {\n        val service = ProductService(uow)\n        val parent0 = Factories.addCategory(uow, 100)\n        val row = Factories.newProduct(1)\n        row.categoryId = 999999\n        val error = assertFailsWith<ValidationFailedException> { service.createProduct(row) }\n        assertTrue(\"category_id\" in error.errors.map { it.field })\n    }\n\n    @Test\n    fun saysWhenARowIsMissing() {\n        val service = ProductService(uow)\n        assertFailsWith<NotFoundException> { service.getProduct(999999L) }\n    }\n\n    @Test\n    fun changesARow() {\n        val service = ProductService(uow)\n        val parent0 = Factories.addCategory(uow, 100)\n        val row = Factories.newProduct(1)\n        row.categoryId = parent0.id\n        val created = service.createProduct(row)\n        val updated = service.updateProduct(created.id!!, ProductChanges(name = Patch.of(\"changed\")))\n        assertEquals(\"changed\", updated.name)\n    }\n\n    @Test\n    fun deletesARow() {\n        val service = ProductService(uow)\n        val parent0 = Factories.addCategory(uow, 100)\n        val row = Factories.newProduct(1)\n        row.categoryId = parent0.id\n        val created = service.createProduct(row)\n        service.deleteProduct(created.id!!)\n        assertFailsWith<NotFoundException> { service.getProduct(created.id!!) }\n    }\n}\n",
+  "src/test/kotlin/app/ProductTagRepositoryTest.kt": "package app\n\nimport kotlin.test.BeforeTest\nimport kotlin.test.Test\nimport kotlin.test.assertEquals\nimport kotlin.test.assertNotNull\nimport kotlin.test.assertNull\nimport kotlin.test.assertTrue\n\n/** The repository of the \"product_tags\" table, against the test database. */\nclass ProductTagRepositoryTest {\n    /** The repositories over the test database, opened empty for every test */\n    private lateinit var uow: SqlUnitOfWork\n\n    @BeforeTest\n    fun open() {\n        uow = TestDatabase.open()\n    }\n\n    @Test\n    fun isStoredAndReadBack() {\n        val stored = Factories.addProductTag(uow, 1)\n        val found = uow.productTags.findByProductIdAndTagId(stored.productId!!, stored.tagId!!)\n        assertNotNull(found)\n        assertEquals(stored.productId, found.productId)\n        assertEquals(stored.tagId, found.tagId)\n        assertEquals(1, uow.productTags.listByProductId(stored.productId!!).size)\n        assertEquals(1, uow.productTags.listByTagId(stored.tagId!!).size)\n    }\n\n    @Test\n    fun listsRowsByKey() {\n        Factories.addProductTag(uow, 1)\n        Factories.addProductTag(uow, 2)\n        val page = uow.productTags.list(0, 1)\n        assertEquals(2L, page.total)\n        assertEquals(1, page.items.size)\n    }\n\n    @Test\n    fun isDeleted() {\n        val stored = Factories.addProductTag(uow, 1)\n        uow.productTags.delete(stored)\n        assertNull(uow.productTags.findByProductIdAndTagId(stored.productId!!, stored.tagId!!))\n    }\n}\n",
+  "src/test/kotlin/app/TagRepositoryTest.kt": "package app\n\nimport kotlin.test.BeforeTest\nimport kotlin.test.Test\nimport kotlin.test.assertEquals\nimport kotlin.test.assertNotNull\nimport kotlin.test.assertNull\nimport kotlin.test.assertTrue\n\n/** The repository of the \"tags\" table, against the test database. */\nclass TagRepositoryTest {\n    /** The repositories over the test database, opened empty for every test */\n    private lateinit var uow: SqlUnitOfWork\n\n    @BeforeTest\n    fun open() {\n        uow = TestDatabase.open()\n    }\n\n    @Test\n    fun isStoredAndReadBack() {\n        val stored = Factories.addTag(uow, 1)\n        val found = uow.tags.findById(stored.id!!)\n        assertNotNull(found)\n        assertEquals(stored.id, found.id)\n    }\n\n    @Test\n    fun listsRowsByKey() {\n        Factories.addTag(uow, 1)\n        Factories.addTag(uow, 2)\n        val page = uow.tags.list(0, 1)\n        assertEquals(2L, page.total)\n        assertEquals(1, page.items.size)\n    }\n\n    @Test\n    fun storesTheChanges() {\n        val stored = Factories.addTag(uow, 1)\n        stored.label = \"changed\"\n        uow.tags.update(stored)\n        assertEquals(\"changed\", uow.tags.findById(stored.id!!)?.label)\n    }\n\n    @Test\n    fun isDeleted() {\n        val stored = Factories.addTag(uow, 1)\n        uow.tags.delete(stored)\n        assertNull(uow.tags.findById(stored.id!!))\n    }\n}\n",
+  "src/test/kotlin/app/TagServiceTest.kt": "package app\n\nimport app.common.Patch\nimport app.errors.NotFoundException\nimport app.errors.ValidationFailedException\nimport app.tags.TagChanges\nimport app.tags.TagService\nimport kotlin.test.BeforeTest\nimport kotlin.test.Test\nimport kotlin.test.assertEquals\nimport kotlin.test.assertFailsWith\nimport kotlin.test.assertNotNull\nimport kotlin.test.assertNull\nimport kotlin.test.assertTrue\n\n/** The service of the \"tags\" table, on the test database. */\nclass TagServiceTest {\n    private lateinit var uow: SqlUnitOfWork\n\n    @BeforeTest\n    fun open() {\n        uow = TestDatabase.open()\n    }\n\n    @Test\n    fun createsAValidRow() {\n        val service = TagService(uow)\n        val row = Factories.newTag(1)\n        val created = service.createTag(row)\n        val found = service.getTag(created.id!!)\n        assertEquals(created.id, found.id)\n    }\n\n    @Test\n    fun refusesAMissingValue() {\n        val service = TagService(uow)\n        val row = Factories.newTag(1)\n        row.label = null\n        val error = assertFailsWith<ValidationFailedException> { service.createTag(row) }\n        assertEquals(listOf(\"label\"), error.errors.map { it.field })\n    }\n\n    @Test\n    fun saysWhenARowIsMissing() {\n        val service = TagService(uow)\n        assertFailsWith<NotFoundException> { service.getTag(999999) }\n    }\n\n    @Test\n    fun changesARow() {\n        val service = TagService(uow)\n        val row = Factories.newTag(1)\n        val created = service.createTag(row)\n        val updated = service.updateTag(created.id!!, TagChanges(label = Patch.of(\"changed\")))\n        assertEquals(\"changed\", updated.label)\n    }\n\n    @Test\n    fun deletesARow() {\n        val service = TagService(uow)\n        val row = Factories.newTag(1)\n        val created = service.createTag(row)\n        service.deleteTag(created.id!!)\n        assertFailsWith<NotFoundException> { service.getTag(created.id!!) }\n    }\n}\n",
+  "src/test/kotlin/app/TestDatabase.kt": "package app\n\nimport app.categories.CategoryTable\nimport app.customers.CustomerTable\nimport app.products.ProductTable\nimport app.producttags.ProductTagTable\nimport app.tags.TagTable\nimport java.io.File\nimport org.jetbrains.exposed.v1.jdbc.Database\nimport org.jetbrains.exposed.v1.jdbc.SchemaUtils\nimport org.jetbrains.exposed.v1.jdbc.transactions.transaction as exposedTransaction\n\n/** The test database: TEST_DATABASE_URL, or SQLite in a temporary file, created from the table objects before every test. */\nobject TestDatabase {\n    private val TABLES = arrayOf(CustomerTable, CategoryTable, ProductTable, TagTable, ProductTagTable)\n\n    /** The repositories over the test database, with every table dropped and created again. */\n    fun open(): SqlUnitOfWork {\n        val url = System.getenv(\"TEST_DATABASE_URL\")\n        val db =\n            if (url == null) Database.connect(\"jdbc:sqlite:${File.createTempFile(\"test\", \".db\").absolutePath}?foreign_keys=true\")\n            else Database.connect(url, user = System.getenv(\"TEST_DATABASE_USER\") ?: \"\", password = System.getenv(\"TEST_DATABASE_PASSWORD\") ?: \"\")\n        exposedTransaction(db) {\n            SchemaUtils.drop(*TABLES)\n            SchemaUtils.create(*TABLES)\n        }\n        return SqlUnitOfWork(db)\n    }\n}\n"
+ }
+}
