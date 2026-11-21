@@ -40,7 +40,8 @@ def _tests(context: dict) -> bool:
     return context["settings"]["tests"] != "none" and writes_entities(context)
 
 
-def gradle_files(context: dict) -> list[dict]:
+def gradle_files(context: dict, models_folder: bool = False) -> list[dict]:
+    """The Gradle files; `models_folder` when the copy of the imported application models is in application-models/."""
     driver = DRIVERS.get(context["settings"]["database"], DRIVERS["postgresql"])
     # The column type of PostgreSQL's enums sends a PGobject: the driver is needed to compile, not only to run
     driver_scope = "implementation" if uses_enum_columns(context) else "runtimeOnly"
@@ -74,6 +75,13 @@ def gradle_files(context: dict) -> list[dict]:
                 "",
                 "kotlin {",
                 "    jvmToolchain(21)",
+                models_folder
+                and [
+                    "    // The copy of the application models, while the project runs on its own: delete the folder inside"
+                    " the application",
+                    '    if (file("application-models").exists())'
+                    ' sourceSets.getByName("main").kotlin.srcDir("application-models/src/main/kotlin")',
+                ],
                 "}",
                 tests
                 and [
