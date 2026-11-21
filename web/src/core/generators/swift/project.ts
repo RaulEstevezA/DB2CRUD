@@ -27,7 +27,8 @@ const PACKAGES: Record<string, { name: string; version: string }> = {
 
 const tests = (context: Context) => context.settings.tests !== 'none' && writesEntities(context)
 
-export function packageFile(context: Context): GeneratedFile {
+/** Package.swift; `models` when the conversions use the application models, in a target of their own. */
+export function packageFile(context: Context, models: { target: string; path: string; imported: boolean } | null = null): GeneratedFile {
   const driver = driverOf(context).module
   const driverPackage = PACKAGES[driver]
   const postgresTimes = context.settings.database === 'postgresql' && usesTimes(context)
@@ -61,8 +62,15 @@ export function packageFile(context: Context): GeneratedFile {
       `                ${product('NIOPosix', 'swift-nio')},`,
       `                ${product('Logging', 'swift-log')},`,
       postgresTimes && `                ${product('PostgresNIO', 'postgres-nio')},`,
+      models && `                "${models.target}",`,
       '            ]',
       '        ),',
+      models && [
+        models.imported
+          ? '        // The application models: the copy DB2CRUD read, while the project runs on its own. Inside the application, replace this target with your module.'
+          : '        // The application models: a copy of the types DB2CRUD read.',
+        `        .target(name: "${models.target}", path: "${models.path}"),`,
+      ],
       tests(context) && [
         '        .testTarget(',
         `            name: "${context.module}Tests",`,

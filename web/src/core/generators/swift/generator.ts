@@ -11,7 +11,9 @@ import { contractFile, envExampleFile, gitignoreFile, packageFile, readmeFile } 
 import { repositoryFile } from './repositories.ts'
 import { serviceFile } from './services.ts'
 import { commonFile, databaseFile, errorsFile, unitOfWorkFile } from './support.ts'
-import { testFiles } from './tests.ts'
+import { canMake, testFiles } from './tests.ts'
+import { planConversions } from '../../conversions/plan.ts'
+import { conversionFiles, conversionTestFile, modelsPath, modelsTarget, servicePlans } from './conversions.ts'
 
 function code(context: Context): GeneratedFile[] {
   const files: (GeneratedFile | null)[] = [databaseFile(context), errorsFile(context), commonFile(context), unitOfWorkFile(context)]
@@ -30,16 +32,29 @@ function code(context: Context): GeneratedFile[] {
 export const swiftGenerator: Generator = {
   language: 'swift',
   orm: 'fluent',
-  generate({ schema, design, settings }) {
+  generate({ schema, design, settings, models }) {
     const context = createContext(schema, design, settings)
+    const plans = models ? servicePlans(context, planConversions(schema, design, models)) : []
+    const conversions = models ? conversionFiles(context, models.schema, plans) : []
+    const tests = testFiles(context)
+    const conversionTests =
+      models && tests.length > 0 && (settings.tests === 'all' || settings.tests === 'services')
+        ? conversionTestFile(context, plans, models.schema, (info) => canMake(context, info))
+        : null
+    const target =
+      conversions.length > 0
+        ? { target: modelsTarget(context), path: modelsPath(context), imported: settings.modelsSource === 'import' }
+        : null
     return [
       readmeFile(context),
-      packageFile(context),
+      packageFile(context, target),
       envExampleFile(context),
       gitignoreFile(),
       contractFile(context),
       ...code(context),
-      ...testFiles(context),
+      ...conversions,
+      ...tests,
+      ...(conversionTests ? [conversionTests] : []),
     ]
   },
 }
