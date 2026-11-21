@@ -305,6 +305,24 @@ export const SCENARIOS = [
     settings: { language: 'csharp', orm: 'efcore', database: 'sqlite', repositoryInterfaces: false, verbs: 'find', tests: 'services', entities: 'all' },
   },
   { id: 'efcore-sqlite-repositories-only', schema: 'shop', settings: { language: 'csharp', orm: 'efcore', database: 'sqlite', services: false } },
+  {
+    id: 'efcore-postgresql-conversions-dtos',
+    case: 'shop-csharp',
+    settings: { language: 'csharp', orm: 'efcore', database: 'postgresql', serviceTypes: 'dtos' },
+    service: 'postgresql',
+  },
+  { id: 'efcore-sqlite-conversions-import', case: 'shop-csharp', settings: { language: 'csharp', orm: 'efcore', database: 'sqlite', modelsSource: 'import' } },
+  {
+    id: 'efcore-mysql-conversions-mapper',
+    case: 'mapper-csharp',
+    settings: { language: 'csharp', orm: 'efcore', database: 'mysql', serviceTypes: 'dtos', dtoKind: 'class' },
+    service: 'mysql',
+  },
+  {
+    id: 'efcore-sqlite-conversions-tables',
+    case: 'shop-csharp',
+    settings: { language: 'csharp', orm: 'efcore', database: 'sqlite', memoryRepositories: false, architecture: 'table', transactions: 'caller' },
+  },
   { id: 'doctrine-sqlite-defaults', schema: 'shop', settings: { language: 'php', orm: 'doctrine', database: 'sqlite' } },
   {
     id: 'doctrine-postgresql-readonly-dtos-patch',
