@@ -537,4 +537,22 @@ export const SCENARIOS = [
     settings: { language: 'swift', orm: 'fluent', database: 'sqlite', repositoryInterfaces: false, verbs: 'find', tests: 'services', entities: 'all', updates: 'full' },
   },
   { id: 'fluent-sqlite-repositories-only', schema: 'shop', settings: { language: 'swift', orm: 'fluent', database: 'sqlite', services: false } },
+  {
+    id: 'fluent-postgresql-conversions-dtos',
+    case: 'shop-swift',
+    settings: { language: 'swift', orm: 'fluent', database: 'postgresql', serviceTypes: 'dtos' },
+    service: 'postgresql',
+  },
+  { id: 'fluent-sqlite-conversions-import', case: 'shop-swift', settings: { language: 'swift', orm: 'fluent', database: 'sqlite', modelsSource: 'import' } },
+  {
+    id: 'fluent-mysql-conversions-mapper',
+    case: 'mapper-swift',
+    settings: { language: 'swift', orm: 'fluent', database: 'mysql', serviceTypes: 'dtos' },
+    service: 'mysql',
+  },
+  {
+    id: 'fluent-sqlite-conversions-tables',
+    case: 'shop-swift',
+    settings: { language: 'swift', orm: 'fluent', database: 'sqlite', memoryRepositories: false, architecture: 'table', transactions: 'caller' },
+  },
 ]
