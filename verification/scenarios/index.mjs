@@ -487,6 +487,24 @@ export const SCENARIOS = [
     settings: { language: 'rust', orm: 'seaorm', database: 'sqlite', repositoryInterfaces: false, verbs: 'find', tests: 'services', entities: 'all', updates: 'full' },
   },
   { id: 'seaorm-sqlite-repositories-only', schema: 'shop', settings: { language: 'rust', orm: 'seaorm', database: 'sqlite', services: false } },
+  {
+    id: 'seaorm-postgresql-conversions-dtos',
+    case: 'shop-rust',
+    settings: { language: 'rust', orm: 'seaorm', database: 'postgresql', serviceTypes: 'dtos' },
+    service: 'postgresql',
+  },
+  { id: 'seaorm-sqlite-conversions-import', case: 'shop-rust', settings: { language: 'rust', orm: 'seaorm', database: 'sqlite', modelsSource: 'import' } },
+  {
+    id: 'seaorm-mysql-conversions-mapper',
+    case: 'mapper-rust',
+    settings: { language: 'rust', orm: 'seaorm', database: 'mysql', serviceTypes: 'dtos' },
+    service: 'mysql',
+  },
+  {
+    id: 'seaorm-sqlite-conversions-tables',
+    case: 'shop-rust',
+    settings: { language: 'rust', orm: 'seaorm', database: 'sqlite', memoryRepositories: false, architecture: 'table', transactions: 'caller' },
+  },
   { id: 'fluent-sqlite-defaults', schema: 'shop', settings: { language: 'swift', orm: 'fluent', database: 'sqlite' } },
   {
     id: 'fluent-postgresql-dtos-patch',
