@@ -1,0 +1,718 @@
+{
+ "tables": [
+  {
+   "table": "customers",
+   "models": [
+    {
+     "direction": "both",
+     "model": {
+      "value": "Customer",
+      "status": "active",
+      "confidence": "exact",
+      "reasons": [
+       {
+        "code": "modelName",
+        "params": {
+         "model": "Customer"
+        }
+       }
+      ],
+      "options": [
+       "Customer",
+       null
+      ]
+     },
+     "columns": [
+      {
+       "column": "id",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "Id"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldWords",
+          "params": {
+           "field": "Id"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "Id"
+         },
+         {
+          "kind": "field",
+          "field": "Email"
+         },
+         {
+          "kind": "field",
+          "field": "PasswordHash"
+         },
+         {
+          "kind": "field",
+          "field": "CreatedAt"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "email",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "Email"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldWords",
+          "params": {
+           "field": "Email"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "Id"
+         },
+         {
+          "kind": "field",
+          "field": "Email"
+         },
+         {
+          "kind": "field",
+          "field": "PasswordHash"
+         },
+         {
+          "kind": "field",
+          "field": "CreatedAt"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "password_hash",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "PasswordHash"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldWords",
+          "params": {
+           "field": "PasswordHash"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "Id"
+         },
+         {
+          "kind": "field",
+          "field": "Email"
+         },
+         {
+          "kind": "field",
+          "field": "PasswordHash"
+         },
+         {
+          "kind": "field",
+          "field": "CreatedAt"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "created_at",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "CreatedAt"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldWords",
+          "params": {
+           "field": "CreatedAt"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "Id"
+         },
+         {
+          "kind": "field",
+          "field": "Email"
+         },
+         {
+          "kind": "field",
+          "field": "PasswordHash"
+         },
+         {
+          "kind": "field",
+          "field": "CreatedAt"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      }
+     ],
+     "children": [],
+     "unused": []
+    }
+   ]
+  },
+  {
+   "table": "categories",
+   "models": [
+    {
+     "direction": "both",
+     "model": {
+      "value": "CategoryDto",
+      "status": "active",
+      "confidence": "exact",
+      "reasons": [
+       {
+        "code": "modelName",
+        "params": {
+         "model": "CategoryDto"
+        }
+       }
+      ],
+      "options": [
+       "CategoryDto",
+       null
+      ]
+     },
+     "columns": [
+      {
+       "column": "id",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "Id"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldWords",
+          "params": {
+           "field": "Id"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "Id"
+         },
+         {
+          "kind": "field",
+          "field": "Name"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "name",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "Name"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldWords",
+          "params": {
+           "field": "Name"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "Id"
+         },
+         {
+          "kind": "field",
+          "field": "Name"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      }
+     ],
+     "children": [],
+     "unused": []
+    }
+   ]
+  },
+  {
+   "table": "products",
+   "models": [
+    {
+     "direction": "both",
+     "model": {
+      "value": "Product",
+      "status": "active",
+      "confidence": "exact",
+      "reasons": [
+       {
+        "code": "modelName",
+        "params": {
+         "model": "Product"
+        }
+       }
+      ],
+      "options": [
+       "Product",
+       null
+      ]
+     },
+     "columns": [
+      {
+       "column": "id",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "Id"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldWords",
+          "params": {
+           "field": "Id"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "Id"
+         },
+         {
+          "kind": "field",
+          "field": "Name"
+         },
+         {
+          "kind": "field",
+          "field": "Price"
+         },
+         {
+          "kind": "field",
+          "field": "Status"
+         },
+         {
+          "kind": "field",
+          "field": "CategoryName"
+         },
+         {
+          "kind": "field",
+          "field": "TagIds"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "category_id",
+       "source": {
+        "value": {
+         "kind": "lookup",
+         "field": "CategoryName",
+         "table": "categories",
+         "by": "name"
+        },
+        "status": "active",
+        "confidence": "probable",
+        "reasons": [
+         {
+          "code": "lookupUnique",
+          "params": {
+           "field": "CategoryName",
+           "table": "categories",
+           "column": "name"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "lookup",
+          "field": "CategoryName",
+          "table": "categories",
+          "by": "name"
+         },
+         {
+          "kind": "field",
+          "field": "Id"
+         },
+         {
+          "kind": "field",
+          "field": "Name"
+         },
+         {
+          "kind": "field",
+          "field": "Price"
+         },
+         {
+          "kind": "field",
+          "field": "Status"
+         },
+         {
+          "kind": "field",
+          "field": "CategoryName"
+         },
+         {
+          "kind": "field",
+          "field": "TagIds"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "name",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "Name"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldWords",
+          "params": {
+           "field": "Name"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "Id"
+         },
+         {
+          "kind": "field",
+          "field": "Name"
+         },
+         {
+          "kind": "field",
+          "field": "Price"
+         },
+         {
+          "kind": "field",
+          "field": "Status"
+         },
+         {
+          "kind": "field",
+          "field": "CategoryName"
+         },
+         {
+          "kind": "field",
+          "field": "TagIds"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "price",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "Price"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldWords",
+          "params": {
+           "field": "Price"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "Id"
+         },
+         {
+          "kind": "field",
+          "field": "Name"
+         },
+         {
+          "kind": "field",
+          "field": "Price"
+         },
+         {
+          "kind": "field",
+          "field": "Status"
+         },
+         {
+          "kind": "field",
+          "field": "CategoryName"
+         },
+         {
+          "kind": "field",
+          "field": "TagIds"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "status",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "Status"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldWords",
+          "params": {
+           "field": "Status"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "Id"
+         },
+         {
+          "kind": "field",
+          "field": "Name"
+         },
+         {
+          "kind": "field",
+          "field": "Price"
+         },
+         {
+          "kind": "field",
+          "field": "Status"
+         },
+         {
+          "kind": "field",
+          "field": "CategoryName"
+         },
+         {
+          "kind": "field",
+          "field": "TagIds"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      }
+     ],
+     "children": [
+      {
+       "field": "TagIds",
+       "table": {
+        "value": "product_tags",
+        "status": "active",
+        "confidence": "probable",
+        "reasons": [
+         {
+          "code": "childRows",
+          "params": {
+           "field": "TagIds",
+           "table": "product_tags"
+          }
+         }
+        ],
+        "options": [
+         "product_tags",
+         null
+        ]
+       }
+      }
+     ],
+     "unused": []
+    }
+   ]
+  },
+  {
+   "table": "tags",
+   "models": [
+    {
+     "direction": "both",
+     "model": {
+      "value": "TagEntity",
+      "status": "active",
+      "confidence": "exact",
+      "reasons": [
+       {
+        "code": "modelName",
+        "params": {
+         "model": "TagEntity"
+        }
+       }
+      ],
+      "options": [
+       "TagEntity",
+       null
+      ]
+     },
+     "columns": [
+      {
+       "column": "id",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "Id"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldWords",
+          "params": {
+           "field": "Id"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "Id"
+         },
+         {
+          "kind": "field",
+          "field": "Label"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "label",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "Label"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldWords",
+          "params": {
+           "field": "Label"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "Id"
+         },
+         {
+          "kind": "field",
+          "field": "Label"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      }
+     ],
+     "children": [],
+     "unused": []
+    }
+   ]
+  },
+  {
+   "table": "product_tags",
+   "models": [
+    {
+     "direction": "both",
+     "model": {
+      "value": null,
+      "status": "active",
+      "confidence": "none",
+      "reasons": [
+       {
+        "code": "noModel"
+       }
+      ],
+      "options": [
+       "Customer",
+       "CategoryDto",
+       "Product",
+       "TagEntity",
+       null
+      ]
+     },
+     "columns": [
+      {
+       "column": "product_id",
+       "source": {
+        "value": null,
+        "status": "active",
+        "confidence": "none",
+        "reasons": [],
+        "options": []
+       },
+       "conflicts": []
+      },
+      {
+       "column": "tag_id",
+       "source": {
+        "value": null,
+        "status": "active",
+        "confidence": "none",
+        "reasons": [],
+        "options": []
+       },
+       "conflicts": []
+      }
+     ],
+     "children": [],
+     "unused": []
+    }
+   ]
+  }
+ ]
+}

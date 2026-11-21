@@ -1,0 +1,217 @@
+[
+ {
+  "table": "customers",
+  "model": "Customer",
+  "direction": "both",
+  "write": [
+   {
+    "column": "email",
+    "value": {
+     "kind": "field",
+     "path": [
+      "Email"
+     ]
+    }
+   },
+   {
+    "column": "password_hash",
+    "value": {
+     "kind": "field",
+     "path": [
+      "PasswordHash"
+     ]
+    }
+   }
+  ],
+  "read": [
+   {
+    "field": "Id",
+    "value": {
+     "kind": "column",
+     "column": "id"
+    }
+   },
+   {
+    "field": "Email",
+    "value": {
+     "kind": "column",
+     "column": "email"
+    }
+   },
+   {
+    "field": "PasswordHash",
+    "value": {
+     "kind": "column",
+     "column": "password_hash"
+    }
+   },
+   {
+    "field": "CreatedAt",
+    "value": {
+     "kind": "column",
+     "column": "created_at"
+    }
+   }
+  ]
+ },
+ {
+  "table": "categories",
+  "model": "CategoryDto",
+  "direction": "both",
+  "write": [
+   {
+    "column": "name",
+    "value": {
+     "kind": "field",
+     "path": [
+      "Name"
+     ]
+    }
+   }
+  ],
+  "read": [
+   {
+    "field": "Id",
+    "value": {
+     "kind": "column",
+     "column": "id"
+    }
+   },
+   {
+    "field": "Name",
+    "value": {
+     "kind": "column",
+     "column": "name"
+    }
+   }
+  ]
+ },
+ {
+  "table": "products",
+  "model": "Product",
+  "direction": "both",
+  "write": [
+   {
+    "column": "category_id",
+    "value": {
+     "kind": "lookup",
+     "path": [
+      "CategoryName"
+     ],
+     "table": "categories",
+     "by": "name",
+     "key": "id"
+    }
+   },
+   {
+    "column": "name",
+    "value": {
+     "kind": "field",
+     "path": [
+      "Name"
+     ]
+    }
+   },
+   {
+    "column": "price",
+    "value": {
+     "kind": "field",
+     "path": [
+      "Price"
+     ]
+    }
+   },
+   {
+    "column": "status",
+    "value": {
+     "kind": "field",
+     "path": [
+      "Status"
+     ]
+    }
+   }
+  ],
+  "read": [
+   {
+    "field": "Id",
+    "value": {
+     "kind": "column",
+     "column": "id"
+    }
+   },
+   {
+    "field": "Name",
+    "value": {
+     "kind": "column",
+     "column": "name"
+    }
+   },
+   {
+    "field": "Price",
+    "value": {
+     "kind": "column",
+     "column": "price"
+    }
+   },
+   {
+    "field": "Status",
+    "value": {
+     "kind": "column",
+     "column": "status"
+    }
+   },
+   {
+    "field": "CategoryName",
+    "value": {
+     "kind": "lookup",
+     "column": "category_id",
+     "table": "categories",
+     "by": "name",
+     "key": "id"
+    }
+   },
+   {
+    "field": "TagIds",
+    "value": {
+     "kind": "children",
+     "table": "product_tags",
+     "by": "product_id",
+     "key": "id",
+     "value": "tag_id"
+    }
+   }
+  ]
+ },
+ {
+  "table": "tags",
+  "model": "TagEntity",
+  "direction": "both",
+  "write": [
+   {
+    "column": "label",
+    "value": {
+     "kind": "field",
+     "path": [
+      "Label"
+     ]
+    }
+   }
+  ],
+  "read": [
+   {
+    "field": "Id",
+    "value": {
+     "kind": "column",
+     "column": "id"
+    }
+   },
+   {
+    "field": "Label",
+    "value": {
+     "kind": "column",
+     "column": "label"
+    }
+   }
+  ]
+ }
+]
