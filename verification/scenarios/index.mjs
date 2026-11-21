@@ -255,6 +255,24 @@ export const SCENARIOS = [
     settings: { language: 'java', orm: 'jpa', database: 'sqlite', repositoryInterfaces: false, verbs: 'find', tests: 'services', entities: 'all', updates: 'full' },
   },
   { id: 'jpa-sqlite-repositories-only', schema: 'shop', settings: { language: 'java', orm: 'jpa', database: 'sqlite', services: false } },
+  {
+    id: 'jpa-postgresql-conversions-dtos',
+    case: 'shop-java',
+    settings: { language: 'java', orm: 'jpa', database: 'postgresql', serviceTypes: 'dtos' },
+    service: 'postgresql',
+  },
+  { id: 'jpa-sqlite-conversions-import', case: 'shop-java', settings: { language: 'java', orm: 'jpa', database: 'sqlite', modelsSource: 'import' } },
+  {
+    id: 'jpa-mysql-conversions-mapper',
+    case: 'mapper-java',
+    settings: { language: 'java', orm: 'jpa', database: 'mysql', serviceTypes: 'dtos', dtoKind: 'class' },
+    service: 'mysql',
+  },
+  {
+    id: 'jpa-sqlite-conversions-tables',
+    case: 'shop-java',
+    settings: { language: 'java', orm: 'jpa', database: 'sqlite', memoryRepositories: false, architecture: 'table', transactions: 'caller' },
+  },
   { id: 'efcore-sqlite-defaults', schema: 'shop', settings: { language: 'csharp', orm: 'efcore', database: 'sqlite' } },
   {
     id: 'efcore-postgresql-record-dtos-patch',
