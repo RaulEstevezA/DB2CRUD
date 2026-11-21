@@ -1,0 +1,208 @@
+/**
+ * The SQL that creates a schema in a database, and the SQL that removes it: what the generated projects without an
+ * ORM run before their tests, since nothing else creates their tables. Each engine gets its own types, keys,
+ * defaults, generated columns and CHECK constraints. A schema read from the same engine keeps its types as declared;
+ * one read from another engine gets the closest types of this one, and what only that engine understands (a
+ * default or a CHECK in its own SQL) is left out.
+ */
+import type { DbCheck, DbColumn, DbSchema, DbTable, DbType, Dialect } from './types.ts'
+
+const MYSQL = new Set<Dialect>(['mysql', 'mariadb'])
+
+/** A name between the quotes of the engine. */
+export const quoteName = (dialect: Dialect, name: string) =>
+  MYSQL.has(dialect) ? `\`${name.replace(/`/g, '``')}\`` : `"${name.replace(/"/g, '""')}"`
+
+/** The name of a table, with its namespace on PostgreSQL. */
+export const tableName = (dialect: Dialect, table: Pick<DbTable, 'name' | 'schema'>) =>
+  table.schema && dialect === 'postgresql'
+    ? `${quoteName(dialect, table.schema)}.${quoteName(dialect, table.name)}`
+    : quoteName(dialect, table.name)
+
+const quoteText = (text: string) => `'${text.replace(/'/g, "''")}'`
+
+/** The tables in the order they can be created: the tables they point to first (a cycle keeps the input's order). */
+export function creationOrder(schema: DbSchema): DbTable[] {
+  const order: DbTable[] = []
+  const visit = (table: DbTable, path: Set<string>) => {
+    if (order.includes(table) || path.has(table.name)) return
+    path.add(table.name)
+    for (const key of table.foreignKeys) {
+      const parent = schema.tables.find((item) => item.name === key.references.table)
+      if (parent && parent !== table) visit(parent, path)
+    }
+    order.push(table)
+  }
+  for (const table of schema.tables) visit(table, new Set())
+  return order
+}
+
+/** The type of a column in the engine. */
+function typeSql(schema: DbSchema, dialect: Dialect, type: DbType): string {
+  if (schema.dialect === dialect && type.kind !== 'enum' && type.kind !== 'unknown') return type.sql
+  const mysql = MYSQL.has(dialect)
+  const sqlite = dialect === 'sqlite'
+  switch (type.kind) {
+    case 'integer':
+      if (sqlite) return 'INTEGER'
+      return type.bits === 16 ? 'SMALLINT' : type.bits === 64 ? 'BIGINT' : 'INTEGER'
+    case 'decimal':
+      return type.precision !== undefined ? `DECIMAL(${type.precision}, ${type.scale ?? 0})` : sqlite ? 'NUMERIC' : 'DECIMAL(38, 10)'
+    case 'float':
+      if (sqlite) return 'REAL'
+      if (mysql) return type.bits === 32 ? 'FLOAT' : 'DOUBLE'
+      return type.bits === 32 ? 'REAL' : 'DOUBLE PRECISION'
+    case 'text':
+      if (type.length !== undefined) return `${type.fixed ? 'CHAR' : 'VARCHAR'}(${type.length})`
+      return 'TEXT'
+    case 'boolean':
+      return 'BOOLEAN'
+    case 'date':
+      return 'DATE'
+    case 'time':
+      return dialect === 'postgresql' && type.timezone ? 'TIME WITH TIME ZONE' : 'TIME'
+    case 'datetime':
+      if (mysql) return 'DATETIME(6)'
+      if (sqlite) return 'DATETIME'
+      return type.timezone ? 'TIMESTAMP WITH TIME ZONE' : 'TIMESTAMP'
+    case 'uuid':
+      return dialect === 'postgresql' ? 'UUID' : mysql ? 'CHAR(36)' : 'TEXT'
+    case 'binary':
+      return dialect === 'postgresql' ? 'BYTEA' : mysql && type.length !== undefined ? `VARBINARY(${type.length})` : 'BLOB'
+    case 'json':
+      return dialect === 'postgresql' ? 'JSONB' : mysql ? 'JSON' : 'TEXT'
+    case 'enum': {
+      const item = schema.enums.find((candidate) => candidate.name === type.name)
+      if (item?.storage === 'native' && dialect === 'postgresql') return quoteName(dialect, item.name)
+      if (item?.storage === 'native' && mysql) return `ENUM(${item.values.map(quoteText).join(', ')})`
+      return `VARCHAR(${Math.max(1, ...(item?.values ?? []).map((value) => value.length))})`
+    }
+    case 'array':
+      return dialect === 'postgresql' ? `${typeSql(schema, dialect, type.items)}[]` : mysql ? 'JSON' : 'TEXT'
+    case 'unknown':
+      return schema.dialect === dialect ? type.sql : 'TEXT'
+  }
+}
+
+/** Whether the column is the one key column the engine numbers by itself. */
+const isIdentity = (table: DbTable, column: DbColumn) =>
+  column.generated === 'identity' && table.primaryKey?.length === 1 && table.primaryKey[0] === column.name
+
+/** What a column is declared with after its type: identity, null, its default or its expression. */
+function columnSql(schema: DbSchema, dialect: Dialect, table: DbTable, column: DbColumn): string {
+  const mysql = MYSQL.has(dialect)
+  const identity = isIdentity(table, column)
+  // SQLite numbers a key only when it is exactly INTEGER PRIMARY KEY
+  if (identity && dialect === 'sqlite') return `${quoteName(dialect, column.name)} INTEGER PRIMARY KEY AUTOINCREMENT`
+  const type = typeSql(schema, dialect, column.type)
+  const parts = [quoteName(dialect, column.name), type]
+  if (identity) parts.push(mysql ? 'AUTO_INCREMENT' : 'GENERATED BY DEFAULT AS IDENTITY')
+  if (typeof column.generated === 'object') {
+    parts.push(`GENERATED ALWAYS AS (${column.generated.computed}) STORED`)
+    return parts.join(' ')
+  }
+  if (!column.nullable) parts.push('NOT NULL')
+  const precise = mysql && type === 'DATETIME(6)'
+  const now = column.type.kind === 'date' ? 'CURRENT_DATE' : precise ? 'CURRENT_TIMESTAMP(6)' : 'CURRENT_TIMESTAMP'
+  if (column.generated === 'now' || column.generated === 'onUpdateNow') {
+    parts.push(`DEFAULT ${column.type.kind === 'date' && mysql ? '(CURRENT_DATE)' : now}`)
+    if (column.generated === 'onUpdateNow' && mysql) parts.push(`ON UPDATE ${now}`)
+  } else if (column.generated === 'uuid' && dialect === 'postgresql') parts.push('DEFAULT gen_random_uuid()')
+  else if (column.default?.kind === 'literal' && column.default.value !== null) {
+    const value = column.default.value
+    const literal = typeof value === 'string' ? quoteText(value) : typeof value === 'boolean' ? (value ? 'TRUE' : 'FALSE') : String(value)
+    // MySQL takes a default for TEXT, BLOB and JSON only as an expression
+    const expression = mysql && /^(TEXT|BLOB|JSON|LONGTEXT|MEDIUMTEXT)/i.test(type)
+    parts.push(`DEFAULT ${expression ? `(${literal})` : literal}`)
+  } else if (column.default?.kind === 'expression') {
+    if (schema.dialect === dialect) parts.push(`DEFAULT ${column.default.sql}`)
+    else if (/^(now\(\)|current_timestamp(\(\d*\))?)$/i.test(column.default.sql.trim())) parts.push(`DEFAULT ${now}`)
+  }
+  return parts.join(' ')
+}
+
+/** A CHECK the engine understands: the forms the rules read are written again, the others only on their own engine. */
+function checkSql(schema: DbSchema, dialect: Dialect, check: DbCheck): string | null {
+  const parsed = check.parsed
+  const name = (column: string) => quoteName(dialect, column)
+  let condition: string | null = null
+  if (parsed?.kind === 'in')
+    condition = `${name(parsed.column)} IN (${parsed.values.map((value) => (typeof value === 'string' ? quoteText(value) : String(value))).join(', ')})`
+  else if (parsed?.kind === 'compare') condition = `${name(parsed.column)} ${parsed.op} ${parsed.value}`
+  else if (parsed?.kind === 'length')
+    condition = `${MYSQL.has(dialect) ? 'CHAR_LENGTH' : 'LENGTH'}(${name(parsed.column)}) ${parsed.op} ${parsed.value}`
+  else if (schema.dialect === dialect) condition = check.sql
+  if (condition === null) return null
+  return `${check.name ? `CONSTRAINT ${quoteName(dialect, check.name)} ` : ''}CHECK (${condition})`
+}
+
+const ACTIONS = { cascade: 'CASCADE', 'set null': 'SET NULL', 'set default': 'SET DEFAULT', restrict: 'RESTRICT', 'no action': 'NO ACTION' }
+
+function foreignKeySql(schema: DbSchema, dialect: Dialect, key: DbTable['foreignKeys'][number]): string {
+  const parent = schema.tables.find((item) => item.name === key.references.table)
+  const target = tableName(dialect, parent ?? { name: key.references.table, schema: key.references.schema })
+  const columns = (names: string[]) => names.map((item) => quoteName(dialect, item)).join(', ')
+  return [
+    key.name ? `CONSTRAINT ${quoteName(dialect, key.name)} ` : '',
+    `FOREIGN KEY (${columns(key.columns)}) REFERENCES ${target} (${columns(key.references.columns)})`,
+    key.onDelete ? ` ON DELETE ${ACTIONS[key.onDelete]}` : '',
+    key.onUpdate ? ` ON UPDATE ${ACTIONS[key.onUpdate]}` : '',
+  ].join('')
+}
+
+/** The statements that create every table of the schema, in an order the engine accepts. */
+export function createStatements(schema: DbSchema, dialect: Dialect): string[] {
+  const statements: string[] = []
+  if (dialect === 'postgresql') {
+    for (const name of [...new Set(schema.tables.map((table) => table.schema).filter((item): item is string => !!item))])
+      statements.push(`CREATE SCHEMA IF NOT EXISTS ${quoteName(dialect, name)}`)
+    for (const item of schema.enums.filter((candidate) => candidate.storage === 'native'))
+      statements.push(`CREATE TYPE ${quoteName(dialect, item.name)} AS ENUM (${item.values.map(quoteText).join(', ')})`)
+  }
+  const created = new Set<string>()
+  const later: string[] = []
+  for (const table of creationOrder(schema)) {
+    const columns = (names: string[]) => names.map((item) => quoteName(dialect, item)).join(', ')
+    const parts = table.columns.map((column) => columnSql(schema, dialect, table, column))
+    const sqliteKey = dialect === 'sqlite' && table.columns.some((column) => isIdentity(table, column))
+    if (table.primaryKey && !sqliteKey) parts.push(`PRIMARY KEY (${columns(table.primaryKey)})`)
+    for (const unique of table.uniques)
+      parts.push(`${unique.name ? `CONSTRAINT ${quoteName(dialect, unique.name)} ` : ''}UNIQUE (${columns(unique.columns)})`)
+    for (const check of table.checks) {
+      const sql = checkSql(schema, dialect, check)
+      if (sql) parts.push(sql)
+    }
+    for (const key of table.foreignKeys) {
+      // A key to a table created later (a cycle) is added at the end, where the engine allows it
+      const pending = !created.has(key.references.table) && key.references.table !== table.name
+      if (pending && dialect !== 'sqlite') later.push(`ALTER TABLE ${tableName(dialect, table)} ADD ${foreignKeySql(schema, dialect, key)}`)
+      else parts.push(foreignKeySql(schema, dialect, key))
+    }
+    statements.push(`CREATE TABLE ${tableName(dialect, table)} (\n  ${parts.join(',\n  ')}\n)`)
+    for (const index of table.indexes) {
+      const name = index.name ?? `ix_${table.name}_${index.columns.join('_')}`
+      statements.push(`CREATE INDEX ${quoteName(dialect, name)} ON ${tableName(dialect, table)} (${columns(index.columns)})`)
+    }
+    created.add(table.name)
+  }
+  return [...statements, ...later]
+}
+
+/** The statements that remove every table of the schema (and its types), so it can be created again. */
+export function dropStatements(schema: DbSchema, dialect: Dialect): string[] {
+  const tables = creationOrder(schema).reverse()
+  if (MYSQL.has(dialect))
+    return [
+      'SET FOREIGN_KEY_CHECKS = 0',
+      ...tables.map((table) => `DROP TABLE IF EXISTS ${tableName(dialect, table)}`),
+      'SET FOREIGN_KEY_CHECKS = 1',
+    ]
+  if (dialect === 'postgresql')
+    return [
+      ...tables.map((table) => `DROP TABLE IF EXISTS ${tableName(dialect, table)} CASCADE`),
+      ...schema.enums
+        .filter((item) => item.storage === 'native')
+        .map((item) => `DROP TYPE IF EXISTS ${quoteName(dialect, item.name)} CASCADE`),
+    ]
+  return tables.map((table) => `DROP TABLE IF EXISTS ${tableName(dialect, table)}`)
+}
