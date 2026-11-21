@@ -32,6 +32,17 @@ STACKS = [
         "updates": ["partial"],
     },
     {
+        "language": "python",
+        "orm": "sql",
+        "label": "SQL (psycopg · MySQL Connector · sqlite3)",
+        "databases": ["postgresql", "mysql", "mariadb", "sqlite"],
+        # The drivers are synchronous
+        "execution": ["sync"],
+        "errors": ["exceptions"],
+        "dtoKinds": ["pydantic", "dataclass"],
+        "updates": ["partial"],
+    },
+    {
         "language": "typescript",
         "orm": "typeorm",
         "label": "TypeORM 0.3",

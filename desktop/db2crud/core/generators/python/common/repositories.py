@@ -172,6 +172,7 @@ def repository_file(context: dict, info: dict) -> dict:
     identity = any(column["column"].get("generated") == "identity" for column in info["columns"])
     # Written before the imports, which they may add to
     init_lines = orm["repository"]["init"](context, imports)
+    helper_lines = orm["repository"].get("helpers", lambda _context, _info, _imports: [])(context, info, imports)
     key = ", ".join(f"row.{column['attr']}" for column in info["key"])
     content = lines(
         f'"""Repository of the "{info["name"]}" table: reads and writes rows, and decides nothing."""',
@@ -196,6 +197,7 @@ def repository_file(context: dict, info: dict) -> dict:
         "",
         *[f"    {line}" if isinstance(line, str) else line for line in init_lines],
         *[item for block in sql_methods for item in ["", indent(block)]],
+        *helper_lines,
         settings["memoryRepositories"]
         and [
             "",
