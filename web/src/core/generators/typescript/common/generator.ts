@@ -11,7 +11,9 @@ import { contractFile, envExampleFile, gitignoreFile, packageFile, readmeFile, t
 import { repositoryFile } from './repositories.ts'
 import { serviceFile } from './services.ts'
 import { errorsFile, pagingFile } from './support.ts'
-import { testFiles } from './tests.ts'
+import { canMake, testFiles } from './tests.ts'
+import { planConversions } from '../../../conversions/plan.ts'
+import { conversionFiles, conversionTestFile, servicePlans } from './conversions.ts'
 import { unitOfWorkFile } from './unitOfWork.ts'
 
 function code(context: Context): GeneratedFile[] {
@@ -35,8 +37,14 @@ export function typescriptGenerator(orm: TsOrm): Generator {
   return {
     language: 'typescript',
     orm: orm.id,
-    generate({ schema, design, settings }) {
+    generate({ schema, design, settings, models }) {
       const context = createContext(orm, schema, design, settings)
+      const plans = models ? servicePlans(context, planConversions(schema, design, models)) : []
+      const tests = testFiles(context)
+      const conversionTests =
+        tests.length > 0 && (settings.tests === 'all' || settings.tests === 'services')
+          ? conversionTestFile(context, plans, (info) => canMake(context, info))
+          : null
       return [
         readmeFile(context),
         packageFile(context),
@@ -45,7 +53,9 @@ export function typescriptGenerator(orm: TsOrm): Generator {
         gitignoreFile(context),
         contractFile(context),
         ...code(context),
-        ...testFiles(context),
+        ...(models ? conversionFiles(context, models.schema, plans) : []),
+        ...tests,
+        ...(conversionTests ? [conversionTests] : []),
       ]
     },
   }
