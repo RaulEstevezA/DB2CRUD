@@ -1,0 +1,617 @@
+{
+ "tables": [
+  {
+   "table": "customers",
+   "models": [
+    {
+     "direction": "both",
+     "model": {
+      "value": "CustomerForm",
+      "status": "active",
+      "confidence": "exact",
+      "reasons": [
+       {
+        "code": "mapperModel",
+        "params": {
+         "mapping": "CustomerForm->Customer"
+        }
+       }
+      ],
+      "options": [
+       "CustomerForm",
+       "Customer",
+       null
+      ]
+     },
+     "columns": [
+      {
+       "column": "id",
+       "source": {
+        "value": {
+         "kind": "database"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "generatedColumn"
+         }
+        ],
+        "options": [
+         {
+          "kind": "database"
+         },
+         {
+          "kind": "field",
+          "field": "email"
+         },
+         {
+          "kind": "field",
+          "field": "firstName"
+         },
+         {
+          "kind": "field",
+          "field": "lastName"
+         },
+         {
+          "kind": "field",
+          "field": "status"
+         },
+         {
+          "kind": "field",
+          "field": "signedUp"
+         },
+         {
+          "kind": "field",
+          "field": "balance"
+         },
+         {
+          "kind": "field",
+          "field": "nickname"
+         },
+         {
+          "kind": "field",
+          "field": "legacyCode"
+         },
+         {
+          "kind": "field",
+          "field": "notes"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "email",
+       "source": {
+        "value": {
+         "kind": "mapper",
+         "mapping": "CustomerForm->Customer",
+         "side": "target",
+         "target": "email",
+         "fields": [
+          "email"
+         ],
+         "transform": "direct",
+         "inverse": true
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "mapperField",
+          "params": {
+           "fields": "email",
+           "transform": "direct"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "mapper",
+          "mapping": "CustomerForm->Customer",
+          "side": "target",
+          "target": "email",
+          "fields": [
+           "email"
+          ],
+          "transform": "direct",
+          "inverse": true
+         },
+         {
+          "kind": "field",
+          "field": "email"
+         },
+         {
+          "kind": "field",
+          "field": "firstName"
+         },
+         {
+          "kind": "field",
+          "field": "lastName"
+         },
+         {
+          "kind": "field",
+          "field": "status"
+         },
+         {
+          "kind": "field",
+          "field": "signedUp"
+         },
+         {
+          "kind": "field",
+          "field": "balance"
+         },
+         {
+          "kind": "field",
+          "field": "nickname"
+         },
+         {
+          "kind": "field",
+          "field": "legacyCode"
+         },
+         {
+          "kind": "field",
+          "field": "notes"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "full_name",
+       "source": {
+        "value": {
+         "kind": "mapper",
+         "mapping": "CustomerForm->Customer",
+         "side": "target",
+         "target": "fullName",
+         "fields": [
+          "firstName",
+          "lastName"
+         ],
+         "transform": "concat",
+         "inverse": false
+        },
+        "status": "pending",
+        "confidence": "review",
+        "reasons": [
+         {
+          "code": "mapperOneWay",
+          "params": {
+           "fields": "firstName, lastName",
+           "transform": "concat"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "mapper",
+          "mapping": "CustomerForm->Customer",
+          "side": "target",
+          "target": "fullName",
+          "fields": [
+           "firstName",
+           "lastName"
+          ],
+          "transform": "concat",
+          "inverse": false
+         },
+         {
+          "kind": "field",
+          "field": "email"
+         },
+         {
+          "kind": "field",
+          "field": "firstName"
+         },
+         {
+          "kind": "field",
+          "field": "lastName"
+         },
+         {
+          "kind": "field",
+          "field": "status"
+         },
+         {
+          "kind": "field",
+          "field": "signedUp"
+         },
+         {
+          "kind": "field",
+          "field": "balance"
+         },
+         {
+          "kind": "field",
+          "field": "nickname"
+         },
+         {
+          "kind": "field",
+          "field": "legacyCode"
+         },
+         {
+          "kind": "field",
+          "field": "notes"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "status",
+       "source": {
+        "value": {
+         "kind": "mapper",
+         "mapping": "CustomerForm->Customer",
+         "side": "target",
+         "target": "status",
+         "fields": [
+          "status"
+         ],
+         "transform": "enum",
+         "inverse": true
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "mapperField",
+          "params": {
+           "fields": "status",
+           "transform": "enum"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "mapper",
+          "mapping": "CustomerForm->Customer",
+          "side": "target",
+          "target": "status",
+          "fields": [
+           "status"
+          ],
+          "transform": "enum",
+          "inverse": true
+         },
+         {
+          "kind": "field",
+          "field": "email"
+         },
+         {
+          "kind": "field",
+          "field": "firstName"
+         },
+         {
+          "kind": "field",
+          "field": "lastName"
+         },
+         {
+          "kind": "field",
+          "field": "status"
+         },
+         {
+          "kind": "field",
+          "field": "signedUp"
+         },
+         {
+          "kind": "field",
+          "field": "balance"
+         },
+         {
+          "kind": "field",
+          "field": "nickname"
+         },
+         {
+          "kind": "field",
+          "field": "legacyCode"
+         },
+         {
+          "kind": "field",
+          "field": "notes"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "created_at",
+       "source": {
+        "value": {
+         "kind": "mapper",
+         "mapping": "CustomerForm->Customer",
+         "side": "target",
+         "target": "createdAt",
+         "fields": [
+          "signedUp"
+         ],
+         "transform": "epoch",
+         "inverse": true
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "mapperField",
+          "params": {
+           "fields": "signedUp",
+           "transform": "epoch"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "mapper",
+          "mapping": "CustomerForm->Customer",
+          "side": "target",
+          "target": "createdAt",
+          "fields": [
+           "signedUp"
+          ],
+          "transform": "epoch",
+          "inverse": true
+         },
+         {
+          "kind": "field",
+          "field": "email"
+         },
+         {
+          "kind": "field",
+          "field": "firstName"
+         },
+         {
+          "kind": "field",
+          "field": "lastName"
+         },
+         {
+          "kind": "field",
+          "field": "status"
+         },
+         {
+          "kind": "field",
+          "field": "signedUp"
+         },
+         {
+          "kind": "field",
+          "field": "balance"
+         },
+         {
+          "kind": "field",
+          "field": "nickname"
+         },
+         {
+          "kind": "field",
+          "field": "legacyCode"
+         },
+         {
+          "kind": "field",
+          "field": "notes"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "balance_cents",
+       "source": {
+        "value": {
+         "kind": "mapper",
+         "mapping": "CustomerForm->Customer",
+         "side": "target",
+         "target": "balanceCents",
+         "fields": [
+          "balance"
+         ],
+         "transform": "arithmetic",
+         "inverse": true
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "mapperField",
+          "params": {
+           "fields": "balance",
+           "transform": "arithmetic"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "mapper",
+          "mapping": "CustomerForm->Customer",
+          "side": "target",
+          "target": "balanceCents",
+          "fields": [
+           "balance"
+          ],
+          "transform": "arithmetic",
+          "inverse": true
+         },
+         {
+          "kind": "field",
+          "field": "email"
+         },
+         {
+          "kind": "field",
+          "field": "firstName"
+         },
+         {
+          "kind": "field",
+          "field": "lastName"
+         },
+         {
+          "kind": "field",
+          "field": "status"
+         },
+         {
+          "kind": "field",
+          "field": "signedUp"
+         },
+         {
+          "kind": "field",
+          "field": "balance"
+         },
+         {
+          "kind": "field",
+          "field": "nickname"
+         },
+         {
+          "kind": "field",
+          "field": "legacyCode"
+         },
+         {
+          "kind": "field",
+          "field": "notes"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "nickname",
+       "source": {
+        "value": {
+         "kind": "mapper",
+         "mapping": "CustomerForm->Customer",
+         "side": "target",
+         "target": "nickname",
+         "fields": [
+          "nickname"
+         ],
+         "transform": "direct",
+         "inverse": true
+        },
+        "status": "pending",
+        "confidence": "review",
+        "reasons": [
+         {
+          "code": "mapperPending",
+          "params": {
+           "fields": "nickname",
+           "transform": "direct"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "mapper",
+          "mapping": "CustomerForm->Customer",
+          "side": "target",
+          "target": "nickname",
+          "fields": [
+           "nickname"
+          ],
+          "transform": "direct",
+          "inverse": true
+         },
+         {
+          "kind": "field",
+          "field": "email"
+         },
+         {
+          "kind": "field",
+          "field": "firstName"
+         },
+         {
+          "kind": "field",
+          "field": "lastName"
+         },
+         {
+          "kind": "field",
+          "field": "status"
+         },
+         {
+          "kind": "field",
+          "field": "signedUp"
+         },
+         {
+          "kind": "field",
+          "field": "balance"
+         },
+         {
+          "kind": "field",
+          "field": "nickname"
+         },
+         {
+          "kind": "field",
+          "field": "legacyCode"
+         },
+         {
+          "kind": "field",
+          "field": "notes"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "country",
+       "source": {
+        "value": null,
+        "status": "pending",
+        "confidence": "conflict",
+        "reasons": [
+         {
+          "code": "noFieldRequired"
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "email"
+         },
+         {
+          "kind": "field",
+          "field": "firstName"
+         },
+         {
+          "kind": "field",
+          "field": "lastName"
+         },
+         {
+          "kind": "field",
+          "field": "status"
+         },
+         {
+          "kind": "field",
+          "field": "signedUp"
+         },
+         {
+          "kind": "field",
+          "field": "balance"
+         },
+         {
+          "kind": "field",
+          "field": "nickname"
+         },
+         {
+          "kind": "field",
+          "field": "legacyCode"
+         },
+         {
+          "kind": "field",
+          "field": "notes"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      }
+     ],
+     "children": [],
+     "unused": [
+      "notes"
+     ]
+    }
+   ]
+  }
+ ]
+}
