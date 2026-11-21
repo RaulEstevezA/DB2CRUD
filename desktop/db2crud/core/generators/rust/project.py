@@ -36,8 +36,9 @@ def _crates(context: dict) -> set[str]:
     return {column["crate"] for info in context["tables"] for column in info["columns"] if column["crate"]}
 
 
-def cargo_file(context: dict) -> dict:
-    used = _crates(context)
+def cargo_file(context: dict, extra: list[str] | None = None) -> dict:
+    """Cargo.toml; `extra` are the crates the conversions and the copy of the application models name too."""
+    used = {*_crates(context), *(extra or [])}
     features = [
         "macros",
         "runtime-tokio-rustls",
