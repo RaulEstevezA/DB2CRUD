@@ -31,7 +31,7 @@ const isNullableKey = (info: TableInfo, key: TableInfo['table']['foreignKeys'][n
   key.columns.every((name) => columnOf(info, name).column.nullable)
 
 /** Tables whose rows the tests can make: they can be inserted, and so can the parents they need. */
-function canMake(context: Context, info: TableInfo, seen = new Set<string>()): boolean {
+export function canMake(context: Context, info: TableInfo, seen = new Set<string>()): boolean {
   if (seen.has(info.name) || !query(info, 'insert')) return false
   const next = new Set(seen).add(info.name)
   return info.table.foreignKeys.every((key) => {
@@ -452,7 +452,7 @@ function createOfHelper(context: Context, info: TableInfo, uses: PhpUses): Line[
 }
 
 /** The property, setup and teardown of a test class over the test database. */
-function databaseMembers(context: Context, uses: PhpUses): Line[] {
+export function databaseMembers(context: Context, uses: PhpUses): Line[] {
   uses.add(rootClass(context, 'SqlUnitOfWork'))
   const caller = context.settings.transactions === 'caller'
   return [
