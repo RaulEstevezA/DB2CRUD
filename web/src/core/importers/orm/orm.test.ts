@@ -148,6 +148,12 @@ describe('ORM code written by DB2CRUD', () => {
       // Prisma keeps no CHECK constraints (DB2CRUD leaves them in a comment), and without migrations they are not read
       const expected = structuredClone(project.schema)
       if (read.schema.notes.some((note) => note.code === 'orm.checksNotKept')) for (const table of expected.tables) table.checks = []
+      // Sequelize cannot say a column is computed by the database (DB2CRUD leaves the expression in a comment)
+      if (name.startsWith('sequelize-'))
+        for (const table of expected.tables)
+          for (const column of table.columns)
+            if (typeof column.generated === 'object' && column.generated !== null && 'computed' in column.generated)
+              column.generated = undefined
       // Code for another engine than the project's has the types of that engine: only the structure has to agree
       // (the engine of the code is the second word of the name of the output: typeorm-mysql-…)
       const sameEngine = name.split('-')[1] === expected.dialect

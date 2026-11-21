@@ -83,6 +83,12 @@ export const SCENARIOS = [
   },
   { id: 'typeorm-sqlite-defaults', schema: 'shop', settings: { language: 'typescript', orm: 'typeorm', database: 'sqlite' } },
   {
+    id: 'typeorm-postgresql-conversions-dtos',
+    case: 'shop-typescript',
+    settings: { language: 'typescript', orm: 'typeorm', database: 'postgresql', serviceTypes: 'dtos' },
+    service: 'postgresql',
+  },
+  {
     id: 'typeorm-postgresql-class-dtos',
     schema: 'shop',
     settings: { language: 'typescript', orm: 'typeorm', database: 'postgresql', serviceTypes: 'dtos', dtoKind: 'class' },
@@ -114,6 +120,7 @@ export const SCENARIOS = [
   },
   { id: 'typeorm-sqlite-repositories-only', schema: 'shop', settings: { language: 'typescript', orm: 'typeorm', database: 'sqlite', services: false } },
   { id: 'prisma-sqlite-defaults', schema: 'shop', settings: { language: 'typescript', orm: 'prisma', database: 'sqlite' } },
+  { id: 'prisma-sqlite-conversions-import', case: 'shop-typescript', settings: { language: 'typescript', orm: 'prisma', database: 'sqlite', modelsSource: 'import' } },
   {
     id: 'prisma-postgresql-class-dtos',
     schema: 'shop',
@@ -147,6 +154,12 @@ export const SCENARIOS = [
   { id: 'prisma-sqlite-repositories-only', schema: 'shop', settings: { language: 'typescript', orm: 'prisma', database: 'sqlite', services: false } },
   { id: 'drizzle-sqlite-defaults', schema: 'shop', settings: { language: 'typescript', orm: 'drizzle', database: 'sqlite' } },
   {
+    id: 'drizzle-mysql-conversions-mapper',
+    case: 'mapper-write',
+    settings: { language: 'typescript', orm: 'drizzle', database: 'mysql', serviceTypes: 'dtos', dtoKind: 'class' },
+    service: 'mysql',
+  },
+  {
     id: 'drizzle-postgresql-class-dtos',
     schema: 'shop',
     settings: { language: 'typescript', orm: 'drizzle', database: 'postgresql', serviceTypes: 'dtos', dtoKind: 'class' },
@@ -178,6 +191,7 @@ export const SCENARIOS = [
   },
   { id: 'drizzle-sqlite-repositories-only', schema: 'shop', settings: { language: 'typescript', orm: 'drizzle', database: 'sqlite', services: false } },
   { id: 'sequelize-sqlite-defaults', schema: 'shop', settings: { language: 'typescript', orm: 'sequelize', database: 'sqlite' } },
+  { id: 'sequelize-sqlite-conversions-directions', case: 'directions-typescript', settings: { language: 'typescript', orm: 'sequelize', database: 'sqlite', memoryRepositories: false } },
   {
     id: 'sequelize-postgresql-class-dtos',
     schema: 'shop',
