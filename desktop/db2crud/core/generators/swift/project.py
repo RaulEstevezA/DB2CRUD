@@ -34,7 +34,8 @@ def _product(name: str, package: str) -> str:
     return f'.product(name: "{name}", package: "{package}")'
 
 
-def package_file(context: dict) -> dict:
+def package_file(context: dict, models: dict | None = None) -> dict:
+    """Package.swift; `models` when the conversions use the application models, in a target of their own."""
     driver = driver_of(context)["module"]
     driver_package = PACKAGES[driver]
     postgres_times = context["settings"]["database"] == "postgresql" and uses_times(context)
@@ -77,8 +78,17 @@ def package_file(context: dict) -> dict:
             f"                {_product('NIOPosix', 'swift-nio')},",
             f"                {_product('Logging', 'swift-log')},",
             postgres_times and f"                {_product('PostgresNIO', 'postgres-nio')},",
+            models and f'                "{models["target"]}",',
             "            ]",
             "        ),",
+            models
+            and [
+                "        // The application models: the copy DB2CRUD read, while the project runs on its own. Inside the"
+                " application, replace this target with your module."
+                if models["imported"]
+                else "        // The application models: a copy of the types DB2CRUD read.",
+                f'        .target(name: "{models["target"]}", path: "{models["path"]}"),',
+            ],
             _tests(context)
             and [
                 "        .testTarget(",
