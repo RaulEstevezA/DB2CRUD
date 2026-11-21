@@ -1,0 +1,332 @@
+{
+ "format": "mapper-project",
+ "version": 1,
+ "savedAt": "2026-11-20T12:00:00.000Z",
+ "source": {
+  "format": "typescript",
+  "text": "",
+  "model": "CustomerForm",
+  "schema": {
+   "format": "model-schema",
+   "version": 1,
+   "origin": {
+    "format": "typescript",
+    "language": "java"
+   },
+   "models": [
+    {
+     "name": "CustomerForm",
+     "kind": "interface",
+     "fields": [
+      {
+       "name": "email",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false
+      },
+      {
+       "name": "firstName",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false
+      },
+      {
+       "name": "lastName",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false
+      },
+      {
+       "name": "status",
+       "type": {
+        "kind": "enum",
+        "name": "CustomerState"
+       },
+       "nullable": false,
+       "optional": false
+      },
+      {
+       "name": "signedUp",
+       "type": {
+        "kind": "primitive",
+        "name": "integer"
+       },
+       "nullable": false,
+       "optional": false
+      },
+      {
+       "name": "balance",
+       "type": {
+        "kind": "primitive",
+        "name": "decimal"
+       },
+       "nullable": false,
+       "optional": false
+      },
+      {
+       "name": "nickname",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": true
+      },
+      {
+       "name": "legacyCode",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": true
+      },
+      {
+       "name": "notes",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": true
+      }
+     ]
+    }
+   ],
+   "enums": [
+    {
+     "name": "CustomerState",
+     "values": [
+      {
+       "name": "ACTIVE",
+       "value": "ACTIVE"
+      },
+      {
+       "name": "BLOCKED",
+       "value": "BLOCKED"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "target": {
+  "format": "typescript",
+  "text": "",
+  "model": "Customer",
+  "schema": {
+   "format": "model-schema",
+   "version": 1,
+   "origin": {
+    "format": "typescript",
+    "language": "java"
+   },
+   "models": [
+    {
+     "name": "Customer",
+     "kind": "interface",
+     "fields": [
+      {
+       "name": "id",
+       "type": {
+        "kind": "primitive",
+        "name": "integer"
+       },
+       "nullable": false,
+       "optional": false
+      },
+      {
+       "name": "email",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false
+      },
+      {
+       "name": "fullName",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false
+      },
+      {
+       "name": "status",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false
+      },
+      {
+       "name": "createdAt",
+       "type": {
+        "kind": "primitive",
+        "name": "datetime"
+       },
+       "nullable": false,
+       "optional": false
+      },
+      {
+       "name": "balanceCents",
+       "type": {
+        "kind": "primitive",
+        "name": "integer"
+       },
+       "nullable": false,
+       "optional": false
+      },
+      {
+       "name": "nickname",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": true,
+       "optional": false
+      }
+     ]
+    }
+   ],
+   "enums": []
+  }
+ },
+ "mapping": {
+  "root": "CustomerForm->Customer",
+  "mappings": [
+   {
+    "id": "CustomerForm->Customer",
+    "source": "CustomerForm",
+    "target": "Customer",
+    "ignoredSources": [
+     "legacyCode"
+    ],
+    "fields": [
+     {
+      "target": "id",
+      "sources": [],
+      "transform": {
+       "kind": "direct"
+      },
+      "status": "unmapped",
+      "confidence": "exact"
+     },
+     {
+      "target": "email",
+      "sources": [
+       [
+        "email"
+       ]
+      ],
+      "transform": {
+       "kind": "direct"
+      },
+      "status": "active",
+      "confidence": "exact"
+     },
+     {
+      "target": "fullName",
+      "sources": [
+       [
+        "firstName"
+       ],
+       [
+        "lastName"
+       ]
+      ],
+      "transform": {
+       "kind": "concat",
+       "separator": " "
+      },
+      "status": "active",
+      "confidence": "exact"
+     },
+     {
+      "target": "status",
+      "sources": [
+       [
+        "status"
+       ]
+      ],
+      "transform": {
+       "kind": "enum",
+       "pairs": [
+        {
+         "from": "ACTIVE",
+         "to": "active"
+        },
+        {
+         "from": "BLOCKED",
+         "to": "blocked"
+        }
+       ]
+      },
+      "status": "active",
+      "confidence": "exact"
+     },
+     {
+      "target": "createdAt",
+      "sources": [
+       [
+        "signedUp"
+       ]
+      ],
+      "transform": {
+       "kind": "epoch",
+       "unit": "seconds"
+      },
+      "status": "active",
+      "confidence": "exact"
+     },
+     {
+      "target": "balanceCents",
+      "sources": [
+       [
+        "balance"
+       ]
+      ],
+      "transform": {
+       "kind": "arithmetic",
+       "operator": "*",
+       "operand": 100
+      },
+      "status": "active",
+      "confidence": "exact"
+     },
+     {
+      "target": "nickname",
+      "sources": [
+       [
+        "nickname"
+       ]
+      ],
+      "transform": {
+       "kind": "direct"
+      },
+      "status": "pending",
+      "confidence": "exact"
+     }
+    ]
+   }
+  ]
+ },
+ "output": {
+  "generator": "typescript",
+  "mode": "functions",
+  "naming": "auto",
+  "options": {}
+ }
+}
