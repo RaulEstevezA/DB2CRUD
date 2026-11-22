@@ -9,6 +9,7 @@ import type { DbSchema } from '../schema/types.ts'
 import { normalizeSettings, type ProjectSettings } from '../settings/settings.ts'
 import { csharpGenerator } from './csharp/generator.ts'
 import { javaGenerator } from './java/generator.ts'
+import { jpaOrm } from './java/jpa/index.ts'
 import { kotlinGenerator } from './kotlin/generator.ts'
 import { rustGenerator } from './rust/generator.ts'
 import { swiftGenerator } from './swift/generator.ts'
@@ -36,7 +37,7 @@ export const GENERATORS: readonly Generator[] = [
   typescriptGenerator(drizzleOrm),
   typescriptGenerator(sequelizeOrm),
   typescriptGenerator(typescriptSqlOrm),
-  javaGenerator,
+  javaGenerator(jpaOrm),
   csharpGenerator,
   phpGenerator(doctrineOrm),
   phpGenerator(eloquentOrm),

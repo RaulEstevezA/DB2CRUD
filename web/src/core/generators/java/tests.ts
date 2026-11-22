@@ -24,7 +24,6 @@ import {
   type TableInfo,
 } from './context.ts'
 import { accessor, createColumns, createDto, updateColumns, updatePackage, updateType } from './dtos.ts'
-import { enumTypes } from './entities.ts'
 import { missingValue, sampleImports, sampleValue } from './samples.ts'
 
 const isNullableKey = (info: TableInfo, key: TableInfo['table']['foreignKeys'][number]) =>
@@ -107,102 +106,6 @@ function factoriesFile(context: Context, makeable: TableInfo[]): GeneratedFile {
     '',
   )
   return { path: javaPath(pkg, 'Factories', true), content }
-}
-
-// The test database
-
-function testDatabaseFile(context: Context): GeneratedFile {
-  const pkg = pkgOf(context)
-  const database = context.settings.database
-  const sqlite = database === 'sqlite'
-  const types = enumTypes(context)
-  const imports = new JavaImports(pkg).add('jakarta.persistence.EntityManager', 'jakarta.persistence.EntityManagerFactory')
-  if (types.length > 0) imports.add('java.sql.Connection', 'java.sql.DriverManager', 'java.sql.SQLException', 'java.sql.Statement')
-  const content = lines(
-    `package ${pkg};`,
-    '',
-    imports.write(),
-    '',
-    sqlite
-      ? '/** The test database: TEST_DATABASE_URL, or SQLite in a file of target/, created from the entities before every test. */'
-      : '/** The test database: the one TEST_DATABASE_URL names (with TEST_DATABASE_USER and TEST_DATABASE_PASSWORD), created from the entities before every test. */',
-    'final class TestDatabase {',
-    sqlite
-      ? '    static final String URL = System.getenv().getOrDefault("TEST_DATABASE_URL", "jdbc:sqlite:target/test.db?foreign_keys=true");'
-      : [
-          '    // The entities are written for one kind of database: the tests cannot fall back to SQLite',
-          '    static final String URL = System.getenv("TEST_DATABASE_URL");',
-        ],
-    '    static final String USER = System.getenv("TEST_DATABASE_USER");',
-    '    static final String PASSWORD = System.getenv("TEST_DATABASE_PASSWORD");',
-    '',
-    '    private static EntityManagerFactory factory;',
-    '',
-    '    private TestDatabase() {}',
-    '',
-    '    /** An EntityManager over the test database, with every table dropped and created again from the entities. */',
-    '    static synchronized EntityManager open() {',
-    !sqlite && [
-      '        if (URL == null)',
-      `            throw new IllegalStateException("The database tests need a disposable ${{ postgresql: 'PostgreSQL', mysql: 'MySQL', mariadb: 'MariaDB' }[database as 'postgresql']} database: set TEST_DATABASE_URL (it is emptied)");`,
-    ],
-    '        if (factory == null) {',
-    types.length > 0 && '            createTypes();',
-    '            factory = Database.configuration(URL, USER, PASSWORD).createEntityManagerFactory();',
-    '        }',
-    '        factory.getSchemaManager().drop(true);',
-    '        factory.getSchemaManager().create(true);',
-    '        return factory.createEntityManager();',
-    '    }',
-    types.length > 0 && [
-      '',
-      '    /** The enum types of the database the entities use, which Hibernate does not create. */',
-      '    private static void createTypes() {',
-      '        try (Connection connection = DriverManager.getConnection(URL, USER, PASSWORD); Statement statement = connection.createStatement()) {',
-      ...types.map(
-        (sql) => `            statement.execute(${javaString(`DO $$ BEGIN ${sql}; EXCEPTION WHEN duplicate_object THEN NULL; END $$`)});`,
-      ),
-      '        } catch (SQLException error) {',
-      '            throw new IllegalStateException(error);',
-      '        }',
-      '    }',
-    ],
-    '}',
-    '',
-  )
-  return { path: javaPath(pkg, 'TestDatabase', true), content }
-}
-
-function databaseTestFile(context: Context): GeneratedFile {
-  const pkg = pkgOf(context)
-  const database = context.settings.database
-  const query =
-    database === 'postgresql' ? 'SELECT current_database()' : database === 'sqlite' ? 'SELECT sqlite_version()' : 'SELECT DATABASE()'
-  const content = lines(
-    `package ${pkg};`,
-    '',
-    'import static org.junit.jupiter.api.Assertions.assertEquals;',
-    database === 'sqlite' && 'import static org.junit.jupiter.api.Assertions.assertTrue;',
-    '',
-    'import jakarta.persistence.EntityManager;',
-    database !== 'sqlite' && 'import java.net.URI;',
-    'import org.junit.jupiter.api.Test;',
-    '',
-    '/** The tests run on the database they were asked to. */',
-    'class DatabaseTest {',
-    '    @Test',
-    database === 'sqlite' ? '    void isSqlite() {' : '    void isTheOneTestDatabaseUrlNames() {',
-    '        EntityManager entityManager = TestDatabase.open();',
-    `        Object result = entityManager.createNativeQuery(${javaString(query)}).getSingleResult();`,
-    '        entityManager.close();',
-    database === 'sqlite'
-      ? '        assertTrue(String.valueOf(result).startsWith("3."));'
-      : '        assertEquals(URI.create(TestDatabase.URL.substring("jdbc:".length())).getPath().substring(1), String.valueOf(result));',
-    '    }',
-    '}',
-    '',
-  )
-  return { path: javaPath(pkg, 'DatabaseTest', true), content }
 }
 
 // Tests of each table
@@ -503,9 +406,8 @@ export function testFiles(context: Context): GeneratedFile[] {
   const tests = context.settings.tests
   if (tests === 'none' || !writesEntities(context)) return []
   const makeable = context.tables.filter((info) => canMake(context, info))
-  const files: GeneratedFile[] = [testDatabaseFile(context), databaseTestFile(context), factoriesFile(context, makeable)]
+  const files: GeneratedFile[] = [...context.orm.testDatabaseFiles(context), factoriesFile(context, makeable)]
   const memory = context.settings.memoryRepositories
-  const caller = context.settings.transactions === 'caller'
   const pkg = pkgOf(context)
   for (const info of makeable) {
     const className = `${info.entity}Test`
@@ -540,7 +442,8 @@ export function testFiles(context: Context): GeneratedFile[] {
       }
     }
     if (nested.length === 0) continue
-    if (database) imports.add('jakarta.persistence.EntityManager', 'org.junit.jupiter.api.AfterEach', 'org.junit.jupiter.api.BeforeEach')
+    // Written before the imports, which it adds to
+    const session = database ? context.orm.testSession(context, imports) : null
     const content = lines(
       `package ${pkg};`,
       '',
@@ -548,25 +451,7 @@ export function testFiles(context: Context): GeneratedFile[] {
       '',
       `/** Tests of the "${info.name}" table. */`,
       `class ${className} {`,
-      database && [
-        '    private EntityManager entityManager;',
-        '    /** The repositories over the test database, opened empty for every test */',
-        '    private SqlUnitOfWork uow;',
-        '',
-        '    @BeforeEach',
-        '    void open() {',
-        '        entityManager = TestDatabase.open();',
-        caller && '        // The caller owns the transaction: the test opens it, and rolls it back at the end',
-        caller && '        entityManager.getTransaction().begin();',
-        '        uow = new SqlUnitOfWork(entityManager);',
-        '    }',
-        '',
-        '    @AfterEach',
-        '    void close() {',
-        '        if (entityManager.getTransaction().isActive()) entityManager.getTransaction().rollback();',
-        '        entityManager.close();',
-        '    }',
-      ],
+      session,
       ...nested,
       '}',
       '',

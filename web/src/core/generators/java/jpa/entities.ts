@@ -5,11 +5,11 @@
  * database instead of designing it. Values the database fills (defaults, identities) are left to it
  * (@DynamicInsert) and read back by the repositories.
  */
-import type { GeneratedFile } from '../../export/files.ts'
-import type { DbEnum, Dialect } from '../../schema/types.ts'
-import { lines, type Line } from '../types.ts'
-import { javaPath, javaString, JavaImports } from './java.ts'
-import { findInfo, jpqlName, packageOf, qualified, type ColumnInfo, type Context, type TableInfo } from './context.ts'
+import type { GeneratedFile } from '../../../export/files.ts'
+import type { DbEnum, Dialect } from '../../../schema/types.ts'
+import { lines, type Line } from '../../types.ts'
+import { javaPath, javaString, JavaImports } from '../java.ts'
+import { findInfo, jpqlName, packageOf, qualified, type ColumnInfo, type Context, type TableInfo } from '../context.ts'
 
 const PERSISTENCE = 'jakarta.persistence'
 const HIBERNATE = 'org.hibernate.annotations'

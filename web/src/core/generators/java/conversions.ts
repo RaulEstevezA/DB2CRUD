@@ -866,7 +866,6 @@ export function conversionTestFile(
     .add('org.junit.jupiter.api.Test')
     .addStatic('org.junit.jupiter.api.Assertions.assertEquals', 'org.junit.jupiter.api.Assertions.assertNotNull')
   const memory = context.settings.memoryRepositories
-  const caller = context.settings.transactions === 'caller'
   const tests: string[][] = []
   const readers = new Map<string, string[]>()
   for (const plan of plans) {
@@ -915,7 +914,8 @@ export function conversionTestFile(
     ])
   }
   if (tests.length === 0) return null
-  if (!memory) imports.add('jakarta.persistence.EntityManager', 'org.junit.jupiter.api.AfterEach', 'org.junit.jupiter.api.BeforeEach')
+  // Written before the imports, which it adds to
+  const session = memory ? null : context.orm.testSession(context, imports)
   const content = lines(
     `package ${pkg};`,
     '',
@@ -923,27 +923,7 @@ export function conversionTestFile(
     '',
     '/** Tests of the conversions between the application models and the tables. */',
     'class ConversionsTest {',
-    memory
-      ? '    private final MemoryUnitOfWork uow = new MemoryUnitOfWork();'
-      : [
-          '    private EntityManager entityManager;',
-          '    /** The repositories over the test database, opened empty for every test */',
-          '    private SqlUnitOfWork uow;',
-          '',
-          '    @BeforeEach',
-          '    void open() {',
-          '        entityManager = TestDatabase.open();',
-          caller && '        // The caller owns the transaction: the test opens it, and rolls it back at the end',
-          caller && '        entityManager.getTransaction().begin();',
-          '        uow = new SqlUnitOfWork(entityManager);',
-          '    }',
-          '',
-          '    @AfterEach',
-          '    void close() {',
-          '        if (entityManager.getTransaction().isActive()) entityManager.getTransaction().rollback();',
-          '        entityManager.close();',
-          '    }',
-        ],
+    memory ? '    private final MemoryUnitOfWork uow = new MemoryUnitOfWork();' : session,
     ...tests.flat(),
     ...[...readers.values()].flatMap((block) => ['', ...block]),
     '}',

@@ -1,7 +1,7 @@
 /**
  * What every Java project shares: the domain errors services throw (no HTTP codes), the pages lists are read
- * in, Patch (a field of an update: absent, null or a value), the unit of work over the repositories, and the
- * EntityManagerFactory of the database DATABASE_URL names.
+ * in, Patch (a field of an update: absent, null or a value), and the unit of work over the repositories (its database
+ * class is the strategy's, orm.ts).
  */
 import type { GeneratedFile } from '../../export/files.ts'
 import { lines } from '../types.ts'
@@ -10,14 +10,13 @@ import {
   commonPackage,
   errorsPackage,
   memoryRepositoryClass,
-  packageOf,
   qualified,
   repositoryType,
   sqlRepositoryClass,
   type Context,
 } from './context.ts'
 
-function file(pkg: string, name: string, body: string[], imports?: JavaImports): GeneratedFile {
+export function file(pkg: string, name: string, body: string[], imports?: JavaImports): GeneratedFile {
   const written = imports?.write() ?? ''
   return { path: javaPath(pkg, name), content: lines(`package ${pkg};`, '', written !== '' && [written, ''], ...body, '') }
 }
@@ -206,11 +205,11 @@ export function commonFiles(context: Context): GeneratedFile[] {
   return files
 }
 
-const HOW = {
+const how = (context: Context) => ({
   operation: 'Each service operation runs in transaction(): committed when it ends, rolled back when it fails.',
-  caller: 'Services never commit: whoever holds the EntityManager opens and ends its transaction; transaction() only groups the code.',
+  caller: `Services never commit: whoever holds the ${context.orm.holder} opens and ends its transaction; transaction() only groups the code.`,
   repository: 'Every repository write is committed at once; transaction() only groups the code.',
-}
+})
 
 /** UnitOfWork, SqlUnitOfWork and MemoryUnitOfWork, in the base package. */
 export function unitOfWorkFiles(context: Context): GeneratedFile[] {
@@ -240,7 +239,7 @@ export function unitOfWorkFiles(context: Context): GeneratedFile[] {
       pkg,
       'UnitOfWork',
       [
-        `/** What services depend on: a repository per table and a transaction. ${HOW[settings.transactions]} */`,
+        `/** What services depend on: a repository per table and a transaction. ${how(context)[settings.transactions]} */`,
         'public interface UnitOfWork {',
         ...context.tables.map((info) => `    ${repositoryType(context, info)} ${info.attr}();`),
         '',
@@ -251,57 +250,10 @@ export function unitOfWorkFiles(context: Context): GeneratedFile[] {
       typeImports(new JavaImports(pkg).add('java.util.function.Function'), 'interface'),
     ),
   ]
-  files.push(
-    file(
-      pkg,
-      'SqlUnitOfWork',
-      [
-        '/** The repositories over one EntityManager, and its transaction. */',
-        'public class SqlUnitOfWork implements UnitOfWork {',
-        '    private final EntityManager entityManager;',
-        ...context.tables.map((info) => `    private final ${repositoryType(context, info)} ${info.attr};`),
-        '',
-        '    public SqlUnitOfWork(EntityManager entityManager) {',
-        '        this.entityManager = entityManager;',
-        ...context.tables.map((info) => `        this.${info.attr} = new ${sqlRepositoryClass(info)}(entityManager);`),
-        '    }',
-        '',
-        '    public EntityManager entityManager() {',
-        '        return entityManager;',
-        '    }',
-        ...accessors(),
-        '',
-        '    @Override',
-        '    public <T> T transaction(Function<UnitOfWork, T> work) {',
-        ...(settings.transactions === 'operation'
-          ? [
-              '        EntityTransaction transaction = entityManager.getTransaction();',
-              '        // Joins the transaction already open',
-              '        if (transaction.isActive()) return work.apply(this);',
-              '        transaction.begin();',
-              '        try {',
-              '            T result = work.apply(this);',
-              '            transaction.commit();',
-              '            return result;',
-              '        } catch (RuntimeException error) {',
-              '            if (transaction.isActive()) transaction.rollback();',
-              '            throw error;',
-              '        }',
-            ]
-          : ['        return work.apply(this);']),
-        '    }',
-        '}',
-      ],
-      typeImports(
-        new JavaImports(pkg).add(
-          'jakarta.persistence.EntityManager',
-          'java.util.function.Function',
-          ...(settings.transactions === 'operation' ? ['jakarta.persistence.EntityTransaction'] : []),
-        ),
-        'sql',
-      ),
-    ),
-  )
+  const sqlImports = typeImports(new JavaImports(pkg).add('java.util.function.Function'), 'sql')
+  // Written before the imports, which it adds to
+  const sqlUnitOfWork = context.orm.unitOfWork(context, sqlImports, accessors())
+  files.push(file(pkg, 'SqlUnitOfWork', sqlUnitOfWork, sqlImports))
   if (settings.memoryRepositories)
     files.push(
       file(
@@ -324,56 +276,4 @@ export function unitOfWorkFiles(context: Context): GeneratedFile[] {
       ),
     )
   return files
-}
-
-/** `Database`: the EntityManagerFactory of the database DATABASE_URL names, with every entity. */
-export function databaseFile(context: Context): GeneratedFile {
-  const pkg = context.base
-  const imports = new JavaImports(pkg).add(
-    'jakarta.persistence.EntityManagerFactory',
-    'org.hibernate.jpa.HibernatePersistenceConfiguration',
-  )
-  for (const info of context.tables) imports.add(`${packageOf(context, info, 'entity')}.${info.entity}`)
-  const url = {
-    postgresql: 'jdbc:postgresql://localhost:5432/app',
-    mysql: 'jdbc:mysql://localhost:3306/app',
-    mariadb: 'jdbc:mariadb://localhost:3306/app',
-    sqlite: 'jdbc:sqlite:app.db?foreign_keys=true',
-  }[context.settings.database as 'postgresql' | 'mysql' | 'mariadb' | 'sqlite']
-  return file(
-    pkg,
-    'Database',
-    [
-      '/** The database DATABASE_URL names (a JDBC URL; DATABASE_USER and DATABASE_PASSWORD), through Hibernate. */',
-      'public final class Database {',
-      `    public static final String DEFAULT_URL = "${url}";`,
-      '',
-      '    private Database() {}',
-      '',
-      '    /** Every entity, so Hibernate knows every table */',
-      `    public static final List<Class<?>> ENTITIES = List.of(${context.tables.map((info) => `${info.entity}.class`).join(', ')});`,
-      '',
-      '    /** The configuration of the database at url: give it a connection pool or a DataSource for production. */',
-      '    public static HibernatePersistenceConfiguration configuration(String url, String user, String password) {',
-      '        HibernatePersistenceConfiguration configuration = new HibernatePersistenceConfiguration("app")',
-      '                .managedClasses(ENTITIES)',
-      '                .jdbcUrl(url)',
-      '                // The services check the values; the database fills its defaults',
-      '                .property("hibernate.check_nullability", false)',
-      '                // Every name is quoted, so names like rank or order work and are used exactly as the database has them',
-      '                .property("hibernate.globally_quoted_identifiers", true)',
-      '                .property("hibernate.globally_quoted_identifiers_skip_column_definitions", true);',
-      '        if (user != null) configuration.jdbcCredentials(user, password == null ? "" : password);',
-      '        return configuration;',
-      '    }',
-      '',
-      '    /** The EntityManagerFactory of DATABASE_URL, DATABASE_USER and DATABASE_PASSWORD. */',
-      '    public static EntityManagerFactory open() {',
-      '        String url = System.getenv().getOrDefault("DATABASE_URL", DEFAULT_URL);',
-      '        return configuration(url, System.getenv("DATABASE_USER"), System.getenv("DATABASE_PASSWORD")).createEntityManagerFactory();',
-      '    }',
-      '}',
-    ],
-    imports.add('java.util.List'),
-  )
 }
