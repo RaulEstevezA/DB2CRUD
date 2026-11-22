@@ -5,6 +5,7 @@ from ..settings.settings import normalize_settings
 from .csharp.generator import CSHARP_GENERATOR
 from .java.generator import java_generator
 from .java.jpa.index import JPA_ORM
+from .java.sql.index import SQL_ORM as JAVA_SQL_ORM
 from .kotlin.generator import KOTLIN_GENERATOR
 from .php.common.generator import php_generator
 from .php.doctrine.index import DOCTRINE_ORM
@@ -32,6 +33,7 @@ GENERATORS = [
     typescript_generator(SEQUELIZE_ORM),
     typescript_generator(TYPESCRIPT_SQL_ORM),
     java_generator(JPA_ORM),
+    java_generator(JAVA_SQL_ORM),
     CSHARP_GENERATOR,
     php_generator(DOCTRINE_ORM),
     php_generator(ELOQUENT_ORM),

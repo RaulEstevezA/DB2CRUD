@@ -279,6 +279,7 @@ def _doc(context: dict, info: dict) -> str:
 JPA_ORM = {
     "id": "jpa",
     "holder": "EntityManager",
+    "forget": "uow.entityManager().clear();",
     "databaseFiles": lambda context: [database_file(context)],
     "entityFile": entity_file,
     "repository": {"doc": _doc, "head": jpa_head, "body": jpa_body, "tail": jpa_tail},

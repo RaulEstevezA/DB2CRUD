@@ -202,7 +202,7 @@ def _repository_tests(context: dict, info: dict) -> list[list]:
             "isStoredAndReadBack",
             [
                 stored,
-                "uow.entityManager().clear();",
+                context["orm"]["forget"],
                 bool(get_by_key)
                 and [
                     f"{entity} found = {repo}.{query_name(context, get_by_key)}({key_of('stored')}).orElseThrow();",
@@ -252,7 +252,7 @@ def _repository_tests(context: dict, info: dict) -> list[list]:
                     stored,
                     f'stored.{text["setter"]}("changed");',
                     f"{repo}.{query_name(context, update)}(stored);",
-                    "uow.entityManager().clear();",
+                    context["orm"]["forget"],
                     f'assertEquals("changed", {repo}.{query_name(context, get_by_key)}({key_of("stored")}).orElseThrow().{text["getter"]}());',
                 ],
             )
