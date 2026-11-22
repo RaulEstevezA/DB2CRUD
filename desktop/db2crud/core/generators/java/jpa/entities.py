@@ -6,10 +6,10 @@ the repositories. Mirrors web/src/core/generators/java/entities.ts."""
 
 import re
 
-from ...js import number_text
-from ..types import lines
-from .context import find_info, is_in, jpql_name, package_of, qualified
-from .java import JavaImports, java_path, java_string
+from ....js import number_text
+from ...types import lines
+from ..context import find_info, is_in, jpql_name, package_of, qualified
+from ..java import JavaImports, java_path, java_string
 
 PERSISTENCE = "jakarta.persistence"
 HIBERNATE = "org.hibernate.annotations"

@@ -7,7 +7,6 @@ from .context import (
     common_package,
     errors_package,
     memory_repository_class,
-    package_of,
     qualified,
     repository_type,
     sql_repository_class,
@@ -169,7 +168,7 @@ PATCH = [
 ]
 
 
-def _file(pkg: str, name: str, body: list[str], imports: JavaImports | None = None) -> dict:
+def file(pkg: str, name: str, body: list[str], imports: JavaImports | None = None) -> dict:
     written = imports.write() if imports else ""
     return {
         "path": java_path(pkg, name),
@@ -180,11 +179,11 @@ def _file(pkg: str, name: str, body: list[str], imports: JavaImports | None = No
 def error_files(context: dict) -> list[dict]:
     pkg = errors_package(context)
     return [
-        _file(pkg, "DomainException", DOMAINEXCEPTION),
-        _file(pkg, "NotFoundException", NOTFOUNDEXCEPTION),
-        _file(pkg, "ConflictException", CONFLICTEXCEPTION, JavaImports(pkg).add("java.util.List")),
-        _file(pkg, "FieldError", FIELDERROR),
-        _file(
+        file(pkg, "DomainException", DOMAINEXCEPTION),
+        file(pkg, "NotFoundException", NOTFOUNDEXCEPTION),
+        file(pkg, "ConflictException", CONFLICTEXCEPTION, JavaImports(pkg).add("java.util.List")),
+        file(pkg, "FieldError", FIELDERROR),
+        file(
             pkg,
             "ValidationFailedException",
             VALIDATIONFAILEDEXCEPTION,
@@ -198,21 +197,22 @@ def common_files(context: dict) -> list[dict]:
     settings = context["settings"]
     files = []
     if settings["paging"] == "offset":
-        files.append(_file(pkg, "Page", PAGE, JavaImports(pkg).add("java.util.List", "java.util.function.Function")))
+        files.append(file(pkg, "Page", PAGE, JavaImports(pkg).add("java.util.List", "java.util.function.Function")))
     if settings["paging"] == "cursor":
         files.append(
-            _file(pkg, "CursorPage", CURSORPAGE, JavaImports(pkg).add("java.util.List", "java.util.function.Function"))
+            file(pkg, "CursorPage", CURSORPAGE, JavaImports(pkg).add("java.util.List", "java.util.function.Function"))
         )
     if settings["services"] and settings["updates"] == "patch":
-        files.append(_file(pkg, "Patch", PATCH))
+        files.append(file(pkg, "Patch", PATCH))
     return files
 
 
-HOW = {
-    "operation": "Each service operation runs in transaction(): committed when it ends, rolled back when it fails.",
-    "caller": "Services never commit: whoever holds the EntityManager opens and ends its transaction; transaction() only groups the code.",
-    "repository": "Every repository write is committed at once; transaction() only groups the code.",
-}
+def _how(context: dict) -> dict:
+    return {
+        "operation": "Each service operation runs in transaction(): committed when it ends, rolled back when it fails.",
+        "caller": f"Services never commit: whoever holds the {context['orm']['holder']} opens and ends its transaction; transaction() only groups the code.",
+        "repository": "Every repository write is committed at once; transaction() only groups the code.",
+    }
 
 
 def unit_of_work_files(context: dict) -> list[dict]:
@@ -246,11 +246,11 @@ def unit_of_work_files(context: dict) -> list[dict]:
         return result
 
     files = [
-        _file(
+        file(
             pkg,
             "UnitOfWork",
             [
-                f"/** What services depend on: a repository per table and a transaction. {HOW[settings['transactions']]} */",
+                f"/** What services depend on: a repository per table and a transaction. {_how(context)[settings['transactions']]} */",
                 "public interface UnitOfWork {",
                 *(f"    {repository_type(context, info)} {info['attr']}();" for info in tables),
                 "",
@@ -261,61 +261,13 @@ def unit_of_work_files(context: dict) -> list[dict]:
             type_imports(JavaImports(pkg).add("java.util.function.Function"), "interface"),
         )
     ]
-    operation = settings["transactions"] == "operation"
-    if operation:
-        transaction = [
-            "        EntityTransaction transaction = entityManager.getTransaction();",
-            "        // Joins the transaction already open",
-            "        if (transaction.isActive()) return work.apply(this);",
-            "        transaction.begin();",
-            "        try {",
-            "            T result = work.apply(this);",
-            "            transaction.commit();",
-            "            return result;",
-            "        } catch (RuntimeException error) {",
-            "            if (transaction.isActive()) transaction.rollback();",
-            "            throw error;",
-            "        }",
-        ]
-    else:
-        transaction = ["        return work.apply(this);"]
-    sql_imports = JavaImports(pkg).add(
-        "jakarta.persistence.EntityManager",
-        "java.util.function.Function",
-        *(["jakarta.persistence.EntityTransaction"] if operation else []),
-    )
-    files.append(
-        _file(
-            pkg,
-            "SqlUnitOfWork",
-            [
-                "/** The repositories over one EntityManager, and its transaction. */",
-                "public class SqlUnitOfWork implements UnitOfWork {",
-                "    private final EntityManager entityManager;",
-                *(f"    private final {repository_type(context, info)} {info['attr']};" for info in tables),
-                "",
-                "    public SqlUnitOfWork(EntityManager entityManager) {",
-                "        this.entityManager = entityManager;",
-                *(f"        this.{info['attr']} = new {sql_repository_class(info)}(entityManager);" for info in tables),
-                "    }",
-                "",
-                "    public EntityManager entityManager() {",
-                "        return entityManager;",
-                "    }",
-                *accessors(),
-                "",
-                "    @Override",
-                "    public <T> T transaction(Function<UnitOfWork, T> work) {",
-                *transaction,
-                "    }",
-                "}",
-            ],
-            type_imports(sql_imports, "sql"),
-        )
-    )
+    sql_imports = type_imports(JavaImports(pkg).add("java.util.function.Function"), "sql")
+    # Written before the imports, which it adds to
+    sql_unit_of_work = context["orm"]["unitOfWork"](context, sql_imports, accessors())
+    files.append(file(pkg, "SqlUnitOfWork", sql_unit_of_work, sql_imports))
     if settings["memoryRepositories"]:
         files.append(
-            _file(
+            file(
                 pkg,
                 "MemoryUnitOfWork",
                 [
@@ -338,59 +290,3 @@ def unit_of_work_files(context: dict) -> list[dict]:
             )
         )
     return files
-
-
-URLS = {
-    "postgresql": "jdbc:postgresql://localhost:5432/app",
-    "mysql": "jdbc:mysql://localhost:3306/app",
-    "mariadb": "jdbc:mariadb://localhost:3306/app",
-    "sqlite": "jdbc:sqlite:app.db?foreign_keys=true",
-}
-
-
-def database_file(context: dict) -> dict:
-    """Database: the EntityManagerFactory of the database DATABASE_URL names, with every entity."""
-    pkg = context["base"]
-    imports = JavaImports(pkg).add(
-        "jakarta.persistence.EntityManagerFactory", "org.hibernate.jpa.HibernatePersistenceConfiguration"
-    )
-    for info in context["tables"]:
-        imports.add(f"{package_of(context, info, 'entity')}.{info['entity']}")
-    url = URLS.get(context["settings"]["database"])
-    entities = ", ".join(f"{info['entity']}.class" for info in context["tables"])
-    return _file(
-        pkg,
-        "Database",
-        [
-            "/** The database DATABASE_URL names (a JDBC URL; DATABASE_USER and DATABASE_PASSWORD), through Hibernate. */",
-            "public final class Database {",
-            f'    public static final String DEFAULT_URL = "{url}";',
-            "",
-            "    private Database() {}",
-            "",
-            "    /** Every entity, so Hibernate knows every table */",
-            f"    public static final List<Class<?>> ENTITIES = List.of({entities});",
-            "",
-            "    /** The configuration of the database at url: give it a connection pool or a DataSource for production. */",
-            "    public static HibernatePersistenceConfiguration configuration(String url, String user, String password) {",
-            '        HibernatePersistenceConfiguration configuration = new HibernatePersistenceConfiguration("app")',
-            "                .managedClasses(ENTITIES)",
-            "                .jdbcUrl(url)",
-            "                // The services check the values; the database fills its defaults",
-            '                .property("hibernate.check_nullability", false)',
-            "                // Every name is quoted, so names like rank or order work and are used exactly as the database has them",
-            '                .property("hibernate.globally_quoted_identifiers", true)',
-            '                .property("hibernate.globally_quoted_identifiers_skip_column_definitions", true);',
-            '        if (user != null) configuration.jdbcCredentials(user, password == null ? "" : password);',
-            "        return configuration;",
-            "    }",
-            "",
-            "    /** The EntityManagerFactory of DATABASE_URL, DATABASE_USER and DATABASE_PASSWORD. */",
-            "    public static EntityManagerFactory open() {",
-            '        String url = System.getenv().getOrDefault("DATABASE_URL", DEFAULT_URL);',
-            '        return configuration(url, System.getenv("DATABASE_USER"), System.getenv("DATABASE_PASSWORD")).createEntityManagerFactory();',
-            "    }",
-            "}",
-        ],
-        imports.add("java.util.List"),
-    )

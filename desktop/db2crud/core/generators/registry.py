@@ -3,7 +3,8 @@
 from ..conversions.plan import conversions_available
 from ..settings.settings import normalize_settings
 from .csharp.generator import CSHARP_GENERATOR
-from .java.generator import JAVA_GENERATOR
+from .java.generator import java_generator
+from .java.jpa.index import JPA_ORM
 from .kotlin.generator import KOTLIN_GENERATOR
 from .php.common.generator import php_generator
 from .php.doctrine.index import DOCTRINE_ORM
@@ -30,7 +31,7 @@ GENERATORS = [
     typescript_generator(DRIZZLE_ORM),
     typescript_generator(SEQUELIZE_ORM),
     typescript_generator(TYPESCRIPT_SQL_ORM),
-    JAVA_GENERATOR,
+    java_generator(JPA_ORM),
     CSHARP_GENERATOR,
     php_generator(DOCTRINE_ORM),
     php_generator(ELOQUENT_ORM),

@@ -18,7 +18,6 @@ from .context import (
     writes_entities,
 )
 from .dtos import accessor, create_columns, create_dto, update_columns, update_package, update_type
-from .entities import enum_types
 from .java import JavaImports, java_path, java_string
 from .samples import missing_value, sample_imports, sample_value
 
@@ -121,117 +120,6 @@ def _factories_file(context: dict, makeable: list[dict]) -> dict:
         "",
     )
     return {"path": java_path(pkg, "Factories", True), "content": content}
-
-
-# The test database
-
-NAMES = {"postgresql": "PostgreSQL", "mysql": "MySQL", "mariadb": "MariaDB"}
-
-
-def _test_database_file(context: dict) -> dict:
-    pkg = context["base"]
-    database = context["settings"]["database"]
-    sqlite = database == "sqlite"
-    types = enum_types(context)
-    imports = JavaImports(pkg).add("jakarta.persistence.EntityManager", "jakarta.persistence.EntityManagerFactory")
-    if types:
-        imports.add("java.sql.Connection", "java.sql.DriverManager", "java.sql.SQLException", "java.sql.Statement")
-    if sqlite:
-        doc = "/** The test database: TEST_DATABASE_URL, or SQLite in a file of target/, created from the entities before every test. */"
-        url = '    static final String URL = System.getenv().getOrDefault("TEST_DATABASE_URL", "jdbc:sqlite:target/test.db?foreign_keys=true");'
-    else:
-        doc = "/** The test database: the one TEST_DATABASE_URL names (with TEST_DATABASE_USER and TEST_DATABASE_PASSWORD), created from the entities before every test. */"
-        url = [
-            "    // The entities are written for one kind of database: the tests cannot fall back to SQLite",
-            '    static final String URL = System.getenv("TEST_DATABASE_URL");',
-        ]
-    statements = [
-        f"            statement.execute({java_string(f'DO $$ BEGIN {sql}; EXCEPTION WHEN duplicate_object THEN NULL; END $$')});"
-        for sql in types
-    ]
-    content = lines(
-        f"package {pkg};",
-        "",
-        imports.write(),
-        "",
-        doc,
-        "final class TestDatabase {",
-        url,
-        '    static final String USER = System.getenv("TEST_DATABASE_USER");',
-        '    static final String PASSWORD = System.getenv("TEST_DATABASE_PASSWORD");',
-        "",
-        "    private static EntityManagerFactory factory;",
-        "",
-        "    private TestDatabase() {}",
-        "",
-        "    /** An EntityManager over the test database, with every table dropped and created again from the entities. */",
-        "    static synchronized EntityManager open() {",
-        not sqlite
-        and [
-            "        if (URL == null)",
-            f'            throw new IllegalStateException("The database tests need a disposable {NAMES.get(database)} database: set TEST_DATABASE_URL (it is emptied)");',
-        ],
-        "        if (factory == null) {",
-        bool(types) and "            createTypes();",
-        "            factory = Database.configuration(URL, USER, PASSWORD).createEntityManagerFactory();",
-        "        }",
-        "        factory.getSchemaManager().drop(true);",
-        "        factory.getSchemaManager().create(true);",
-        "        return factory.createEntityManager();",
-        "    }",
-        bool(types)
-        and [
-            "",
-            "    /** The enum types of the database the entities use, which Hibernate does not create. */",
-            "    private static void createTypes() {",
-            "        try (Connection connection = DriverManager.getConnection(URL, USER, PASSWORD); Statement statement = connection.createStatement()) {",
-            *statements,
-            "        } catch (SQLException error) {",
-            "            throw new IllegalStateException(error);",
-            "        }",
-            "    }",
-        ],
-        "}",
-        "",
-    )
-    return {"path": java_path(pkg, "TestDatabase", True), "content": content}
-
-
-def _database_test_file(context: dict) -> dict:
-    pkg = context["base"]
-    database = context["settings"]["database"]
-    sqlite = database == "sqlite"
-    if database == "postgresql":
-        sql = "SELECT current_database()"
-    elif sqlite:
-        sql = "SELECT sqlite_version()"
-    else:
-        sql = "SELECT DATABASE()"
-    content = lines(
-        f"package {pkg};",
-        "",
-        "import static org.junit.jupiter.api.Assertions.assertEquals;",
-        sqlite and "import static org.junit.jupiter.api.Assertions.assertTrue;",
-        "",
-        "import jakarta.persistence.EntityManager;",
-        not sqlite and "import java.net.URI;",
-        "import org.junit.jupiter.api.Test;",
-        "",
-        "/** The tests run on the database they were asked to. */",
-        "class DatabaseTest {",
-        "    @Test",
-        "    void isSqlite() {" if sqlite else "    void isTheOneTestDatabaseUrlNames() {",
-        "        EntityManager entityManager = TestDatabase.open();",
-        f"        Object result = entityManager.createNativeQuery({java_string(sql)}).getSingleResult();",
-        "        entityManager.close();",
-        '        assertTrue(String.valueOf(result).startsWith("3."));'
-        if sqlite
-        else '        assertEquals(URI.create(TestDatabase.URL.substring("jdbc:".length())).getPath().substring(1), String.valueOf(result));',
-        "    }",
-        "}",
-        "",
-    )
-    return {"path": java_path(pkg, "DatabaseTest", True), "content": content}
 
 
 # Tests of each table
@@ -650,9 +538,8 @@ def test_files(context: dict) -> list[dict]:
     if tests == "none" or not writes_entities(context):
         return []
     makeable = [info for info in context["tables"] if can_make(context, info)]
-    files = [_test_database_file(context), _database_test_file(context), _factories_file(context, makeable)]
+    files = [*context["orm"]["testDatabaseFiles"](context), _factories_file(context, makeable)]
     memory = context["settings"]["memoryRepositories"]
-    caller = context["settings"]["transactions"] == "caller"
     pkg = context["base"]
     for info in makeable:
         class_name = f"{info['entity']}Test"
@@ -698,12 +585,8 @@ def test_files(context: dict) -> list[dict]:
                     nested += _create_of_helper(context, info, imports)
         if not nested:
             continue
-        if database:
-            imports.add(
-                "jakarta.persistence.EntityManager",
-                "org.junit.jupiter.api.AfterEach",
-                "org.junit.jupiter.api.BeforeEach",
-            )
+        # Written before the imports, which it adds to
+        session = context["orm"]["testSession"](context, imports) if database else None
         content = lines(
             f"package {pkg};",
             "",
@@ -711,27 +594,7 @@ def test_files(context: dict) -> list[dict]:
             "",
             f'/** Tests of the "{info["name"]}" table. */',
             f"class {class_name} {{",
-            database
-            and [
-                "    private EntityManager entityManager;",
-                "    /** The repositories over the test database, opened empty for every test */",
-                "    private SqlUnitOfWork uow;",
-                "",
-                "    @BeforeEach",
-                "    void open() {",
-                "        entityManager = TestDatabase.open();",
-                caller
-                and "        // The caller owns the transaction: the test opens it, and rolls it back at the end",
-                caller and "        entityManager.getTransaction().begin();",
-                "        uow = new SqlUnitOfWork(entityManager);",
-                "    }",
-                "",
-                "    @AfterEach",
-                "    void close() {",
-                "        if (entityManager.getTransaction().isActive()) entityManager.getTransaction().rollback();",
-                "        entityManager.close();",
-                "    }",
-            ],
+            session,
             *nested,
             "}",
             "",

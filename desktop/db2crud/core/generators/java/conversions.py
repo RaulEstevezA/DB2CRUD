@@ -939,7 +939,6 @@ def conversion_test_file(context: dict, plans: list[dict], schema: dict, can_mak
         .add_static("org.junit.jupiter.api.Assertions.assertEquals", "org.junit.jupiter.api.Assertions.assertNotNull")
     )
     memory = context["settings"]["memoryRepositories"]
-    caller = context["settings"]["transactions"] == "caller"
     tests: list[list[str]] = []
     readers: dict[str, list[str]] = {}
     for plan in plans:
@@ -987,32 +986,11 @@ def conversion_test_file(context: dict, plans: list[dict], schema: dict, can_mak
         tests.append(["", "    @Test", f"    void {method}() {{", *(f"        {line}" for line in body), "    }"])
     if not tests:
         return None
-    if not memory:
-        imports.add(
-            "jakarta.persistence.EntityManager", "org.junit.jupiter.api.AfterEach", "org.junit.jupiter.api.BeforeEach"
-        )
+    # Written before the imports, which it adds to
     setup = (
         "    private final MemoryUnitOfWork uow = new MemoryUnitOfWork();"
         if memory
-        else [
-            "    private EntityManager entityManager;",
-            "    /** The repositories over the test database, opened empty for every test */",
-            "    private SqlUnitOfWork uow;",
-            "",
-            "    @BeforeEach",
-            "    void open() {",
-            "        entityManager = TestDatabase.open();",
-            caller and "        // The caller owns the transaction: the test opens it, and rolls it back at the end",
-            caller and "        entityManager.getTransaction().begin();",
-            "        uow = new SqlUnitOfWork(entityManager);",
-            "    }",
-            "",
-            "    @AfterEach",
-            "    void close() {",
-            "        if (entityManager.getTransaction().isActive()) entityManager.getTransaction().rollback();",
-            "        entityManager.close();",
-            "    }",
-        ]
+        else context["orm"]["testSession"](context, imports)
     )
     content = lines(
         f"package {pkg};",
