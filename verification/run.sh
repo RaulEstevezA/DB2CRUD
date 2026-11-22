@@ -14,7 +14,7 @@ runner_of() {
   case "$1" in
     sqlalchemy-* | django-* | python-sql-*) echo ./runners/python.sh ;;
     typeorm-* | prisma-* | drizzle-* | sequelize-* | typescript-sql-*) echo ./runners/node.sh ;;
-    jpa-*) echo ./runners/java.sh ;;
+    jpa-* | java-sql-*) echo ./runners/java.sh ;;
     efcore-*) echo ./runners/dotnet.sh ;;
     doctrine-* | eloquent-*) echo ./runners/php.sh ;;
     exposed-*) echo ./runners/kotlin.sh ;;

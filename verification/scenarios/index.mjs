@@ -326,6 +326,38 @@ export const SCENARIOS = [
     case: 'shop-java',
     settings: { language: 'java', orm: 'jpa', database: 'sqlite', memoryRepositories: false, architecture: 'table', transactions: 'caller' },
   },
+  // Java without an ORM: SQL through JDBC
+  { id: 'java-sql-sqlite-defaults', schema: 'shop', settings: { language: 'java', orm: 'sql', database: 'sqlite' } },
+  {
+    id: 'java-sql-postgresql-record-dtos-patch-cursor',
+    schema: 'shop',
+    settings: { language: 'java', orm: 'sql', database: 'postgresql', serviceTypes: 'dtos', dtoKind: 'record', updates: 'patch', paging: 'cursor' },
+    service: 'postgresql',
+  },
+  {
+    id: 'java-sql-mysql-decided-offset-optional-repository-commits',
+    schema: 'shop',
+    settings: { language: 'java', orm: 'sql', database: 'mysql', paging: 'offset', updates: 'optional', transactions: 'repository', repositoryInterfaces: false, verbs: 'get' },
+    decisions: OTHER_WAY,
+    service: 'mysql',
+  },
+  {
+    id: 'java-sql-mariadb-caller-class-dtos-full-by-table',
+    schema: 'shop',
+    settings: { language: 'java', orm: 'sql', database: 'mariadb', transactions: 'caller', serviceTypes: 'dtos', dtoKind: 'class', updates: 'full', architecture: 'table', memoryRepositories: false },
+    service: 'mariadb',
+  },
+  {
+    id: 'java-sql-sqlite-no-interfaces-services-tests',
+    schema: 'shop',
+    settings: { language: 'java', orm: 'sql', database: 'sqlite', repositoryInterfaces: false, verbs: 'find', tests: 'services', entities: 'all' },
+  },
+  {
+    id: 'java-sql-postgresql-conversions-dtos',
+    case: 'shop-java',
+    settings: { language: 'java', orm: 'sql', database: 'postgresql', serviceTypes: 'dtos' },
+    service: 'postgresql',
+  },
   { id: 'efcore-sqlite-defaults', schema: 'shop', settings: { language: 'csharp', orm: 'efcore', database: 'sqlite' } },
   {
     id: 'efcore-postgresql-record-dtos-patch',
