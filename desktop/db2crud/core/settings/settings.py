@@ -85,6 +85,16 @@ STACKS = [
         "updates": ["partial"],
     },
     {
+        "language": "typescript",
+        "orm": "sql",
+        "label": "SQL (pg · mysql2 · better-sqlite3)",
+        "databases": ["postgresql", "mysql", "mariadb", "sqlite"],
+        "execution": ["async"],
+        "errors": ["exceptions"],
+        "dtoKinds": ["interface", "class"],
+        "updates": ["partial"],
+    },
+    {
         "language": "java",
         "orm": "jpa",
         "label": "JPA · Hibernate 7",

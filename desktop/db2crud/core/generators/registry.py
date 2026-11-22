@@ -18,6 +18,7 @@ from .typescript.common.generator import typescript_generator
 from .typescript.drizzle.index import DRIZZLE_ORM
 from .typescript.prisma.index import PRISMA_ORM
 from .typescript.sequelize.index import SEQUELIZE_ORM
+from .typescript.sql.index import SQL_ORM as TYPESCRIPT_SQL_ORM
 from .typescript.typeorm.index import TYPEORM_ORM
 
 GENERATORS = [
@@ -28,6 +29,7 @@ GENERATORS = [
     typescript_generator(PRISMA_ORM),
     typescript_generator(DRIZZLE_ORM),
     typescript_generator(SEQUELIZE_ORM),
+    typescript_generator(TYPESCRIPT_SQL_ORM),
     JAVA_GENERATOR,
     CSHARP_GENERATOR,
     php_generator(DOCTRINE_ORM),
