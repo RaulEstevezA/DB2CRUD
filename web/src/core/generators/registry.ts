@@ -24,6 +24,7 @@ import { typescriptGenerator } from './typescript/common/generator.ts'
 import { drizzleOrm } from './typescript/drizzle/index.ts'
 import { prismaOrm } from './typescript/prisma/index.ts'
 import { sequelizeOrm } from './typescript/sequelize/index.ts'
+import { sqlOrm as typescriptSqlOrm } from './typescript/sql/index.ts'
 import { typeormOrm } from './typescript/typeorm/index.ts'
 
 export const GENERATORS: readonly Generator[] = [
@@ -34,6 +35,7 @@ export const GENERATORS: readonly Generator[] = [
   typescriptGenerator(prismaOrm),
   typescriptGenerator(drizzleOrm),
   typescriptGenerator(sequelizeOrm),
+  typescriptGenerator(typescriptSqlOrm),
   javaGenerator,
   csharpGenerator,
   phpGenerator(doctrineOrm),
