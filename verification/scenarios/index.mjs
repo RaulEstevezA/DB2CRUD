@@ -244,6 +244,38 @@ export const SCENARIOS = [
     settings: { language: 'typescript', orm: 'sequelize', database: 'sqlite', repositoryInterfaces: false, verbs: 'find', tests: 'services', entities: 'all' },
   },
   { id: 'sequelize-sqlite-repositories-only', schema: 'shop', settings: { language: 'typescript', orm: 'sequelize', database: 'sqlite', services: false } },
+  // TypeScript without an ORM: SQL through each database's driver
+  { id: 'typescript-sql-sqlite-defaults', schema: 'shop', settings: { language: 'typescript', orm: 'sql', database: 'sqlite' } },
+  {
+    id: 'typescript-sql-postgresql-class-dtos-cursor',
+    schema: 'shop',
+    settings: { language: 'typescript', orm: 'sql', database: 'postgresql', serviceTypes: 'dtos', dtoKind: 'class', paging: 'cursor' },
+    service: 'postgresql',
+  },
+  {
+    id: 'typescript-sql-mysql-offset-repository-commits',
+    schema: 'shop',
+    settings: { language: 'typescript', orm: 'sql', database: 'mysql', paging: 'offset', transactions: 'repository', repositoryInterfaces: false, verbs: 'get' },
+    decisions: OTHER_WAY,
+    service: 'mysql',
+  },
+  {
+    id: 'typescript-sql-mariadb-caller-by-table',
+    schema: 'shop',
+    settings: { language: 'typescript', orm: 'sql', database: 'mariadb', transactions: 'caller', architecture: 'table', memoryRepositories: false, serviceTypes: 'dtos', dtoKind: 'interface' },
+    service: 'mariadb',
+  },
+  {
+    id: 'typescript-sql-sqlite-no-interfaces-services-tests',
+    schema: 'shop',
+    settings: { language: 'typescript', orm: 'sql', database: 'sqlite', repositoryInterfaces: false, verbs: 'find', tests: 'services', entities: 'all' },
+  },
+  {
+    id: 'typescript-sql-postgresql-conversions-dtos',
+    case: 'shop-typescript',
+    settings: { language: 'typescript', orm: 'sql', database: 'postgresql', serviceTypes: 'dtos' },
+    service: 'postgresql',
+  },
   { id: 'jpa-sqlite-defaults', schema: 'shop', settings: { language: 'java', orm: 'jpa', database: 'sqlite' } },
   {
     id: 'jpa-postgresql-record-dtos-patch',
