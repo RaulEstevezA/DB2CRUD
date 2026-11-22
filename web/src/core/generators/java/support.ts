@@ -4,7 +4,7 @@
  * class is the strategy's, orm.ts).
  */
 import type { GeneratedFile } from '../../export/files.ts'
-import { lines } from '../types.ts'
+import { lines, type Line } from '../types.ts'
 import { javaPath, JavaImports } from './java.ts'
 import {
   commonPackage,
@@ -16,7 +16,7 @@ import {
   type Context,
 } from './context.ts'
 
-export function file(pkg: string, name: string, body: string[], imports?: JavaImports): GeneratedFile {
+export function file(pkg: string, name: string, body: (Line | Line[])[], imports?: JavaImports): GeneratedFile {
   const written = imports?.write() ?? ''
   return { path: javaPath(pkg, name), content: lines(`package ${pkg};`, '', written !== '' && [written, ''], ...body, '') }
 }

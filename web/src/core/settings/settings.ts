@@ -189,6 +189,17 @@ export const STACKS: readonly StackInfo[] = [
     updates: ['patch', 'optional', 'full'],
   },
   {
+    language: 'java',
+    orm: 'sql',
+    label: 'SQL (JDBC)',
+    databases: ['postgresql', 'mysql', 'mariadb', 'sqlite'],
+    // JDBC is blocking
+    execution: ['sync'],
+    errors: ['exceptions'],
+    dtoKinds: ['record', 'class'],
+    updates: ['patch', 'optional', 'full'],
+  },
+  {
     language: 'csharp',
     orm: 'efcore',
     label: 'EF Core 9',

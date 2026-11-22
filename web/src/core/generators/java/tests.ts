@@ -142,7 +142,7 @@ function repositoryTests(context: Context, info: TableInfo): Line[][] {
   tests.push(
     test('isStoredAndReadBack', [
       stored,
-      'uow.entityManager().clear();',
+      context.orm.forget,
       getByKey && [
         `${info.entity} found = ${repo}.${queryName(context, getByKey)}(${keyOf('stored')}).orElseThrow();`,
         ...info.key.map((column) => `assertEquals(stored.${column.getter}(), found.${column.getter}());`),
@@ -197,7 +197,7 @@ function repositoryTests(context: Context, info: TableInfo): Line[][] {
         stored,
         `stored.${text.setter}("changed");`,
         `${repo}.${queryName(context, update)}(stored);`,
-        'uow.entityManager().clear();',
+        context.orm.forget,
         `assertEquals("changed", ${repo}.${queryName(context, getByKey)}(${keyOf('stored')}).orElseThrow().${text.getter}());`,
       ]),
     )

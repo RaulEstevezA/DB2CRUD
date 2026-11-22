@@ -244,6 +244,7 @@ function dependencies(context: Context): (Line | Line[])[] {
 export const jpaOrm: JavaOrm = {
   id: 'jpa',
   holder: 'EntityManager',
+  forget: 'uow.entityManager().clear();',
   databaseFiles: (context) => [databaseFile(context)],
   entityFile,
   repository: {
