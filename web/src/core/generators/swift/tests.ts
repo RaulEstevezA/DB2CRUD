@@ -6,7 +6,6 @@
  * SQLite in memory unless TEST_DATABASE_URL names another. Mirrors kotlin/tests.ts.
  */
 import type { GeneratedFile } from '../../export/files.ts'
-import type { DbColumn } from '../../schema/types.ts'
 import {
   columnOf,
   findInfo,
@@ -21,7 +20,6 @@ import {
 } from './context.ts'
 import { createColumns, createDto, updateColumns, updateType } from './dtos.ts'
 import { imports, swString } from './swift.ts'
-import { driverOf } from './support.ts'
 import { missingValue, sampleValue } from './samples.ts'
 
 const isNullableKey = (info: TableInfo, key: TableInfo['table']['foreignKeys'][number]) =>
@@ -79,7 +77,11 @@ function factoriesFile(context: Context, makeable: TableInfo[]): GeneratedFile {
         if (column === info.soft) return column.column.type.kind === 'boolean' ? [`${column.key}: false`] : []
         // No sample is sure to fit a type that is not known
         if (column.column.nullable && (isKey || column.column.type.kind === 'unknown')) return []
-        return [`${column.key}: ${sampleValue(column, info.table.checks, context.schema.enums)}`]
+        const value =
+          column.column.type.kind === 'array'
+            ? context.orm.emptyList(context)
+            : sampleValue(column, info.table.checks, context.schema.enums)
+        return [`${column.key}: ${value}`]
       })
     const insert = query(info, 'insert')!
     return [
@@ -114,152 +116,16 @@ function factoriesFile(context: Context, makeable: TableInfo[]): GeneratedFile {
 
 // The test database
 
-const NAMES: Record<string, string> = { postgresql: 'PostgreSQL', mysql: 'MySQL', mariadb: 'MariaDB' }
-
-/** The tables in the order they can be created: the rows they point to first. */
-function creationOrder(tables: TableInfo[]): TableInfo[] {
-  const order: TableInfo[] = []
-  const visit = (info: TableInfo, path: Set<string>) => {
-    if (order.includes(info) || path.has(info.name)) return
-    path.add(info.name)
-    for (const key of info.table.foreignKeys) {
-      const parent = tables.find((item) => item.name === key.references.table)
-      if (parent && parent !== info) visit(parent, path)
-    }
-    order.push(info)
-  }
-  for (const info of tables) visit(info, new Set())
-  return order
-}
-
-const sqlQuote = (text: string) => `'${text.replace(/'/g, "''")}'`
-
-/** The data type of a column in Fluent's schema builder, as the database has it. */
-function dataType(context: Context, column: DbColumn): string {
-  const database = context.settings.database
-  const type = column.type
-  const raw = (sql: string) => `.sql(unsafeRaw: ${swString(sql)})`
-  if (type.kind === 'enum' && database !== 'sqlite') {
-    const item = context.schema.enums.find((candidate) => candidate.name === type.name)
-    if (item?.storage === 'native')
-      return database === 'postgresql' ? raw(`"${item.name}"`) : raw(`ENUM(${item.values.map(sqlQuote).join(', ')})`)
-  }
-  switch (type.kind) {
-    case 'integer':
-      return type.bits === 16 ? '.int16' : type.bits === 64 ? '.int64' : '.int32'
-    case 'decimal':
-      return raw(`DECIMAL(${type.precision ?? 10}, ${type.scale ?? 0})`)
-    case 'float':
-      return type.bits === 32 ? '.float' : '.double'
-    case 'boolean':
-      return '.bool'
-    case 'text':
-      return type.length === undefined ? '.string' : raw(`${type.fixed ? 'CHAR' : 'VARCHAR'}(${type.length})`)
-    case 'enum': {
-      const values = context.schema.enums.find((item) => item.name === type.name)?.values ?? []
-      return raw(`VARCHAR(${Math.max(1, ...values.map((value) => value.length))})`)
-    }
-    case 'date':
-      return '.date'
-    case 'time':
-      return '.time'
-    case 'datetime':
-      return type.timezone && database === 'postgresql' ? raw('TIMESTAMPTZ') : '.datetime'
-    case 'uuid':
-      return '.uuid'
-    case 'binary':
-      return '.data'
-    default:
-      return '.string'
-  }
-}
-
-/** The constraints of a column in Fluent's schema builder: its key, null, its default. */
-function constraints(context: Context, info: TableInfo, column: ColumnInfo): string[] {
-  const db = column.column
-  const result: string[] = []
-  const single = info.table.primaryKey?.length === 1 && info.table.primaryKey[0] === db.name
-  if (single) result.push(`.identifier(auto: ${db.generated === 'identity' ? 'true' : 'false'})`)
-  else if (!db.nullable) result.push('.required')
-  const raw = (sql: string) => result.push(`.sql(unsafeRaw: ${swString(sql)})`)
-  if (db.generated === 'now' || db.generated === 'onUpdateNow')
-    // Fluent writes a datetime as DATETIME(6) on MySQL, whose default must have the same precision
-    raw(
-      db.type.kind === 'date'
-        ? 'DEFAULT CURRENT_DATE'
-        : ['mysql', 'mariadb'].includes(context.settings.database) && dataType(context, db) === '.datetime'
-          ? 'DEFAULT CURRENT_TIMESTAMP(6)'
-          : 'DEFAULT CURRENT_TIMESTAMP',
-    )
-  else if (typeof db.generated === 'object') raw(`GENERATED ALWAYS AS (${db.generated.computed}) STORED`)
-  else if (db.default?.kind === 'literal' && db.default.value !== null) {
-    const value = db.default.value
-    raw(`DEFAULT ${typeof value === 'string' ? sqlQuote(value) : typeof value === 'boolean' ? (value ? 'TRUE' : 'FALSE') : String(value)}`)
-  } else if (db.default?.kind === 'expression') raw(`DEFAULT ${db.default.sql}`)
-  return result
-}
-
-const ACTIONS: Record<string, string> = {
-  cascade: '.cascade',
-  'set null': '.setNull',
-  'set default': '.setDefault',
-  restrict: '.restrict',
-  'no action': '.noAction',
-}
-
-/** The schema builder of a table, as the database has it. */
-function createTable(context: Context, info: TableInfo): string[] {
-  const { table } = info
-  const space = table.schema && context.settings.database === 'postgresql' ? `, space: ${swString(table.schema)}` : ''
-  const lines = [`try await db.schema(${swString(table.name)}${space})`]
-  for (const column of info.columns)
-    lines.push(
-      `    .field(${[swString(column.column.name), dataType(context, column.column), ...constraints(context, info, column)].join(', ')})`,
-    )
-  if (table.primaryKey && table.primaryKey.length > 1)
-    lines.push(`    .compositeIdentifier(over: ${table.primaryKey.map(swString).join(', ')})`)
-  for (const unique of table.uniques)
-    lines.push(`    .unique(on: ${unique.columns.map(swString).join(', ')}${unique.name ? `, name: ${swString(unique.name)}` : ''})`)
-  for (const key of table.foreignKeys) {
-    const parent = findInfo(context, key.references.table)
-    if (!parent || !parent.writesEntity) continue
-    const parentSpace =
-      parent.table.schema && context.settings.database === 'postgresql' ? `, inSpace: ${swString(parent.table.schema)}` : ''
-    const many = key.columns.length > 1
-    const fields = (names: string[]) => (many ? `[${names.map(swString).join(', ')}]` : swString(names[0]))
-    lines.push(
-      `    .foreignKey(${fields(key.columns)}, references: ${swString(parent.name)}${parentSpace}, ${fields(key.references.columns)}, onDelete: ${ACTIONS[key.onDelete ?? 'no action']}${key.name ? `, name: ${swString(key.name)}` : ''})`,
-    )
-  }
-  lines.push('    .create()')
-  return lines
-}
+export const NAMES: Record<string, string> = { postgresql: 'PostgreSQL', mysql: 'MySQL', mariadb: 'MariaDB' }
 
 function testDatabaseFile(context: Context): GeneratedFile {
   const database = context.settings.database
   const sqlite = database === 'sqlite'
-  const postgres = database === 'postgresql'
-  const tables = context.tables.filter((info) => info.writesEntity)
-  const quote = (name: string) => (database === 'mysql' || database === 'mariadb' ? `\`${name}\`` : `"${name}"`)
-  const qualifiedName = (info: TableInfo) =>
-    info.table.schema && postgres ? `${quote(info.table.schema)}.${quote(info.name)}` : quote(info.name)
-  const schemas = postgres ? [...new Set(context.tables.map((info) => info.table.schema).filter((name): name is string => !!name))] : []
-  const enums = postgres
-    ? context.schema.enums.filter(
-        (item) =>
-          item.storage === 'native' &&
-          context.tables.some((info) =>
-            info.columns.some((column) => column.column.type.kind === 'enum' && column.column.type.name === item.name),
-          ),
-      )
-    : []
-  const run = (sql: string) => `try await sql.raw(${swString(sql)}).run()`
-  const order = creationOrder(tables)
-  const check = postgres ? 'SELECT current_database() AS value' : sqlite ? 'SELECT sqlite_version() AS value' : 'SELECT DATABASE() AS value'
+  const pieces = context.orm.testDatabase(context)
   return {
     path: testPath(context, 'TestDatabase'),
     content: [
-      header(context, true, 'FluentKit', 'FluentSQL', ...(sqlite ? [driverOf(context).module] : [])),
+      header(context, true, ...pieces.modules),
       '',
       '/// Every test is in this suite, one after another: they all empty the same database.',
       '@Suite(.serialized) struct DataTests {}',
@@ -270,16 +136,7 @@ function testDatabaseFile(context: Context): GeneratedFile {
       'enum TestDatabase {',
       '    /// Runs body with the repositories over the test database, with every table dropped and created again first.',
       '    static func with(_ body: (SqlUnitOfWork) async throws -> Void) async throws {',
-      ...(sqlite
-        ? [
-            '        let url = ProcessInfo.processInfo.environment["TEST_DATABASE_URL"]',
-            '        let app = if let url { AppDatabase(url: url) } else { AppDatabase(configuration: .sqlite(.memory)) }',
-          ]
-        : [
-            '        // The tables are written for one kind of database: the tests cannot fall back to SQLite',
-            `        let url = try #require(ProcessInfo.processInfo.environment["TEST_DATABASE_URL"], ${swString(`The database tests need a disposable ${NAMES[database]} database: set TEST_DATABASE_URL (it is emptied)`)})`,
-            '        let app = try AppDatabase(url: url)',
-          ]),
+      ...pieces.open,
       '        do {',
       '            try await recreate(app.database)',
       '            try await body(SqlUnitOfWork(db: app.database))',
@@ -290,23 +147,7 @@ function testDatabaseFile(context: Context): GeneratedFile {
       '        await app.shutdown()',
       '    }',
       '',
-      '    /// Drops every table, the rows that point to others first, and creates them again as the database has them.',
-      '    private static func recreate(_ db: any Database) async throws {',
-      '        let sql = db as! any SQLDatabase',
-      ...ind(
-        [
-          ...schemas.map((name) => run(`DROP SCHEMA IF EXISTS ${quote(name)} CASCADE`)),
-          ...[...order].reverse().map((info) => run(`DROP TABLE IF EXISTS ${qualifiedName(info)}${postgres ? ' CASCADE' : ''}`)),
-          ...enums.flatMap((item) => [
-            run(`DROP TYPE IF EXISTS ${quote(item.name)} CASCADE`),
-            run(`CREATE TYPE ${quote(item.name)} AS ENUM (${item.values.map(sqlQuote).join(', ')})`),
-          ]),
-          ...schemas.map((name) => run(`CREATE SCHEMA ${quote(name)}`)),
-          ...order.flatMap((info) => createTable(context, info)),
-        ],
-        8,
-      ),
-      '    }',
+      ...pieces.recreate,
       '}',
       '',
       '/// The DomainError work throws, or nil when it throws none.',
@@ -334,7 +175,7 @@ function testDatabaseFile(context: Context): GeneratedFile {
       '    @Suite struct DatabaseTests {',
       '        @Test func isTheTestDatabase() async throws {',
       '            try await TestDatabase.with { uow in',
-      `                let rows = try await (uow.db as! any SQLDatabase).raw(${swString(check)}).all()`,
+      `                let rows = try await ${pieces.check}`,
       '                let value = try rows[0].decode(column: "value", as: String.self)',
       sqlite
         ? '                #expect(value.hasPrefix("3."))'

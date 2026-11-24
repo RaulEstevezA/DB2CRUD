@@ -16,6 +16,7 @@ import type {
 import { findPolicy, findRepository, findService } from '../../crud/types.ts'
 import type { DbColumn, DbSchema, DbTable, DbType } from '../../schema/types.ts'
 import type { ProjectSettings } from '../../settings/settings.ts'
+import type { SwiftOrm } from './orm.ts'
 import { memberName, typeName } from './swift.ts'
 
 export interface ColumnInfo {
@@ -65,6 +66,7 @@ export interface TableInfo {
 }
 
 export interface Context {
+  orm: SwiftOrm
   schema: DbSchema
   design: CrudDesign
   settings: ProjectSettings
@@ -165,8 +167,9 @@ function tableInfo(schema: DbSchema, design: CrudDesign, settings: ProjectSettin
   }
 }
 
-export function createContext(schema: DbSchema, design: CrudDesign, settings: ProjectSettings): Context {
+export function createContext(orm: SwiftOrm, schema: DbSchema, design: CrudDesign, settings: ProjectSettings): Context {
   return {
+    orm,
     schema,
     design,
     settings,

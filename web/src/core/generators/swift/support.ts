@@ -1,11 +1,11 @@
 /**
  * What every Swift project shares: the domain errors services throw (no HTTP codes), the pages lists are read in,
- * Patch (a field of an update: absent, or a value that may be nil), the rows the in-memory repositories keep, the
- * database DATABASE_URL names, and the unit of work over the repositories, with its database and in-memory versions.
+ * Patch (a field of an update: absent, or a value that may be nil), the rows the in-memory repositories keep,
+ * and the unit of work over the repositories, with its database and in-memory versions.
  */
 import type { GeneratedFile } from '../../export/files.ts'
 import { memoryRepository, repositoryType, sharedFile, sqlRepository, swFile, usesTimes, type Context } from './context.ts'
-import { imports, swString } from './swift.ts'
+import { imports } from './swift.ts'
 
 export function errorsFile(context: Context): GeneratedFile {
   return swFile(sharedFile(context, 'Errors'), '', [
@@ -212,19 +212,6 @@ export function commonFile(context: Context): GeneratedFile {
   return swFile(sharedFile(context, 'Common'), header, body)
 }
 
-const DRIVERS: Record<string, { module: string; factory: (url: string) => string; throws: boolean }> = {
-  postgresql: { module: 'FluentPostgresDriver', factory: (url) => `.postgres(url: ${url})`, throws: true },
-  mysql: { module: 'FluentMySQLDriver', factory: (url) => `.mysql(url: ${url})`, throws: true },
-  mariadb: { module: 'FluentMySQLDriver', factory: (url) => `.mysql(url: ${url})`, throws: true },
-  sqlite: {
-    module: 'FluentSQLiteDriver',
-    factory: (url) => `.sqlite(.init(storage: .file(path: ${url}.hasPrefix("sqlite://") ? String(${url}.dropFirst(9)) : ${url})))`,
-    throws: false,
-  },
-}
-
-export const driverOf = (context: Context) => DRIVERS[context.settings.database] ?? DRIVERS.postgresql
-
 const URLS: Record<string, string> = {
   postgresql: 'postgres://app:app@localhost:5432/app',
   mysql: 'mysql://app:app@localhost:3306/app?ssl-mode=DISABLED',
@@ -233,39 +220,6 @@ const URLS: Record<string, string> = {
 }
 
 export const defaultUrl = (context: Context) => URLS[context.settings.database] ?? URLS.postgresql
-
-/** `AppDatabase`: the database DATABASE_URL names, through Fluent. */
-export function databaseFile(context: Context): GeneratedFile {
-  const driver = driverOf(context)
-  return swFile(sharedFile(context, 'AppDatabase'), imports('FluentKit', driver.module, 'Foundation', 'Logging', 'NIOCore', 'NIOPosix'), [
-    '/// The database DATABASE_URL names, through Fluent. It never migrates: the database already exists.',
-    'public final class AppDatabase: Sendable {',
-    `    public static let defaultURL = ${swString(defaultUrl(context))}`,
-    '',
-    '    private let databases: Databases',
-    '    /// What the repositories run their queries on.',
-    '    public let database: any Database',
-    '',
-    '    /// The database at url (DATABASE_URL, or defaultURL, by default).',
-    `    public convenience init(url: String = ProcessInfo.processInfo.environment["DATABASE_URL"] ?? AppDatabase.defaultURL)${driver.throws ? ' throws' : ''} {`,
-    `        ${driver.throws ? 'try ' : ''}self.init(configuration: ${driver.factory('url')})`,
-    '    }',
-    '',
-    '    /// The database a configuration of Fluent names.',
-    '    public init(configuration: DatabaseConfigurationFactory) {',
-    '        let databases = Databases(threadPool: .singleton, on: MultiThreadedEventLoopGroup.singleton)',
-    '        databases.use(configuration, as: DatabaseID(string: "app"))',
-    '        self.databases = databases',
-    '        self.database = databases.database(logger: Logger(label: "app.database"), on: MultiThreadedEventLoopGroup.singleton.any())!',
-    '    }',
-    '',
-    '    /// Closes the connections.',
-    '    public func shutdown() async {',
-    '        await databases.shutdownAsync()',
-    '    }',
-    '}',
-  ])
-}
 
 const HOW = {
   operation: 'Each service operation runs in transaction(): committed when it ends, rolled back when it throws.',
@@ -276,9 +230,10 @@ const HOW = {
 /** UnitOfWork, SqlUnitOfWork and MemoryUnitOfWork. */
 export function unitOfWorkFile(context: Context): GeneratedFile {
   const settings = context.settings
+  const { holder } = context.orm
   const operation = settings.transactions === 'operation'
   const signature = 'func transaction<T: Sendable>(_ work: @escaping @Sendable (any UnitOfWork) async throws -> T) async throws -> T'
-  return swFile(sharedFile(context, 'UnitOfWork'), imports('FluentKit'), [
+  return swFile(sharedFile(context, 'UnitOfWork'), imports(...context.orm.holder.modules), [
     `/// What services depend on: a repository per table and a transaction. ${HOW[settings.transactions]}`,
     'public protocol UnitOfWork: Sendable {',
     ...context.tables.map((info) => `    var ${info.attr}: ${repositoryType(context, info)} { get }`),
@@ -289,9 +244,9 @@ export function unitOfWorkFile(context: Context): GeneratedFile {
     '',
     '/// The repositories over one database, and its transaction.',
     'public struct SqlUnitOfWork: UnitOfWork {',
-    '    public let db: any Database',
+    `    public let db: ${holder.type}`,
     '',
-    '    public init(db: any Database) {',
+    `    public init(db: ${holder.type}) {`,
     '        self.db = db',
     '    }',
     ...context.tables.flatMap((info) => [
@@ -303,9 +258,7 @@ export function unitOfWorkFile(context: Context): GeneratedFile {
       ? '    /// Joins the transaction already open, or opens one.'
       : `    /// ${settings.transactions === 'caller' ? 'The transaction belongs to whoever holds the database' : 'Every write is committed at once'}: this only groups the code.`,
     `    public ${signature} {`,
-    operation
-      ? '        try await db.transaction { transaction in try await work(SqlUnitOfWork(db: transaction)) }'
-      : '        try await work(self)',
+    operation ? `        ${context.orm.transaction}` : '        try await work(self)',
     '    }',
     '}',
     ...(settings.memoryRepositories

@@ -5,9 +5,9 @@
  * through the model; the repositories turn models into entities and back. The constraints of the table (unique values,
  * foreign keys, defaults, CHECKs) live in the database: the tests create them, and the services check the values.
  */
-import type { GeneratedFile } from '../../export/files.ts'
-import { fileOf, swFile, type ColumnInfo, type Context, type TableInfo } from './context.ts'
-import { imports, swString } from './swift.ts'
+import type { GeneratedFile } from '../../../export/files.ts'
+import { fileOf, swFile, type ColumnInfo, type Context, type TableInfo } from '../context.ts'
+import { imports, swString } from '../swift.ts'
 
 export function entityFile(context: Context, info: TableInfo): GeneratedFile {
   const comment = info.table.comment ? `: ${info.table.comment}` : ''
