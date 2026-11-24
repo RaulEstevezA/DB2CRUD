@@ -3,6 +3,7 @@ Mirrors web/src/core/generators/python/sqlalchemy/project.ts."""
 
 import json
 
+from ....schema.documents import nested_fields
 from ...types import lines
 from .context import is_in, module_of, operation_name, service_class
 from .dtos import create_dto, read_dto, update_dto
@@ -49,12 +50,17 @@ def pyproject_file(context: dict) -> dict:
 
 
 def env_example_file(context: dict) -> dict:
+    documents = context["orm"].get("documents")
     return {
         "path": ".env.example",
         "content": lines(
-            "# Where the database is. The synchronous driver is named here; the asynchronous one is chosen from it.",
+            "# Where the database is"
+            if documents
+            else "# Where the database is. The synchronous driver is named here; the asynchronous one is chosen from it.",
             f"DATABASE_URL={context['orm']['defaultUrl'](context)}",
-            "# The tests use SQLite in a temporary file unless this names another database (it is emptied by the tests)",
+            "# The database the tests use (it is emptied by the tests)"
+            if documents
+            else "# The tests use SQLite in a temporary file unless this names another database (it is emptied by the tests)",
             "# TEST_DATABASE_URL=",
             "",
         ),
@@ -96,6 +102,9 @@ def readme_file(context: dict) -> dict:
     else:
         services = "not written"
     code = "asynchronous (AsyncSession)" if context["async"] else "synchronous (Session)"
+    documents = bool(context["orm"].get("documents"))
+    if documents:
+        code = "asynchronous"
     return {
         "path": "README.md",
         "content": lines(
@@ -136,7 +145,7 @@ def readme_file(context: dict) -> dict:
             "```bash",
             "python -m venv .venv && source .venv/bin/activate",
             "pip install -r requirements-dev.txt",
-            "python -m pytest                       # SQLite in a temporary file",
+            not documents and "python -m pytest                       # SQLite in a temporary file",
             f"TEST_DATABASE_URL={context['orm']['defaultUrl'](context)} python -m pytest   # a real, disposable database: it is emptied",
             "```",
             "",
@@ -150,10 +159,20 @@ def readme_file(context: dict) -> dict:
 
 
 def _type_of(column: dict) -> dict:
-    column_type = column["column"]["type"]
+    return _plain_type(column["column"]["type"])
+
+
+def _plain_type(column_type: dict) -> dict:
     result = {"kind": column_type["kind"]}
     if column_type["kind"] == "text" and "length" in column_type:
         result["length"] = column_type["length"]
+    # What a nested document, or each of a list of them, holds
+    fields = nested_fields(column_type)
+    if fields is not None:
+        result["fields"] = [
+            {"name": field["name"], "type": _plain_type(field["type"]), "nullable": field["nullable"]}
+            for field in fields
+        ]
     return result
 
 

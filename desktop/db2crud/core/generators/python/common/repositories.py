@@ -2,6 +2,7 @@
 database implementation (written by each ORM, common/orm.py) and its in-memory one, with the same methods. Mirrors
 web/src/core/generators/python/sqlalchemy/repositories.ts."""
 
+from ....schema.documents import is_object_id
 from ...types import indent, lines
 from ..python import Imports, py_literal
 from .context import (
@@ -14,6 +15,7 @@ from .context import (
     repository_class,
     sql_repository_class,
 )
+from .documents import identified_lists, item_params, list_of
 
 
 def _columns_of(info: dict, names: list[str]) -> list[dict]:
@@ -72,6 +74,27 @@ def repository_methods(context: dict, info: dict, imports: Imports) -> list[dict
                 entity,
                 "Stores the changes made to a row read from this repository.",
             )
+        elif kind in ("addItem", "removeItem"):
+            items = list_of(info, query)
+            adds = kind == "addItem"
+
+            def type_of(column: dict) -> str:
+                return column_py_type(column, imports, False)
+
+            params = (
+                [{"name": items["item"], "type": type_of(items["itemColumn"])}] if adds else item_params(items, type_of)
+            )
+            # Told apart by its position, it is only removed from a list of the size it was seen in
+            size = [{"name": "size", "type": "int"}] if not adds and items["by"] == "position" else []
+            column = query["columns"][0]
+            seen = " that has this size" if size else ""
+            add(
+                [*({"name": key["attr"], "type": type_of(key)} for key in info["key"]), *params, *size],
+                f"{entity} | None",
+                f"Adds an item to {column}, and gives the row as it is then, or None when there is none."
+                if adds
+                else f"Removes an item from {column}{seen}, and gives the row as it is then, or None when there is none.",
+            )
         elif kind == "delete":
             add([{"name": "entity", "type": entity}], "None", "Removes a row read from this repository.")
     return methods
@@ -85,7 +108,7 @@ def signature(context: dict, method: dict) -> str:
 # In memory
 
 
-def _memory_fill(context: dict, column: dict, imports: Imports) -> str | None:
+def memory_fill(context: dict, column: dict, imports: Imports) -> str | None:
     """The value a new row gets for a column the database would fill."""
     db = column["column"]
     attr = f"entity.{column['attr']}"
@@ -96,6 +119,9 @@ def _memory_fill(context: dict, column: dict, imports: Imports) -> str | None:
         return f"{attr} = None" if context["orm"].get("lazyComputed") else None
     if generated == "identity":
         return f"if {unset}:\n    {attr} = self._next_id\n    self._next_id += 1"
+    if generated == "uuid" and is_object_id(db["type"]):
+        imports.from_("bson", "ObjectId")
+        return f"if {unset}:\n    {attr} = str(ObjectId())"
     if generated == "uuid":
         imports.from_("uuid", "uuid4")
         return f"if {unset}:\n    {attr} = uuid4()"
@@ -142,13 +168,57 @@ def _memory_body(context: dict, info: dict, method: dict, imports: Imports) -> l
             ]
         return [f"return {rows}"]
     if kind == "insert":
-        fills = [line for line in (_memory_fill(context, column, imports) for column in info["columns"]) if line]
-        return [*fills, f"self._rows[{key_of('entity')}] = entity", "return entity"]
+        fills = [line for line in (memory_fill(context, column, imports) for column in info["columns"]) if line]
+        return [*fills, *identified(info, imports), f"self._rows[{key_of('entity')}] = entity", "return entity"]
     if kind == "update":
-        return [f"self._rows[{key_of('entity')}] = entity", "return entity"]
+        return [*identified(info, imports), f"self._rows[{key_of('entity')}] = entity", "return entity"]
+    if kind in ("addItem", "removeItem"):
+        return _memory_item(info, method, imports)
     if kind == "delete":
         return [f"self._rows.pop({key_of('entity')}, None)"]
     return ["raise NotImplementedError"]
+
+
+def identified(info: dict, imports: Imports) -> list[str]:
+    """The identifiers of the documents in its lists."""
+    found = identified_lists(info)
+    if found:
+        imports.from_("app.documents", "identify")
+    return [f"identify(entity.{column['attr']})" for column in found]
+
+
+def _memory_item(info: dict, method: dict, imports: Imports) -> list:
+    items = list_of(info, method["query"])
+    attr = f"row.{items['column']['attr']}"
+    item, by = items["item"], items["by"]
+    if method["query"]["kind"] == "addItem":
+        change = [f"{attr} = [*({attr} or []), {item}]"]
+        if by == "id":
+            imports.from_("app.documents", "identify")
+            change.insert(0, f"identify([{item}])")
+    elif by == "position":
+        change = [
+            f"if len({attr} or []) != size:",
+            "    return None",
+            f"{attr} = [*{attr}[:position], *{attr}[position + 1 :]]",
+        ]
+    else:
+        kept = f'item["_id"] != {item}_id' if by == "id" else f"item != {item}"
+        change = [f"{attr} = [item for item in {attr} or [] if {kept}]"]
+    touched = [column for column in info["columns"] if column["column"].get("generated") == "onUpdateNow"]
+    if touched:
+        imports.from_("datetime", "UTC", "datetime")
+    key = ", ".join(column["attr"] for column in info["key"])
+    version = info["version"]
+    return [
+        f"row = next((row for row in self._rows.values() if self._key(row) == ({key},) and {_memory_visible(info)}), None)",
+        "if row is None:",
+        "    return None",
+        *change,
+        bool(version) and f"row.{version['attr']} = (row.{version['attr']} or 0) + 1",
+        *(f"row.{column['attr']} = datetime.now(UTC)" for column in touched),
+        "return row",
+    ]
 
 
 def _method_block(context: dict, method: dict, body: list) -> str:

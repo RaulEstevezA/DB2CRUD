@@ -23,7 +23,7 @@ STANDARD = {
     "enum",
     "os",
 }
-STANDARD |= {"typing", "uuid"}
+STANDARD |= {"typing", "urllib.parse", "uuid", "weakref"}
 
 
 def js_json(value) -> str:

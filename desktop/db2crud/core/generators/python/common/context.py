@@ -10,11 +10,12 @@ import re
 
 from ....crud.types import find_policy, find_repository, find_service
 from ..python import Imports, class_name, method_name, snake_name
+from .documents import nested_types
 
 BLOCKING = (None, "no action", "restrict")
 
 
-def _py_type(column_type: dict, imports: Imports | None = None) -> str:
+def py_type(column_type: dict, imports: Imports | None = None, nested: str | None = None) -> str:
     kind = column_type["kind"]
     simple = {"integer": "int", "float": "float", "text": "str", "enum": "str", "boolean": "bool", "binary": "bytes"}
     if kind in simple:
@@ -33,7 +34,9 @@ def _py_type(column_type: dict, imports: Imports | None = None) -> str:
         return name if imports is None else imports.local(name)
     if kind == "array":
         outer = "list" if imports is None else imports.local("list")
-        return f"{outer}[{_py_type(column_type['items'], imports)}]"
+        return f"{outer}[{py_type(column_type['items'], imports, nested)}]"
+    if kind == "json" and column_type.get("fields") is not None and nested:
+        return nested
     if imports is not None:
         imports.from_("typing", "Any")
     return "Any"
@@ -41,7 +44,10 @@ def _py_type(column_type: dict, imports: Imports | None = None) -> str:
 
 def column_py_type(info: dict, imports: Imports, optional: bool | None = None) -> str:
     """The Python type of a column, adding its imports."""
-    base = _py_type(info["column"]["type"], imports)
+    nested = info["nested"]
+    if nested:
+        imports.from_(nested["module"], nested["type"]["name"])
+    base = py_type(info["column"]["type"], imports, nested["type"]["name"] if nested else None)
     nullable = info["column"]["nullable"] if optional is None else optional
     return f"{base} | None" if nullable else base
 
@@ -60,15 +66,18 @@ def _included(items: list[dict]) -> list[dict]:
     return [item for item in items if item["include"]["value"]]
 
 
-def _column_info(orm, column: dict) -> dict:
-    attr = snake_name(column["name"])
+def _column_info(orm, column: dict, nested: dict | None, own: bool) -> dict:
+    # MongoDB's `_id` is the `id` of the entity, unless the documents have one of their own
+    attr = "document_id" if own else snake_name(column["name"])
     generated = column.get("generated") is not None and column.get("generated") != "onUpdateNow"
     return {
         "column": column,
         "attr": orm["attribute"](attr) if "attribute" in orm else attr,
-        "py": _py_type(column["type"]),
+        "py": py_type(column["type"], None, nested["type"]["name"] if nested else None),
         "generated": generated,
         "required": not column["nullable"] and "default" not in column and not generated,
+        # The type of the documents it holds and its module: only in document databases
+        "nested": nested,
     }
 
 
@@ -76,7 +85,25 @@ def _table_info(orm, schema: dict, design: dict, settings: dict, table: dict) ->
     policy = find_policy(design, table["name"])
     repository = find_repository(design, table["name"])
     service = find_service(design, table["name"]) if settings["services"] else None
-    columns = [_column_info(orm, column) for column in table["columns"]]
+    # The input's classes only count when they are of this stack's ORM: JPA entities do not help a SQLAlchemy project
+    own_entities = (
+        not orm.get("ownModels") and not repository["entityMissing"] and schema["source"]["format"] == settings["orm"]
+    )
+    writes_entity = settings["entities"] == "all" or (settings["entities"] == "missing" and not own_entities)
+    entity = class_name(repository["entity"])
+    # Entities of the user bring no types of ours for their nested documents
+    nested = nested_types(table["columns"], entity) if orm.get("documents") and writes_entity else {}
+    module = _entity_module(settings, snake_name(repository["entity"]))
+    own_id = bool(orm.get("documents")) and any(column["name"] == "id" for column in table["columns"])
+    columns = [
+        _column_info(
+            orm,
+            column,
+            {"type": nested[column["name"]], "module": module} if column["name"] in nested else None,
+            own_id and column["name"] == "_id",
+        )
+        for column in table["columns"]
+    ]
 
     def by_name(name: str) -> dict:
         return next(info for info in columns if info["column"]["name"] == name)
@@ -87,14 +114,11 @@ def _table_info(orm, schema: dict, design: dict, settings: dict, table: dict) ->
     )
     delete_mode = policy["delete"]["value"]
     concurrency = policy["concurrency"]["value"]
-    # The input's classes only count when they are of this stack's ORM: JPA entities do not help a SQLAlchemy project
-    own_entities = not repository["entityMissing"] and schema["source"]["format"] == settings["orm"]
-    writes_entity = settings["entities"] == "all" or (settings["entities"] == "missing" and not own_entities)
     children = policy["children"]
     return {
         "table": table,
         "name": table["name"],
-        "entity": class_name(repository["entity"]),
+        "entity": entity,
         "module": snake_name(repository["entity"]),
         "attr": snake_name(table["name"]),
         "columns": columns,
@@ -138,6 +162,10 @@ def is_in(column: dict, columns: list[dict]) -> bool:
 
 
 # Modules and names
+
+
+def _entity_module(settings: dict, module: str) -> str:
+    return f"app.{module}.entity" if settings["architecture"] == "table" else f"app.entities.{module}"
 
 
 def module_of(context: dict, info: dict, kind: str) -> str:

@@ -1,9 +1,12 @@
 """A Python generator for an ORM (Strategy of common/orm.py): every file of the project, composed from the modules
 of common/ and the ORM's own database layer. Mirrors web/src/core/generators/python/common/generator.ts."""
 
+import re
+
 from ....conversions.plan import plan_conversions
 from .context import create_context
 from .conversions import conversion_files, conversion_test_file, service_plans, tests_package
+from .documents import documents_file
 from .dtos import dtos_file
 from .project import contract_file, env_example_file, gitignore_file, pyproject_file, readme_file, requirements_files
 from .repositories import repository_file
@@ -30,7 +33,13 @@ def _unique_roots(roots: list[str]) -> list[str]:
 
 
 def _code(context: dict) -> list[dict]:
-    files = [*context["orm"]["databaseFiles"](context), errors_file(), paging_file(context), unit_of_work_file(context)]
+    files = [
+        *context["orm"]["databaseFiles"](context),
+        errors_file(),
+        documents_file(context),
+        paging_file(context),
+        unit_of_work_file(context),
+    ]
     for info in context["tables"]:
         files.append(repository_file(context, info))
         if context["settings"]["services"] and info["service"]:
@@ -40,8 +49,25 @@ def _code(context: dict) -> list[dict]:
     return [file for file in files if file is not None]
 
 
+def _named(orm: dict, files: list[dict]) -> list[dict]:
+    """The files with the database classes named as the strategy asks: `SqlUnitOfWork` is `MongoUnitOfWork` in a document
+    database."""
+    prefix = orm.get("prefix")
+    if not prefix:
+        return files
+
+    def rename(text: str) -> str:
+        text = re.sub(r"\bSql(?=UnitOfWork\b|\w+Repository\b)", prefix, text)
+        return re.sub(r"\bsql_uow\b", f"{prefix.lower()}_uow", text)
+
+    return [{**file, "content": rename(file["content"])} for file in files]
+
+
 def python_generator(orm: dict) -> dict:
     def generate(schema: dict, design: dict, settings: dict, models: dict | None = None) -> list[dict]:
+        # The conversions read columns, not the documents inside them
+        if orm.get("documents"):
+            models = None
         context = create_context(orm, schema, design, settings)
         app = _code(context)
         plans = service_plans(context, plan_conversions(schema, design, models)) if models else []
@@ -56,7 +82,7 @@ def python_generator(orm: dict) -> dict:
         ]
         wants = settings["tests"] in ("all", "services")
         conversion_tests = conversion_test_file(context, plans) if tests and wants else None
-        return [
+        files = [
             readme_file(context),
             pyproject_file(context),
             *requirements_files(context),
@@ -68,5 +94,6 @@ def python_generator(orm: dict) -> dict:
             *tests,
             *([conversion_tests] if conversion_tests else []),
         ]
+        return _named(orm, files)
 
     return {"language": "python", "orm": orm["id"], "generate": generate}

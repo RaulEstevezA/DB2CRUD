@@ -17,6 +17,7 @@ from .context import (
     query_name,
     service_class,
 )
+from .documents import document_rules, has_rules, item_params, list_of
 from .dtos import create_columns, create_dto, read_columns, read_dto, update_dto
 
 
@@ -76,7 +77,7 @@ def _value_rules(column: dict, checks: list[dict]) -> list[str]:
     rules = []
     name = column["column"]["name"]
     column_type = column["column"]["type"]
-    if column_type["kind"] == "text" and "length" in column_type:
+    if column_type["kind"] == "text" and "length" in column_type and not column_type.get("objectId"):
         length = column_type["length"]
         rules.append(
             f"if isinstance(value, str) and len(value) > {length}:\n"
@@ -104,6 +105,7 @@ def _value_rules(column: dict, checks: list[dict]) -> list[str]:
 
 
 def _validate_method(writer: _Writer) -> list:
+    context = writer.context
     info, imports = writer.info, writer.imports
     imports.from_("app.errors", "FieldError", "ValidationFailedError").from_("typing", "Any")
     blocks = []
@@ -116,6 +118,9 @@ def _validate_method(writer: _Writer) -> list:
         else:
             missing = "pass"
         rules = _value_rules(column, info["table"]["checks"])
+        if has_rules(context, info, column):
+            imports.from_("app.documents", "problems")
+            rules.append(f'errors += problems(value, _RULES["{attr}"], "{name}")')
         # A nullable column without rules has nothing to check
         if missing == "pass" and not rules:
             continue
@@ -525,7 +530,83 @@ def _operation_lines(writer: _Writer, operation: dict) -> list:
             f'    """The {info["name"]} with this {joined}."""',
             f"    return [self._read(entity) for entity in {rows}]" if writer.dtos else f"    return {rows}",
         ]
+    # One item of a list: only document databases have them
+    if kind in ("addItem", "removeItem"):
+        return _item_lines(writer, operation, name)
     return _link_lines(writer, operation, name)
+
+
+def _item_lines(writer: _Writer, operation: dict, name: str) -> list:
+    """Adds or removes one item of a list, so two people changing the same list do not undo each other."""
+    context, info, imports = writer.context, writer.info, writer.imports
+    adds = operation["kind"] == "addItem"
+    change = query(info, "addItem" if adds else "removeItem", operation["columns"])
+    if not change or not query(info, "getByKey"):
+        return []
+    items = list_of(info, change)
+    attr = items["column"]["attr"]
+    stored = items["column"]["column"]["name"]
+    item, by = items["item"], items["by"]
+    entity = info["entity"]
+
+    def type_of(column: dict) -> str:
+        return column_py_type(column, imports, False)
+
+    params = [{"name": item, "type": type_of(items["itemColumn"])}] if adds else item_params(items, type_of)
+    version = f", version: {column_py_type(info['version'], imports, False)}" if info["version"] else ""
+    read_at = ", read at `version`" if info["version"] else ""
+    param = params[0]["name"]
+    position = not adds and by == "position"
+    if by == "id":
+        found = f'any(item["_id"] == {param} for item in current.{attr} or [])'
+    elif by == "value":
+        found = f"({param} in (current.{attr} or []))"
+    else:
+        found = f"(0 <= {param} < len(current.{attr} or []))"
+    label = item[:1].upper() + item[1:]
+    imports.from_("app.errors", "NotFoundError")
+    if position:
+        imports.from_("app.errors", "ConflictError")
+    checked = adds and has_rules(context, info, items["column"])
+    if checked:
+        imports.from_("app.documents", "problems").from_("app.errors", "ValidationFailedError")
+    sizes = [f"len(current.{attr})"] if position else []
+    args = ", ".join([_key_args(info), *(one["name"] for one in params), *sizes])
+    given = ", ".join(f"{one['name']}: {one['type']}" for one in params)
+    call = f"{_repo(info)}.{query_name(context, change)}({args})"
+    if position:
+        gone = f'    raise ConflictError("{entity}", "was changed by someone else since it was read", ("{attr}",))'
+    else:
+        gone = f'    raise NotFoundError("{entity}", {_key_value(info)})'
+    by_text = "identifier" if by == "id" else by
+    return [
+        f"{writer.def_} {name}(self, {_key_params(writer)}, {given}{version}) -> {_result_type(writer)}:",
+        f'    """Adds an item to {stored}{read_at}."""'
+        if adds
+        else f'    """Removes an item from {stored}, by its {by_text}{read_at}."""',
+        checked
+        and [
+            f'    errors = problems([{item}], _RULES["{attr}"], "{stored}")',
+            "    if errors:",
+            f'        raise ValidationFailedError("{entity}", errors)',
+        ],
+        indent(
+            lines(
+                *_in_transaction(
+                    writer,
+                    [
+                        f"{'' if adds and not info['version'] else 'current = '}{_call(writer, f'self._find({_key_args(info)})')}",
+                        *_version_check(writer),
+                        not adds and [f"if not {found}:", f'    raise NotFoundError("{label}", {param})'],
+                        f"changed = {_call(writer, call)}",
+                        "if changed is None:",
+                        gone,
+                        f"return {_out(writer, 'changed')}",
+                    ],
+                )
+            )
+        ),
+    ]
 
 
 def _link_lines(writer: _Writer, operation: dict, name: str) -> list:
@@ -628,6 +709,7 @@ def service_file(context: dict, info: dict) -> dict | None:
     if writes:
         helpers = [_validate_all(writer), _unique_method(writer), _check_method(writer), *helpers]
     hidden = info["hidden"]
+    rules = document_rules(context, info) if writes else []
     fields = [f'"{column["attr"]}"' for column in create_columns(info)] if writes else []
     one = len(hidden) == 1
     content = lines(
@@ -639,6 +721,14 @@ def service_file(context: dict, info: dict) -> dict | None:
             "",
             "# Columns a client may send: the database fills the others",
             f"_FIELDS = frozenset({{{', '.join(fields)}}})",
+        ],
+        bool(rules)
+        and [
+            "",
+            "# What the documents inside each field must be",
+            "_RULES: dict[str, dict[str, Any]] = {",
+            *(f'    "{item["column"]["attr"]}": {item["rule"]},' for item in rules),
+            "}",
         ],
         "",
         "",

@@ -783,6 +783,23 @@ VERIFIED = [
         ],
         "date": "2026-11-24",
     },
+    {
+        "language": "python",
+        "orm": "beanie",
+        "database": "mongodb",
+        "execution": "async",
+        "scenarios": [
+            "beanie-mongodb-defaults",
+            "beanie-mongodb-pydantic-dtos-cursor-by-table",
+            "beanie-mongodb-caller-dataclass-dtos",
+            "beanie-mongodb-no-interfaces-services-tests",
+            "beanie-mongodb-repositories-only",
+            "beanie-mongodb-validators",
+            "beanie-mongodb-validators-dtos",
+            "beanie-mongodb-own-documents",
+        ],
+        "date": "2026-11-24",
+    },
 ]
 
 

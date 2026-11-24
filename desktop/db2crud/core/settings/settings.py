@@ -43,6 +43,18 @@ STACKS = [
         "updates": ["partial"],
     },
     {
+        "language": "python",
+        "orm": "beanie",
+        "label": "Beanie 2",
+        "databases": ["mongodb"],
+        "transactions": "repository",
+        # Beanie is asynchronous only
+        "execution": ["async"],
+        "errors": ["exceptions"],
+        "dtoKinds": ["pydantic", "dataclass"],
+        "updates": ["partial"],
+    },
+    {
         "language": "typescript",
         "orm": "typeorm",
         "label": "TypeORM 0.3",

@@ -16,6 +16,7 @@ from .php.common.generator import php_generator
 from .php.doctrine.index import DOCTRINE_ORM
 from .php.eloquent.index import ELOQUENT_ORM
 from .php.sql.index import SQL_ORM as PHP_SQL_ORM
+from .python.beanie.index import BEANIE_ORM
 from .python.common.generator import python_generator
 from .python.django.index import DJANGO_ORM
 from .python.sql.index import SQL_ORM as PYTHON_SQL_ORM
@@ -38,6 +39,7 @@ GENERATORS = [
     python_generator(SQLALCHEMY_ORM),
     python_generator(DJANGO_ORM),
     python_generator(PYTHON_SQL_ORM),
+    python_generator(BEANIE_ORM),
     typescript_generator(TYPEORM_ORM),
     typescript_generator(PRISMA_ORM),
     typescript_generator(DRIZZLE_ORM),

@@ -2,10 +2,13 @@
 a real database and service tests on the in-memory unit of work. Mirrors
 web/src/core/generators/python/sqlalchemy/tests.ts."""
 
+import re
+
 from ...types import indent, lines
 from ..python import Imports
 from ..samples import missing_value, sample_value
 from .context import aw, find_info, module_of, operation_name, query, query_name, service_class, writes_entities
+from .documents import list_of
 from .dtos import create_dto, update_columns, update_dto
 
 
@@ -74,7 +77,13 @@ def _factories_file(context: dict, makeable: list[dict]) -> dict:
                 # No sample is sure to fit a type that is not known
                 value = "None"
             else:
-                value = sample_value(column["column"], info["table"]["checks"], context["schema"]["enums"], imports)
+                value = sample_value(
+                    column["column"],
+                    info["table"]["checks"],
+                    context["schema"]["enums"],
+                    imports,
+                    bool(context["orm"].get("documents")),
+                )
             values.append(f'"{column["attr"]}": {value}')
         insert = query(info, "insert")
         from_parents = [f"{_column(info, column)['attr']}={value}" for column, value in parent_of.items()]
@@ -103,6 +112,12 @@ def _factories_file(context: dict, makeable: list[dict]) -> dict:
         "",
     )
     return {"path": "tests/factories.py", "content": content}
+
+
+def _item_sample(context: dict, items: dict, imports: Imports) -> str:
+    """A value for an item of a list, as a Python expression for the number 7."""
+    sample = sample_value(items["itemColumn"]["column"], [], context["schema"]["enums"], imports, True)
+    return re.sub(r"\bn\b", "7", sample)
 
 
 # Repository tests
@@ -205,6 +220,31 @@ def _repository_tests(context: dict, info: dict, imports: Imports) -> list:
                 f'assert found is not None and found.{text["attr"]} == "changed"',
             ],
         )
+    for add in [item for item in info["queries"] if item["kind"] == "addItem"]:
+        items = list_of(info, add)
+        removing = query(info, "removeItem", add["columns"])
+        if not removing or not get_by_key:
+            continue
+        attr = items["column"]["attr"]
+        which = {
+            "id": f'added.{attr}[-1]["_id"]',
+            "value": "item",
+            "position": f"before, len(added.{attr})",
+        }[items["by"]]
+        taking = f"{a}{repo}.{query_name(context, removing)}({key_of('stored')}"
+        blocks += test(
+            f"adds_and_removes_one_item_of_{attr}",
+            [
+                f"stored = {a}add_{module}(sql_uow, 1)",
+                f"before = len(stored.{attr} or [])",
+                f"item = {_item_sample(context, items, imports)}",
+                f"added = {a}{repo}.{query_name(context, add)}({key_of('stored')}, item)",
+                f"assert added is not None and len(added.{attr}) == before + 1",
+                f"removed = {taking}, {which})",
+                f"assert removed is not None and len(removed.{attr}) == before",
+                items["by"] == "position" and f"assert {taking}, 0, before + 5) is None",
+            ],
+        )
     remove = query(info, "delete")
     if remove and get_by_key and not info["soft"]:
         blocks += test(
@@ -238,8 +278,8 @@ def _service_tests(context: dict, info: dict, imports: Imports, uow: str) -> lis
         f"{operation['kind']}:{','.join(operation['columns'])}": operation for operation in info["operations"]
     }
 
-    def op(kind: str) -> dict | None:
-        return operations.get(f"{kind}:")
+    def op(kind: str, columns: list[str] | None = None) -> dict | None:
+        return operations.get(f"{kind}:{','.join(columns or [])}")
 
     create, get = op("create"), op("get")
 
@@ -416,6 +456,39 @@ def _service_tests(context: dict, info: dict, imports: Imports, uow: str) -> lis
                 f"created = {a}service.{operation_name(context, create)}({built(base_args)})",
                 f"updated = {a}service.{operation_name(context, update)}({key_of('created')}, {change}{version})",
                 f'assert updated.{text["attr"]} == "changed"',
+            ],
+        )
+    for operation in [item for item in info["operations"] if item["kind"] == "addItem"]:
+        items = list_of(info, operation)
+        without = op("removeItem", operation["columns"])
+        if not create or not without or items["column"]["column"]["name"] in info["hidden"]:
+            continue
+        attr = items["column"]["attr"]
+
+        def version_of(variable: str) -> str:
+            return f", version={variable}.{info['version']['attr']}" if info["version"] else ""
+
+        which, missing = {
+            "id": (f'added.{attr}[-1]["_id"]', '"' + "f" * 24 + '"'),
+            "value": ("item", None),
+            "position": ("before", "99"),
+        }[items["by"]]
+        imports.from_("app.errors", "NotFoundError")
+        taking = f"{a}service.{operation_name(context, without)}({key_of('created')}"
+        blocks += test(
+            f"adds_and_removes_one_item_of_{attr}",
+            [
+                "n = 100",
+                *parents_first,
+                f"created = {a}service.{operation_name(context, create)}({built(base_args)})",
+                f"before = len(created.{attr} or [])",
+                f"item = {_item_sample(context, items, imports)}",
+                f"added = {a}service.{operation_name(context, operation)}({key_of('created')}, item{version_of('created')})",
+                f"assert len(added.{attr}) == before + 1",
+                f"removed = {taking}, {which}{version_of('added')})",
+                f"assert len(removed.{attr}) == before",
+                bool(missing) and "with pytest.raises(NotFoundError):",
+                bool(missing) and f"    {taking}, {missing}{version_of('removed')})",
             ],
         )
     remove = op("delete")

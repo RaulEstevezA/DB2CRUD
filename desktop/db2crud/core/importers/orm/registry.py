@@ -5,6 +5,7 @@ web/src/core/importers/orm/registry.ts.
 
 A result is {"ok": True, "schema", "reader"} or {"ok": False, "error": "unknownOrm" | "noTables"}."""
 
+from .beanie import BEANIE_READER
 from .django import DJANGO_READER
 from .doctrine import DOCTRINE_READER
 from .drizzle import DRIZZLE_READER
@@ -38,6 +39,7 @@ ORM_READERS: list[OrmReader] = [
     MONGOOSE_READER,
     MONGODB_READER,
     SPRING_DATA_READER,
+    BEANIE_READER,
 ]
 
 

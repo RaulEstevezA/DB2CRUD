@@ -2,10 +2,11 @@
 the CHECK constraints the rules understand) and changes with n, so rows made with different numbers do not clash on
 unique columns. Mirrors web/src/core/generators/python/samples.ts."""
 
-import math
 import re
 
 from ...js import number_text
+from ...schema.documents import is_object_id, nested_fields
+from ..samples import bounded_number
 from .python import Imports, js_json
 
 
@@ -18,19 +19,15 @@ def _checks_of(column: dict, checks: list[dict]) -> list[dict]:
 
 
 def _number(column: dict, checks: list[dict]) -> str:
-    """A whole number that changes with n and stays above the lower bound a CHECK sets."""
+    """A whole number that changes with n and stays within the bounds a CHECK sets."""
     parsed = _checks_of(column, checks)
     choices = next((item for item in parsed if item["kind"] == "in"), None)
     if choices:
         return js_json(choices["values"][0])
-    low = 0
-    for item in parsed:
-        if item["kind"] == "compare" and item["op"] in (">", ">="):
-            low = max(low, math.ceil(item["value"]))
-    return "n" if low == 0 else f"{low} + n"
+    return bounded_number(parsed, "n", column["type"]["kind"] == "float")
 
 
-def sample_value(column: dict, checks: list[dict], enums: list[dict], imports: Imports) -> str:
+def sample_value(column: dict, checks: list[dict], enums: list[dict], imports: Imports, utc: bool = False) -> str:
     """A Python expression for a value of the column, adding its imports."""
     column_type = column["type"]
     kind = column_type["kind"]
@@ -55,6 +52,8 @@ def sample_value(column: dict, checks: list[dict], enums: list[dict], imports: I
     if kind == "float":
         return _text(choices["values"][0]) if choices else f"{_number(column, checks)} + 0.5"
     if kind == "text":
+        if column_type.get("objectId"):
+            return 'f"{n:024x}"'
         length = column_type.get("length", 40)
         if column_type.get("fixed"):
             return f'f"{{n:0{length}d}}"[-{length}:]'
@@ -74,6 +73,9 @@ def sample_value(column: dict, checks: list[dict], enums: list[dict], imports: I
         return "time(12, n % 60)"
     if kind == "datetime":
         imports.from_("datetime", "datetime")
+        if utc:
+            imports.from_("datetime", "UTC")
+            return "datetime(2026, 1, n % 28 + 1, 12, 0, 0, tzinfo=UTC)"
         return "datetime(2026, 1, n % 28 + 1, 12, 0, 0)"
     if kind == "uuid":
         imports.from_("uuid", "UUID")
@@ -82,6 +84,16 @@ def sample_value(column: dict, checks: list[dict], enums: list[dict], imports: I
         # As long as the column, when its length may be fixed: the database fills shorter values
         length = column_type.get("length")
         return f"bytes([n % 256]) * {length}" if length is not None and length <= 64 else "bytes([n % 256])"
+    if kind == "json" and column_type.get("fields") is not None:
+        # The identifier is given when it is stored; no sample is sure to fit a type that is not known
+        values = [
+            f"{js_json(field['name'])}: {sample_value(field, field.get('checks') or [], enums, imports, utc)}"
+            for field in column_type["fields"]
+            if field["name"] != "_id" and field["type"]["kind"] != "unknown"
+        ]
+        return "{" + ", ".join(values) + "}"
+    if kind == "array" and nested_fields(column_type) is not None:
+        return f"[{sample_value({**column, 'type': column_type['items']}, [], enums, imports, utc)}]"
     if kind == "array":
         return "[]"
     if kind == "json":
@@ -91,6 +103,8 @@ def sample_value(column: dict, checks: list[dict], enums: list[dict], imports: I
 
 def missing_value(column_type: dict, imports: Imports) -> str:
     """A key no row has, as a Python expression, for the tests of missing rows."""
+    if is_object_id(column_type):
+        return js_json("f" * 24)
     if column_type["kind"] in ("integer", "decimal", "float"):
         return "999999"
     if column_type["kind"] == "uuid":

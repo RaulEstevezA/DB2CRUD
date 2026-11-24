@@ -14,7 +14,7 @@ VALIDATOR = '{ $jsonSchema: { bsonType: "object", title: "users", properties: { 
 
 def test_stack_follows_the_database():
     settings = normalize_settings(DEFAULT_SETTINGS)
-    assert [stack["orm"] for stack in stacks_for("mongodb")] == ["mongoose", "springdata"]
+    assert [stack["orm"] for stack in stacks_for("mongodb")] == ["beanie", "mongoose", "springdata"]
     assert settings_for("mongodb", settings)["database"] == "mongodb"
     assert settings_for("postgresql", settings) == settings
     assert settings_for("postgresql", settings_for("mongodb", settings))["orm"] != "mongoose"
