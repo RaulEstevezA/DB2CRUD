@@ -49,7 +49,7 @@ def creation_order(schema: dict) -> list[dict]:
     return order
 
 
-def _type_sql(schema: dict, dialect: str, type_: dict) -> str:
+def type_sql(schema: dict, dialect: str, type_: dict) -> str:
     """The type of a column in the engine."""
     kind = type_["kind"]
     if schema.get("dialect") == dialect and kind not in ("enum", "unknown"):
@@ -104,7 +104,7 @@ def _type_sql(schema: dict, dialect: str, type_: dict) -> str:
         return f"VARCHAR({max([1, *(len(value) for value in values)])})"
     if kind == "array":
         if dialect == "postgresql":
-            return f"{_type_sql(schema, dialect, type_['items'])}[]"
+            return f"{type_sql(schema, dialect, type_['items'])}[]"
         return "JSON" if mysql else "TEXT"
     return type_["sql"] if schema.get("dialect") == dialect else "TEXT"
 
@@ -142,7 +142,7 @@ def _column_sql(schema: dict, dialect: str, table: dict, column: dict) -> str:
     if identity and dialect == "sqlite":
         return f"{quote_name(dialect, column['name'])} INTEGER PRIMARY KEY AUTOINCREMENT"
     # A serial type numbers the column already: as an identity it is the whole number it stands for
-    declared = _type_sql(schema, dialect, column["type"])
+    declared = type_sql(schema, dialect, column["type"])
     type_text = _SERIALS.get(declared.upper(), declared) if identity else declared
     parts = [quote_name(dialect, column["name"]), type_text]
     if identity:
