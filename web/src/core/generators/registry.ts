@@ -14,6 +14,7 @@ import { javaGenerator } from './java/generator.ts'
 import { jpaOrm } from './java/jpa/index.ts'
 import { sqlOrm as javaSqlOrm } from './java/sql/index.ts'
 import { exposedOrm } from './kotlin/exposed/index.ts'
+import { sqlOrm as kotlinSqlOrm } from './kotlin/sql/index.ts'
 import { kotlinGenerator } from './kotlin/generator.ts'
 import { rustGenerator } from './rust/generator.ts'
 import { swiftGenerator } from './swift/generator.ts'
@@ -50,6 +51,7 @@ export const GENERATORS: readonly Generator[] = [
   phpGenerator(eloquentOrm),
   phpGenerator(phpSqlOrm),
   kotlinGenerator(exposedOrm),
+  kotlinGenerator(kotlinSqlOrm),
   rustGenerator,
   swiftGenerator,
 ]

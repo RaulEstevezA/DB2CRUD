@@ -264,6 +264,16 @@ export const STACKS: readonly StackInfo[] = [
     updates: ['patch', 'optional', 'full'],
   },
   {
+    language: 'kotlin',
+    orm: 'sql',
+    label: 'SQL (JDBC)',
+    databases: ['postgresql', 'mysql', 'mariadb', 'sqlite'],
+    execution: ['sync'],
+    errors: ['exceptions'],
+    dtoKinds: ['data', 'class'],
+    updates: ['patch', 'optional', 'full'],
+  },
+  {
     language: 'rust',
     orm: 'seaorm',
     label: 'SeaORM 2',

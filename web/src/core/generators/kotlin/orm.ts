@@ -14,6 +14,8 @@ export interface KotlinOrm {
   id: OrmId
   /** What repositories and the unit of work take, which holds the transaction: its name, its type and what to import */
   holder: { name: string; type: string; ktImport: string; text: string }
+  /** A list without items as the entities keep it, as a Kotlin expression */
+  emptyList(context: Context): string
   /** `AppDatabase` and what else reaches the database */
   databaseFiles(context: Context): (GeneratedFile | null)[]
   /** The entity of a table, and what maps it */

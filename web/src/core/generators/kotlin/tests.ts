@@ -75,7 +75,11 @@ function factoriesFile(context: Context, makeable: TableInfo[]): GeneratedFile {
         if (column === info.soft) return column.column.type.kind === 'boolean' ? [`        ${column.prop} = false,`] : []
         // No sample is sure to fit a type that is not known
         if (column.column.nullable && (isKey || column.column.type.kind === 'unknown')) return []
-        return [`        ${column.prop} = ${sampleValue(column, info.table.checks, context.schema.enums, imports)},`]
+        const value =
+          column.column.type.kind === 'array'
+            ? context.orm.emptyList(context)
+            : sampleValue(column, info.table.checks, context.schema.enums, imports)
+        return [`        ${column.prop} = ${value},`]
       })
     const insert = query(info, 'insert')!
     return [

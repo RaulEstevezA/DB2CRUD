@@ -127,6 +127,7 @@ function transaction(imports: KtImports): string[] {
 export const exposedOrm: KotlinOrm = {
   id: 'exposed',
   holder: { name: 'db', type: 'Database', ktImport: 'org.jetbrains.exposed.v1.jdbc.Database', text: 'database' },
+  emptyList: () => '"[]"',
   databaseFiles: (context) => [databaseFile(context), enumColumnFile(context)],
   entityFiles: (context, info) => [entityFile(context, info), tableObjectFile(context, info)],
   repository: {
