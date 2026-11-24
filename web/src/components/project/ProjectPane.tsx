@@ -10,7 +10,8 @@ import { downloadBlob } from '../../app/download.ts'
 import type { ConversionsAvailability } from '../../core/conversions/plan.ts'
 import type { GeneratedFile } from '../../core/export/files.ts'
 import { createZip } from '../../core/export/zip.ts'
-import { findStack, STACKS, type LanguageId, type ProjectSettings } from '../../core/settings/settings.ts'
+import type { Dialect } from '../../core/schema/types.ts'
+import { findStack, STACKS, stacksFor, type LanguageId, type ProjectSettings } from '../../core/settings/settings.ts'
 import { isVerified } from '../../core/settings/verified.ts'
 import { useCopy } from '../../hooks/useCopy.ts'
 import { useI18n } from '../../i18n/useI18n.ts'
@@ -22,6 +23,8 @@ import { FileTree } from './FileTree.tsx'
 import './ProjectPane.css'
 
 export interface ProjectPaneProps {
+  /** The database read: only the stacks that can reach it are offered */
+  dialect: Dialect | null
   settings: ProjectSettings
   files: GeneratedFile[]
   onSettingsChange: (change: Partial<ProjectSettings>) => void
@@ -29,7 +32,7 @@ export interface ProjectPaneProps {
   conversions?: ConversionsAvailability | null
 }
 
-export function ProjectPane({ settings, files, onSettingsChange, conversions = null }: ProjectPaneProps) {
+export function ProjectPane({ dialect, settings, files, onSettingsChange, conversions = null }: ProjectPaneProps) {
   const { t } = useI18n()
   const [chosen, setChosen] = useState<string | null>(null)
   const [language, setLanguage] = useState<LanguageSupport | null>(null)
@@ -128,7 +131,7 @@ export function ProjectPane({ settings, files, onSettingsChange, conversions = n
                 onSettingsChange({ language, orm } as Partial<ProjectSettings>)
               }}
             >
-              {STACKS.map((item) => (
+              {stacksFor(dialect).map((item) => (
                 <option key={`${item.language}:${item.orm}`} value={`${item.language}:${item.orm}`}>
                   {`${t.languages[item.language]} · ${item.label}`}
                 </option>

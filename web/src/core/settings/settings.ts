@@ -24,6 +24,7 @@ export type OrmId =
   | 'exposed'
   | 'seaorm'
   | 'fluent'
+  | 'mongoose'
   /** No ORM: SQL through each database's driver */
   | 'sql'
 
@@ -172,6 +173,16 @@ export const STACKS: readonly StackInfo[] = [
     orm: 'sql',
     label: 'SQL (pg · mysql2 · better-sqlite3)',
     databases: ['postgresql', 'mysql', 'mariadb', 'sqlite'],
+    execution: ['async'],
+    errors: ['exceptions'],
+    dtoKinds: ['interface', 'class'],
+    updates: ['partial'],
+  },
+  {
+    language: 'typescript',
+    orm: 'mongoose',
+    label: 'Mongoose 8 (MongoDB)',
+    databases: ['mongodb'],
     execution: ['async'],
     errors: ['exceptions'],
     dtoKinds: ['interface', 'class'],
@@ -355,6 +366,20 @@ const TESTS: readonly Tests[] = ['all', 'services', 'repositories', 'none']
 
 export function findStack(language: LanguageId, orm: OrmId): StackInfo | undefined {
   return STACKS.find((stack) => stack.language === language && stack.orm === orm)
+}
+
+/** The stacks that can reach a database: documents need one made for them, and tables one made for tables. */
+export function stacksFor(dialect: Dialect | null): readonly StackInfo[] {
+  if (dialect === null) return STACKS
+  return STACKS.filter((stack) => stack.databases.includes('mongodb') === (dialect === 'mongodb'))
+}
+
+/** The same settings, on the first stack for the database when theirs cannot reach it. */
+export function settingsFor(dialect: Dialect | null, settings: ProjectSettings): ProjectSettings {
+  const stacks = stacksFor(dialect)
+  if (stacks.some((stack) => stack.language === settings.language && stack.orm === settings.orm)) return settings
+  const [stack] = stacks
+  return normalizeSettings({ ...settings, language: stack.language, orm: stack.orm })
 }
 
 const pick = <T>(value: unknown, options: readonly T[], fallback: T): T => (options.includes(value as T) ? (value as T) : fallback)

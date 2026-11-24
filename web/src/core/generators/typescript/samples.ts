@@ -3,6 +3,7 @@
  * precision, the CHECK constraints the rules understand) and changes with `n`, a variable of the generated
  * factory, so rows made with different numbers do not clash on unique columns. Mirrors python/samples.ts.
  */
+import { isObjectId, nestedFields } from '../../schema/documents.ts'
 import type { DbCheck, DbColumn, DbEnum, DbType } from '../../schema/types.ts'
 
 function checksOf(column: DbColumn, checks: DbCheck[]) {
@@ -46,6 +47,7 @@ export function sampleValue(column: DbColumn, checks: DbCheck[], enums: DbEnum[]
     case 'float':
       return choices?.kind === 'in' ? String(choices.values[0]) : `${number(column, checks)} + 0.5`
     case 'text': {
+      if (type.objectId) return "n.toString(16).padStart(24, '0')"
       const length = type.length ?? 40
       if (type.fixed) return `String(n).padStart(${length}, '0').slice(-${length})`
       // The column name and the number, as long as it fits; n stays below 1000 in the tests
@@ -72,16 +74,25 @@ export function sampleValue(column: DbColumn, checks: DbCheck[], enums: DbEnum[]
       // As long as the column, when its length may be fixed: the database fills shorter values
       return type.length !== undefined && type.length <= 64 ? `Buffer.alloc(${type.length}, n % 256)` : 'Buffer.from([n % 256])'
     case 'json':
-      return '{ n }'
+      return type.fields ? documentSample(type.fields, enums) : '{ n }'
     case 'array':
-      return '[]'
+      return nestedFields(type) ? `[${sampleValue({ ...column, type: type.items }, [], enums)}]` : '[]'
     case 'unknown':
       return '`value-${n}`'
   }
 }
 
+/** A nested document: a value for each of its fields but the identifier the database gives it. */
+function documentSample(fields: DbColumn[], enums: DbEnum[]): string {
+  const values = fields
+    .filter((field) => field.name !== '_id' && (!field.nullable || field.type.kind !== 'unknown'))
+    .map((field) => `${/^[A-Za-z_$][\w$]*$/.test(field.name) ? field.name : literal(field.name)}: ${sampleValue(field, [], enums)}`)
+  return `{ ${values.join(', ')} }`
+}
+
 /** A key no row has, as a TypeScript expression, for the tests of missing rows. */
 export function missingValue(type: DbType): string {
+  if (isObjectId(type)) return `'${'f'.repeat(24)}'`
   switch (type.kind) {
     case 'integer':
     case 'float':

@@ -26,6 +26,10 @@ export interface TsOrm {
   /** The entities are plain classes the project always writes (src/entities): the ORM keeps its tables elsewhere
    * (a Prisma schema), and the `entities` setting decides whether that is written */
   plainEntities: boolean
+  /** The models of the input never stand in for the project's own */
+  ownModels?: boolean
+  /** What the names of the database classes start with, when it is not `Sql`: `MongoUnitOfWork` */
+  prefix?: string
   /** The data source and the entities */
   databaseFiles(context: Context): GeneratedFile[]
   /** The database repository of a table: its doc comment, its fields and constructor, and each method's body */

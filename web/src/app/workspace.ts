@@ -22,12 +22,15 @@ export type DatabaseReadError = Model2DBReadError | 'unknownInput' | 'noTables'
 
 export type DatabaseReadResult = { ok: true; schema: DbSchema } | { ok: false; error: DatabaseReadError; path?: string }
 
+const isValidator = (text: string) => /^\{\s*["']?\$jsonSchema\b/.test(text) || /^\{[^{}]*\boptions\b[^]*\$jsonSchema/.test(text)
+
 /** The physical schema of the input, or why it cannot be read; null while the input is empty. A JSON text is a
  * Model2DB project; anything else is ORM code, or else SQL DDL. */
 export function readDatabase(input: InputState): DatabaseReadResult | null {
   const text = input.text.trim()
   if (text === '') return null
-  if (text.startsWith('{')) return readModel2DBProject(input.text)
+  // A validator of MongoDB is an object too
+  if (text.startsWith('{') && !isValidator(text)) return readModel2DBProject(input.text)
   const read = readOrmCode([{ name: input.fileName ?? 'input', text: input.text }])
   if (read.ok) return { ok: true, schema: read.schema }
   if (read.error === 'unknownOrm' && detectDdl(input.text)) {
@@ -40,7 +43,7 @@ export function readDatabase(input: InputState): DatabaseReadResult | null {
 /** The language of the input, for the editor's highlighting: JSON for a project, the ORM's for its code, SQL for DDL. */
 export function inputLanguage(input: InputState): string {
   const text = input.text.trimStart()
-  if (text === '' || text.startsWith('{')) return 'json'
+  if (text === '' || (text.startsWith('{') && !isValidator(text))) return 'json'
   return detectOrm([{ name: input.fileName ?? 'input', text: input.text }])?.language ?? (detectDdl(input.text) ? 'sql' : 'text')
 }
 

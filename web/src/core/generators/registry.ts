@@ -33,6 +33,7 @@ import { sqlOrm as pythonSqlOrm } from './python/sql/index.ts'
 import type { Generator } from './types.ts'
 import { typescriptGenerator } from './typescript/common/generator.ts'
 import { drizzleOrm } from './typescript/drizzle/index.ts'
+import { mongooseOrm } from './typescript/mongoose/index.ts'
 import { prismaOrm } from './typescript/prisma/index.ts'
 import { sequelizeOrm } from './typescript/sequelize/index.ts'
 import { sqlOrm as typescriptSqlOrm } from './typescript/sql/index.ts'
@@ -47,6 +48,7 @@ export const GENERATORS: readonly Generator[] = [
   typescriptGenerator(drizzleOrm),
   typescriptGenerator(sequelizeOrm),
   typescriptGenerator(typescriptSqlOrm),
+  typescriptGenerator(mongooseOrm),
   javaGenerator(jpaOrm),
   javaGenerator(javaSqlOrm),
   csharpGenerator(efcoreOrm),

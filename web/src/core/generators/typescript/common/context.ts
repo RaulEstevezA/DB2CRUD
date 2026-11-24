@@ -15,7 +15,7 @@ import type {
 import { findPolicy, findRepository, findService } from '../../../crud/types.ts'
 import type { DbColumn, DbSchema, DbTable, DbType } from '../../../schema/types.ts'
 import type { ProjectSettings } from '../../../settings/settings.ts'
-import { fileName, memberName, typeName } from '../typescript.ts'
+import { fileName, memberName, quote, typeName } from '../typescript.ts'
 import type { TsOrm } from './orm.ts'
 
 export interface ColumnInfo {
@@ -89,11 +89,18 @@ export function tsType(type: DbType): string {
     case 'array':
       return `${tsType(type.items)}[]`
     case 'json':
-      return 'unknown'
+      return type.fields ? documentType(type.fields) : 'unknown'
     // A type the rules do not know is kept as its text
     case 'unknown':
       return 'string'
   }
+}
+
+/** The type of a nested document, by the stored names of its fields. */
+function documentType(fields: DbColumn[]): string {
+  const field = ({ name, type, nullable }: DbColumn) =>
+    `${/^[A-Za-z_$][\w$]*$/.test(name) ? name : quote(name)}${nullable ? '?' : ''}: ${tsType(type)}${nullable ? ' | null' : ''}`
+  return `{ ${fields.map(field).join('; ')} }`
 }
 
 /** The schemas of PostgreSQL the tables are in (`sales` in `sales.orders`): the tests create them, as the ORMs create
@@ -122,29 +129,30 @@ function blockingLinks(schema: DbSchema, table: DbTable): ChildLink[] {
 
 const included = <T extends { include: { value: boolean } }>(items: T[]) => items.filter((item) => item.include.value)
 
-function columnInfo(column: DbColumn): ColumnInfo {
+function columnInfo(table: DbTable, column: DbColumn): ColumnInfo {
   const generated = column.generated !== undefined && column.generated !== 'onUpdateNow'
   return {
     column,
-    prop: memberName(column.name),
+    // MongoDB's `_id` is the `id` of the entity, unless the documents have one of their own
+    prop: column.name === '_id' && table.columns.some((item) => item.name === 'id') ? '_id' : memberName(column.name),
     ts: tsType(column.type),
     generated,
     required: !column.nullable && column.default === undefined && !generated,
   }
 }
 
-function tableInfo(schema: DbSchema, design: CrudDesign, settings: ProjectSettings, table: DbTable): TableInfo {
+function tableInfo(orm: TsOrm, schema: DbSchema, design: CrudDesign, settings: ProjectSettings, table: DbTable): TableInfo {
   const policy = findPolicy(design, table.name)!
   const repository = findRepository(design, table.name)!
   const service = settings.services ? (findService(design, table.name) ?? null) : null
-  const columns = table.columns.map(columnInfo)
+  const columns = table.columns.map((column) => columnInfo(table, column))
   const byName = (name: string) => columns.find((info) => info.column.name === name)!
   // A table without a primary key is mapped on all its columns: ORMs need some key to tell rows apart
   const key = (table.primaryKey ?? table.columns.map((column) => column.name)).map(byName)
   const deleteMode = policy.delete.value
   const concurrency = policy.concurrency.value
   // The input's classes only count when they are of this stack's ORM
-  const ownEntities = !repository.entityMissing && schema.source.format === settings.orm
+  const ownEntities = !orm.ownModels && !repository.entityMissing && schema.source.format === settings.orm
   const writesEntity = settings.entities === 'all' || (settings.entities === 'missing' && !ownEntities)
   return {
     table,
@@ -168,7 +176,7 @@ function tableInfo(schema: DbSchema, design: CrudDesign, settings: ProjectSettin
 }
 
 export function createContext(orm: TsOrm, schema: DbSchema, design: CrudDesign, settings: ProjectSettings): Context {
-  return { orm, schema, design, settings, tables: schema.tables.map((table) => tableInfo(schema, design, settings, table)) }
+  return { orm, schema, design, settings, tables: schema.tables.map((table) => tableInfo(orm, schema, design, settings, table)) }
 }
 
 export const writesEntities = (context: Context) => context.tables.some((info) => info.writesEntity)

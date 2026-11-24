@@ -13,6 +13,7 @@ import { describe, expect, it } from 'vitest'
 import { decidePolicy } from '../crud/edit.ts'
 import { SHOP } from '../crud/fixtures.ts'
 import { proposeCrud } from '../crud/propose.ts'
+import { readOrmCode } from '../importers/orm/registry.ts'
 import { readDdl } from '../importers/ddl/ddl.ts'
 import type { DbSchema } from '../schema/types.ts'
 import { MATCHING_CASES, readCase } from '../matching/test/cases.ts'
@@ -29,6 +30,8 @@ interface Scenario {
   case?: string
   /** The database of verification/ddl/, read from its SQL */
   ddl?: true
+  /** A file of verification/ with the code the schema is read from */
+  code?: string
   settings: Record<string, unknown>
   decisions?: { table: string; decision: 'role' | 'delete' | 'concurrency' | 'children' | 'hidden'; value: unknown }[]
 }
@@ -38,13 +41,21 @@ const { SCENARIOS } = (await import(resolve(process.cwd(), '../verification/scen
 
 const ddlOf = (scenario: Scenario) => readFileSync(resolve(process.cwd(), `../verification/ddl/${scenario.settings.database}.sql`), 'utf8')
 
+function readCode(path: string): DbSchema {
+  const read = readOrmCode([{ name: path, text: readFileSync(resolve(process.cwd(), '../verification', path), 'utf8') }])
+  if (!read.ok) throw new Error(`${path}: ${read.error}`)
+  return read.schema
+}
+
 function project(scenario: Scenario) {
   const shared = scenario.case ? readCase(join(MATCHING_CASES, scenario.case)) : null
   const schema = shared
     ? shared.database
-    : scenario.ddl
-      ? readDdl(ddlOf(scenario), scenario.settings.database as Parameters<typeof readDdl>[1])
-      : SCHEMAS[scenario.schema ?? 'shop']
+    : scenario.code
+      ? readCode(scenario.code)
+      : scenario.ddl
+        ? readDdl(ddlOf(scenario), scenario.settings.database as Parameters<typeof readDdl>[1])
+        : SCHEMAS[scenario.schema ?? 'shop']
   const models = shared ? { schema: shared.models, project: shared.project } : null
   let design = proposeCrud(schema, null, models?.schema ?? null, models?.project ?? null)
   for (const item of scenario.decisions ?? [])

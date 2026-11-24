@@ -33,6 +33,15 @@ function code(context: Context): GeneratedFile[] {
   return files.filter((file): file is GeneratedFile => file !== null)
 }
 
+/** The files with the database classes named as the ORM asks: `SqlUnitOfWork` is `MongoUnitOfWork` in a document database. */
+function named(orm: TsOrm, files: GeneratedFile[]): GeneratedFile[] {
+  const { prefix } = orm
+  if (!prefix) return files
+  const lower = prefix.charAt(0).toLowerCase() + prefix.slice(1)
+  const rename = (text: string) => text.replace(/\bSql(?=UnitOfWork\b|\w+Repository\b)/g, prefix).replace(/\bsqlUow\b/g, `${lower}Uow`)
+  return files.map((file) => ({ ...file, content: rename(file.content) }))
+}
+
 export function typescriptGenerator(orm: TsOrm): Generator {
   return {
     language: 'typescript',
@@ -45,7 +54,7 @@ export function typescriptGenerator(orm: TsOrm): Generator {
         tests.length > 0 && (settings.tests === 'all' || settings.tests === 'services')
           ? conversionTestFile(context, plans, (info) => canMake(context, info))
           : null
-      return [
+      return named(orm, [
         readmeFile(context),
         packageFile(context),
         ...tsconfigFiles(context),
@@ -56,7 +65,7 @@ export function typescriptGenerator(orm: TsOrm): Generator {
         ...(models ? conversionFiles(context, models.schema, plans) : []),
         ...tests,
         ...(conversionTests ? [conversionTests] : []),
-      ]
+      ])
     },
   }
 }

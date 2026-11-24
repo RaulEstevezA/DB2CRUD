@@ -5,6 +5,7 @@
  * ConflictError, for the races the services' checks cannot prevent.
  */
 import type { GeneratedFile } from '../../../export/files.ts'
+import { isObjectId } from '../../../schema/documents.ts'
 import { indent, lines, type Line } from '../../types.ts'
 import { tsLiteral, TsImports } from '../typescript.ts'
 import {
@@ -109,6 +110,10 @@ function memoryFill(context: Context, column: ColumnInfo, imports: TsImports): s
   const target = `entity.${column.prop}`
   const unset = context.orm.unset(target)
   if (db.generated === 'identity') return `if (${unset}) ${target} = this.nextId++`
+  if (isObjectId(db.type) && db.generated === 'uuid') {
+    imports.from('node:crypto', 'randomBytes')
+    return `if (${unset}) ${target} = randomBytes(12).toString('hex')`
+  }
   if (db.generated === 'uuid') {
     imports.from('node:crypto', 'randomUUID')
     return `if (${unset}) ${target} = randomUUID()`

@@ -15,7 +15,7 @@ import { ProjectPane } from './components/project/ProjectPane.tsx'
 import { conversionsAvailable } from './core/conversions/plan.ts'
 import { pendingDecisions } from './core/crud/edit.ts'
 import { generateProject } from './core/generators/registry.ts'
-import { DEFAULT_SETTINGS, normalizeSettings, type ProjectSettings } from './core/settings/settings.ts'
+import { DEFAULT_SETTINGS, normalizeSettings, settingsFor, type ProjectSettings } from './core/settings/settings.ts'
 import { findExample, type ExampleId } from './examples/index.ts'
 import { useCrudDesign } from './hooks/useCrudDesign.ts'
 import { useStoredState } from './hooks/useStoredState.ts'
@@ -31,12 +31,14 @@ function App() {
   const [part, setPart] = useState<WorkspacePart>('database')
   // The settings are a preference, kept in this browser; the database never is
   const [stored, setStored] = useStoredState<ProjectSettings>('db2crud.settings', () => DEFAULT_SETTINGS)
-  const settings = useMemo(() => normalizeSettings(stored), [stored])
 
   // Large inputs are read after the keystroke is painted, so typing stays smooth
   const deferredInput = useDeferredValue(input)
   const read = useMemo(() => readDatabase(deferredInput), [deferredInput])
   const schema = read?.ok ? read.schema : null
+  // A stack for the kind of database that was read: documents or tables
+  const dialect = schema?.dialect ?? null
+  const settings = useMemo(() => settingsFor(dialect, normalizeSettings(stored)), [stored, dialect])
   // The application models are optional: each table gets the model it corresponds to
   const deferredModels = useDeferredValue(models)
   const modelsRead = useMemo(() => readModels(deferredModels), [deferredModels])
@@ -105,7 +107,15 @@ function App() {
               />
             ),
             design: <DesignPane state={designState} />,
-            project: <ProjectPane settings={settings} files={files} onSettingsChange={changeSettings} conversions={conversions} />,
+            project: (
+              <ProjectPane
+                dialect={dialect}
+                settings={settings}
+                files={files}
+                onSettingsChange={changeSettings}
+                conversions={conversions}
+              />
+            ),
           }}
         />
         <LinksPanel />

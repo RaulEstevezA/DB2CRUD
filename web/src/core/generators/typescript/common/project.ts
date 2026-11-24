@@ -5,6 +5,8 @@
  * section 6). Mirrors python/common/project.ts.
  */
 import type { GeneratedFile } from '../../../export/files.ts'
+import { nestedFields } from '../../../schema/documents.ts'
+import type { DbType } from '../../../schema/types.ts'
 import { lines } from '../../types.ts'
 import { moduleOf, operationName, serviceClass, writesEntities, type ColumnInfo, type Context } from './context.ts'
 import { createDto, readDto, updateDto } from './dtos.ts'
@@ -174,16 +176,21 @@ export function readmeFile(context: Context): GeneratedFile {
 
 // crud-contract.json
 
-function typeOf(column: ColumnInfo): Record<string, unknown> {
-  const type = column.column.type
-  return { kind: type.kind, ...(type.kind === 'text' && type.length !== undefined ? { length: type.length } : {}) }
+function typeOf(type: DbType): Record<string, unknown> {
+  // What a nested document, or each of a list of them, holds
+  const fields = nestedFields(type)
+  return {
+    kind: type.kind,
+    ...(type.kind === 'text' && type.length !== undefined ? { length: type.length } : {}),
+    ...(fields ? { fields: fields.map((field) => ({ name: field.name, type: typeOf(field.type), nullable: field.nullable })) } : {}),
+  }
 }
 
 export function contractFile(context: Context): GeneratedFile {
   const dtos = context.settings.serviceTypes === 'dtos'
   const types = context.tables.flatMap((info) => {
     const fields = (columns: ColumnInfo[], optional: boolean) =>
-      columns.map((column) => ({ name: column.prop, type: typeOf(column), nullable: optional || column.column.nullable }))
+      columns.map((column) => ({ name: column.prop, type: typeOf(column.column.type), nullable: optional || column.column.nullable }))
     const entity = { name: info.entity, module: moduleOf(context, info, 'entity'), kind: 'entity', fields: fields(info.columns, false) }
     if (!dtos || !info.service) return [entity]
     const module = moduleOf(context, info, 'dtos')

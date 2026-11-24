@@ -246,7 +246,7 @@ function serviceTests(context: Context, info: TableInfo, imports: TsImports, mem
   }
   const fresh = (n: number, extra: string[] = []) =>
     dtos ? `pick<${createDto(info)}>(${factory(n, extra)}, CREATE_FIELDS)` : factory(n, extra)
-  const version = info.version ? `, created.${info.version.prop}` : ''
+  const version = info.version ? `, created.${info.version.prop}${info.version.column.nullable ? '!' : ''}` : ''
   const tests: Line[][] = []
   if (create) {
     imports.from('test/factories', newName(info))
