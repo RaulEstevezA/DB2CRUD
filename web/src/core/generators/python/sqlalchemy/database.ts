@@ -131,6 +131,9 @@ function saType(context: Context, type: DbType, imports: Imports, key: boolean):
     case 'uuid':
       return `${sa('Uuid')}()`
     case 'binary':
+      // MySQL has no keys on columns without a length
+      if (type.length !== undefined && (context.settings.database === 'mysql' || context.settings.database === 'mariadb'))
+        return `${sa('VARBINARY')}(${type.length})`
       return type.length !== undefined ? `${sa('LargeBinary')}(${type.length})` : `${sa('LargeBinary')}()`
     case 'array':
       if (context.settings.database === 'postgresql') return `${sa('ARRAY')}(${columnType(context, type.items, imports, false)})`

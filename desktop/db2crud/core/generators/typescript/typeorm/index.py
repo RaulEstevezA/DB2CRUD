@@ -135,9 +135,13 @@ def _test_database(context: dict) -> list[dict]:
             *(f"""      await dataSource.query('CREATE SCHEMA IF NOT EXISTS "{name}"')""" for name in schemas),
             "    }",
         ]
+    family = "mariadb" if context["settings"]["database"] == "mariadb" else "mysql"
     return [
         {"path": "test/database.ts", "content": lines(*content)},
-        {"path": "test/database.test.ts", "content": lines(*DATABASE_TEST)},
+        {
+            "path": "test/database.test.ts",
+            "content": lines(*(line.replace("'mysql'", f"'{family}'") for line in DATABASE_TEST)),
+        },
     ]
 
 

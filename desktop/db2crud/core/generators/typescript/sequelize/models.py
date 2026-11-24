@@ -7,7 +7,7 @@ web/src/core/generators/typescript/sequelize/models.ts."""
 import re
 
 from ...types import lines
-from ..common.context import find_info
+from ..common.context import find_info, pg_schemas
 from ..typescript import quote, ts_literal
 
 
@@ -67,7 +67,9 @@ def _data_type(context: dict, column_type: dict) -> str:
     if kind == "uuid":
         return "DataTypes.UUID"
     if kind == "binary":
-        return "DataTypes.BLOB"
+        # MySQL has no keys on columns without a length
+        length = column_type.get("length")
+        return quote(f"VARBINARY({length})") if dialect == "mysql" and length is not None else "DataTypes.BLOB"
     if kind == "array":
         # The other databases keep arrays as JSON
         return f"DataTypes.ARRAY({_data_type(context, column_type['items'])})" if postgres else "DataTypes.JSON"
@@ -105,6 +107,14 @@ def _default_of(column: dict) -> str | None:
     return None if value["value"] is None else ts_literal(value["value"])
 
 
+def _model_reference(context: dict, parent: dict) -> str:
+    """The table a foreign key points to: with its schema, when any table is in one, or Sequelize takes the child's."""
+    if not pg_schemas(context):
+        return quote(parent["name"])
+    schema = parent["table"].get("schema") or "public"
+    return f"{{ tableName: {quote(parent['name'])}, schema: {quote(schema)} }}"
+
+
 def _attribute_lines(context: dict, info: dict, column: dict) -> list:
     db = column["column"]
     options = [f"type: {_data_type(context, db['type'])}"]
@@ -128,7 +138,7 @@ def _attribute_lines(context: dict, info: dict, column: dict) -> list:
     parent = find_info(context, key["references"]["table"]) if key else None
     if key and parent:
         options += [
-            f"references: {{ model: {quote(parent['name'])}, key: {quote(key['references']['columns'][0])} }}",
+            f"references: {{ model: {_model_reference(context, parent)}, key: {quote(key['references']['columns'][0])} }}",
             f"onDelete: '{ACTIONS[key.get('onDelete') or 'no action']}'",
             f"onUpdate: '{ACTIONS[key.get('onUpdate') or 'no action']}'",
         ]

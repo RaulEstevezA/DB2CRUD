@@ -49,7 +49,7 @@ def data_source_file(context: dict) -> dict:
         "  if (scheme === 'postgresql' || scheme === 'postgres') return new DataSource({ type: 'postgres', url, entities: ENTITIES, parseInt8: true })",
         "  if (scheme === 'mysql' || scheme === 'mariadb')",
         "    return new DataSource({",
-        "      type: 'mysql',",
+        f"      type: '{'mariadb' if context['settings']['database'] == 'mariadb' else 'mysql'}',",
         "      url: url.replace(/^mariadb:/, 'mysql:'),",
         "      entities: ENTITIES,",
         "      supportBigNumbers: true,",

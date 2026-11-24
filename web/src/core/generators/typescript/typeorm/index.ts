@@ -66,6 +66,7 @@ function unitOfWork(context: Context, imports: TsImports): Line[] {
 
 function testDatabase(context: Context): GeneratedFile[] {
   const schemas = pgSchemas(context)
+  const family = context.settings.database === 'mariadb' ? 'mariadb' : 'mysql'
   return [
     {
       path: 'test/database.ts',
@@ -113,7 +114,7 @@ function testDatabase(context: Context): GeneratedFile[] {
         'const sqlUow = useTestDatabase()',
         '',
         '/** The TypeORM driver of each scheme TEST_DATABASE_URL may have */',
-        "const DRIVERS: Record<string, string> = { postgresql: 'postgres', postgres: 'postgres', mysql: 'mysql', mariadb: 'mysql', sqlite: 'better-sqlite3' }",
+        `const DRIVERS: Record<string, string> = { postgresql: 'postgres', postgres: 'postgres', mysql: '${family}', mariadb: '${family}', sqlite: 'better-sqlite3' }`,
         '',
         "describe('the test database', () => {",
         "  it('is the one TEST_DATABASE_URL names', () => {",

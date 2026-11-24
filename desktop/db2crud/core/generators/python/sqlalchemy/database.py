@@ -140,6 +140,9 @@ def _sa_type(context: dict, column_type: dict, imports: Imports, key: bool) -> s
         name = "Time" if kind == "time" else "DateTime"
         return f"{sa(name)}(timezone={'True' if column_type['timezone'] else 'False'})"
     if kind == "binary":
+        # MySQL has no keys on columns without a length
+        if "length" in column_type and context["settings"]["database"] in ("mysql", "mariadb"):
+            return f"{sa('VARBINARY')}({column_type['length']})"
         if "length" in column_type:
             return f"{sa('LargeBinary')}({column_type['length']})"
         return f"{sa('LargeBinary')}()"

@@ -8,7 +8,7 @@ import type { DbColumn, DbType } from '../../../schema/types.ts'
 import type { GeneratedFile } from '../../../export/files.ts'
 import { lines, type Line } from '../../types.ts'
 import { quote, tsLiteral } from '../typescript.ts'
-import { findInfo, type ColumnInfo, type Context, type TableInfo } from '../common/context.ts'
+import { findInfo, pgSchemas, type ColumnInfo, type Context, type TableInfo } from '../common/context.ts'
 
 export type Dialect = 'postgresql' | 'mysql' | 'sqlite'
 
@@ -55,7 +55,8 @@ function dataType(context: Context, type: DbType): string {
     case 'uuid':
       return 'DataTypes.UUID'
     case 'binary':
-      return 'DataTypes.BLOB'
+      // MySQL has no keys on columns without a length
+      return dialect === 'mysql' && type.length !== undefined ? quote(`VARBINARY(${type.length})`) : 'DataTypes.BLOB'
     case 'array':
       // The other databases keep arrays as JSON
       return postgres ? `DataTypes.ARRAY(${dataType(context, type.items)})` : 'DataTypes.JSON'
@@ -87,6 +88,12 @@ function defaultOf(column: DbColumn): string | null {
   return value.value === null ? null : tsLiteral(value.value)
 }
 
+/** The table a foreign key points to: with its schema, when any table is in one, or Sequelize takes the child's. */
+function modelReference(context: Context, parent: TableInfo): string {
+  if (pgSchemas(context).length === 0) return quote(parent.name)
+  return `{ tableName: ${quote(parent.name)}, schema: ${quote(parent.table.schema ?? 'public')} }`
+}
+
 function attributeLines(context: Context, info: TableInfo, column: ColumnInfo): Line[] {
   const db = column.column
   const options = [`type: ${dataType(context, db.type)}`]
@@ -102,7 +109,7 @@ function attributeLines(context: Context, info: TableInfo, column: ColumnInfo): 
   const parent = key && findInfo(context, key.references.table)
   if (key && parent)
     options.push(
-      `references: { model: ${quote(parent.name)}, key: ${quote(key.references.columns[0])} }`,
+      `references: { model: ${modelReference(context, parent)}, key: ${quote(key.references.columns[0])} }`,
       `onDelete: '${ACTIONS[key.onDelete ?? 'no action']}'`,
       `onUpdate: '${ACTIONS[key.onUpdate ?? 'no action']}'`,
     )

@@ -44,7 +44,7 @@ export function dataSourceFile(context: Context): GeneratedFile {
     "  if (scheme === 'postgresql' || scheme === 'postgres') return new DataSource({ type: 'postgres', url, entities: ENTITIES, parseInt8: true })",
     "  if (scheme === 'mysql' || scheme === 'mariadb')",
     '    return new DataSource({',
-    "      type: 'mysql',",
+    `      type: '${context.settings.database === 'mariadb' ? 'mariadb' : 'mysql'}',`,
     "      url: url.replace(/^mariadb:/, 'mysql:'),",
     '      entities: ENTITIES,',
     '      supportBigNumbers: true,',
