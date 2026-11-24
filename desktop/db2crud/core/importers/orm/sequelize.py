@@ -525,7 +525,10 @@ def _read_sequelize(files: list[dict]) -> dict:
             references = settings.get("references")
             if references is not None:
                 target = _entries_of(references)
+                # A model, the name of a table, or a table with its schema: { tableName: 'orders', schema: 'sales' }
                 referenced_model = target.get("model")
+                if referenced_model is not None and referenced_model["kind"] == "dict":
+                    referenced_model = _entries_of(referenced_model).get("tableName")
                 referenced_table = name_of(referenced_model)
                 if referenced_table is None:
                     referenced_table = string_of(referenced_model) or ""

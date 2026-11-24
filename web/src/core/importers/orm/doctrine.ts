@@ -27,8 +27,11 @@ function argumentOf(attribute: Expr | undefined, name: string, position?: number
   return attribute.named[name] ?? (position !== undefined ? attribute.args[position] : undefined)
 }
 
+/** A name of the database: Doctrine quotes those written between backticks. */
+const nameIn = (expr: Expr | undefined) => stringOf(expr)?.replace(/^`(.*)`$/, '$1')
+
 const stringsOf = (expr: Expr | undefined): string[] =>
-  (expr?.kind === 'list' ? expr.items : []).map((item) => stringOf(item)).filter((item): item is string => item !== undefined)
+  (expr?.kind === 'list' ? expr.items : []).map((item) => nameIn(item)).filter((item): item is string => item !== undefined)
 
 /** The simple name of a PHP type: `?\DateTimeImmutable` → `DateTimeImmutable`; `int|null` → `int`. */
 const simpleType = (type: string) =>
@@ -201,7 +204,7 @@ function readDoctrine(files: SourceFile[]): DbSchema {
     if (!attributeOf(cls.attributes, 'Entity')) continue
     const tableAttribute = attributeOf(cls.attributes, 'Table')
     const table: DbTable = {
-      name: stringOf(argumentOf(tableAttribute, 'name', 0)) ?? cls.name,
+      name: nameIn(argumentOf(tableAttribute, 'name', 0)) ?? cls.name,
       columns: [],
       primaryKey: null,
       foreignKeys: [],
@@ -230,7 +233,7 @@ function readDoctrine(files: SourceFile[]): DbSchema {
       }
       const column = attributeOf(property.attributes, 'Column')
       if (!column) return
-      const name = `${prefix}${stringOf(argumentOf(column, 'name')) ?? property.name}`
+      const name = `${prefix}${nameIn(argumentOf(column, 'name')) ?? property.name}`
       const options = entriesOf(argumentOf(column, 'options'))
       const definition = stringOf(argumentOf(column, 'columnDefinition'))
       const typeExpr = argumentOf(column, 'type', 0)
@@ -326,13 +329,13 @@ function readDoctrine(files: SourceFile[]): DbSchema {
       argumentOf(tableAttribute, name)?.kind === 'list' ? (argumentOf(tableAttribute, name) as Expr & { kind: 'list' }).items : []
     for (const index of [...cls.attributes.filter((item) => nameOf(item) === 'Index'), ...nested('indexes')]) {
       const columns = columnsOf(index)
-      const name = stringOf(argumentOf(index, 'name'))
+      const name = nameIn(argumentOf(index, 'name'))
       const unique = stringsOf(argumentOf(index, 'flags')).includes('unique')
       if (columns.length > 0) (unique ? table.uniques : table.indexes).push({ ...(name ? { name } : {}), columns })
     }
     for (const unique of [...cls.attributes.filter((item) => nameOf(item) === 'UniqueConstraint'), ...nested('uniqueConstraints')]) {
       const columns = columnsOf(unique)
-      const name = stringOf(argumentOf(unique, 'name'))
+      const name = nameIn(argumentOf(unique, 'name'))
       if (columns.length > 0) table.uniques.push({ ...(name ? { name } : {}), columns })
     }
     models.push(model)
@@ -363,7 +366,7 @@ function readDoctrine(files: SourceFile[]): DbSchema {
       joinList.forEach((join, position) => {
         const parent = keyColumn(target, stringOf(argumentOf(join, 'referencedColumnName')), position)
         if (!parent) return
-        const name = stringOf(argumentOf(join, 'name')) ?? `${property.name}_${parent.name}`
+        const name = nameIn(argumentOf(join, 'name')) ?? `${property.name}_${parent.name}`
         const isKey = !!attributeOf(property.attributes, 'Id')
         if (!table.columns.some((item) => item.name === name)) {
           table.columns.push({ name, type: parent.type, nullable: !isKey && booleanOf(argumentOf(join, 'nullable')) !== false })
@@ -429,7 +432,7 @@ function joinTableOf(
 ): DbTable {
   const joinTable = attributeOf(property.attributes, 'JoinTable')
   const table: DbTable = {
-    name: stringOf(argumentOf(joinTable, 'name', 0)) ?? `${model.cls.name}_${target.cls.name}`.toLowerCase(),
+    name: nameIn(argumentOf(joinTable, 'name', 0)) ?? `${model.cls.name}_${target.cls.name}`.toLowerCase(),
     columns: [],
     primaryKey: [],
     foreignKeys: [],
@@ -451,7 +454,7 @@ function joinTableOf(
       const join = given[position]
       const parent = keyColumn(side, stringOf(argumentOf(join, 'referencedColumnName')), position)
       if (!parent) continue
-      const name = stringOf(argumentOf(join, 'name')) ?? `${side.cls.name.toLowerCase()}_${parent.name}`
+      const name = nameIn(argumentOf(join, 'name')) ?? `${side.cls.name.toLowerCase()}_${parent.name}`
       table.columns.push({ name, type: parent.type, nullable: false })
       table.primaryKey!.push(name)
       table.indexes.push({ columns: [name] })

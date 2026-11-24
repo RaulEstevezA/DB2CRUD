@@ -35,9 +35,15 @@ def _argument_of(attribute: dict | None, name: str, position: int | None = None)
     return found
 
 
+def _name_in(expr: dict | None) -> str | None:
+    """A name of the database: Doctrine quotes those written between backticks."""
+    name = string_of(expr)
+    return name[1:-1] if name is not None and len(name) > 1 and name[0] == name[-1] == "`" else name
+
+
 def _strings_of(expr: dict | None) -> list[str]:
     items = expr["items"] if expr is not None and expr["kind"] == "list" else []
-    return [value for value in (string_of(item) for item in items) if value is not None]
+    return [value for value in (_name_in(item) for item in items) if value is not None]
 
 
 def _simple_type(written: str) -> str:
@@ -219,7 +225,7 @@ def _read_doctrine(files: list[dict]) -> dict:
         if not _attribute_of(cls["attributes"], "Entity"):
             continue
         table_attribute = _attribute_of(cls["attributes"], "Table")
-        table_name = string_of(_argument_of(table_attribute, "name", 0))
+        table_name = _name_in(_argument_of(table_attribute, "name", 0))
         table = {
             "name": table_name if table_name is not None else cls["name"],
             "columns": [],
@@ -265,7 +271,7 @@ def _read_doctrine(files: list[dict]) -> dict:
             column = _attribute_of(prop["attributes"], "Column")
             if column is None:
                 return
-            given_name = string_of(_argument_of(column, "name"))
+            given_name = _name_in(_argument_of(column, "name"))
             name = f"{prefix}{given_name if given_name is not None else prop['name']}"
             options = entries_of(_argument_of(column, "options"))
             definition = string_of(_argument_of(column, "columnDefinition"))
@@ -405,7 +411,7 @@ def _read_doctrine(files: list[dict]) -> dict:
 
         for index in [*(item for item in cls["attributes"] if name_of(item) == "Index"), *nested("indexes")]:
             columns = columns_of(index)
-            name = string_of(_argument_of(index, "name"))
+            name = _name_in(_argument_of(index, "name"))
             unique = "unique" in _strings_of(_argument_of(index, "flags"))
             if columns:
                 (table["uniques"] if unique else table["indexes"]).append(
@@ -416,7 +422,7 @@ def _read_doctrine(files: list[dict]) -> dict:
             *nested("uniqueConstraints"),
         ]:
             columns = columns_of(unique)
-            name = string_of(_argument_of(unique, "name"))
+            name = _name_in(_argument_of(unique, "name"))
             if columns:
                 table["uniques"].append({**({"name": name} if name else {}), "columns": columns})
         models.append(model)
@@ -455,7 +461,7 @@ def _read_doctrine(files: list[dict]) -> dict:
                 parent = key_column(target, string_of(_argument_of(join, "referencedColumnName")), position)
                 if parent is None:
                     continue
-                given = string_of(_argument_of(join, "name"))
+                given = _name_in(_argument_of(join, "name"))
                 name = given if given is not None else f"{prop['name']}_{parent['name']}"
                 if not any(item["name"] == name for item in table["columns"]):
                     nullable = not is_key and boolean_of(_argument_of(join, "nullable")) is not False
@@ -535,7 +541,7 @@ def _join_table_of(model: dict, target: dict, prop: dict, key_column) -> dict:
     """The join table of a `#[ORM\\ManyToMany]`: as `#[ORM\\JoinTable]` names it, or as Doctrine does
     (`<source>_<target>` in lower case, with columns `<class>_<key>`), keyed by both and deleted with either row."""
     join_table = _attribute_of(prop["attributes"], "JoinTable")
-    name = string_of(_argument_of(join_table, "name", 0))
+    name = _name_in(_argument_of(join_table, "name", 0))
     table = {
         "name": name if name is not None else f"{model['cls']['name']}_{target['cls']['name']}".lower(),
         "columns": [],
@@ -560,7 +566,7 @@ def _join_table_of(model: dict, target: dict, prop: dict, key_column) -> dict:
             parent = key_column(side, string_of(_argument_of(join, "referencedColumnName")), position)
             if parent is None:
                 continue
-            given_name = string_of(_argument_of(join, "name"))
+            given_name = _name_in(_argument_of(join, "name"))
             column = given_name if given_name is not None else f"{side['cls']['name'].lower()}_{parent['name']}"
             table["columns"].append({"name": column, "type": parent["type"], "nullable": False})
             table["primaryKey"].append(column)

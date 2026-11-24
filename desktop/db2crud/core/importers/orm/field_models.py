@@ -180,7 +180,7 @@ def _add_field(flavour: FieldFlavour, model: dict, item: dict, enums: dict, enum
     if flavour.identity(kind, named, column_type, primary_key):
         column["generated"] = "identity"
     if kind == "GeneratedField" and "expression" in named:
-        column["generated"] = {"computed": text_of(named["expression"])}
+        column["generated"] = {"computed": _computed_of(named["expression"])}
     if "auto_now" in named:
         column["generated"] = "onUpdateNow"
     elif "auto_now_add" in named:
@@ -289,6 +289,12 @@ def _condition_sql(expr: dict | None, model: dict) -> str | None:
     return " AND ".join(parts) if parts else None
 
 
+def _computed_of(expr: dict) -> str:
+    """The expression of a computed column: the SQL of a RawSQL, or the Python code."""
+    sql = string_of(expr["args"][0]) if expr["kind"] == "call" and name_of(expr) == "RawSQL" and expr["args"] else None
+    return sql if sql is not None else text_of(expr)
+
+
 def _groups_of(expr: dict | None) -> list[dict]:
     """`unique_together = ("a", "b")` or `(("a", "b"), ("c", "d"))`: the groups of fields."""
     if expr is None or expr["kind"] != "list":
@@ -370,7 +376,12 @@ def _model_of(
 ) -> dict:
     meta = _meta_of(definition)
     declared = string_of(meta.get(flavour.options["table"]))
-    table = empty_table(declared if declared is not None else flavour.default_table(definition), definition["line"])
+    # A table of another schema: "sales"."orders", as Django leaves names already quoted
+    qualified = re.fullmatch(r'"([^"]+)"\."([^"]+)"', declared or "")
+    name = qualified.group(2) if qualified else declared
+    table = empty_table(name if name is not None else flavour.default_table(definition), definition["line"])
+    if qualified:
+        table["schema"] = qualified.group(1)
     schema = string_of(meta.get("schema"))
     if schema:
         table["schema"] = schema

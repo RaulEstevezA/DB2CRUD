@@ -205,7 +205,7 @@ function addField(
     nullable: !primaryKey && (booleanOf(named.null) === true || kind === 'NullBooleanField'),
   }
   if (flavour.identity(kind, named, type, primaryKey)) column.generated = 'identity'
-  if (kind === 'GeneratedField' && named.expression) column.generated = { computed: textOf(named.expression) }
+  if (kind === 'GeneratedField' && named.expression) column.generated = { computed: computedOf(named.expression) }
   if (named.auto_now) column.generated = 'onUpdateNow'
   else if (named.auto_now_add) column.generated = 'now'
   if (named.db_default) databaseDefault(named.db_default, column)
@@ -298,6 +298,9 @@ function groupsOf(expr: Expr | undefined): Expr[] {
   return expr.items.every((item) => item.kind === 'string') ? [expr] : expr.items.filter((item) => item.kind === 'list')
 }
 
+/** The expression of a computed column: the SQL of a `RawSQL`, or the Python code. */
+const computedOf = (expr: Expr) => (nameOf(expr) === 'RawSQL' && expr.kind === 'call' ? stringOf(expr.args[0]) : undefined) ?? textOf(expr)
+
 /** What `Meta` says about the table: its name is read before, the rest once every column is known. */
 function applyMeta(flavour: FieldFlavour, model: Model, notes: DbNote[]): void {
   const { table, meta } = model
@@ -360,7 +363,11 @@ function modelOf(
   notes: DbNote[],
 ): Model {
   const meta = metaOf(def)
-  const table = emptyTable(stringOf(meta.get(flavour.options.table)) ?? flavour.defaultTable(def), def.line)
+  const declared = stringOf(meta.get(flavour.options.table))
+  // A table of another schema: `"sales"."orders"`, as Django leaves names already quoted
+  const qualified = /^"([^"]+)"\."([^"]+)"$/.exec(declared ?? '')
+  const table = emptyTable(qualified?.[2] ?? declared ?? flavour.defaultTable(def), def.line)
+  if (qualified) table.schema = qualified[1]
   const schema = stringOf(meta.get('schema'))
   if (schema) table.schema = schema
   table.entity = def.name

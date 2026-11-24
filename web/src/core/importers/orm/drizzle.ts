@@ -438,7 +438,11 @@ function readDrizzle(files: SourceFile[]): DbSchema {
       } else if (kind === 'foreignKey') {
         const options = entriesOf(head.args[0])
         const foreign = listOf(options.get('foreignColumns'))
-        const target = foreign[0]?.kind === 'name' ? byVariable.get(foreign[0].path[0]) : undefined
+        // A column of the table itself is named by the argument of the arrow function: `t.id`
+        const own = listOf(options.get('columns'))[0]
+        const first = foreign[0]?.kind === 'name' ? foreign[0].path[0] : undefined
+        const target =
+          first === undefined ? undefined : (byVariable.get(first) ?? (own?.kind === 'name' && own.path[0] === first ? model : undefined))
         if (!target) continue
         const keyName = stringOf(options.get('name'))
         const onDelete = actionOf(chain.find((part) => nameOf(part.callee) === 'onDelete')?.args[0])

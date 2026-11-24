@@ -521,7 +521,18 @@ def _read_drizzle(files: list[dict]) -> dict:
             elif kind == "foreignKey":
                 options = _entries_of(head["args"][0] if head["args"] else None)
                 foreign = list_of(options.get("foreignColumns"))
-                target = by_variable.get(foreign[0]["path"][0]) if foreign and foreign[0]["kind"] == "name" else None
+                # A column of the table itself is named by the argument of the arrow function: `t.id`
+                own = list_of(options.get("columns"))
+                first = foreign[0]["path"][0] if foreign and foreign[0]["kind"] == "name" else None
+                target = by_variable.get(first) if first is not None else None
+                if (
+                    target is None
+                    and first is not None
+                    and own
+                    and own[0]["kind"] == "name"
+                    and own[0]["path"][0] == first
+                ):
+                    target = model
                 if target is None:
                     continue
                 key_name = string_of(options.get("name"))

@@ -434,11 +434,13 @@ function readSequelize(files: SourceFile[]): DbSchema {
       const references = settings.get('references')
       if (references) {
         const target = entriesOf(references)
+        // A model, the name of a table, or a table with its schema: `{ tableName: 'orders', schema: 'sales' }`
         const model = target.get('model')
+        const named = model?.kind === 'dict' ? entriesOf(model).get('tableName') : model
         table.foreignKeys.push({
           columns: [name],
           // Resolved below: a model, or the name of a table
-          references: { table: nameOf(model) ?? stringOf(model) ?? '', columns: [stringOf(target.get('key')) ?? 'id'] },
+          references: { table: nameOf(named) ?? stringOf(named) ?? '', columns: [stringOf(target.get('key')) ?? 'id'] },
           ...(actionOf(settings.get('onDelete')) ? { onDelete: actionOf(settings.get('onDelete')) } : {}),
           ...(actionOf(settings.get('onUpdate')) ? { onUpdate: actionOf(settings.get('onUpdate')) } : {}),
         })
