@@ -2,10 +2,10 @@
 CHECK constraints the rules understand) and changes with n, an i32 of the generated factory, so rows made with
 different numbers do not clash on unique columns. Mirrors web/src/core/generators/rust/samples.ts."""
 
-import math
 import re
 
 from ...js import is_number, js_string
+from ..samples import bounded_number
 from .rust import owned
 from .values import rs_literal
 
@@ -19,12 +19,8 @@ def _checks_of(column: dict, checks: list[dict]) -> list[dict]:
 
 
 def _whole(column: dict, checks: list[dict]) -> str:
-    """A whole number that changes with n and stays above the lower bound a CHECK sets, in the column's type."""
-    low = 0
-    for parsed in _checks_of(column, checks):
-        if parsed["kind"] == "compare" and parsed["op"] in (">", ">="):
-            low = max(low, math.ceil(parsed["value"]))
-    value = "n" if low == 0 else f"{low} + n"
+    """A whole number that changes with n and stays within the bounds a CHECK sets, in the column's type."""
+    value = bounded_number(_checks_of(column, checks), "n", column["column"]["type"]["kind"] == "float")
     if column["rs"] == "i64":
         return f"i64::from({value})"
     if column["rs"] == "i16":

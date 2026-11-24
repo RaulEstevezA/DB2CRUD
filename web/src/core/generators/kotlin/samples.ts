@@ -4,6 +4,7 @@
  * different numbers do not clash on unique columns. Mirrors php/common/samples.ts.
  */
 import type { DbCheck, DbEnum } from '../../schema/types.ts'
+import { boundedNumber } from '../samples.ts'
 import type { ColumnInfo } from './context.ts'
 import { ktLiteral } from './repositories.ts'
 import { type KtImports, ktString } from './kotlin.ts'
@@ -12,15 +13,13 @@ function checksOf(column: ColumnInfo, checks: DbCheck[]) {
   return checks.map((check) => check.parsed).filter((parsed) => parsed !== undefined && parsed.column === column.column.name)
 }
 
-/** A whole number that changes with n and stays above the lower bound a CHECK sets, in the column's type. */
+/** A whole number that changes with n and stays within the bounds a CHECK sets, in the column's type. */
 function whole(column: ColumnInfo, checks: DbCheck[]): string {
-  let low = 0
-  for (const parsed of checksOf(column, checks))
-    if (parsed?.kind === 'compare' && (parsed.op === '>' || parsed.op === '>=')) low = Math.max(low, Math.ceil(parsed.value))
-  const value = low === 0 ? 'n' : `(${low} + n)`
+  const number = boundedNumber(checksOf(column, checks), 'n', column.column.type.kind === 'float')
+  const value = number === 'n' ? number : `(${number})`
   if (column.kt === 'Long') return `${value}.toLong()`
   if (column.kt === 'Short') return `${value}.toShort()`
-  return low === 0 ? 'n' : `${low} + n`
+  return number
 }
 
 /** A Kotlin expression for a value of the column, adding its imports. */

@@ -4,6 +4,7 @@
  * rows made with different numbers do not clash on unique columns. Mirrors typescript/samples.ts.
  */
 import type { DbCheck, DbEnum } from '../../schema/types.ts'
+import { boundedNumber } from '../samples.ts'
 import { isObjectId } from '../../schema/documents.ts'
 import { javaString } from './java.ts'
 import type { ColumnInfo } from './context.ts'
@@ -20,12 +21,9 @@ function whole(java: string, text: string): string {
   return text
 }
 
-/** A whole number that changes with n and stays above the lower bound a CHECK sets. */
+/** A whole number that changes with n and stays within the bounds a CHECK sets. */
 function number(column: ColumnInfo, checks: DbCheck[]): string {
-  let low = 0
-  for (const parsed of checksOf(column, checks))
-    if (parsed?.kind === 'compare' && (parsed.op === '>' || parsed.op === '>=')) low = Math.max(low, Math.ceil(parsed.value))
-  return low === 0 ? 'n' : `${low} + n`
+  return boundedNumber(checksOf(column, checks), 'n', column.column.type.kind === 'float')
 }
 
 /** The imports the samples of a column need. */

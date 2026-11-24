@@ -4,6 +4,7 @@
  * with different numbers do not clash on unique columns. Mirrors java/samples.ts.
  */
 import type { DbCheck, DbEnum } from '../../schema/types.ts'
+import { boundedNumber } from '../samples.ts'
 import { csString } from './csharp.ts'
 import type { ColumnInfo } from './context.ts'
 
@@ -19,12 +20,9 @@ function whole(cs: string, text: string): string {
   return literal ? text : `(${text})`
 }
 
-/** A whole number that changes with n and stays above the lower bound a CHECK sets. */
+/** A whole number that changes with n and stays within the bounds a CHECK sets. */
 function number(column: ColumnInfo, checks: DbCheck[]): string {
-  let low = 0
-  for (const parsed of checksOf(column, checks))
-    if (parsed?.kind === 'compare' && (parsed.op === '>' || parsed.op === '>=')) low = Math.max(low, Math.ceil(parsed.value))
-  return low === 0 ? 'n' : `${low} + n`
+  return boundedNumber(checksOf(column, checks), 'n', column.column.type.kind === 'float')
 }
 
 /** A C# expression for a value of the column. */

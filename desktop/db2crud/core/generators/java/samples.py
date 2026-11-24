@@ -2,11 +2,11 @@
 CHECK constraints the rules understand) and changes with n, an int of the generated factory, so rows made with
 different numbers do not clash on unique columns. Mirrors web/src/core/generators/java/samples.ts."""
 
-import math
 import re
 
 from ...js import number_text
 from ...schema.documents import is_object_id
+from ..samples import bounded_number
 from .java import java_string
 
 
@@ -30,12 +30,8 @@ def _whole(java: str, text: str) -> str:
 
 
 def _number(column: dict, checks: list[dict]) -> str:
-    """A whole number that changes with n and stays above the lower bound a CHECK sets."""
-    low = 0
-    for parsed in _checks_of(column, checks):
-        if parsed["kind"] == "compare" and parsed["op"] in (">", ">="):
-            low = max(low, math.ceil(parsed["value"]))
-    return "n" if low == 0 else f"{low} + n"
+    """A whole number that changes with n and stays within the bounds a CHECK sets."""
+    return bounded_number(_checks_of(column, checks), "n", column["column"]["type"]["kind"] == "float")
 
 
 def sample_imports(column: dict) -> list[str]:

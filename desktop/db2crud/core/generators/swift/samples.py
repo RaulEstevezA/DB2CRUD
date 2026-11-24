@@ -2,10 +2,10 @@
 CHECK constraints the rules understand) and changes with n, an Int of the generated factory, so rows made with
 different numbers do not clash on unique columns. Mirrors web/src/core/generators/swift/samples.ts."""
 
-import math
 import re
 
 from ...js import js_string
+from ..samples import bounded_number
 from .swift import sw_string
 
 
@@ -18,12 +18,8 @@ def _checks_of(column: dict, checks: list[dict]) -> list[dict]:
 
 
 def _whole(column: dict, checks: list[dict]) -> str:
-    """A whole number that changes with n and stays above the lower bound a CHECK sets."""
-    low = 0
-    for parsed in _checks_of(column, checks):
-        if parsed["kind"] == "compare" and parsed["op"] in (">", ">="):
-            low = max(low, math.ceil(parsed["value"]))
-    return "n" if low == 0 else f"{low} + n"
+    """A whole number that changes with n and stays within the bounds a CHECK sets."""
+    return bounded_number(_checks_of(column, checks), "n", column["column"]["type"]["kind"] == "float")
 
 
 def sw_literal_of(column: dict, value) -> str:

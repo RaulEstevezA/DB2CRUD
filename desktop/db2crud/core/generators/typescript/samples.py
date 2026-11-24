@@ -2,12 +2,12 @@
 precision, the CHECK constraints the rules understand) and changes with n, so rows made with different numbers do
 not clash on unique columns. Mirrors web/src/core/generators/typescript/samples.ts."""
 
-import math
 import re
 
 from ...js import number_text
 from ...schema.documents import is_object_id, nested_fields
 from ..python.python import js_json
+from ..samples import bounded_number
 
 
 def _text(value) -> str:
@@ -26,16 +26,12 @@ def _literal(value) -> str:
 
 
 def _number(column: dict, checks: list[dict]) -> str:
-    """A whole number that changes with n and stays above the lower bound a CHECK sets."""
+    """A whole number that changes with n and stays within the bounds a CHECK sets."""
     parsed = _checks_of(column, checks)
     choices = next((item for item in parsed if item["kind"] == "in"), None)
     if choices:
         return _literal(choices["values"][0])
-    low = 0
-    for item in parsed:
-        if item["kind"] == "compare" and item["op"] in (">", ">="):
-            low = max(low, math.ceil(item["value"]))
-    return "n" if low == 0 else f"{low} + n"
+    return bounded_number(parsed, "n", column["type"]["kind"] == "float")
 
 
 def _two_digits(expression: str) -> str:

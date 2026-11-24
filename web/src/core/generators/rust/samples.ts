@@ -4,6 +4,7 @@
  * different numbers do not clash on unique columns. Mirrors kotlin/samples.ts.
  */
 import type { DbCheck, DbEnum } from '../../schema/types.ts'
+import { boundedNumber } from '../samples.ts'
 import type { ColumnInfo } from './context.ts'
 import { rsLiteral } from './values.ts'
 import { owned } from './rust.ts'
@@ -12,12 +13,9 @@ function checksOf(column: ColumnInfo, checks: DbCheck[]) {
   return checks.map((check) => check.parsed).filter((parsed) => parsed !== undefined && parsed.column === column.column.name)
 }
 
-/** A whole number that changes with n and stays above the lower bound a CHECK sets, in the column's type. */
+/** A whole number that changes with n and stays within the bounds a CHECK sets, in the column's type. */
 function whole(column: ColumnInfo, checks: DbCheck[]): string {
-  let low = 0
-  for (const parsed of checksOf(column, checks))
-    if (parsed?.kind === 'compare' && (parsed.op === '>' || parsed.op === '>=')) low = Math.max(low, Math.ceil(parsed.value))
-  const value = low === 0 ? 'n' : `${low} + n`
+  const value = boundedNumber(checksOf(column, checks), 'n', column.column.type.kind === 'float')
   if (column.rs === 'i64') return `i64::from(${value})`
   if (column.rs === 'i16') return `(${value}) as i16`
   return value

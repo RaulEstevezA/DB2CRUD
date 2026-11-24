@@ -2,10 +2,10 @@
 CHECK constraints the rules understand) and changes with n, an Int of the generated factory, so rows made with
 different numbers do not clash on unique columns. Mirrors web/src/core/generators/kotlin/samples.ts."""
 
-import math
 import re
 
 from ...js import is_number, js_string
+from ..samples import bounded_number
 from .kotlin import KtImports, kt_string
 from .repositories import kt_literal
 
@@ -19,17 +19,14 @@ def _checks_of(column: dict, checks: list[dict]) -> list[dict]:
 
 
 def _whole(column: dict, checks: list[dict]) -> str:
-    """A whole number that changes with n and stays above the lower bound a CHECK sets, in the column's type."""
-    low = 0
-    for parsed in _checks_of(column, checks):
-        if parsed["kind"] == "compare" and parsed["op"] in (">", ">="):
-            low = max(low, math.ceil(parsed["value"]))
-    value = "n" if low == 0 else f"({low} + n)"
+    """A whole number that changes with n and stays within the bounds a CHECK sets, in the column's type."""
+    number = bounded_number(_checks_of(column, checks), "n", column["column"]["type"]["kind"] == "float")
+    value = number if number == "n" else f"({number})"
     if column["kt"] == "Long":
         return f"{value}.toLong()"
     if column["kt"] == "Short":
         return f"{value}.toShort()"
-    return "n" if low == 0 else f"{low} + n"
+    return number
 
 
 def sample_value(column: dict, checks: list[dict], enums: list[dict], imports: KtImports) -> str:

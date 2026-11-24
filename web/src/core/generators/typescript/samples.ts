@@ -5,6 +5,7 @@
  */
 import { isObjectId, nestedFields } from '../../schema/documents.ts'
 import type { DbCheck, DbColumn, DbEnum, DbType } from '../../schema/types.ts'
+import { boundedNumber } from '../samples.ts'
 
 function checksOf(column: DbColumn, checks: DbCheck[]) {
   return checks.map((check) => check.parsed).filter((parsed) => parsed !== undefined && parsed.column === column.name)
@@ -13,14 +14,11 @@ function checksOf(column: DbColumn, checks: DbCheck[]) {
 const literal = (value: unknown) =>
   typeof value === 'string' ? `'${value.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'` : JSON.stringify(value)
 
-/** A whole number that changes with n and stays above the lower bound a CHECK sets. */
+/** A whole number that changes with n and stays within the bounds a CHECK sets. */
 function number(column: DbColumn, checks: DbCheck[]): string {
   const choices = checksOf(column, checks).find((parsed) => parsed?.kind === 'in')
   if (choices?.kind === 'in') return literal(choices.values[0])
-  let low = 0
-  for (const parsed of checksOf(column, checks))
-    if (parsed?.kind === 'compare' && (parsed.op === '>' || parsed.op === '>=')) low = Math.max(low, Math.ceil(parsed.value))
-  return low === 0 ? 'n' : `${low} + n`
+  return boundedNumber(checksOf(column, checks), 'n', column.type.kind === 'float')
 }
 
 const twoDigits = (expression: string) => `String(${expression}).padStart(2, '0')`

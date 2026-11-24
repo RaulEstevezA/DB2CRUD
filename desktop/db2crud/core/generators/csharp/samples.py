@@ -2,10 +2,10 @@
 CHECK constraints the rules understand) and changes with n, an int of the generated factory, so rows made with
 different numbers do not clash on unique columns. Mirrors web/src/core/generators/csharp/samples.ts."""
 
-import math
 import re
 
 from ...js import number_text
+from ..samples import bounded_number
 from .csharp import cs_string
 
 
@@ -27,11 +27,7 @@ def _whole(cs: str, text: str) -> str:
 
 
 def _number(column: dict, checks: list[dict]) -> str:
-    low = 0
-    for parsed in _checks_of(column, checks):
-        if parsed["kind"] == "compare" and parsed["op"] in (">", ">="):
-            low = max(low, math.ceil(parsed["value"]))
-    return "n" if low == 0 else f"{low} + n"
+    return bounded_number(_checks_of(column, checks), "n", column["column"]["type"]["kind"] == "float")
 
 
 def _text(value) -> str:
