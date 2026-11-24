@@ -19,7 +19,8 @@ from .python.common.generator import python_generator
 from .python.django.index import DJANGO_ORM
 from .python.sql.index import SQL_ORM as PYTHON_SQL_ORM
 from .python.sqlalchemy.index import SQLALCHEMY_ORM
-from .rust.generator import RUST_GENERATOR
+from .rust.generator import rust_generator
+from .rust.seaorm.index import SEAORM_ORM
 from .swift.generator import SWIFT_GENERATOR
 from .typescript.common.generator import typescript_generator
 from .typescript.drizzle.index import DRIZZLE_ORM
@@ -46,7 +47,7 @@ GENERATORS = [
     php_generator(PHP_SQL_ORM),
     kotlin_generator(EXPOSED_ORM),
     kotlin_generator(KOTLIN_SQL_ORM),
-    RUST_GENERATOR,
+    rust_generator(SEAORM_ORM),
     SWIFT_GENERATOR,
 ]
 

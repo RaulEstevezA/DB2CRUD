@@ -6,8 +6,8 @@ import math
 import re
 
 from ...js import is_number, js_string
-from .entities import rs_literal
 from .rust import owned
+from .values import rs_literal
 
 
 def _checks_of(column: dict, checks: list[dict]) -> list[dict]:

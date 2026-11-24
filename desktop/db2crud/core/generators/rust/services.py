@@ -34,9 +34,9 @@ from .dtos import (
     update_struct,
     update_type,
 )
-from .entities import now_of
 from .rust import RsUses, rs_string, snake_name
 from .support import COMMON, DOMAIN_ERROR, ERRORS, UNIT_OF_WORK
+from .values import now_of
 
 
 def _ind(items: list[str], spaces: int = 4) -> list[str]:

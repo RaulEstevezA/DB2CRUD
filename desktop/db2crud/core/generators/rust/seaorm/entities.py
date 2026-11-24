@@ -3,13 +3,13 @@ SeaORM module, which describes the table as the database has it: exact table and
 lengths and precision, the key, unique values, foreign keys with their actions, defaults and the values the database
 fills. SeaORM reads and writes rows through that module; the repositories turn its models into entities and back. CHECK
 constraints are named in the module's documentation: the services check them. Mirrors
-web/src/core/generators/rust/entities.ts."""
+web/src/core/generators/rust/seaorm/entities.ts."""
 
 import re
 
-from ...js import js_string
-from .context import column_of, file_of, find_info, is_in, module_of, rs_file, stored_type
-from .rust import rs_string
+from ....js import js_string
+from ..context import column_of, file_of, find_info, is_in, module_of, rs_file, stored_type
+from ..rust import rs_string
 
 
 def entity_file(context: dict, info: dict) -> dict:
@@ -246,33 +246,3 @@ def table_file(context: dict, info: dict) -> dict:
             ),
         ],
     )
-
-
-def rs_literal(column: dict, value) -> str:
-    """A literal of a default, as a Rust expression of the column's type."""
-    if isinstance(value, bool):
-        return "true" if value else "false"
-    text = js_string(value)
-    rs = column["rs"]
-    if rs in ("i64", "i32", "i16", "bool"):
-        return text
-    if rs in ("f64", "f32"):
-        return text if re.search(r"[.eE]", text) else f"{text}.0"
-    if rs == "String":
-        return f"{rs_string(text)}.to_string()"
-    if rs == "Vec<u8>":
-        return f"{rs_string(text)}.as_bytes().to_vec()"
-    return f"{rs_string(text)}.parse::<{rs}>().expect({rs_string('a ' + rs)})"
-
-
-NOW = {
-    "chrono::DateTime<chrono::FixedOffset>": "chrono::Utc::now().fixed_offset()",
-    "chrono::NaiveDateTime": "chrono::Utc::now().naive_utc()",
-    "chrono::NaiveDate": "chrono::Utc::now().date_naive()",
-    "chrono::NaiveTime": "chrono::Utc::now().time()",
-}
-
-
-def now_of(column: dict) -> str | None:
-    """The current time, as a value of the column's type."""
-    return NOW.get(column["rs"])

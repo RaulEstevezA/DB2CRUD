@@ -42,7 +42,7 @@ const newName = (info: TableInfo) => `new_${info.module.replace(/^r#/, '')}`
 const addName = (info: TableInfo) => `add_${info.module.replace(/^r#/, '')}`
 const ind = (items: string[], spaces = 4) => items.map((line) => (line === '' ? '' : ' '.repeat(spaces) + line))
 export const TESTS = 'tests/data'
-export const UNIT_OF_WORK = (context: Context) => `${context.crate}::unit_of_work`
+export const unitOfWork = (context: Context) => `${context.crate}::unit_of_work`
 /** A path of the crate, as the tests name it: `crate::errors` → `data_access::errors`. */
 export const external = (context: Context, path: string) => path.replace(/^crate::/, `${context.crate}::`)
 
@@ -56,7 +56,7 @@ const option = (expression: string, column: ColumnInfo) => (column.copy ? expres
 // Factories
 
 function factoriesFile(context: Context, makeable: TableInfo[]): GeneratedFile {
-  const uses = new RsUses().add(`${UNIT_OF_WORK(context)}::UnitOfWork`)
+  const uses = new RsUses().add(`${unitOfWork(context)}::UnitOfWork`)
   const blocks = makeable.map((info) => {
     uses.add(external(context, pathIn(moduleOf(context, info, 'entity'), info.entity)))
     const parents: string[] = []
@@ -470,7 +470,7 @@ export function testFiles(context: Context): GeneratedFile[] {
     const entityPath = external(context, pathIn(moduleOf(context, info, 'entity'), info.entity))
     const base = snakeName(info.module.replace(/^r#/, ''))
     if (tests === 'all' || tests === 'repositories') {
-      const uses = new RsUses().add('super::database', 'super::factories', `${UNIT_OF_WORK(context)}::UnitOfWork`)
+      const uses = new RsUses().add('super::database', 'super::factories', `${unitOfWork(context)}::UnitOfWork`)
       const blocks = repositoryTests(context, info)
       const module = `${base}_repository`
       modules.push(module)
@@ -487,7 +487,7 @@ export function testFiles(context: Context): GeneratedFile[] {
     }
     if ((tests === 'all' || tests === 'services') && info.service !== null) {
       const uses = new RsUses().add('std::sync::Arc')
-      if (memory) uses.add(`${UNIT_OF_WORK(context)}::MemoryUnitOfWork`)
+      if (memory) uses.add(`${unitOfWork(context)}::MemoryUnitOfWork`)
       const blocks = serviceTests(context, info, uses)
       if (blocks.length === 0) continue
       const all = blocks.flat().join('\n')

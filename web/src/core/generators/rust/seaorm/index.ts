@@ -7,7 +7,7 @@ import { moduleOf, rsFile, type Context, type Crate, type TableInfo } from '../c
 import type { RustOrm } from '../orm.ts'
 import { RsUses, rsString } from '../rust.ts'
 import { defaultUrl } from '../support.ts'
-import { external, TESTS, UNIT_OF_WORK } from '../tests.ts'
+import { external, TESTS, unitOfWork } from '../tests.ts'
 import { entityFile, nativeEnum, tableFile } from './entities.ts'
 import { seaBody, seaHelpers } from './repository.ts'
 
@@ -84,7 +84,7 @@ function testDatabaseFile(context: Context): GeneratedFile {
     'sea_orm::Statement',
     'tokio::sync::Mutex',
     'tokio::sync::MutexGuard',
-    `${UNIT_OF_WORK(context)}::SqlUnitOfWork`,
+    `${unitOfWork(context)}::SqlUnitOfWork`,
   )
   if (sqlite) uses.add('std::sync::atomic::AtomicUsize', 'std::sync::atomic::Ordering')
   // Each table's module by a name of its own: by table, every one of them is `table`

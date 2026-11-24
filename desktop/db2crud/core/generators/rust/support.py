@@ -5,7 +5,7 @@ its changes are kept by commit(), and dropped when it is dropped without one. Mi
 web/src/core/generators/rust/support.ts."""
 
 from .context import file_of, memory_repository, module_of, path_in, repository_trait, rs_file, sql_repository
-from .rust import RsUses, rs_string
+from .rust import RsUses
 
 ERRORS = "crate::errors"
 COMMON = "crate::common"
@@ -13,7 +13,7 @@ DOMAIN_ERROR = f"{ERRORS}::DomainError"
 UNIT_OF_WORK = "crate::unit_of_work::UnitOfWork"
 
 
-def errors_file() -> dict:
+def errors_file(context: dict) -> dict:
     return rs_file(
         file_of(ERRORS),
         "",
@@ -41,7 +41,7 @@ def errors_file() -> dict:
             "    /// The values break the rules of the table: missing, too long, out of range, pointing nowhere.",
             "    ValidationFailed { entity: String, errors: Vec<FieldError> },",
             "    /// The database failed for another reason.",
-            "    Database(sea_orm::DbErr),",
+            f"    Database({context['orm']['error']}),",
             "}",
             "",
             "impl DomainError {",
@@ -76,8 +76,8 @@ def errors_file() -> dict:
             "",
             "impl std::error::Error for DomainError {}",
             "",
-            "impl From<sea_orm::DbErr> for DomainError {",
-            "    fn from(error: sea_orm::DbErr) -> Self {",
+            f"impl From<{context['orm']['error']}> for DomainError {{",
+            f"    fn from(error: {context['orm']['error']}) -> Self {{",
             "        DomainError::Database(error)",
             "    }",
             "}",
@@ -173,39 +173,6 @@ def default_url(context: dict) -> str:
     return URLS.get(context["settings"]["database"], URLS["postgresql"])
 
 
-def database_file(context: dict) -> dict:
-    """database.rs: the connection DATABASE_URL names, and Db, what repositories run their queries on."""
-    return rs_file(
-        "src/database.rs",
-        "use sea_orm::{DatabaseConnection, DatabaseExecutor, DatabaseTransaction, DbErr};",
-        [
-            f"pub const DEFAULT_URL: &str = {rs_string(default_url(context))};",
-            "",
-            "/// A connection to the database at DATABASE_URL (DEFAULT_URL when it is not set).",
-            "pub async fn connect() -> Result<DatabaseConnection, DbErr> {",
-            '    let url = std::env::var("DATABASE_URL").unwrap_or_else(|_| DEFAULT_URL.to_string());',
-            "    sea_orm::Database::connect(url).await",
-            "}",
-            "",
-            "/// What repositories run their queries on: the connection, or a transaction opened on it.",
-            "pub enum Db {",
-            "    Connection(DatabaseConnection),",
-            "    Transaction(DatabaseTransaction),",
-            "}",
-            "",
-            "impl Db {",
-            "    pub fn executor(&self) -> DatabaseExecutor<'_> {",
-            "        match self {",
-            "            Db::Connection(connection) => connection.into(),",
-            "            Db::Transaction(transaction) => transaction.into(),",
-            "        }",
-            "    }",
-            "}",
-        ],
-        ["The database DATABASE_URL names, through SeaORM. It never migrates: the database already exists."],
-    )
-
-
 HOW = {
     "operation": "Each service operation runs in a transaction of its own: begin() opens it, commit() keeps its changes.",
     "caller": "Services never commit: whoever holds the database opens the transaction (SqlUnitOfWork::in_transaction) and commits it.",
@@ -225,12 +192,8 @@ def unit_of_work_file(context: dict) -> dict:
     settings = context["settings"]
     interfaces = settings["repositoryInterfaces"]
     memory = settings["memoryRepositories"]
-    uses = RsUses().add(
-        "async_trait::async_trait",
-        "sea_orm::DatabaseConnection",
-        "sea_orm::DatabaseTransaction",
-        "sea_orm::TransactionTrait",
-    )
+    transactions = context["orm"]["unitOfWork"](context)
+    uses = RsUses().add("async_trait::async_trait", *transactions["uses"])
     uses.add("crate::database::Db", DOMAIN_ERROR)
     for info in context["tables"]:
         module = module_of(context, info, "repository")
@@ -301,34 +264,18 @@ def unit_of_work_file(context: dict) -> dict:
         "}",
         "",
         "impl SqlUnitOfWork {",
-        "    /// The repositories over a connection: every write outside a transaction is committed at once.",
-        "    pub fn new(connection: DatabaseConnection) -> Self {",
-        "        Self { db: Db::Connection(connection) }",
-        "    }",
-        "",
-        "    /// The repositories inside a transaction someone else opened; commit() commits it.",
-        "    pub fn in_transaction(transaction: DatabaseTransaction) -> Self {",
-        "        Self { db: Db::Transaction(transaction) }",
-        "    }",
+        *transactions["constructors"],
         "}",
         "",
         "#[async_trait]",
         "impl UnitOfWork for SqlUnitOfWork {",
         *sql_accessors,
         "    async fn begin(&self) -> Result<Box<dyn UnitOfWork>, DomainError> {",
-        "        // Inside a transaction, a new one is a savepoint of it",
-        "        let transaction = match &self.db {",
-        "            Db::Connection(connection) => connection.begin().await?,",
-        "            Db::Transaction(transaction) => transaction.begin().await?,",
-        "        };",
-        "        Ok(Box::new(SqlUnitOfWork::in_transaction(transaction)))",
+        *transactions["begin"],
         "    }",
         "",
         "    async fn commit(self: Box<Self>) -> Result<(), DomainError> {",
-        "        if let Db::Transaction(transaction) = self.db {",
-        "            transaction.commit().await?;",
-        "        }",
-        "        Ok(())",
+        *transactions["commit"],
         "    }",
         "}",
         *memory_lines,

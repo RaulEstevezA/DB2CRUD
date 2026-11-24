@@ -1,12 +1,10 @@
-"""The repositories of each table: the trait services depend on (when the settings want one), its SeaORM implementation
-(queries on the table's entity, run on the connection or the transaction of the unit of work, models turned into
-entities, a database refusal turned into a Conflict, what the database fills read back after an insert), and its
-in-memory one, with the same methods. Repositories decide nothing. Mirrors web/src/core/generators/rust/repositories.ts."""
+"""The repositories of each table: the trait services depend on (when the settings want one), its database implementation
+(its bodies are the strategy's), and its in-memory one, with the same methods. Repositories decide nothing. Mirrors
+web/src/core/generators/rust/repositories.ts."""
 
 from .context import (
     column_of,
     file_of,
-    is_in,
     key_type,
     memory_repository,
     module_of,
@@ -17,9 +15,9 @@ from .context import (
     sql_repository,
     stored,
 )
-from .entities import now_of, rs_literal
-from .rust import RsUses, rs_string
+from .rust import RsUses
 from .support import COMMON, DOMAIN_ERROR
+from .values import now_of, rs_literal
 
 
 def repository_methods(context: dict, info: dict, uses: RsUses) -> list[dict]:
@@ -81,217 +79,10 @@ def _signature(method: dict) -> str:
     return f"async fn {method['name']}(&self{params}) -> Result<{method['returns']}, DomainError>"
 
 
-# SeaORM
-
-
-def _col(column: dict) -> str:
-    return f"table::Column::{column['variant']}"
-
-
-def _soft_filter(info: dict, uses: RsUses) -> str:
-    """The filter that leaves out rows marked as deleted."""
-    soft = info["soft"]
-    if not soft:
-        return ""
-    if soft["column"]["type"]["kind"] != "boolean":
-        return f".filter({_col(soft)}.is_null())"
-    uses.add("sea_orm::Condition")
-    return f".filter(Condition::any().add({_col(soft)}.eq(false)).add({_col(soft)}.is_null()))"
-
-
-def _insert_columns(info: dict) -> list[dict]:
-    """The columns written by an insert: not those the database fills (uuids are made first)."""
-    return [column for column in info["columns"] if column["column"].get("generated") in (None, "uuid")]
-
-
-def _update_columns(info: dict) -> list[dict]:
-    """The columns written by an update: not the key, nor those the database fills."""
-    return [
-        column
-        for column in info["columns"]
-        if column["column"].get("generated") is None and not is_in(column, info["key"])
-    ]
-
-
-def _key_filter(info: dict) -> str:
-    """The filters of a row, by the key of an entity."""
-    return "".join(
-        f".filter({_col(column)}.eq({stored('entity.' + column['field'], column)}))" for column in info["key"]
-    )
-
-
-def _order_by(info: dict, uses: RsUses) -> str:
-    uses.add("sea_orm::QueryOrder")
-    return "".join(f".order_by_asc({_col(column)})" for column in info["key"])
-
-
-def _key_value(info: dict, variable: str) -> str:
+def key_value(info: dict, variable: str) -> str:
     """The key of an entity known to be stored: last.id.expect(…), or a tuple."""
     values = [stored(f"{variable}.{column['field']}", column) for column in info["key"]]
     return values[0] if len(values) == 1 else f"({', '.join(values)})"
-
-
-TO_ENTITIES = ".into_iter().map(to_entity).collect()"
-
-
-def _sea_body(context: dict, info: dict, method: dict, uses: RsUses) -> list[str]:
-    columns = [column_of(info, name) for name in method["query"]["columns"]]
-    soft = _soft_filter(info, uses)
-    paging = context["settings"]["paging"]
-
-    def by_columns() -> str:
-        uses.add("sea_orm::QueryFilter", "sea_orm::ColumnTrait")
-        return "".join(f".filter({_col(column)}.eq({column['field']}))" for column in columns)
-
-    db = "let db = self.db.executor();"
-    if soft:
-        uses.add("sea_orm::QueryFilter", "sea_orm::ColumnTrait")
-    kind = method["query"]["kind"]
-    # Every query but an update starts from the table's entity
-    if kind != "update":
-        uses.add("sea_orm::EntityTrait")
-    if kind in ("getByKey", "findByUnique"):
-        return [db, f"Ok(table::Entity::find(){by_columns()}{soft}.one(&db).await?.map(to_entity))"]
-    if kind in ("listByParent", "findAllBy"):
-        return [
-            db,
-            f"Ok(table::Entity::find(){by_columns()}{soft}{_order_by(info, uses)}.all(&db).await?{TO_ENTITIES})",
-        ]
-    if kind == "list":
-        if paging == "offset":
-            uses.add("sea_orm::PaginatorTrait", "sea_orm::QuerySelect")
-            return [
-                db,
-                f"let total = table::Entity::find(){soft}.count(&db).await?;",
-                f"let rows = table::Entity::find(){soft}{_order_by(info, uses)}.offset(offset).limit(limit).all(&db).await?;",
-                f"Ok(Page {{ items: rows{TO_ENTITIES}, total, offset, limit }})",
-            ]
-        if paging == "cursor":
-            # After the key (a, b): a greater, or a the same and b greater
-            uses.add("sea_orm::QuerySelect", "sea_orm::QueryFilter", "sea_orm::ColumnTrait")
-            key = info["key"]
-            multi = len(key) > 1
-
-            def after(index: int) -> str:
-                return f"after{index}.clone()" if multi else "after"
-
-            if not multi:
-                condition = f"{_col(key[0])}.gt(after)"
-            else:
-                uses.add("sea_orm::Condition")
-                terms = []
-                for index, column in enumerate(key):
-                    parts = [
-                        *(f".add({_col(before)}.eq({after(position)}))" for position, before in enumerate(key[:index])),
-                        f".add({_col(column)}.gt({after(index)}))",
-                    ]
-                    terms.append(
-                        f"{_col(column)}.gt({after(index)})" if index == 0 else f"Condition::all(){''.join(parts)}"
-                    )
-                condition = f"Condition::any(){''.join(f'.add({term})' for term in terms)}"
-            names = ", ".join(f"after{index}" for index in range(len(key)))
-            return [
-                db,
-                f"let mut query = table::Entity::find(){soft};",
-                "if let Some(after) = after {",
-                *([f"    let ({names}) = after;"] if multi else []),
-                f"    query = query.filter({condition});",
-                "}",
-                f"let rows = query{_order_by(info, uses)}.limit(limit + 1).all(&db).await?;",
-                "let more = rows.len() as u64 > limit;",
-                f"let items: Vec<{info['entity']}> = rows.into_iter().take(limit as usize).map(to_entity).collect();",
-                f"let next = if more {{ items.last().map(|last| {_key_value(info, 'last')}) }} else {{ None }};",
-                "Ok(CursorPage { items, next })",
-            ]
-        return [db, f"Ok(table::Entity::find(){soft}{_order_by(info, uses)}.all(&db).await?{TO_ENTITIES})"]
-    if kind == "insert":
-        uses.add("sea_orm::ActiveValue")
-        uuids = [column for column in info["columns"] if column["column"].get("generated") == "uuid"]
-        values = [
-            f"    {column['field']}: entity.{column['field']}.map_or(ActiveValue::NotSet, |value| ActiveValue::Set(Some(value))),"
-            if column["column"]["nullable"]
-            else f"    {column['field']}: entity.{column['field']}.map_or(ActiveValue::NotSet, ActiveValue::Set),"
-            for column in _insert_columns(info)
-        ]
-        return [
-            *(["let mut entity = entity;"] if uuids else []),
-            *(
-                f"entity.{column['field']} = entity.{column['field']}.or_else(|| Some(uuid::Uuid::new_v4()));"
-                for column in uuids
-            ),
-            db,
-            "let model = table::ActiveModel {",
-            *values,
-            "    ..Default::default()",
-            "};",
-            # What the database filled is read back with the row
-            "let stored = table::Entity::insert(model).exec_with_returning(&db).await.map_err(refused)?;",
-            "Ok(to_entity(stored))",
-        ]
-    if kind == "update":
-        changing = _update_columns(info)
-        if not changing:
-            return ["// Nothing of it can change", "Ok(entity)"]
-        uses.add("sea_orm::ActiveValue", "sea_orm::ActiveModelTrait")
-        lines = []
-        for column in changing:
-            value = f"entity.{column['field']}" if column["copy"] else f"entity.{column['field']}.clone()"
-            if column["column"]["nullable"]:
-                lines.append(f"    {column['field']}: ActiveValue::Set({value}),")
-            else:
-                lines.append(f"    {column['field']}: {value}.map_or(ActiveValue::NotSet, ActiveValue::Set),")
-        return [
-            db,
-            "let model = table::ActiveModel {",
-            *(
-                f"    {column['field']}: ActiveValue::Unchanged({stored('entity.' + column['field'], column)}),"
-                for column in info["key"]
-            ),
-            *lines,
-            "    ..Default::default()",
-            "};",
-            "let stored = model.update(&db).await.map_err(refused)?;",
-            "Ok(to_entity(stored))",
-        ]
-    if kind == "delete":
-        uses.add("sea_orm::QueryFilter", "sea_orm::ColumnTrait")
-        return [db, f"table::Entity::delete_many(){_key_filter(info)}.exec(&db).await.map_err(refused)?;", "Ok(())"]
-    return ["unimplemented!()"]
-
-
-def _sea_helpers(info: dict, methods: list[dict], uses: RsUses) -> list[str]:
-    """to_entity and refused: how models become entities, and how a refusal of the database becomes a Conflict."""
-    reads = any(method["query"]["kind"] != "delete" for method in methods)
-    writes = any(method["query"]["kind"] in ("insert", "update", "delete") for method in methods)
-    if writes:
-        uses.add("sea_orm::DbErr")
-    entity = info["entity"]
-    lines: list[str] = []
-    if reads:
-        lines += [
-            "",
-            f"fn to_entity(model: table::Model) -> {entity} {{",
-            f"    {entity} {{",
-            *(
-                f"        {column['field']}: {'model.' + column['field'] if column['column']['nullable'] else 'Some(model.' + column['field'] + ')'},"
-                for column in info["columns"]
-            ),
-            "    }",
-            "}",
-        ]
-    if writes:
-        lines += [
-            "",
-            "/// A refusal of the database (a unique value, a row still pointed to) becomes a Conflict.",
-            "fn refused(error: DbErr) -> DomainError {",
-            "    if error.sql_err().is_some() {",
-            f'        DomainError::conflict({rs_string(entity)}, &format!("the database refused the change: {{error}}"), &[])',
-            "    } else {",
-            "        error.into()",
-            "    }",
-            "}",
-        ]
-    return lines
 
 
 # In memory
@@ -355,7 +146,7 @@ def _memory_body(context: dict, info: dict, method: dict) -> list[str]:
                 "    .collect();",
                 "let more = rows.len() as u64 > limit;",
                 f"let items: Vec<{info['entity']}> = rows.into_iter().take(limit as usize).collect();",
-                f"let next = if more {{ items.last().map(|last| {_key_value(info, 'last')}) }} else {{ None }};",
+                f"let next = if more {{ items.last().map(|last| {key_value(info, 'last')}) }} else {{ None }};",
                 "Ok(CursorPage { items, next })",
             ]
         return ["Ok(self.visible())"]
@@ -381,9 +172,8 @@ def repository_file(context: dict, info: dict) -> dict:
     entity_path = path_in(module_of(context, info, "entity"), info["entity"])
     interfaces = context["settings"]["repositoryInterfaces"]
     entity = info["entity"]
-    uses = RsUses().add(
-        entity_path, DOMAIN_ERROR, "crate::database::Db", f"{module_of(context, info, 'table')} as table"
-    )
+    repository, label = context["orm"]["repository"], context["orm"]["label"]
+    uses = RsUses().add(entity_path, DOMAIN_ERROR, "crate::database::Db", *repository["uses"](context, info))
     methods = repository_methods(context, info, uses)
     if interfaces:
         uses.add("async_trait::async_trait")
@@ -404,9 +194,11 @@ def repository_file(context: dict, info: dict) -> dict:
         ]
     sql_bodies: list[str] = []
     for item in methods:
-        sql_bodies += _block(item, _sea_body(context, info, item, uses), "" if interfaces else "pub ", not interfaces)
+        sql_bodies += _block(
+            item, repository["body"](context, info, item, uses), "" if interfaces else "pub ", not interfaces
+        )
     body += [
-        f"/// Keeps {info['name']} rows in the database, through SeaORM: on the connection of the unit of work, or in its transaction.",
+        f"/// Keeps {info['name']} rows in the database, through {label}: on the connection of the unit of work, or in its transaction.",
         f"pub struct {sql_repository(info)}<'a> {{",
         "    db: &'a Db,",
         "}",
@@ -427,7 +219,7 @@ def repository_file(context: dict, info: dict) -> dict:
             else sql_bodies
         ),
         "}",
-        *_sea_helpers(info, methods, uses),
+        *repository["helpers"](context, info, methods, uses),
     ]
     if context["settings"]["memoryRepositories"]:
         uses.add("std::sync::Arc", "std::sync::Mutex")

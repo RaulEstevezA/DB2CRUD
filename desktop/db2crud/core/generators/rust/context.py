@@ -114,8 +114,9 @@ def _table_info(schema: dict, design: dict, settings: dict, table: dict) -> dict
     }
 
 
-def create_context(schema: dict, design: dict, settings: dict) -> dict:
+def create_context(orm: dict, schema: dict, design: dict, settings: dict) -> dict:
     return {
+        "orm": orm,
         "schema": schema,
         "design": design,
         "settings": settings,

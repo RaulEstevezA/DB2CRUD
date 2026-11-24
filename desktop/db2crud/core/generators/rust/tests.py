@@ -19,7 +19,6 @@ from .context import (
     writes_entities,
 )
 from .dtos import create_columns, create_dto, update_columns, update_path, update_type
-from .entities import native_enum
 from .rust import RsUses, owned, rs_string, snake_name
 from .samples import missing_value, sample_value
 
@@ -61,11 +60,11 @@ def _ind(items: list[str], spaces: int = 4) -> list[str]:
 TESTS = "tests/data"
 
 
-def _unit_of_work(context: dict) -> str:
+def unit_of_work(context: dict) -> str:
     return f"{context['crate']}::unit_of_work"
 
 
-def _external(context: dict, path: str) -> str:
+def external(context: dict, path: str) -> str:
     """A path of the crate, as the tests name it: crate::errors → data_access::errors."""
     return re.sub(r"^crate::", f"{context['crate']}::", path)
 
@@ -85,10 +84,10 @@ def _option(expression: str, column: dict) -> str:
 
 
 def _factories_file(context: dict, makeable: list[dict]) -> dict:
-    uses = RsUses().add(f"{_unit_of_work(context)}::UnitOfWork")
+    uses = RsUses().add(f"{unit_of_work(context)}::UnitOfWork")
     blocks = []
     for info in makeable:
-        uses.add(_external(context, path_in(module_of(context, info, "entity"), info["entity"])))
+        uses.add(external(context, path_in(module_of(context, info, "entity"), info["entity"])))
         parents: list[str] = []
         from_parents: list[str] = []
         parent_columns: set[str] = set()
@@ -115,7 +114,10 @@ def _factories_file(context: dict, makeable: list[dict]) -> dict:
             # No sample is sure to fit a type that is not known
             if column["column"]["nullable"] and (is_key or column["column"]["type"]["kind"] == "unknown"):
                 continue
-            sample = sample_value(column, info["table"]["checks"], context["schema"]["enums"])
+            if column["column"]["type"]["kind"] == "array":
+                sample = context["orm"]["emptyList"](context)
+            else:
+                sample = sample_value(column, info["table"]["checks"], context["schema"]["enums"])
             values.append(f"        {column['field']}: Some({sample}),")
         uses_n = any(re.search(r"\bn\b", line) for line in values)
         insert = query(info, "insert")
@@ -156,172 +158,6 @@ def _factories_file(context: dict, makeable: list[dict]) -> dict:
 
 
 # The test database
-
-NAMES = {"postgresql": "PostgreSQL", "mysql": "MySQL", "mariadb": "MariaDB"}
-
-
-def _creation_order(tables: list[dict]) -> list[dict]:
-    """The tables in the order they can be created: the rows they point to first."""
-    order: list[dict] = []
-
-    def visit(info: dict, path: set[str]) -> None:
-        if any(info is item for item in order) or info["name"] in path:
-            return
-        path.add(info["name"])
-        for key in info["table"]["foreignKeys"]:
-            parent = next((item for item in tables if item["name"] == key["references"]["table"]), None)
-            if parent and parent is not info:
-                visit(parent, path)
-        order.append(info)
-
-    for info in tables:
-        visit(info, set())
-    return order
-
-
-def _test_database_file(context: dict) -> dict:
-    database = context["settings"]["database"]
-    sqlite = database == "sqlite"
-    postgres = database == "postgresql"
-    tables = [info for info in context["tables"] if info["writesEntity"]]
-    uses = RsUses().add(
-        "sea_orm::ConnectionTrait",
-        "sea_orm::Database",
-        "sea_orm::DatabaseConnection",
-        "sea_orm::Schema",
-        "sea_orm::Statement",
-        "tokio::sync::Mutex",
-        "tokio::sync::MutexGuard",
-        f"{_unit_of_work(context)}::SqlUnitOfWork",
-    )
-    if sqlite:
-        uses.add("std::sync::atomic::AtomicUsize", "std::sync::atomic::Ordering")
-
-    # Each table's module by a name of its own: by table, every one of them is table
-    def table_module(info: dict) -> str:
-        return f"{re.sub(r'^r#', '', info['attr'])}_table"
-
-    for info in tables:
-        uses.add(f"{_external(context, module_of(context, info, 'table'))} as {table_module(info)}")
-
-    def quote(name: str) -> str:
-        return f"`{name}`" if database in ("mysql", "mariadb") else f'"{name}"'
-
-    def qualified_name(info: dict) -> str:
-        if info["table"].get("schema") and postgres:
-            return f"{quote(info['table']['schema'])}.{quote(info['name'])}"
-        return quote(info["name"])
-
-    schemas: list[str] = []
-    if postgres:
-        for info in context["tables"]:
-            name = info["table"].get("schema")
-            if name and name not in schemas:
-                schemas.append(name)
-    enums = (
-        [
-            item
-            for item in context["schema"]["enums"]
-            if any(
-                native_enum(context, column["column"]) is item
-                for info in context["tables"]
-                for column in info["columns"]
-            )
-        ]
-        if postgres
-        else []
-    )
-
-    def sql_quote(text: str) -> str:
-        escaped = text.replace("'", "''")
-        return f"'{escaped}'"
-
-    def run(sql: str) -> str:
-        return f"    db.execute_unprepared({rs_string(sql)}).await.expect({rs_string(sql)});"
-
-    order = _creation_order(tables)
-    sql = "SELECT current_database()" if postgres else "SELECT sqlite_version()" if sqlite else "SELECT DATABASE()"
-    name = NAMES.get(database)
-    if sqlite:
-        url = [
-            '    let url = std::env::var("TEST_DATABASE_URL").unwrap_or_else(|_| {',
-            "        // A new file for every test: SQLite in memory would be another database on every connection",
-            "        static FILES: AtomicUsize = AtomicUsize::new(0);",
-            f"        let name = format!({rs_string(context['crate'] + '-{}-{}.db')}, std::process::id(), FILES.fetch_add(1, Ordering::SeqCst));",
-            '        format!("sqlite://{}?mode=rwc", std::env::temp_dir().join(name).display())',
-            "    });",
-        ]
-    else:
-        message = f"The database tests need a disposable {name} database: set TEST_DATABASE_URL (it is emptied)"
-        url = [
-            "    // The entities are written for one kind of database: the tests cannot fall back to SQLite",
-            f'    let url = std::env::var("TEST_DATABASE_URL").expect({rs_string(message)});',
-        ]
-    enum_lines: list[str] = []
-    for item in enums:
-        values = ", ".join(sql_quote(value) for value in item["values"])
-        enum_lines += [
-            run(f"DROP TYPE IF EXISTS {quote(item['name'])} CASCADE"),
-            run(f"CREATE TYPE {quote(item['name'])} AS ENUM ({values})"),
-        ]
-    check = (
-        '    assert!(value.starts_with("3."));'
-        if sqlite
-        else '    let url = std::env::var("TEST_DATABASE_URL").expect("TEST_DATABASE_URL");\n'
-        "    assert_eq!(url.rsplit('/').next().and_then(|name| name.split('?').next()), Some(value.as_str()));"
-    )
-    content = [
-        "//! The test database: TEST_DATABASE_URL, or SQLite in a new temporary file, created from the SeaORM entities before every test."
-        if sqlite
-        else f"//! The test database: the {name} database TEST_DATABASE_URL names, created from the SeaORM entities before every test.",
-        "",
-        uses.write(),
-        "",
-        "/// Every test empties the same database: they take turns",
-        "static TURN: Mutex<()> = Mutex::const_new(());",
-        "",
-        "/// A connection to the test database.",
-        "async fn connect() -> DatabaseConnection {",
-        *url,
-        '    Database::connect(&url).await.expect("the test database")',
-        "}",
-        "",
-        "/// The repositories over the test database, with every table dropped and created again, and the turn of the test",
-        "/// that holds it.",
-        "pub async fn open() -> (MutexGuard<'static, ()>, SqlUnitOfWork) {",
-        "    let turn = TURN.lock().await;",
-        "    let db = connect().await;",
-        *(run(f"DROP SCHEMA IF EXISTS {quote(schema)} CASCADE") for schema in schemas),
-        # The rows that point to others first
-        *(
-            run(f"DROP TABLE IF EXISTS {qualified_name(info)}{' CASCADE' if postgres else ''}")
-            for info in reversed(order)
-        ),
-        *enum_lines,
-        *(run(f"CREATE SCHEMA {quote(schema)}") for schema in schemas),
-        "    Schema::new(db.get_database_backend())",
-        "        .builder()",
-        *(f"        .register({table_module(info)}::Entity)" for info in tables),
-        "        .apply(&db)",
-        "        .await",
-        '        .expect("the tables");',
-        "    (turn, SqlUnitOfWork::new(db))",
-        "}",
-        "",
-        "#[tokio::test]",
-        "async fn is_sqlite() {" if sqlite else "async fn is_the_one_test_database_url_names() {",
-        "    let _turn = TURN.lock().await;",
-        "    let db = connect().await;",
-        f'    let row = db.query_one_raw(Statement::from_string(db.get_database_backend(), {rs_string(sql)})).await.expect("a query").expect("a row");',
-        '    let value: String = row.try_get_by_index(0).expect("a value");',
-        check,
-        "}",
-        "",
-    ]
-    return {"path": f"{TESTS}/database.rs", "content": "\n".join(content)}
-
-
-# Tests of each table
 
 
 def _changeable_text(info: dict) -> dict | None:
@@ -483,7 +319,7 @@ def _repository_tests(context: dict, info: dict) -> list[list[str]]:
 
 def _service_tests(context: dict, info: dict, uses: RsUses) -> list[list[str]]:
     service = service_type(info)
-    uses.add(_external(context, path_in(module_of(context, info, "service"), service)))
+    uses.add(external(context, path_in(module_of(context, info, "service"), service)))
     dtos = context["settings"]["serviceTypes"] == "dtos"
     memory = context["settings"]["memoryRepositories"]
     crate = context["crate"]
@@ -548,7 +384,7 @@ def _service_tests(context: dict, info: dict, uses: RsUses) -> list[list[str]]:
 
     def changes(target: dict, value: dict, source: str) -> str:
         """The changes of an update that sets one field, and keeps the others as the row has them."""
-        uses.add(_external(context, update_path(context, info)))
+        uses.add(external(context, update_path(context, info)))
         type_ = update_type(context, info)
         mode = context["settings"]["updates"]
         if mode == "patch":
@@ -758,7 +594,7 @@ def _service_tests(context: dict, info: dict, uses: RsUses) -> list[list[str]]:
 
 def _create_of_helper(context: dict, info: dict, uses: RsUses) -> list[str]:
     """Builds a create DTO from a factory row: the values of its fields."""
-    uses.add(_external(context, path_in(module_of(context, info, "dtos"), create_dto(info))))
+    uses.add(external(context, path_in(module_of(context, info, "dtos"), create_dto(info))))
     fields = ", ".join(f"{column['field']}: row.{column['field']}" for column in create_columns(info))
     return [
         "",
@@ -774,14 +610,14 @@ def test_files(context: dict) -> list[dict]:
     if tests == "none" or not writes_entities(context):
         return []
     makeable = [info for info in context["tables"] if can_make(context, info)]
-    files = [_test_database_file(context), _factories_file(context, makeable)]
+    files = [context["orm"]["testDatabaseFile"](context), _factories_file(context, makeable)]
     modules = ["database", "factories"]
     memory = context["settings"]["memoryRepositories"]
     for info in makeable:
-        entity_path = _external(context, path_in(module_of(context, info, "entity"), info["entity"]))
+        entity_path = external(context, path_in(module_of(context, info, "entity"), info["entity"]))
         base = snake_name(_base(info))
         if tests in ("all", "repositories"):
-            uses = RsUses().add("super::database", "super::factories", f"{_unit_of_work(context)}::UnitOfWork")
+            uses = RsUses().add("super::database", "super::factories", f"{unit_of_work(context)}::UnitOfWork")
             blocks = _repository_tests(context, info)
             module = f"{base}_repository"
             modules.append(module)
@@ -796,7 +632,7 @@ def test_files(context: dict) -> list[dict]:
         if tests in ("all", "services") and info["service"] is not None:
             uses = RsUses().add("std::sync::Arc")
             if memory:
-                uses.add(f"{_unit_of_work(context)}::MemoryUnitOfWork")
+                uses.add(f"{unit_of_work(context)}::MemoryUnitOfWork")
             blocks = _service_tests(context, info, uses)
             if not blocks:
                 continue
