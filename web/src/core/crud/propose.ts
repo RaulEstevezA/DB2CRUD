@@ -169,7 +169,8 @@ function proposeQueries(table: DbTable, role: TableRole, previous: RepositoryDes
     add({
       id: 'getByKey',
       kind: 'getByKey',
-      name: `getBy${byColumns(key)}`,
+      // A collection may have an `id` of its own besides MongoDB's `_id`: findById would be both
+      name: `getBy${key.join() === '_id' && table.columns.some((column) => column.name === 'id') ? 'DocumentId' : byColumns(key)}`,
       columns: key,
       returns: 'optional',
       include: include('exact', [reason('primaryKey', { columns: key.join(', ') })]),

@@ -1,0 +1,335 @@
+{
+ "format": "db-schema",
+ "version": 1,
+ "dialect": "mongodb",
+ "source": {
+  "kind": "orm",
+  "format": "mongoose"
+ },
+ "tables": [
+  {
+   "name": "orders",
+   "columns": [
+    {
+     "name": "_id",
+     "type": {
+      "sql": "Number",
+      "kind": "float",
+      "bits": 64
+     },
+     "nullable": false
+    },
+    {
+     "name": "customer",
+     "type": {
+      "sql": "Object",
+      "kind": "json",
+      "fields": [
+       {
+        "name": "id",
+        "type": {
+         "sql": "Number",
+         "kind": "float",
+         "bits": 64
+        },
+        "nullable": false
+       },
+       {
+        "name": "email",
+        "type": {
+         "sql": "String",
+         "kind": "text"
+        },
+        "nullable": false
+       },
+       {
+        "name": "full_name",
+        "type": {
+         "sql": "String",
+         "kind": "text"
+        },
+        "nullable": false
+       },
+       {
+        "name": "phone",
+        "type": {
+         "sql": "String",
+         "kind": "text"
+        },
+        "nullable": true
+       },
+       {
+        "name": "shipping_address",
+        "type": {
+         "sql": "Object",
+         "kind": "json",
+         "fields": [
+          {
+           "name": "street",
+           "type": {
+            "sql": "String",
+            "kind": "text"
+           },
+           "nullable": false
+          },
+          {
+           "name": "city",
+           "type": {
+            "sql": "String",
+            "kind": "text"
+           },
+           "nullable": false
+          },
+          {
+           "name": "postal_code",
+           "type": {
+            "sql": "String",
+            "kind": "text"
+           },
+           "nullable": false
+          },
+          {
+           "name": "country",
+           "type": {
+            "sql": "String",
+            "kind": "text"
+           },
+           "nullable": false
+          }
+         ]
+        },
+        "nullable": false
+       },
+       {
+        "name": "created_at",
+        "type": {
+         "sql": "Date",
+         "kind": "datetime",
+         "timezone": true
+        },
+        "nullable": false
+       }
+      ]
+     },
+     "nullable": false
+    },
+    {
+     "name": "status",
+     "type": {
+      "sql": "String",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "lines",
+     "type": {
+      "sql": "[Object]",
+      "kind": "array",
+      "items": {
+       "sql": "Object",
+       "kind": "json",
+       "fields": [
+        {
+         "name": "quantity",
+         "type": {
+          "sql": "Number",
+          "kind": "float",
+          "bits": 64
+         },
+         "nullable": false
+        },
+        {
+         "name": "unit_price",
+         "type": {
+          "sql": "Number",
+          "kind": "float",
+          "bits": 64
+         },
+         "nullable": false
+        }
+       ]
+      }
+     },
+     "nullable": true
+    },
+    {
+     "name": "coupon_code",
+     "type": {
+      "sql": "String",
+      "kind": "text"
+     },
+     "nullable": true
+    },
+    {
+     "name": "tags",
+     "type": {
+      "sql": "[String]",
+      "kind": "array",
+      "items": {
+       "sql": "String",
+       "kind": "text"
+      }
+     },
+     "nullable": true
+    },
+    {
+     "name": "placed_at",
+     "type": {
+      "sql": "Date",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": [
+    "_id"
+   ],
+   "foreignKeys": [],
+   "uniques": [],
+   "indexes": [],
+   "checks": [
+    {
+     "sql": "status IN ('draft', 'paid', 'shipped', 'cancelled')",
+     "parsed": {
+      "kind": "in",
+      "column": "status",
+      "values": [
+       "draft",
+       "paid",
+       "shipped",
+       "cancelled"
+      ]
+     }
+    }
+   ],
+   "entity": "Order",
+   "origin": {
+    "line": 69,
+    "column": 1
+   }
+  },
+  {
+   "name": "products",
+   "columns": [
+    {
+     "name": "_id",
+     "type": {
+      "sql": "Number",
+      "kind": "float",
+      "bits": 64
+     },
+     "nullable": false
+    },
+    {
+     "name": "sku",
+     "type": {
+      "sql": "String",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": {
+      "sql": "String",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "price",
+     "type": {
+      "sql": "Number",
+      "kind": "float",
+      "bits": 64
+     },
+     "nullable": false
+    },
+    {
+     "name": "categories",
+     "type": {
+      "sql": "[Number]",
+      "kind": "array",
+      "items": {
+       "sql": "Number",
+       "kind": "float",
+       "bits": 64
+      }
+     },
+     "nullable": true
+    },
+    {
+     "name": "attributes",
+     "type": {
+      "sql": "Map",
+      "kind": "json"
+     },
+     "nullable": true
+    }
+   ],
+   "primaryKey": [
+    "_id"
+   ],
+   "foreignKeys": [],
+   "uniques": [],
+   "indexes": [],
+   "checks": [],
+   "entity": "Product",
+   "origin": {
+    "line": 70,
+    "column": 1
+   }
+  },
+  {
+   "name": "categories",
+   "columns": [
+    {
+     "name": "_id",
+     "type": {
+      "sql": "Number",
+      "kind": "float",
+      "bits": 64
+     },
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": {
+      "sql": "String",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "products",
+     "type": {
+      "sql": "[Number]",
+      "kind": "array",
+      "items": {
+       "sql": "Number",
+       "kind": "float",
+       "bits": 64
+      }
+     },
+     "nullable": true
+    }
+   ],
+   "primaryKey": [
+    "_id"
+   ],
+   "foreignKeys": [],
+   "uniques": [],
+   "indexes": [],
+   "checks": [],
+   "entity": "Category",
+   "origin": {
+    "line": 71,
+    "column": 1
+   }
+  }
+ ],
+ "enums": [],
+ "notes": []
+}

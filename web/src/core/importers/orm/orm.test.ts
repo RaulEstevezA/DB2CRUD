@@ -77,7 +77,10 @@ describe('ORM code written by Model2DB', () => {
   it('has the code of every reader', () => {
     for (const example of EXAMPLES)
       expect([...new Set(folders(join(FOLDER, 'model2db', example.id)).map(readerOf))]).toEqual(
-        ORM_READERS.map((reader) => reader.id).sort(),
+        // Those of documents are not of tables: they have their own folders (hand/)
+        ORM_READERS.map((reader) => reader.id)
+          .filter((id) => id !== 'mongoose' && id !== 'mongodb')
+          .sort(),
       )
   })
 })

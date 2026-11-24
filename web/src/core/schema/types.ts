@@ -10,7 +10,7 @@ export const DB_SCHEMA_FORMAT = 'db-schema'
 export const DB_SCHEMA_VERSION = 1
 
 /** Every engine a schema can describe; the generators say which ones they support. */
-export type Dialect = 'postgresql' | 'mysql' | 'mariadb' | 'sqlite' | 'sqlserver' | 'oracle'
+export type Dialect = 'postgresql' | 'mysql' | 'mariadb' | 'sqlite' | 'sqlserver' | 'oracle' | 'mongodb'
 
 /** Where a fact was read in the input text, for explanations; lines and columns start at 1. */
 export interface Origin {
@@ -24,14 +24,16 @@ export type DbType = { sql: string } & (
   | { kind: 'integer'; bits: 16 | 32 | 64 }
   | { kind: 'decimal'; precision?: number; scale?: number }
   | { kind: 'float'; bits: 32 | 64 }
-  | { kind: 'text'; length?: number; fixed?: boolean }
+  /** `objectId`: an identifier of MongoDB, as its 24 hexadecimal digits */
+  | { kind: 'text'; length?: number; fixed?: boolean; objectId?: true }
   | { kind: 'boolean' }
   | { kind: 'date' }
   | { kind: 'time'; timezone: boolean }
   | { kind: 'datetime'; timezone: boolean }
   | { kind: 'uuid' }
   | { kind: 'binary'; length?: number }
-  | { kind: 'json' }
+  /** `fields`: what a nested document holds, when the input says (MongoDB); columns of a document, not of the table */
+  | { kind: 'json'; fields?: DbColumn[] }
   | { kind: 'enum'; name: string }
   | { kind: 'array'; items: DbType }
   | { kind: 'unknown' }

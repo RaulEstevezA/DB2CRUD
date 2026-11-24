@@ -1,0 +1,235 @@
+{
+ "format": "db-schema",
+ "version": 1,
+ "dialect": "mongodb",
+ "source": {
+  "kind": "orm",
+  "format": "mongoose"
+ },
+ "tables": [
+  {
+   "name": "authors",
+   "columns": [
+    {
+     "name": "_id",
+     "type": {
+      "sql": "Number",
+      "kind": "float",
+      "bits": 64
+     },
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": {
+      "sql": "String",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "email",
+     "type": {
+      "sql": "String",
+      "kind": "text"
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": [
+    "_id"
+   ],
+   "foreignKeys": [],
+   "uniques": [
+    {
+     "name": "uq_authors_email",
+     "columns": [
+      "email"
+     ]
+    }
+   ],
+   "indexes": [],
+   "checks": [],
+   "entity": "Author",
+   "origin": {
+    "line": 48,
+    "column": 1
+   }
+  },
+  {
+   "name": "books",
+   "columns": [
+    {
+     "name": "_id",
+     "type": {
+      "sql": "Number",
+      "kind": "float",
+      "bits": 64
+     },
+     "nullable": false
+    },
+    {
+     "name": "isbn",
+     "type": {
+      "sql": "String",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "title",
+     "type": {
+      "sql": "String",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "author",
+     "type": {
+      "sql": "Number",
+      "kind": "float",
+      "bits": 64
+     },
+     "nullable": true
+    },
+    {
+     "name": "price",
+     "type": {
+      "sql": "Decimal128",
+      "kind": "decimal"
+     },
+     "nullable": false
+    },
+    {
+     "name": "published_on",
+     "type": {
+      "sql": "Date",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": false
+    },
+    {
+     "name": "genre",
+     "type": {
+      "sql": "String",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "shelf",
+     "type": {
+      "sql": "Object",
+      "kind": "json",
+      "fields": [
+       {
+        "name": "room",
+        "type": {
+         "sql": "String",
+         "kind": "text"
+        },
+        "nullable": false
+       },
+       {
+        "name": "row",
+        "type": {
+         "sql": "Number",
+         "kind": "float",
+         "bits": 64
+        },
+        "nullable": true
+       }
+      ]
+     },
+     "nullable": false
+    },
+    {
+     "name": "tags",
+     "type": {
+      "sql": "[Object]",
+      "kind": "array",
+      "items": {
+       "sql": "Object",
+       "kind": "json",
+       "fields": [
+        {
+         "name": "code",
+         "type": {
+          "sql": "String",
+          "kind": "text"
+         },
+         "nullable": false
+        },
+        {
+         "name": "label",
+         "type": {
+          "sql": "String",
+          "kind": "text"
+         },
+         "nullable": false
+        }
+       ]
+      }
+     },
+     "nullable": true
+    }
+   ],
+   "primaryKey": [
+    "_id"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "author"
+     ],
+     "references": {
+      "table": "authors",
+      "columns": [
+       "_id"
+      ]
+     }
+    }
+   ],
+   "uniques": [
+    {
+     "name": "uq_books_isbn",
+     "columns": [
+      "isbn"
+     ]
+    }
+   ],
+   "indexes": [
+    {
+     "name": "ix_books_author",
+     "columns": [
+      "author"
+     ]
+    }
+   ],
+   "checks": [
+    {
+     "sql": "genre IN ('FICTION', 'ESSAY', 'POETRY', 'SCIENCE')",
+     "parsed": {
+      "kind": "in",
+      "column": "genre",
+      "values": [
+       "FICTION",
+       "ESSAY",
+       "POETRY",
+       "SCIENCE"
+      ]
+     }
+    }
+   ],
+   "entity": "Book",
+   "origin": {
+    "line": 49,
+    "column": 1
+   }
+  }
+ ],
+ "enums": [],
+ "notes": []
+}

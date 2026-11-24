@@ -1,0 +1,211 @@
+{
+ "format": "db-schema",
+ "version": 1,
+ "dialect": "mongodb",
+ "source": {
+  "kind": "orm",
+  "format": "mongodb"
+ },
+ "tables": [
+  {
+   "name": "users",
+   "columns": [
+    {
+     "name": "_id",
+     "type": {
+      "sql": "string",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "email",
+     "type": {
+      "sql": "string",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": {
+      "sql": "string",
+      "kind": "text"
+     },
+     "nullable": true
+    },
+    {
+     "name": "profile",
+     "type": {
+      "sql": "object",
+      "kind": "json",
+      "fields": [
+       {
+        "name": "bio",
+        "type": {
+         "sql": "string",
+         "kind": "text"
+        },
+        "nullable": true
+       },
+       {
+        "name": "website",
+        "type": {
+         "sql": "string",
+         "kind": "text"
+        },
+        "nullable": true
+       }
+      ]
+     },
+     "nullable": true
+    },
+    {
+     "name": "created_at",
+     "type": {
+      "sql": "date",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": true
+    }
+   ],
+   "primaryKey": [
+    "_id"
+   ],
+   "foreignKeys": [],
+   "uniques": [
+    {
+     "name": "uq_users_email",
+     "columns": [
+      "email"
+     ]
+    }
+   ],
+   "indexes": [],
+   "checks": [],
+   "origin": {
+    "line": 4,
+    "column": 1
+   }
+  },
+  {
+   "name": "posts",
+   "columns": [
+    {
+     "name": "_id",
+     "type": {
+      "sql": "int",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false
+    },
+    {
+     "name": "title",
+     "type": {
+      "sql": "string",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "body",
+     "type": {
+      "sql": "string",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "published",
+     "type": {
+      "sql": "bool",
+      "kind": "boolean"
+     },
+     "nullable": true
+    },
+    {
+     "name": "author_id",
+     "type": {
+      "sql": "string",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "comments",
+     "type": {
+      "sql": "array<object>",
+      "kind": "array",
+      "items": {
+       "sql": "object",
+       "kind": "json",
+       "fields": [
+        {
+         "name": "text",
+         "type": {
+          "sql": "string",
+          "kind": "text"
+         },
+         "nullable": false
+        },
+        {
+         "name": "written_at",
+         "type": {
+          "sql": "date",
+          "kind": "datetime",
+          "timezone": true
+         },
+         "nullable": false
+        },
+        {
+         "name": "rating",
+         "type": {
+          "sql": "int",
+          "kind": "integer",
+          "bits": 32
+         },
+         "nullable": true
+        }
+       ]
+      }
+     },
+     "nullable": false
+    },
+    {
+     "name": "tags",
+     "type": {
+      "sql": "array<string>",
+      "kind": "array",
+      "items": {
+       "sql": "string",
+       "kind": "text"
+      }
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": [
+    "_id"
+   ],
+   "foreignKeys": [],
+   "uniques": [],
+   "indexes": [
+    {
+     "name": "ix_posts_author_id",
+     "columns": [
+      "author_id"
+     ]
+    }
+   ],
+   "checks": [],
+   "origin": {
+    "line": 39,
+    "column": 1
+   }
+  }
+ ],
+ "enums": [],
+ "notes": []
+}

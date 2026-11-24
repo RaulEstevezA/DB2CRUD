@@ -33,6 +33,7 @@ function qualified(table: DbTable): string {
 function enumNames(type: DbType): string[] {
   if (type.kind === 'enum') return [type.name]
   if (type.kind === 'array') return enumNames(type.items)
+  if (type.kind === 'json') return (type.fields ?? []).flatMap((field) => enumNames(field.type))
   return []
 }
 

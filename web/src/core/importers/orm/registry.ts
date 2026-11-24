@@ -10,6 +10,8 @@ import { drizzleReader } from './drizzle.ts'
 import { efcoreReader } from './efcore.ts'
 import { eloquentReader } from './eloquent.ts'
 import { jpaReader } from './jpa.ts'
+import { mongodbReader } from './mongodb.ts'
+import { mongooseReader } from './mongoose.ts'
 import { prismaReader } from './prisma.ts'
 import { sequelizeReader } from './sequelize.ts'
 import { sqlalchemyReader } from './sqlalchemy.ts'
@@ -31,6 +33,8 @@ export const ORM_READERS: OrmReader[] = [
   efcoreReader,
   doctrineReader,
   eloquentReader,
+  mongooseReader,
+  mongodbReader,
 ]
 
 /** The reader for these files, or null when none recognises them. */

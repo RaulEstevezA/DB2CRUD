@@ -19,7 +19,7 @@ export type Model2DBReadResult = { ok: true; schema: DbSchema } | { ok: false; e
 
 /** Engines of each relational output of Model2DB (`generate/outputs.ts`): an SQL output is its own engine,
  * an ORM or a migration tool uses the project's engine when it supports it, and its first one otherwise. */
-const RELATIONAL_OUTPUTS: Record<string, readonly Dialect[] | null> = {
+const RELATIONAL_OUTPUTS: Record<string, readonly RelationalDialect[] | null> = {
   postgresql: null,
   mysql: null,
   mariadb: null,
@@ -47,14 +47,17 @@ const RELATIONAL_OUTPUTS: Record<string, readonly Dialect[] | null> = {
 /** Outputs that write SQL or migrations, not classes: their tables have no entity of their own. */
 const SQL_OUTPUTS = new Set(['postgresql', 'mysql', 'mariadb', 'sqlite', 'sqlserver', 'oracle', 'flyway', 'liquibase'])
 
-function engineOf(output: string, engine: Dialect): Dialect {
+/** Model2DB's document databases are not read from its projects yet. */
+type RelationalDialect = Exclude<Dialect, 'mongodb'>
+
+function engineOf(output: string, engine: RelationalDialect): RelationalDialect {
   const engines = RELATIONAL_OUTPUTS[output]
-  if (!engines) return output as Dialect
+  if (!engines) return output as RelationalDialect
   return engines.includes(engine) ? engine : engines[0]
 }
 
 /** The tables Model2DB builds for the project, as Model2DB itself does when the project is opened. */
-function relationalOf(project: Model2DBProject): { physical: RelationalSchema; engine: Dialect } | Model2DBReadError {
+function relationalOf(project: Model2DBProject): { physical: RelationalSchema; engine: RelationalDialect } | Model2DBReadError {
   const { input, output } = project
   if (!(output.output in RELATIONAL_OUTPUTS)) return 'notRelational'
   const format = input.format ?? detectFormat(input.text, input.fileName)
@@ -75,7 +78,7 @@ function bitsOf(type: ColumnType & { kind: 'primitive' }): 16 | 32 | 64 {
   return type.bits !== undefined && type.bits <= 16 ? 16 : 32
 }
 
-function dbType(type: ColumnType, engine: Dialect, enums: PhysicalEnum[]): DbType {
+function dbType(type: ColumnType, engine: RelationalDialect, enums: PhysicalEnum[]): DbType {
   const sql = sqlColumnType(type, engine, enums)
   switch (type.kind) {
     case 'raw':
@@ -122,7 +125,7 @@ function dbType(type: ColumnType, engine: Dialect, enums: PhysicalEnum[]): DbTyp
   }
 }
 
-function dbColumn(column: Column, engine: Dialect, enums: PhysicalEnum[]): DbColumn {
+function dbColumn(column: Column, engine: RelationalDialect, enums: PhysicalEnum[]): DbColumn {
   return {
     name: column.name,
     type: dbType(column.type, engine, enums),
@@ -134,7 +137,7 @@ function dbColumn(column: Column, engine: Dialect, enums: PhysicalEnum[]): DbCol
 
 const quoted = (value: string | number) => (typeof value === 'number' ? String(value) : `'${value.replace(/'/g, "''")}'`)
 
-function dbTable(table: Table, engine: Dialect, enums: PhysicalEnum[], withEntities: boolean): DbTable {
+function dbTable(table: Table, engine: RelationalDialect, enums: PhysicalEnum[], withEntities: boolean): DbTable {
   const checks: DbCheck[] = table.checks.map((check) => ({
     name: check.name,
     sql: `${check.column} IN (${check.values.map(quoted).join(', ')})`,
