@@ -1,7 +1,7 @@
 /**
  * What every Kotlin project shares: the domain errors services throw (no HTTP codes), the pages lists are read in,
- * Patch (a field of an update: absent, or a value that may be null), the connection DATABASE_URL names, and the unit
- * of work over the repositories, with its database and in-memory versions.
+ * Patch (a field of an update: absent, or a value that may be null), and the unit of work over the repositories, with its
+ * database and in-memory versions.
  */
 import type { GeneratedFile } from '../../export/files.ts'
 import {
@@ -17,7 +17,7 @@ import {
   type Context,
   type TableInfo,
 } from './context.ts'
-import { KtImports, ktString } from './kotlin.ts'
+import { KtImports } from './kotlin.ts'
 
 export function errorsFile(context: Context): GeneratedFile {
   const pkg = errorsPackage(context)
@@ -87,9 +87,6 @@ export function commonFiles(context: Context): GeneratedFile[] {
   return files
 }
 
-/** Exposed's transaction, by another name than the unit of work's own transaction(). */
-export const EXPOSED_TRANSACTION = 'org.jetbrains.exposed.v1.jdbc.transactions.transaction as exposedTransaction'
-
 const URLS: Record<string, string> = {
   postgresql: 'jdbc:postgresql://localhost:5432/app',
   mysql: 'jdbc:mysql://localhost:3306/app',
@@ -99,29 +96,11 @@ const URLS: Record<string, string> = {
 
 export const defaultUrl = (context: Context) => URLS[context.settings.database] ?? URLS.postgresql
 
-/** `AppDatabase`: the database DATABASE_URL names (with DATABASE_USER and DATABASE_PASSWORD). */
-export function databaseFile(context: Context): GeneratedFile {
-  const pkg = context.base
-  return ktFile(pathOf(pkg, 'AppDatabase'), pkg, 'import org.jetbrains.exposed.v1.jdbc.Database', [
-    '/** The database DATABASE_URL names (a JDBC URL), through Exposed. It never migrates: the database already exists. */',
-    'object AppDatabase {',
-    `    const val DEFAULT_URL = ${ktString(defaultUrl(context))}`,
-    '',
-    '    /** A connection to the database at url (DATABASE_URL, with DATABASE_USER and DATABASE_PASSWORD, by default). */',
-    '    fun connect(',
-    '        url: String = System.getenv("DATABASE_URL") ?: DEFAULT_URL,',
-    '        user: String = System.getenv("DATABASE_USER") ?: "",',
-    '        password: String = System.getenv("DATABASE_PASSWORD") ?: "",',
-    '    ): Database = Database.connect(url, user = user, password = password)',
-    '}',
-  ])
-}
-
-const HOW = {
+const how = (context: Context) => ({
   operation: 'Each service operation runs in transaction(): committed when it ends, rolled back when it throws.',
-  caller: 'Services never commit: whoever holds the database opens and ends its transaction; transaction() only groups the code.',
+  caller: `Services never commit: whoever holds the ${context.orm.holder.text} opens and ends its transaction; transaction() only groups the code.`,
   repository: 'Every repository write is committed at once; transaction() only groups the code.',
-}
+})
 
 function properties(context: Context, imports: KtImports, value: (info: TableInfo) => string): string[] {
   return context.tables.map((info) => {
@@ -141,7 +120,7 @@ export function unitOfWorkFiles(context: Context): GeneratedFile[] {
   })
   const files: GeneratedFile[] = [
     ktFile(pathOf(pkg, 'UnitOfWork'), pkg, interfaceImports.write(), [
-      `/** What services depend on: a repository per table and a transaction. ${HOW[settings.transactions]} */`,
+      `/** What services depend on: a repository per table and a transaction. ${how(context)[settings.transactions]} */`,
       'interface UnitOfWork {',
       ...members,
       '',
@@ -150,23 +129,22 @@ export function unitOfWorkFiles(context: Context): GeneratedFile[] {
       '}',
     ]),
   ]
-  const sqlImports = new KtImports(pkg).add('org.jetbrains.exposed.v1.jdbc.Database')
+  const { holder } = context.orm
+  const sqlImports = new KtImports(pkg).add(holder.ktImport)
   for (const info of context.tables) sqlImports.add(qualified(packageOf(context, info, 'repository'), sqlRepositoryClass(info)))
-  const sqlProperties = properties(context, sqlImports, (info) => `${sqlRepositoryClass(info)}(db)`)
+  const sqlProperties = properties(context, sqlImports, (info) => `${sqlRepositoryClass(info)}(${holder.name})`)
   const operation = settings.transactions === 'operation'
-  if (operation) sqlImports.add(EXPOSED_TRANSACTION)
+  const transaction = operation ? context.orm.transaction(sqlImports) : []
   files.push(
     ktFile(pathOf(pkg, 'SqlUnitOfWork'), pkg, sqlImports.write(), [
-      '/** The repositories over one database, and its transaction. */',
-      'class SqlUnitOfWork(val db: Database) : UnitOfWork {',
+      `/** The repositories over one ${holder.text}, and its transaction. */`,
+      `class SqlUnitOfWork(val ${holder.name}: ${holder.type}) : UnitOfWork {`,
       ...sqlProperties,
       '',
       operation
         ? '    /** Joins the transaction already open, or opens one. */'
-        : `    /** ${settings.transactions === 'caller' ? 'The transaction belongs to whoever holds the database' : 'Every write is committed at once'}: this only groups the code. */`,
-      operation
-        ? '    override fun <T> transaction(work: (UnitOfWork) -> T): T = exposedTransaction(db) { work(this@SqlUnitOfWork) }'
-        : '    override fun <T> transaction(work: (UnitOfWork) -> T): T = work(this)',
+        : `    /** ${settings.transactions === 'caller' ? `The transaction belongs to whoever holds the ${holder.text}` : 'Every write is committed at once'}: this only groups the code. */`,
+      ...(operation ? transaction : ['    override fun <T> transaction(work: (UnitOfWork) -> T): T = work(this)']),
       '}',
     ]),
   )

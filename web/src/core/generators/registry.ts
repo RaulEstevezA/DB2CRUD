@@ -13,6 +13,7 @@ import { sqlOrm as csharpSqlOrm } from './csharp/sql/index.ts'
 import { javaGenerator } from './java/generator.ts'
 import { jpaOrm } from './java/jpa/index.ts'
 import { sqlOrm as javaSqlOrm } from './java/sql/index.ts'
+import { exposedOrm } from './kotlin/exposed/index.ts'
 import { kotlinGenerator } from './kotlin/generator.ts'
 import { rustGenerator } from './rust/generator.ts'
 import { swiftGenerator } from './swift/generator.ts'
@@ -48,7 +49,7 @@ export const GENERATORS: readonly Generator[] = [
   phpGenerator(doctrineOrm),
   phpGenerator(eloquentOrm),
   phpGenerator(phpSqlOrm),
-  kotlinGenerator,
+  kotlinGenerator(exposedOrm),
   rustGenerator,
   swiftGenerator,
 ]

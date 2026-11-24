@@ -26,10 +26,8 @@ import {
   type TableInfo,
 } from './context.ts'
 import { createColumns, createDto, updateClass, updateColumns, updateType } from './dtos.ts'
-import { nativeEnum } from './entities.ts'
 import { KtImports, ktString } from './kotlin.ts'
 import { missingValue, sampleValue } from './samples.ts'
-import { EXPOSED_TRANSACTION } from './support.ts'
 
 const isNullableKey = (info: TableInfo, key: TableInfo['table']['foreignKeys'][number]) =>
   key.columns.every((name) => columnOf(info, name).column.nullable)
@@ -47,7 +45,7 @@ export function canMake(context: Context, info: TableInfo, seen = new Set<string
 
 const newName = (info: TableInfo) => `new${info.entity}`
 const addName = (info: TableInfo) => `add${info.entity}`
-const testPath = (context: Context, name: string) => pathOf(context.base, name, true)
+export const testPath = (context: Context, name: string) => pathOf(context.base, name, true)
 const ind = (items: string[], spaces: number) => items.map((line) => (line === '' ? '' : ' '.repeat(spaces) + line))
 
 // Factories
@@ -102,93 +100,6 @@ function factoriesFile(context: Context, makeable: TableInfo[]): GeneratedFile {
     ...blocks.flatMap((block, index) => [...(index > 0 ? [''] : []), ...block]),
     '}',
   ])
-}
-
-// The test database
-
-const NAMES: Record<string, string> = { postgresql: 'PostgreSQL', mysql: 'MySQL', mariadb: 'MariaDB' }
-
-function testDatabaseFiles(context: Context): GeneratedFile[] {
-  const database = context.settings.database
-  const sqlite = database === 'sqlite'
-  const imports = new KtImports(context.base).add(
-    'org.jetbrains.exposed.v1.jdbc.Database',
-    'org.jetbrains.exposed.v1.jdbc.SchemaUtils',
-    EXPOSED_TRANSACTION,
-  )
-  const tables = context.tables.filter((info) => info.writesEntity)
-  for (const info of tables) imports.add(qualified(packageOf(context, info, 'entity'), info.tableObject))
-  const postgres = database === 'postgresql'
-  const schemas = postgres ? [...new Set(context.tables.map((info) => info.table.schema).filter((name): name is string => !!name))] : []
-  const enums = postgres
-    ? context.schema.enums.filter((item) =>
-        context.tables.some((info) => info.columns.some((column) => nativeEnum(context, column.column) === item)),
-      )
-    : []
-  const quote = (text: string) => `'${text.replace(/'/g, "''")}'`
-  const statement = (sql: string) => `            exec(${ktString(sql)})`
-  if (sqlite) imports.add('java.io.File')
-  const files: GeneratedFile[] = [
-    ktFile(testPath(context, 'TestDatabase'), context.base, imports.write(), [
-      sqlite
-        ? '/** The test database: TEST_DATABASE_URL, or SQLite in a temporary file, created from the table objects before every test. */'
-        : `/** The test database: the ${NAMES[database]} database TEST_DATABASE_URL names (with TEST_DATABASE_USER and TEST_DATABASE_PASSWORD), created from the table objects before every test. */`,
-      'object TestDatabase {',
-      `    private val TABLES = arrayOf(${tables.map((info) => info.tableObject).join(', ')})`,
-      '',
-      '    /** The repositories over the test database, with every table dropped and created again. */',
-      '    fun open(): SqlUnitOfWork {',
-      '        val url = System.getenv("TEST_DATABASE_URL")',
-      ...(sqlite
-        ? [
-            '        val db =',
-            '            if (url == null) Database.connect("jdbc:sqlite:${File.createTempFile("test", ".db").absolutePath}?foreign_keys=true")',
-            '            else Database.connect(url, user = System.getenv("TEST_DATABASE_USER") ?: "", password = System.getenv("TEST_DATABASE_PASSWORD") ?: "")',
-          ]
-        : [
-            '        // The table objects are written for one kind of database: the tests cannot fall back to SQLite',
-            `        checkNotNull(url) { ${ktString(`The database tests need a disposable ${NAMES[database]} database: set TEST_DATABASE_URL (it is emptied)`)} }`,
-            '        val db = Database.connect(url, user = System.getenv("TEST_DATABASE_USER") ?: "", password = System.getenv("TEST_DATABASE_PASSWORD") ?: "")',
-          ]),
-      '        exposedTransaction(db) {',
-      ...schemas.map((name) => statement(`DROP SCHEMA IF EXISTS "${name}" CASCADE`)),
-      '            SchemaUtils.drop(*TABLES)',
-      ...enums.flatMap((item) => [
-        statement(`DROP TYPE IF EXISTS "${item.name}" CASCADE`),
-        statement(`CREATE TYPE "${item.name}" AS ENUM (${item.values.map(quote).join(', ')})`),
-      ]),
-      ...schemas.map((name) => statement(`CREATE SCHEMA "${name}"`)),
-      '            SchemaUtils.create(*TABLES)',
-      '        }',
-      '        return SqlUnitOfWork(db)',
-      '    }',
-      '}',
-    ]),
-  ]
-  const sql = database === 'postgresql' ? 'SELECT current_database()' : sqlite ? 'SELECT sqlite_version()' : 'SELECT DATABASE()'
-  files.push(
-    ktFile(
-      testPath(context, 'DatabaseTest'),
-      context.base,
-      new KtImports(context.base)
-        .add(EXPOSED_TRANSACTION, 'kotlin.test.Test', 'kotlin.test.assertEquals', 'kotlin.test.assertTrue')
-        .write(),
-      [
-        '/** The tests run on the database they were asked to. */',
-        'class DatabaseTest {',
-        '    @Test',
-        sqlite ? '    fun isSqlite() {' : '    fun isTheOneTestDatabaseUrlNames() {',
-        '        val uow = TestDatabase.open()',
-        `        val value = exposedTransaction(uow.db) { exec(${ktString(sql)}) { it.next(); it.getString(1) } }`,
-        sqlite
-          ? '        assertTrue(value!!.startsWith("3."))'
-          : '        assertEquals(System.getenv("TEST_DATABASE_URL")!!.substringAfterLast("/").substringBefore("?"), value)',
-        '    }',
-        '}',
-      ],
-    ),
-  )
-  return files
 }
 
 // Tests of each table
@@ -492,15 +403,23 @@ function createOfHelper(context: Context, info: TableInfo, imports: KtImports): 
   ]
 }
 
+/** What a test class over the test database does after opening the unit of work, and when a test ends. */
+export const openTest = (context: Context) => context.orm.openTest(context).map((line) => `        ${line}`)
+export const closeTest = (context: Context) =>
+  context.orm.closeTest.length > 0
+    ? ['', '    @AfterTest', '    fun close() {', ...context.orm.closeTest.map((line) => `        ${line}`), '    }']
+    : []
+
 export function testFiles(context: Context): GeneratedFile[] {
   const tests = context.settings.tests
   if (tests === 'none' || !writesEntities(context)) return []
   const makeable = context.tables.filter((info) => canMake(context, info))
-  const files: GeneratedFile[] = [...testDatabaseFiles(context), factoriesFile(context, makeable)]
+  const files: GeneratedFile[] = [...context.orm.testDatabaseFiles(context), factoriesFile(context, makeable)]
   const memory = context.settings.memoryRepositories
   const assertions = [
     'kotlin.test.Test',
     'kotlin.test.BeforeTest',
+    ...(context.orm.closeTest.length > 0 ? ['kotlin.test.AfterTest'] : []),
     'kotlin.test.assertEquals',
     'kotlin.test.assertNotNull',
     'kotlin.test.assertNull',
@@ -521,7 +440,9 @@ export function testFiles(context: Context): GeneratedFile[] {
           '    @BeforeTest',
           '    fun open() {',
           '        uow = TestDatabase.open()',
+          ...openTest(context),
           '    }',
+          ...closeTest(context),
           ...blocks.flat(),
           '}',
         ]),
@@ -546,7 +467,9 @@ export function testFiles(context: Context): GeneratedFile[] {
           '    @BeforeTest',
           '    fun open() {',
           memory ? '        uow = MemoryUnitOfWork()' : '        uow = TestDatabase.open()',
+          ...(memory ? [] : openTest(context)),
           '    }',
+          ...(memory ? [] : closeTest(context)),
           ...blocks.flat(),
           ...helper,
           '}',

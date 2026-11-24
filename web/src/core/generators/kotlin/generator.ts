@@ -1,30 +1,30 @@
 /**
- * The Kotlin generator: Kotlin on the JVM + Exposed 1.6 (its DSL over JDBC) data access layers, with no web
- * framework. Every file of the project, composed from the modules of this folder; each module writes one kind of file.
+ * The Kotlin generator: data access layers in Kotlin on the JVM with no web framework, over Exposed or JDBC, the strategy
+ * (orm.ts) it is given. Every file of the project, composed from the modules of this folder; each module writes one kind
+ * of file.
  */
 import type { GeneratedFile } from '../../export/files.ts'
 import type { Generator } from '../types.ts'
 import { createContext, type Context } from './context.ts'
 import { dtoFiles } from './dtos.ts'
-import { entityFile, enumColumnFile, tableObjectFile } from './entities.ts'
+import type { KotlinOrm } from './orm.ts'
 import { contractFile, envExampleFile, gitignoreFile, gradleFiles, readmeFile } from './project.ts'
 import { repositoryFiles } from './repositories.ts'
 import { serviceFile } from './services.ts'
-import { commonFiles, databaseFile, errorsFile, unitOfWorkFiles } from './support.ts'
+import { commonFiles, errorsFile, unitOfWorkFiles } from './support.ts'
 import { canMake, testFiles } from './tests.ts'
 import { planConversions } from '../../conversions/plan.ts'
 import { conversionFiles, conversionTestFile, servicePlans } from './conversions.ts'
 
 function code(context: Context): GeneratedFile[] {
   const files: (GeneratedFile | null)[] = [
-    databaseFile(context),
+    ...context.orm.databaseFiles(context),
     errorsFile(context),
-    enumColumnFile(context),
     ...commonFiles(context),
     ...unitOfWorkFiles(context),
   ]
   for (const info of context.tables) {
-    if (info.writesEntity) files.push(entityFile(context, info), tableObjectFile(context, info))
+    if (info.writesEntity) files.push(...context.orm.entityFiles(context, info))
     files.push(...repositoryFiles(context, info))
     if (context.settings.services && info.service) {
       files.push(...dtoFiles(context, info))
@@ -34,28 +34,30 @@ function code(context: Context): GeneratedFile[] {
   return files.filter((file): file is GeneratedFile => file !== null)
 }
 
-export const kotlinGenerator: Generator = {
-  language: 'kotlin',
-  orm: 'exposed',
-  generate({ schema, design, settings, models }) {
-    const context = createContext(schema, design, settings)
-    const plans = models ? servicePlans(context, planConversions(schema, design, models)) : []
-    const conversions = models ? conversionFiles(context, models.schema, plans) : []
-    const tests = testFiles(context)
-    const conversionTests =
-      models && tests.length > 0 && (settings.tests === 'all' || settings.tests === 'services')
-        ? conversionTestFile(context, plans, models.schema, (info) => canMake(context, info))
-        : null
-    return [
-      readmeFile(context),
-      ...gradleFiles(context, conversions.length > 0 && settings.modelsSource === 'import'),
-      envExampleFile(context),
-      gitignoreFile(),
-      contractFile(context),
-      ...code(context),
-      ...conversions,
-      ...tests,
-      ...(conversionTests ? [conversionTests] : []),
-    ]
-  },
+export function kotlinGenerator(orm: KotlinOrm): Generator {
+  return {
+    language: 'kotlin',
+    orm: orm.id,
+    generate({ schema, design, settings, models }) {
+      const context = createContext(orm, schema, design, settings)
+      const plans = models ? servicePlans(context, planConversions(schema, design, models)) : []
+      const conversions = models ? conversionFiles(context, models.schema, plans) : []
+      const tests = testFiles(context)
+      const conversionTests =
+        models && tests.length > 0 && (settings.tests === 'all' || settings.tests === 'services')
+          ? conversionTestFile(context, plans, models.schema, (info) => canMake(context, info))
+          : null
+      return [
+        readmeFile(context),
+        ...gradleFiles(context, conversions.length > 0 && settings.modelsSource === 'import'),
+        envExampleFile(context),
+        gitignoreFile(),
+        contractFile(context),
+        ...code(context),
+        ...conversions,
+        ...tests,
+        ...(conversionTests ? [conversionTests] : []),
+      ]
+    },
+  }
 }

@@ -17,6 +17,7 @@ import type { DbColumn, DbSchema, DbTable, DbType } from '../../schema/types.ts'
 import type { ProjectSettings } from '../../settings/settings.ts'
 import { toCamelCase } from '../../model/naming.ts'
 import { memberName, typeName } from './kotlin.ts'
+import type { KotlinOrm } from './orm.ts'
 
 export interface ColumnInfo {
   column: DbColumn
@@ -65,6 +66,7 @@ export interface TableInfo {
 }
 
 export interface Context {
+  orm: KotlinOrm
   schema: DbSchema
   design: CrudDesign
   settings: ProjectSettings
@@ -169,8 +171,8 @@ function tableInfo(schema: DbSchema, design: CrudDesign, settings: ProjectSettin
   }
 }
 
-export function createContext(schema: DbSchema, design: CrudDesign, settings: ProjectSettings): Context {
-  return { schema, design, settings, tables: schema.tables.map((table) => tableInfo(schema, design, settings, table)), base: 'app' }
+export function createContext(orm: KotlinOrm, schema: DbSchema, design: CrudDesign, settings: ProjectSettings): Context {
+  return { orm, schema, design, settings, tables: schema.tables.map((table) => tableInfo(schema, design, settings, table)), base: 'app' }
 }
 
 export const writesEntities = (context: Context) => context.tables.some((info) => info.writesEntity)

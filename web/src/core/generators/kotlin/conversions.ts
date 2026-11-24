@@ -32,6 +32,7 @@ import {
 } from './context.ts'
 import { createDto, readColumns, readDto } from './dtos.ts'
 import { KtImports, ktString, memberName } from './kotlin.ts'
+import { closeTest, openTest } from './tests.ts'
 
 /** The folder of the copy of the models when they are imported from the user's package. */
 export const MODELS_FOLDER = 'application-models'
@@ -705,6 +706,7 @@ export function conversionTestFile(
     'kotlin.test.assertNotNull',
   )
   const memory = context.settings.memoryRepositories
+  if (!memory && context.orm.closeTest.length > 0) imports.add('kotlin.test.AfterTest')
   const tests: string[][] = []
   const readers = new Map<string, string[]>()
   for (const plan of plans) {
@@ -757,7 +759,9 @@ export function conversionTestFile(
     '    @BeforeTest',
     '    fun open() {',
     memory ? '        uow = MemoryUnitOfWork()' : '        uow = TestDatabase.open()',
+    ...(memory ? [] : openTest(context)),
     '    }',
+    ...(memory ? [] : closeTest(context)),
     ...tests.flatMap((test) => ['', ...test]),
     ...[...readers.values()].flatMap((reader) => ['', ...reader]),
     '}',

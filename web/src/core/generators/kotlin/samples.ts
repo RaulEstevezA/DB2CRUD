@@ -5,7 +5,7 @@
  */
 import type { DbCheck, DbEnum } from '../../schema/types.ts'
 import type { ColumnInfo } from './context.ts'
-import { ktLiteral } from './entities.ts'
+import { ktLiteral } from './repositories.ts'
 import { type KtImports, ktString } from './kotlin.ts'
 
 function checksOf(column: ColumnInfo, checks: DbCheck[]) {

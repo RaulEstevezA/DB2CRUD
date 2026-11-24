@@ -5,8 +5,8 @@
  * values the database fills. Exposed reads and writes rows through the table object; the repositories turn rows
  * into entities and back. CHECK constraints are named in the table's comment: the services check them.
  */
-import type { GeneratedFile } from '../../export/files.ts'
-import type { DbColumn, DbEnum, DbType } from '../../schema/types.ts'
+import type { GeneratedFile } from '../../../export/files.ts'
+import type { DbColumn, DbEnum, DbType } from '../../../schema/types.ts'
 import {
   columnOf,
   commonPackage,
@@ -19,8 +19,9 @@ import {
   type ColumnInfo,
   type Context,
   type TableInfo,
-} from './context.ts'
-import { KtImports, ktString } from './kotlin.ts'
+} from '../context.ts'
+import { KtImports, ktString } from '../kotlin.ts'
+import { ktLiteral } from '../repositories.ts'
 
 const EXPOSED = 'org.jetbrains.exposed.v1.core'
 const JAVA_TIME = 'org.jetbrains.exposed.v1.javatime'
@@ -100,38 +101,6 @@ function columnCall(context: Context, column: ColumnInfo, imports: KtImports): s
     case 'array':
     case 'unknown':
       return `text(${name})`
-  }
-}
-
-/** A literal of a default, in the column's Kotlin type. */
-export function ktLiteral(column: ColumnInfo, value: string | number | boolean): string {
-  if (typeof value === 'boolean') return String(value)
-  const text = String(value)
-  switch (column.kt) {
-    case 'Long':
-      return `${text}L`
-    case 'Int':
-      return text
-    case 'Short':
-      return `${text}.toShort()`
-    case 'BigDecimal':
-      return `BigDecimal(${ktString(text)})`
-    case 'Double':
-      return /[.eE]/.test(text) ? text : `${text}.0`
-    case 'Float':
-      return `${text}f`
-    case 'Boolean':
-      return text
-    case 'LocalDate':
-    case 'LocalTime':
-    case 'LocalDateTime':
-    case 'OffsetDateTime':
-    case 'Instant':
-      return `${column.kt}.parse(${ktString(text)})`
-    case 'UUID':
-      return `UUID.fromString(${ktString(text)})`
-    default:
-      return ktString(text)
   }
 }
 
