@@ -1,14 +1,14 @@
 """The entity of each table (a plain class with a property per column) and AppDbContext, whose Fluent API maps every
 table as the database has it: exact table and column names, lengths, precision, keys (none for a table without one),
 unique indexes, indexes, CHECK constraints, foreign keys with their actions, enums of PostgreSQL, and the values the
-database fills, which EF Core reads back after an insert. Mirrors web/src/core/generators/csharp/entities.ts."""
+database fills, which EF Core reads back after an insert. Mirrors web/src/core/generators/csharp/efcore/entities.ts."""
 
 import re
 
-from ...js import number_text
-from ..types import lines
-from .context import column_of, find_info, is_in, namespace_of, path_of, writes_entities
-from .csharp import CsUsings, cs_string, pascal_name
+from ....js import number_text
+from ...types import lines
+from ..context import column_of, find_info, is_in, namespace_of, path_of, writes_entities
+from ..csharp import CsUsings, cs_string, pascal_name
 
 
 def entity_file(context: dict, info: dict) -> dict:

@@ -95,7 +95,7 @@ def _table_info(schema: dict, design: dict, settings: dict, table: dict) -> dict
     def by_name(name: str) -> dict:
         return next(info for info in columns if info["column"]["name"] == name)
 
-    # A table without a primary key is read only, keyless for EF Core; its rows are told apart by all their columns
+    # A table without a primary key is read only; its rows are told apart by all their columns
     all_names = table["primaryKey"] if table["primaryKey"] is not None else [c["name"] for c in table["columns"]]
     delete_mode = policy["delete"]["value"]
     concurrency = policy["concurrency"]["value"]
@@ -124,8 +124,9 @@ def _table_info(schema: dict, design: dict, settings: dict, table: dict) -> dict
     }
 
 
-def create_context(schema: dict, design: dict, settings: dict) -> dict:
+def create_context(orm: dict, schema: dict, design: dict, settings: dict) -> dict:
     return {
+        "orm": orm,
         "schema": schema,
         "design": design,
         "settings": settings,

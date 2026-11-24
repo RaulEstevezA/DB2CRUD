@@ -1,6 +1,6 @@
 """What every C# project shares: the domain errors services throw (no HTTP codes), the pages lists are read in, Patch
-(a field of an update: absent, null or a value), the unit of work over the repositories, and the options of the
-database DATABASE_CONNECTION names. Mirrors web/src/core/generators/csharp/support.ts."""
+(a field of an update: absent, null or a value), and the unit of work over the repositories (what its database class does
+is the strategy's). Mirrors web/src/core/generators/csharp/support.ts."""
 
 from ..types import lines
 from .context import (
@@ -11,10 +11,8 @@ from .context import (
     path_of,
     repository_type,
     sql_repository_class,
-    writes_entities,
 )
-from .csharp import CsUsings, cs_string
-from .entities import enum_type_name, pg_enums
+from .csharp import CsUsings
 
 DOMAINEXCEPTION = [
     "/// <summary>Base of every error a service throws on purpose. They carry no HTTP codes: whoever calls the services translates them.</summary>",
@@ -99,7 +97,7 @@ PATCH = [
 ]
 
 
-def _file(ns: str, name: str, body: list, usings: CsUsings | None = None) -> dict:
+def file(ns: str, name: str, body: list, usings: CsUsings | None = None) -> dict:
     written = usings.write() if usings else ""
     return {
         "path": path_of(ns, name),
@@ -110,11 +108,11 @@ def _file(ns: str, name: str, body: list, usings: CsUsings | None = None) -> dic
 def error_files(context: dict) -> list[dict]:
     ns = errors_namespace(context)
     return [
-        _file(ns, "DomainException", DOMAINEXCEPTION),
-        _file(ns, "NotFoundException", NOTFOUNDEXCEPTION),
-        _file(ns, "ConflictException", CONFLICTEXCEPTION),
-        _file(ns, "FieldError", FIELDERROR),
-        _file(ns, "ValidationFailedException", VALIDATIONFAILEDEXCEPTION),
+        file(ns, "DomainException", DOMAINEXCEPTION),
+        file(ns, "NotFoundException", NOTFOUNDEXCEPTION),
+        file(ns, "ConflictException", CONFLICTEXCEPTION),
+        file(ns, "FieldError", FIELDERROR),
+        file(ns, "ValidationFailedException", VALIDATIONFAILEDEXCEPTION),
     ]
 
 
@@ -123,19 +121,21 @@ def common_files(context: dict) -> list[dict]:
     settings = context["settings"]
     files = []
     if settings["paging"] == "offset":
-        files.append(_file(ns, "Page", PAGE))
+        files.append(file(ns, "Page", PAGE))
     if settings["paging"] == "cursor":
-        files.append(_file(ns, "CursorPage", CURSORPAGE))
+        files.append(file(ns, "CursorPage", CURSORPAGE))
     if settings["services"] and settings["updates"] == "patch":
-        files.append(_file(ns, "Patch", PATCH))
+        files.append(file(ns, "Patch", PATCH))
     return files
 
 
-HOW = {
-    "operation": "Each service operation runs in TransactionAsync: committed when it ends, rolled back when it fails.",
-    "caller": "Services never commit: whoever holds the AppDbContext opens and ends its transaction; TransactionAsync only groups the code.",
-    "repository": "Every repository write is committed at once; TransactionAsync only groups the code.",
-}
+def _how(context: dict) -> dict:
+    return {
+        "operation": "Each service operation runs in TransactionAsync: committed when it ends, rolled back when it fails.",
+        "caller": f"Services never commit: whoever holds the {context['orm']['holder']} opens and ends its transaction; TransactionAsync only groups the code.",
+        "repository": "Every repository write is committed at once; TransactionAsync only groups the code.",
+    }
+
 
 VOID_TRANSACTION = [
     "",
@@ -166,31 +166,15 @@ def unit_of_work_files(context: dict) -> list[dict]:
         ]
 
     if settings["transactions"] == "operation":
-        transaction = [
-            "        // Joins the transaction already open",
-            "        if (Db.Database.CurrentTransaction is not null) return await work(this);",
-            "        await using var transaction = await Db.Database.BeginTransactionAsync();",
-            "        try",
-            "        {",
-            "            var result = await work(this);",
-            "            await transaction.CommitAsync();",
-            "            return result;",
-            "        }",
-            "        catch",
-            "        {",
-            "            await transaction.RollbackAsync();",
-            "            Db.ChangeTracker.Clear();",
-            "            throw;",
-            "        }",
-        ]
+        transaction = [f"        {line}" for line in context["orm"]["transaction"]]
     else:
         transaction = ["        return await work(this);"]
     files = [
-        _file(
+        file(
             ns,
             "IUnitOfWork",
             [
-                f"/// <summary>What services depend on: a repository per table and a transaction. {HOW[settings['transactions']]}</summary>",
+                f"/// <summary>What services depend on: a repository per table and a transaction. {_how(context)[settings['transactions']]}</summary>",
                 "public interface IUnitOfWork",
                 "{",
                 *(f"    {repository_type(context, info)} {info['attr']} {{ get; }}" for info in tables),
@@ -204,14 +188,14 @@ def unit_of_work_files(context: dict) -> list[dict]:
             ],
             repositories(),
         ),
-        _file(
+        file(
             ns,
             "SqlUnitOfWork",
             [
-                "/// <summary>The repositories over one AppDbContext, and its transaction.</summary>",
-                "public class SqlUnitOfWork(AppDbContext db) : IUnitOfWork",
+                f"/// <summary>The repositories over one {context['orm']['holder']}, and its transaction.</summary>",
+                f"public class SqlUnitOfWork({context['orm']['holder']} db) : IUnitOfWork",
                 "{",
-                "    public AppDbContext Db { get; } = db;",
+                f"    public {context['orm']['holder']} Db {{ get; }} = db;",
                 *properties(lambda info: f"new {sql_repository_class(info)}(db)"),
                 "",
                 "    public async Task<T> TransactionAsync<T>(Func<IUnitOfWork, Task<T>> work)",
@@ -226,7 +210,7 @@ def unit_of_work_files(context: dict) -> list[dict]:
     ]
     if settings["memoryRepositories"]:
         files.append(
-            _file(
+            file(
                 ns,
                 "MemoryUnitOfWork",
                 [
@@ -256,45 +240,3 @@ CONNECTIONS = {
 
 def default_connection(context: dict) -> str:
     return CONNECTIONS.get(context["settings"]["database"], CONNECTIONS["postgresql"])
-
-
-def database_file(context: dict) -> dict:
-    """Database: the options of the AppDbContext of the database DATABASE_CONNECTION names."""
-    ns = context["base"]
-    database = context["settings"]["database"]
-    enums = pg_enums(context) if writes_entities(context) else []
-    if database == "postgresql" and enums:
-        maps = "".join(f".MapEnum<{enum_type_name(context, item)}>({cs_string(item['name'])})" for item in enums)
-        use = f"builder.UseNpgsql(connection, npgsql => npgsql{maps})"
-    elif database == "postgresql":
-        use = "builder.UseNpgsql(connection)"
-    elif database == "sqlite":
-        use = "builder.UseSqlite(connection)"
-    else:
-        use = "builder.UseMySql(connection, ServerVersion.AutoDetect(connection))"
-    return _file(
-        ns,
-        "Database",
-        [
-            "/// <summary>The database DATABASE_CONNECTION names (a connection string), through EF Core.</summary>",
-            "public static class Database",
-            "{",
-            f'    public const string DefaultConnection = "{default_connection(context)}";',
-            "",
-            "    /// <summary>The connection string of DATABASE_CONNECTION, or the default one.</summary>",
-            '    public static string Connection => Environment.GetEnvironmentVariable("DATABASE_CONNECTION") ?? DefaultConnection;',
-            "",
-            "    /// <summary>The options of an AppDbContext over the database at connection.</summary>",
-            "    public static DbContextOptions<AppDbContext> Options(string connection)",
-            "    {",
-            "        var builder = new DbContextOptionsBuilder<AppDbContext>();",
-            f"        {use};",
-            "        return builder.Options;",
-            "    }",
-            "",
-            "    /// <summary>An AppDbContext over DATABASE_CONNECTION; dispose it when done.</summary>",
-            "    public static AppDbContext Open() => new(Options(Connection));",
-            "}",
-        ],
-        CsUsings(ns).add("Microsoft.EntityFrameworkCore"),
-    )

@@ -2,7 +2,8 @@
 
 from ..conversions.plan import conversions_available
 from ..settings.settings import normalize_settings
-from .csharp.generator import CSHARP_GENERATOR
+from .csharp.efcore.index import EFCORE_ORM
+from .csharp.generator import csharp_generator
 from .java.generator import java_generator
 from .java.jpa.index import JPA_ORM
 from .java.sql.index import SQL_ORM as JAVA_SQL_ORM
@@ -34,7 +35,7 @@ GENERATORS = [
     typescript_generator(TYPESCRIPT_SQL_ORM),
     java_generator(JPA_ORM),
     java_generator(JAVA_SQL_ORM),
-    CSHARP_GENERATOR,
+    csharp_generator(EFCORE_ORM),
     php_generator(DOCTRINE_ORM),
     php_generator(ELOQUENT_ORM),
     KOTLIN_GENERATOR,

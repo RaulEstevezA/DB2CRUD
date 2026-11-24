@@ -48,7 +48,7 @@ def _add_name(info: dict) -> str:
     return f"Add{info['entity']}Async"
 
 
-def _tests_ns(context: dict) -> str:
+def tests_ns(context: dict) -> str:
     return f"{context['base']}.Tests"
 
 
@@ -57,16 +57,16 @@ def _plain(expression: str, column: dict) -> str:
     return f"{expression}!.Value" if column["optional"] and column["valueType"] else expression
 
 
-def _file(context: dict, name: str, usings: CsUsings, body: list) -> dict:
+def test_file(context: dict, name: str, usings: CsUsings, body: list) -> dict:
     written = usings.write()
     return {
-        "path": path_of(_tests_ns(context), name, True),
-        "content": lines(written != "" and [written, ""], f"namespace {_tests_ns(context)};", "", *body, ""),
+        "path": path_of(tests_ns(context), name, True),
+        "content": lines(written != "" and [written, ""], f"namespace {tests_ns(context)};", "", *body, ""),
     }
 
 
 def _factories_file(context: dict, makeable: list[dict]) -> dict:
-    usings = CsUsings(_tests_ns(context)).add(context["base"])
+    usings = CsUsings(tests_ns(context)).add(context["base"])
     blocks = []
     for info in makeable:
         usings.add(namespace_of(context, info, "entity"))
@@ -94,7 +94,10 @@ def _factories_file(context: dict, makeable: list[dict]) -> dict:
                 continue
             if column["column"]["nullable"] and is_key:
                 continue
-            value = sample_value(column, info["table"]["checks"], context["schema"]["enums"])
+            if column["column"]["type"]["kind"] == "array":
+                value = context["orm"]["emptyList"](context)
+            else:
+                value = sample_value(column, info["table"]["checks"], context["schema"]["enums"])
             values.append(f"        entity.{column['prop']} = {value};")
         insert = query(info, "insert")
         entity = info["entity"]
@@ -121,7 +124,7 @@ def _factories_file(context: dict, makeable: list[dict]) -> dict:
     body = []
     for index, block in enumerate(blocks):
         body += ["" if index > 0 else None, *block]
-    return _file(
+    return test_file(
         context,
         "Factories",
         usings,
@@ -130,110 +133,6 @@ def _factories_file(context: dict, makeable: list[dict]) -> dict:
             "internal static class Factories",
             "{",
             *body,
-            "}",
-        ],
-    )
-
-
-NAMES = {"postgresql": "PostgreSQL", "mysql": "MySQL", "mariadb": "MariaDB"}
-
-
-def _test_database_file(context: dict) -> dict:
-    database = context["settings"]["database"]
-    sqlite = database == "sqlite"
-    usings = CsUsings(_tests_ns(context)).add(context["base"])
-    if sqlite:
-        usings.add("Microsoft.Data.Sqlite", "Microsoft.EntityFrameworkCore")
-        doc = "/// <summary>The test database: TEST_DATABASE_CONNECTION, or SQLite in memory, created empty from the mapping for every test.</summary>"
-        opening = [
-            "        SqliteConnection? memory = null;",
-            "        DbContextOptions<AppDbContext> options;",
-            "        if (Connection is null)",
-            "        {",
-            "            // An in-memory database lives as long as its connection is open",
-            '            memory = new SqliteConnection("Data Source=:memory:");',
-            "            memory.Open();",
-            "            options = new DbContextOptionsBuilder<AppDbContext>().UseSqlite(memory).Options;",
-            "        }",
-            "        else options = Database.Options(Connection);",
-            "        var db = new AppDbContext(options);",
-        ]
-    else:
-        doc = f"/// <summary>The test database: the {NAMES[database]} database TEST_DATABASE_CONNECTION names, created empty from the mapping for every test.</summary>"
-        opening = [
-            "        // The mapping is written for one kind of database: the tests cannot fall back to SQLite",
-            "        if (Connection is null)",
-            f'            throw new InvalidOperationException("The database tests need a disposable {NAMES[database]} database: set TEST_DATABASE_CONNECTION (it is emptied)");',
-            "        var db = new AppDbContext(Database.Options(Connection));",
-        ]
-    return _file(
-        context,
-        "TestDatabase",
-        usings,
-        [
-            doc,
-            "public sealed class TestDatabase : IAsyncDisposable",
-            "{",
-            '    public static readonly string? Connection = Environment.GetEnvironmentVariable("TEST_DATABASE_CONNECTION");',
-            "",
-            sqlite and ["    private readonly SqliteConnection? memory;", ""],
-            "    private TestDatabase(AppDbContext db, SqliteConnection? memory)"
-            if sqlite
-            else "    private TestDatabase(AppDbContext db)",
-            "    {",
-            "        Db = db;",
-            sqlite and "        this.memory = memory;",
-            "    }",
-            "",
-            "    public AppDbContext Db { get; }",
-            "",
-            "    /// <summary>The test database, with every table dropped and created again.</summary>",
-            "    public static async Task<TestDatabase> OpenAsync()",
-            "    {",
-            *opening,
-            "        await db.Database.EnsureDeletedAsync();",
-            "        await db.Database.EnsureCreatedAsync();",
-            "        return new TestDatabase(db, memory);" if sqlite else "        return new TestDatabase(db);",
-            "    }",
-            "",
-            "    public async ValueTask DisposeAsync()",
-            "    {",
-            "        await Db.DisposeAsync();",
-            sqlite and "        if (memory is not null) await memory.DisposeAsync();",
-            "    }",
-            "}",
-        ],
-    )
-
-
-def _database_tests_file(context: dict) -> dict:
-    database = context["settings"]["database"]
-    sqlite = database == "sqlite"
-    if database == "postgresql":
-        sql = 'SELECT current_database() AS "Value"'
-    elif sqlite:
-        sql = 'SELECT sqlite_version() AS "Value"'
-    else:
-        sql = "SELECT DATABASE() AS Value"
-    return _file(
-        context,
-        "DatabaseTests",
-        CsUsings(_tests_ns(context)).add("Microsoft.EntityFrameworkCore", "Xunit"),
-        [
-            "/// <summary>The tests run on the database they were asked to.</summary>",
-            "public class DatabaseTests",
-            "{",
-            "    [Fact]",
-            "    public async Task IsSqlite()"
-            if sqlite
-            else "    public async Task IsTheOneTestDatabaseConnectionNames()",
-            "    {",
-            "        await using var database = await TestDatabase.OpenAsync();",
-            f"        var value = await database.Db.Database.SqlQueryRaw<string>({cs_string(sql)}).SingleAsync();",
-            '        Assert.StartsWith("3.", value);'
-            if sqlite
-            else "        Assert.Equal(database.Db.Database.GetDbConnection().Database, value);",
-            "    }",
             "}",
         ],
     )
@@ -321,7 +220,7 @@ def _repository_tests(context: dict, info: dict) -> list[list]:
             "IsStoredAndReadBack",
             [
                 stored,
-                "uow.Db.ChangeTracker.Clear();",
+                context["orm"]["forget"],
                 bool(get_by_key)
                 and [
                     f"var found = await {repo}.{query_name(context, get_by_key)}({key_of('stored')});",
@@ -369,7 +268,7 @@ def _repository_tests(context: dict, info: dict) -> list[list]:
                     stored,
                     f'stored.{text["prop"]} = "changed";',
                     f"await {repo}.{query_name(context, update)}(stored);",
-                    "uow.Db.ChangeTracker.Clear();",
+                    context["orm"]["forget"],
                     f'Assert.Equal("changed", (await {repo}.{query_name(context, get_by_key)}({key_of("stored")}))!.{text["prop"]});',
                 ],
             )
@@ -634,26 +533,6 @@ def _create_of_helper(context: dict, info: dict, usings: CsUsings) -> list[str]:
     return ["", "    /// <summary>The create DTO of a row the factories made.</summary>", body]
 
 
-def database_members(context: dict) -> list:
-    caller = context["settings"]["transactions"] == "caller"
-    return [
-        "    private TestDatabase database = null!;",
-        "",
-        "    /// <summary>The repositories over the test database, opened empty for every test</summary>",
-        "    private SqlUnitOfWork uow = null!;",
-        "",
-        "    public async ValueTask InitializeAsync()",
-        "    {",
-        "        database = await TestDatabase.OpenAsync();",
-        caller and "        // The caller owns the transaction: the test opens it, and it ends with the test",
-        caller and "        await database.Db.Database.BeginTransactionAsync();",
-        "        uow = new SqlUnitOfWork(database.Db);",
-        "    }",
-        "",
-        "    public async ValueTask DisposeAsync() => await database.DisposeAsync();",
-    ]
-
-
 ASSEMBLY = "\n".join(
     [
         "using Xunit;",
@@ -672,20 +551,19 @@ def test_files(context: dict) -> list[dict]:
     makeable = [info for info in context["tables"] if can_make(context, info)]
     files = [
         {"path": "tests/App.Tests/AssemblyInfo.cs", "content": ASSEMBLY},
-        _test_database_file(context),
-        _database_tests_file(context),
+        *context["orm"]["testDatabaseFiles"](context),
         _factories_file(context, makeable),
     ]
     memory = context["settings"]["memoryRepositories"]
     for info in makeable:
-        usings = CsUsings(_tests_ns(context)).add("Xunit", context["base"], namespace_of(context, info, "entity"))
+        usings = CsUsings(tests_ns(context)).add("Xunit", context["base"], namespace_of(context, info, "entity"))
         classes: list = []
         if tests in ("all", "repositories"):
             classes += [
                 f'/// <summary>The repository of the "{info["name"]}" table, against the test database.</summary>',
                 f"public class {info['entity']}RepositoryTests : IAsyncLifetime",
                 "{",
-                *database_members(context),
+                *context["orm"]["testMembers"](context),
                 *_flat(_repository_tests(context, info)),
                 "}",
             ]
@@ -708,12 +586,16 @@ def test_files(context: dict) -> list[dict]:
                     if memory
                     else f"public class {service_class(info)}Tests : IAsyncLifetime",
                     "{",
-                    *(["    private readonly MemoryUnitOfWork uow = new();"] if memory else database_members(context)),
+                    *(
+                        ["    private readonly MemoryUnitOfWork uow = new();"]
+                        if memory
+                        else context["orm"]["testMembers"](context)
+                    ),
                     *_flat(blocks),
                     *helper,
                     "}",
                 ]
         if not classes:
             continue
-        files.append(_file(context, f"{info['entity']}Tests", usings, classes))
+        files.append(test_file(context, f"{info['entity']}Tests", usings, classes))
     return files
