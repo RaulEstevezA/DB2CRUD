@@ -4,6 +4,8 @@
  * written so CRUD2Controller does not have to read the code back (docs/design.md, section 6).
  */
 import type { GeneratedFile } from '../../../export/files.ts'
+import { nestedFields } from '../../../schema/documents.ts'
+import type { DbType } from '../../../schema/types.ts'
 import { lines } from '../../types.ts'
 import { columnPyType, moduleOf, operationName, serviceClass, type Context } from './context.ts'
 import { createDto, readDto, updateDto } from './dtos.ts'
@@ -47,9 +49,13 @@ export function envExampleFile(context: Context): GeneratedFile {
   return {
     path: '.env.example',
     content: lines(
-      '# Where the database is. The synchronous driver is named here; the asynchronous one is chosen from it.',
+      context.orm.documents
+        ? '# Where the database is'
+        : '# Where the database is. The synchronous driver is named here; the asynchronous one is chosen from it.',
       `DATABASE_URL=${context.orm.defaultUrl(context)}`,
-      '# The tests use SQLite in a temporary file unless this names another database (it is emptied by the tests)',
+      context.orm.documents
+        ? '# The database the tests use (it is emptied by the tests)'
+        : '# The tests use SQLite in a temporary file unless this names another database (it is emptied by the tests)',
       '# TEST_DATABASE_URL=',
       '',
     ),
@@ -86,7 +92,7 @@ export function readmeFile(context: Context): GeneratedFile {
       '',
       '## Settings',
       '',
-      `- Database: ${settings.database}; code: ${context.async ? 'asynchronous (AsyncSession)' : 'synchronous (Session)'}.`,
+      `- Database: ${settings.database}; code: ${context.orm.documents ? 'asynchronous' : context.async ? 'asynchronous (AsyncSession)' : 'synchronous (Session)'}.`,
       `- Entities: ${settings.entities === 'missing' ? 'written for the tables the input had no class for' : settings.entities === 'all' ? 'written for every table' : `imported from \`${settings.entitiesModule}\``}.`,
       `- Services: ${settings.services ? `take and return ${settings.serviceTypes === 'dtos' ? `DTOs (${settings.dtoKind})` : 'the entities'}` : 'not written'}.`,
       `- Transactions: ${LABELS.transactions[settings.transactions]}.`,
@@ -114,7 +120,7 @@ export function readmeFile(context: Context): GeneratedFile {
       '```bash',
       'python -m venv .venv && source .venv/bin/activate',
       'pip install -r requirements-dev.txt',
-      'python -m pytest                       # SQLite in a temporary file',
+      !context.orm.documents && 'python -m pytest                       # SQLite in a temporary file',
       `TEST_DATABASE_URL=${context.orm.defaultUrl(context)} python -m pytest   # a real, disposable database: it is emptied`,
       '```',
       '',
@@ -127,8 +133,17 @@ export function readmeFile(context: Context): GeneratedFile {
 // crud-contract.json
 
 function typeOf(column: Parameters<typeof columnPyType>[0]): Record<string, unknown> {
-  const type = column.column.type
-  return { kind: type.kind, ...(type.kind === 'text' && type.length !== undefined ? { length: type.length } : {}) }
+  return plainType(column.column.type)
+}
+
+function plainType(type: DbType): Record<string, unknown> {
+  // What a nested document, or each of a list of them, holds
+  const fields = nestedFields(type)
+  return {
+    kind: type.kind,
+    ...(type.kind === 'text' && type.length !== undefined ? { length: type.length } : {}),
+    ...(fields ? { fields: fields.map((field) => ({ name: field.name, type: plainType(field.type), nullable: field.nullable })) } : {}),
+  }
 }
 
 export function contractFile(context: Context): GeneratedFile {

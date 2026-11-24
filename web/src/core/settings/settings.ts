@@ -26,6 +26,7 @@ export type OrmId =
   | 'fluent'
   | 'mongoose'
   | 'springdata'
+  | 'beanie'
   /** No ORM: SQL through each database's driver */
   | 'sql'
 
@@ -125,6 +126,18 @@ export const STACKS: readonly StackInfo[] = [
     databases: ['postgresql', 'mysql', 'mariadb', 'sqlite'],
     // The drivers are synchronous
     execution: ['sync'],
+    errors: ['exceptions'],
+    dtoKinds: ['pydantic', 'dataclass'],
+    updates: ['partial'],
+  },
+  {
+    language: 'python',
+    orm: 'beanie',
+    label: 'Beanie 2',
+    databases: ['mongodb'],
+    transactions: 'repository',
+    // Beanie is asynchronous only
+    execution: ['async'],
     errors: ['exceptions'],
     dtoKinds: ['pydantic', 'dataclass'],
     updates: ['partial'],

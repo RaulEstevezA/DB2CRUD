@@ -88,7 +88,9 @@ const STANDARD = new Set([
   'enum',
   'os',
   'typing',
+  'urllib.parse',
   'uuid',
+  'weakref',
 ])
 
 /** The imports of one module, deduplicated and sorted into the three groups of isort. */

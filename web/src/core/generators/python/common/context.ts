@@ -17,6 +17,7 @@ import { findPolicy, findRepository, findService } from '../../../crud/types.ts'
 import type { DbColumn, DbSchema, DbTable, DbType } from '../../../schema/types.ts'
 import type { ProjectSettings } from '../../../settings/settings.ts'
 import { className, Imports, methodName, snakeName } from '../python.ts'
+import { nestedTypes, type NestedType } from './documents.ts'
 import type { PythonOrm } from './orm.ts'
 
 export interface ColumnInfo {
@@ -29,6 +30,8 @@ export interface ColumnInfo {
   generated: boolean
   /** Required on create: not null, no default, not generated */
   required: boolean
+  /** The type of the documents it holds and its module: only in document databases */
+  nested: { type: NestedType; module: string } | null
 }
 
 /** A foreign key of a child table to this one: its columns and the columns of this table they hold. */
@@ -71,7 +74,7 @@ export interface Context {
   async: boolean
 }
 
-function pyType(type: DbType, imports?: Imports): string {
+export function pyType(type: DbType, imports?: Imports, nested: string | null = null): string {
   const local = (name: string) => imports?.local(name) ?? name
   switch (type.kind) {
     case 'integer':
@@ -101,8 +104,11 @@ function pyType(type: DbType, imports?: Imports): string {
     case 'binary':
       return local('bytes')
     case 'array':
-      return `${local('list')}[${pyType(type.items, imports)}]`
+      return `${local('list')}[${pyType(type.items, imports, nested)}]`
     case 'json':
+      if (type.fields && nested) return nested
+      imports?.from('typing', 'Any')
+      return 'Any'
     case 'unknown':
       imports?.from('typing', 'Any')
       return 'Any'
@@ -111,7 +117,8 @@ function pyType(type: DbType, imports?: Imports): string {
 
 /** The Python type of a column, adding its imports. */
 export function columnPyType(info: ColumnInfo, imports: Imports, optional = info.column.nullable): string {
-  const base = pyType(info.column.type, imports)
+  if (info.nested) imports.from(info.nested.module, info.nested.type.name)
+  const base = pyType(info.column.type, imports, info.nested?.type.name)
   return optional ? `${base} | None` : base
 }
 
@@ -128,14 +135,16 @@ function blockingLinks(schema: DbSchema, table: DbTable): ChildLink[] {
 
 const included = <T extends { include: { value: boolean } }>(items: T[]) => items.filter((item) => item.include.value)
 
-function columnInfo(orm: PythonOrm, column: DbColumn): ColumnInfo {
+function columnInfo(orm: PythonOrm, column: DbColumn, nested: ColumnInfo['nested'], own: boolean): ColumnInfo {
   const generated = column.generated !== undefined && column.generated !== 'onUpdateNow'
   return {
     column,
-    attr: orm.attribute?.(snakeName(column.name)) ?? snakeName(column.name),
-    py: pyType(column.type),
+    // MongoDB's `_id` is the `id` of the entity, unless the documents have one of their own
+    attr: own ? 'document_id' : (orm.attribute?.(snakeName(column.name)) ?? snakeName(column.name)),
+    py: pyType(column.type, undefined, nested?.type.name),
     generated,
     required: !column.nullable && column.default === undefined && !generated,
+    nested,
   }
 }
 
@@ -143,19 +152,27 @@ function tableInfo(orm: PythonOrm, schema: DbSchema, design: CrudDesign, setting
   const policy = findPolicy(design, table.name)!
   const repository = findRepository(design, table.name)!
   const service = settings.services ? (findService(design, table.name) ?? null) : null
-  const columns = table.columns.map((column) => columnInfo(orm, column))
+  // The input's classes only count when they are of this stack's ORM: JPA entities do not help a SQLAlchemy project
+  const ownEntities = !orm.ownModels && !repository.entityMissing && schema.source.format === settings.orm
+  const writesEntity = settings.entities === 'all' || (settings.entities === 'missing' && !ownEntities)
+  const entity = className(repository.entity)
+  // Entities of the user bring no types of ours for their nested documents
+  const nested = orm.documents && writesEntity ? nestedTypes(table.columns, entity) : new Map<string, NestedType>()
+  const module = entityModule(settings, snakeName(repository.entity))
+  const ownId = orm.documents && table.columns.some((column) => column.name === 'id')
+  const columns = table.columns.map((column) => {
+    const type = nested.get(column.name)
+    return columnInfo(orm, column, type ? { type, module } : null, ownId === true && column.name === '_id')
+  })
   const byName = (name: string) => columns.find((info) => info.column.name === name)!
   // A table without a primary key is mapped on all its columns: ORMs need some key to tell rows apart
   const key = (table.primaryKey ?? table.columns.map((column) => column.name)).map(byName)
   const deleteMode = policy.delete.value
   const concurrency = policy.concurrency.value
-  // The input's classes only count when they are of this stack's ORM: JPA entities do not help a SQLAlchemy project
-  const ownEntities = !repository.entityMissing && schema.source.format === settings.orm
-  const writesEntity = settings.entities === 'all' || (settings.entities === 'missing' && !ownEntities)
   return {
     table,
     name: table.name,
-    entity: className(repository.entity),
+    entity,
     module: snakeName(repository.entity),
     attr: snakeName(table.name),
     columns,
@@ -192,6 +209,9 @@ export function findInfo(context: Context, table: string): TableInfo | undefined
 }
 
 // Modules and names
+
+const entityModule = (settings: ProjectSettings, module: string) =>
+  settings.architecture === 'table' ? `app.${module}.entity` : `app.entities.${module}`
 
 /** Module of one kind of file of a table, by architecture: `app.repositories.order_line` or `app.order_line.repository`. */
 export function moduleOf(context: Context, info: TableInfo, kind: 'entity' | 'repository' | 'service' | 'dtos'): string {

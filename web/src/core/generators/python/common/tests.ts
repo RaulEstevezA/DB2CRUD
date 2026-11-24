@@ -21,6 +21,7 @@ import {
   type TableInfo,
   writesEntities,
 } from './context.ts'
+import { listOf, type ListInfo } from './documents.ts'
 import { createDto, updateColumns, updateDto } from './dtos.ts'
 
 type Block = (Line | Line[])[]
@@ -75,7 +76,7 @@ function factoriesFile(context: Context, makeable: TableInfo[]): GeneratedFile {
           soft ??
           (column.column.nullable && (isKey || column.column.type.kind === 'unknown')
             ? 'None'
-            : sampleValue(column.column, info.table.checks, context.schema.enums, imports))
+            : sampleValue(column.column, info.table.checks, context.schema.enums, imports, context.orm.documents))
         return `"${column.attr}": ${value}`
       })
     const insert = query(info, 'insert')!
@@ -104,6 +105,11 @@ function factoriesFile(context: Context, makeable: TableInfo[]): GeneratedFile {
     '',
   )
   return { path: 'tests/factories.py', content }
+}
+
+/** A value for an item of a list, as a Python expression for the number 7. */
+function itemSample(context: Context, list: ListInfo, imports: Imports): string {
+  return sampleValue(list.itemColumn.column, [], context.schema.enums, imports, true).replace(/\bn\b/g, '7')
 }
 
 // Repository tests
@@ -191,6 +197,25 @@ function repositoryTests(context: Context, info: TableInfo, imports: Imports): B
         `assert found is not None and found.${text.attr} == "changed"`,
       ]),
     )
+  for (const add of info.queries.filter((item) => item.kind === 'addItem')) {
+    const list = listOf(info, add)
+    const remove = query(info, 'removeItem', add.columns)
+    if (!remove || !getByKey) continue
+    const attr = list.column.attr
+    const which = list.by === 'id' ? `added.${attr}[-1]["_id"]` : list.by === 'value' ? 'item' : `before, len(added.${attr})`
+    blocks.push(
+      ...test(`adds_and_removes_one_item_of_${attr}`, [
+        `stored = ${a}add_${info.module}(sql_uow, 1)`,
+        `before = len(stored.${attr} or [])`,
+        `item = ${itemSample(context, list, imports)}`,
+        `added = ${a}${repo}.${queryName(context, add)}(${keyOf('stored')}, item)`,
+        `assert added is not None and len(added.${attr}) == before + 1`,
+        `removed = ${a}${repo}.${queryName(context, remove)}(${keyOf('stored')}, ${which})`,
+        `assert removed is not None and len(removed.${attr}) == before`,
+        list.by === 'position' && `assert ${a}${repo}.${queryName(context, remove)}(${keyOf('stored')}, 0, before + 5) is None`,
+      ]),
+    )
+  }
   const remove = query(info, 'delete')
   if (remove && getByKey && !info.soft)
     blocks.push(
@@ -362,6 +387,32 @@ function serviceTests(context: Context, info: TableInfo, imports: Imports, uow: 
         `created = ${a}service.${operationName(context, create)}(${dtos ? `${createDto(info)}(**_values(new_${info.module}(${['1', ...overrides].join(', ')}), ${createDto(info)}))` : `new_${info.module}(${['1', ...overrides].join(', ')})`})`,
         `updated = ${a}service.${operationName(context, update)}(${keyOf('created')}, ${change}${version})`,
         `assert updated.${text.attr} == "changed"`,
+      ]),
+    )
+  }
+  for (const operation of info.operations.filter((item) => item.kind === 'addItem')) {
+    const list = listOf(info, operation)
+    const without = op('removeItem', operation.columns)
+    if (!create || !without || info.hidden.includes(list.column.column.name)) continue
+    const attr = list.column.attr
+    const version = (variable: string) => (info.version ? `, version=${variable}.${info.version.attr}` : '')
+    const which = list.by === 'id' ? `added.${attr}[-1]["_id"]` : list.by === 'value' ? 'item' : 'before'
+    const missing = list.by === 'id' ? `"${'f'.repeat(24)}"` : list.by === 'value' ? null : '99'
+    imports.from('app.errors', 'NotFoundError')
+    const args = `new_${info.module}(${['1', ...overrides].join(', ')})`
+    blocks.push(
+      ...test(`adds_and_removes_one_item_of_${attr}`, [
+        'n = 100',
+        ...parentsFirst,
+        `created = ${a}service.${operationName(context, create)}(${dtos ? `${createDto(info)}(**_values(${args}, ${createDto(info)}))` : args})`,
+        `before = len(created.${attr} or [])`,
+        `item = ${itemSample(context, list, imports)}`,
+        `added = ${a}service.${operationName(context, operation)}(${keyOf('created')}, item${version('created')})`,
+        `assert len(added.${attr}) == before + 1`,
+        `removed = ${a}service.${operationName(context, without)}(${keyOf('created')}, ${which}${version('added')})`,
+        `assert len(removed.${attr}) == before`,
+        missing && 'with pytest.raises(NotFoundError):',
+        missing && `    ${a}service.${operationName(context, without)}(${keyOf('created')}, ${missing}${version('removed')})`,
       ]),
     )
   }

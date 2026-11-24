@@ -7,6 +7,8 @@
 import type { GeneratedFile } from '../../../export/files.ts'
 import { indent, lines, type Line } from '../../types.ts'
 import { Imports, pyLiteral } from '../python.ts'
+import { isObjectId } from '../../../schema/documents.ts'
+import { identifiedLists, itemParams, listOf } from './documents.ts'
 import type { RepositoryMethod } from './orm.ts'
 import {
   columnPyType,
@@ -102,6 +104,25 @@ export function repositoryMethods(context: Context, info: TableInfo, imports: Im
           doc: 'Stores the changes made to a row read from this repository.',
         })
         break
+      case 'addItem':
+      case 'removeItem': {
+        const list = listOf(info, query)
+        const adds = query.kind === 'addItem'
+        const type = (column: ColumnInfo) => columnPyType(column, imports, false)
+        const params = adds ? [{ name: list.item, type: type(list.itemColumn) }] : itemParams(list, type)
+        // Told apart by its position, it is only removed from a list of the size it was seen in
+        const size = !adds && list.by === 'position' ? [{ name: 'size', type: 'int' }] : []
+        methods.push({
+          query,
+          name,
+          params: [...info.key.map((column) => ({ name: column.attr, type: type(column) })), ...params, ...size],
+          returns: `${entity} | None`,
+          doc: adds
+            ? `Adds an item to ${query.columns[0]}, and gives the row as it is then, or None when there is none.`
+            : `Removes an item from ${query.columns[0]}${size.length > 0 ? ' that has this size' : ''}, and gives the row as it is then, or None when there is none.`,
+        })
+        break
+      }
       case 'delete':
         methods.push({
           query,
@@ -122,13 +143,17 @@ export const signature = (context: Context, method: Method) =>
 // In memory
 
 /** The value a new row gets for a column the database would fill. */
-function memoryFill(context: Context, column: ColumnInfo, imports: Imports): Line {
+export function memoryFill(context: Context, column: ColumnInfo, imports: Imports): Line {
   const db = column.column
   const attr = `entity.${column.attr}`
   const unset = context.orm.unset(attr, imports)
   // Reading it before it has a value would ask the database
   if (typeof db.generated === 'object') return context.orm.lazyComputed ? `${attr} = None` : null
   if (db.generated === 'identity') return `if ${unset}:\n    ${attr} = self._next_id\n    self._next_id += 1`
+  if (db.generated === 'uuid' && isObjectId(db.type)) {
+    imports.from('bson', 'ObjectId')
+    return `if ${unset}:\n    ${attr} = str(ObjectId())`
+  }
   if (db.generated === 'uuid') {
     imports.from('uuid', 'uuid4')
     return `if ${unset}:\n    ${attr} = uuid4()`
@@ -176,15 +201,48 @@ function memoryBody(context: Context, info: TableInfo, method: Method, imports: 
       const fills = info.columns
         .map((column) => memoryFill(context, column, imports))
         .filter((line): line is string => typeof line === 'string')
-      return [...fills, `self._rows[${keyOf('entity')}] = entity`, 'return entity']
+      return [...fills, ...identified(info, imports), `self._rows[${keyOf('entity')}] = entity`, 'return entity']
     }
     case 'update':
-      return [`self._rows[${keyOf('entity')}] = entity`, 'return entity']
+      return [...identified(info, imports), `self._rows[${keyOf('entity')}] = entity`, 'return entity']
+    case 'addItem':
+    case 'removeItem':
+      return memoryItem(info, method, imports)
     case 'delete':
       return [`self._rows.pop(${keyOf('entity')}, None)`]
     default:
       return ['raise NotImplementedError']
   }
+}
+
+/** The identifiers of the documents in its lists. */
+export function identified(info: TableInfo, imports: Imports): string[] {
+  const lists = identifiedLists(info)
+  if (lists.length > 0) imports.from('app.documents', 'identify')
+  return lists.map((column) => `identify(entity.${column.attr})`)
+}
+
+function memoryItem(info: TableInfo, method: Method, imports: Imports): Line[] {
+  const list = listOf(info, method.query)
+  const attr = `row.${list.column.attr}`
+  const removed = list.by === 'id' ? `item["_id"] != ${list.item}_id` : list.by === 'value' ? `item != ${list.item}` : null
+  let change: Line[]
+  if (method.query.kind === 'addItem') {
+    if (list.by === 'id') imports.from('app.documents', 'identify')
+    change = [list.by === 'id' && `identify([${list.item}])`, `${attr} = [*(${attr} or []), ${list.item}]`]
+  } else if (removed) change = [`${attr} = [item for item in ${attr} or [] if ${removed}]`]
+  else change = [`if len(${attr} or []) != size:`, '    return None', `${attr} = [*${attr}[:position], *${attr}[position + 1 :]]`]
+  const touched = info.columns.filter(({ column }) => column.generated === 'onUpdateNow')
+  if (touched.length > 0) imports.from('datetime', 'UTC', 'datetime')
+  return [
+    `row = next((row for row in self._rows.values() if self._key(row) == (${info.key.map((column) => column.attr).join(', ')},) and ${memoryVisible(info)}), None)`,
+    'if row is None:',
+    '    return None',
+    ...change,
+    info.version && `row.${info.version.attr} = (row.${info.version.attr} or 0) + 1`,
+    ...touched.map((column) => `row.${column.attr} = datetime.now(UTC)`),
+    'return row',
+  ]
 }
 
 function methodBlock(context: Context, method: Method, body: Line[]): string {

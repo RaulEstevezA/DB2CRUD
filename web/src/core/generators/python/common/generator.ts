@@ -7,6 +7,7 @@ import type { Generator } from '../../types.ts'
 import { planConversions } from '../../../conversions/plan.ts'
 import { createContext, type Context } from './context.ts'
 import { conversionFiles, conversionTestFile, servicePlans, testsPackage } from './conversions.ts'
+import { documentsFile } from './documents.ts'
 import { dtosFile } from './dtos.ts'
 import type { PythonOrm } from './orm.ts'
 import { contractFile, envExampleFile, gitignoreFile, pyprojectFile, readmeFile, requirementsFiles } from './project.ts'
@@ -31,6 +32,7 @@ function code(context: Context): GeneratedFile[] {
   const files: (GeneratedFile | null)[] = [
     ...context.orm.databaseFiles(context),
     errorsFile(),
+    documentsFile(context),
     pagingFile(context),
     unitOfWorkFile(context),
   ]
@@ -44,11 +46,22 @@ function code(context: Context): GeneratedFile[] {
   return files.filter((file): file is GeneratedFile => file !== null)
 }
 
+/** The files with the database classes named as the strategy asks: `SqlUnitOfWork` is `MongoUnitOfWork` in a document database. */
+function named(orm: PythonOrm, files: GeneratedFile[]): GeneratedFile[] {
+  const { prefix } = orm
+  if (!prefix) return files
+  const rename = (text: string) =>
+    text.replace(/\bSql(?=UnitOfWork\b|\w+Repository\b)/g, prefix).replace(/\bsql_uow\b/g, `${prefix.toLowerCase()}_uow`)
+  return files.map((file) => ({ ...file, content: rename(file.content) }))
+}
+
 export function pythonGenerator(orm: PythonOrm): Generator {
   return {
     language: 'python',
     orm: orm.id,
-    generate({ schema, design, settings, models }) {
+    generate({ schema, design, settings, models: given }) {
+      // The conversions read columns, not the documents inside them
+      const models = orm.documents ? null : given
       const context = createContext(orm, schema, design, settings)
       const app = code(context)
       const plans = models ? servicePlans(context, planConversions(schema, design, models)) : []
@@ -59,7 +72,7 @@ export function pythonGenerator(orm: PythonOrm): Generator {
       const conversionTests =
         tests.length > 0 && (settings.tests === 'all' || settings.tests === 'services') ? conversionTestFile(context, plans) : null
       const roots = [...new Set(['app', settings.modelsModule.split('.')[0]])]
-      return [
+      return named(orm, [
         readmeFile(context),
         pyprojectFile(context),
         ...requirementsFiles(context),
@@ -70,7 +83,7 @@ export function pythonGenerator(orm: PythonOrm): Generator {
         ...packages(app, roots),
         ...tests,
         ...(conversionTests ? [conversionTests] : []),
-      ]
+      ])
     },
   }
 }

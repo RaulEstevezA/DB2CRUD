@@ -23,6 +23,12 @@ export interface PythonOrm {
   id: OrmId
   /** `SQLAlchemy 2`, for texts */
   label: string
+  /** Columns may hold documents and lists of them, as types of their own */
+  documents?: boolean
+  /** The entities of the input never stand in for the project's own */
+  ownModels?: boolean
+  /** What the names of the database classes start with, when it is not `Sql`: `MongoUnitOfWork` */
+  prefix?: string
   /** The attribute of a column named `name`, when an entity cannot have that one */
   attribute?(name: string): string
   /** Connection, settings and entities: every file of the database layer */

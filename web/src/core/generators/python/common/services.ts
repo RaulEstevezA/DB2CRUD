@@ -24,6 +24,7 @@ import {
   type Context,
   type TableInfo,
 } from './context.ts'
+import { documentRules, itemParams, listOf } from './documents.ts'
 import { createColumns, createDto, readColumns, readDto, updateDto } from './dtos.ts'
 
 /** Lines of a method, where a nested list is a group that applies or not as a whole. */
@@ -63,7 +64,7 @@ function valueRules(column: ColumnInfo, checks: DbCheck[]): string[] {
   const rules: string[] = []
   const name = column.column.name
   const type = column.column.type
-  if (type.kind === 'text' && type.length !== undefined)
+  if (type.kind === 'text' && type.length !== undefined && !type.objectId)
     rules.push(
       `if isinstance(value, str) and len(value) > ${type.length}:\n    errors.append(FieldError("${name}", "is longer than ${type.length} characters"))`,
     )
@@ -87,7 +88,8 @@ function valueRules(column: ColumnInfo, checks: DbCheck[]): string[] {
 }
 
 function validateMethod(writer: Writer): Block {
-  const { info, imports } = writer
+  const { context, info, imports } = writer
+  const documents = documentRules(context, info)
   imports.from('app.errors', 'FieldError', 'ValidationFailedError').from('typing', 'Any')
   const editable = createColumns(info)
   const blocks = editable.map((column) => {
@@ -99,6 +101,10 @@ function validateMethod(writer: Writer): Block {
         ? `if "${attr}" in values and not creating:\n        errors.append(FieldError("${name}", "cannot be empty"))`
         : 'pass'
     const rules = valueRules(column, info.table.checks)
+    if (documents.some((item) => item.column === column)) {
+      imports.from('app.documents', 'problems')
+      rules.push(`errors += problems(value, _RULES["${attr}"], "${name}")`)
+    }
     // A nullable column without rules has nothing to check
     if (missing === 'pass' && rules.length === 0) return ''
     if (missing === 'pass') return lines(`value = values.get("${attr}")`, 'if value is not None:', ...rules.map((rule) => indent(rule)))
@@ -464,8 +470,65 @@ function operationLines(writer: Writer, operation: OperationDesign): Block {
     // One item of a list: only document databases have them
     case 'addItem':
     case 'removeItem':
-      return []
+      return itemLines(writer, operation, name)
   }
+}
+
+/** Adds or removes one item of a list, so two people changing the same list do not undo each other. */
+function itemLines(writer: Writer, operation: OperationDesign, name: string): Block {
+  const { context, info, imports } = writer
+  const adds = operation.kind === 'addItem'
+  const change = query(info, adds ? 'addItem' : 'removeItem', operation.columns)
+  if (!change || !query(info, 'getByKey')) return []
+  const list = listOf(info, change)
+  const attr = list.column.attr
+  const stored = list.column.column.name
+  const type = (column: ColumnInfo) => columnPyType(column, imports, false)
+  const params = adds ? [{ name: list.item, type: type(list.itemColumn) }] : itemParams(list, type)
+  const version = info.version ? `, version: ${columnPyType(info.version, imports, false)}` : ''
+  const [param] = params
+  const position = !adds && list.by === 'position'
+  const found =
+    list.by === 'id'
+      ? `any(item["_id"] == ${param.name} for item in current.${attr} or [])`
+      : list.by === 'value'
+        ? `${param.name} in (current.${attr} or [])`
+        : `0 <= ${param.name} < len(current.${attr} or [])`
+  const label = list.item.charAt(0).toUpperCase() + list.item.slice(1)
+  imports.from('app.errors', 'NotFoundError')
+  if (position) imports.from('app.errors', 'ConflictError')
+  const checked = adds && documentRules(context, info).some((item) => item.column === list.column)
+  if (checked) imports.from('app.documents', 'problems').from('app.errors', 'ValidationFailedError')
+  const args = [keyArgs(info), ...params.map((item) => item.name), ...(position ? [`len(current.${attr})`] : [])].join(', ')
+  return [
+    `${writer.def} ${name}(self, ${keyParams(writer)}, ${params.map((item) => `${item.name}: ${item.type}`).join(', ')}${version}) -> ${resultType(writer)}:`,
+    adds
+      ? `    """Adds an item to ${stored}${info.version ? ', read at `version`' : ''}."""`
+      : `    """Removes an item from ${stored}, by its ${list.by === 'id' ? 'identifier' : list.by}${info.version ? ', read at `version`' : ''}."""`,
+    checked && [
+      `    errors = problems([${list.item}], _RULES["${attr}"], "${stored}")`,
+      '    if errors:',
+      `        raise ValidationFailedError("${info.entity}", errors)`,
+    ],
+    indent(
+      lines(
+        ...inTransaction(writer, [
+          `${adds && !info.version ? '' : 'current = '}${call(writer, `self._find(${keyArgs(info)})`)}`,
+          ...versionCheck(writer),
+          !adds && [
+            `if not ${list.by === 'position' ? `(${found})` : list.by === 'value' ? `(${found})` : found}:`,
+            `    raise NotFoundError("${label}", ${param.name})`,
+          ],
+          `changed = ${call(writer, `${repo(info)}.${queryName(context, change)}(${args})`)}`,
+          'if changed is None:',
+          position
+            ? `    raise ConflictError("${info.entity}", "was changed by someone else since it was read", ("${attr}",))`
+            : `    raise NotFoundError("${info.entity}", ${keyValue(info)})`,
+          `return ${out(writer, 'changed')}`,
+        ]),
+      ),
+    ),
+  ]
 }
 
 function linkLines(writer: Writer, operation: OperationDesign, name: string): Block {
@@ -546,12 +609,20 @@ export function serviceFile(context: Context, info: TableInfo): GeneratedFile | 
   const helpers: Block[] = [findMethod(writer), readMethod(writer)]
   if (writes) helpers.unshift(validateAll(writer), uniqueMethod(writer), checkMethod(writer))
   const hidden = info.hidden.length > 0 && !dtos
+  const rules = writes ? documentRules(context, info) : []
   const fields = writes ? createColumns(info).map((column) => `"${column.attr}"`) : []
   const content = lines(
     `"""Operations on ${info.name}: what each one checks before it writes."""`,
     '',
     imports.write('app'),
     writes && ['', `# Columns a client may send: the database fills the others`, `_FIELDS = frozenset({${fields.join(', ')}})`],
+    rules.length > 0 && [
+      '',
+      '# What the documents inside each field must be',
+      '_RULES: dict[str, dict[str, Any]] = {',
+      ...rules.map(({ column, rule }) => `    "${column.attr}": ${rule},`),
+      '}',
+    ],
     '',
     '',
     `class ${serviceClass(info)}:`,

@@ -30,6 +30,7 @@ import { eloquentOrm } from './php/eloquent/index.ts'
 import { pythonGenerator } from './python/common/generator.ts'
 import { djangoOrm } from './python/django/index.ts'
 import { sqlalchemyOrm } from './python/sqlalchemy/index.ts'
+import { beanieOrm } from './python/beanie/index.ts'
 import { sqlOrm as pythonSqlOrm } from './python/sql/index.ts'
 import type { Generator } from './types.ts'
 import { typescriptGenerator } from './typescript/common/generator.ts'
@@ -44,6 +45,7 @@ export const GENERATORS: readonly Generator[] = [
   pythonGenerator(sqlalchemyOrm),
   pythonGenerator(djangoOrm),
   pythonGenerator(pythonSqlOrm),
+  pythonGenerator(beanieOrm),
   typescriptGenerator(typeormOrm),
   typescriptGenerator(prismaOrm),
   typescriptGenerator(drizzleOrm),
