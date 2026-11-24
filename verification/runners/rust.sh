@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Runs the generated Rust projects (SeaORM) in a clean container: Cargo compiles them, with every compiler warning
+# Runs the generated Rust projects (SeaORM, sqlx) in a clean container: Cargo compiles them, with every compiler warning
 # treated as an error, and runs their own tests. The Cargo registry and the compiled dependencies are cached in
 # Docker volumes between runs, so each project only compiles its own code.
 #

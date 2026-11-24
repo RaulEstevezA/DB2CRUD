@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Runs the generated Swift projects (Fluent) in a clean container: the Swift Package Manager builds them, fails on any
+# Runs the generated Swift projects (Fluent, SQLKit) in a clean container: the Swift Package Manager builds them, fails on any
 # warning of the project's own code, and runs their own tests. Packages and compiled dependencies are cached in a
 # Docker volume between runs, so each project only compiles its own code.
 #

@@ -768,4 +768,36 @@ export const SCENARIOS = [
     case: 'shop-swift',
     settings: { language: 'swift', orm: 'fluent', database: 'sqlite', memoryRepositories: false, architecture: 'table', transactions: 'caller' },
   },
+  // Swift without an ORM: SQL through SQLKit
+  { id: 'swift-sql-sqlite-defaults', schema: 'shop', settings: { language: 'swift', orm: 'sql', database: 'sqlite' } },
+  {
+    id: 'swift-sql-postgresql-dtos-patch-cursor',
+    schema: 'shop',
+    settings: { language: 'swift', orm: 'sql', database: 'postgresql', serviceTypes: 'dtos', updates: 'patch', paging: 'cursor' },
+    service: 'postgresql',
+  },
+  {
+    id: 'swift-sql-mysql-decided-offset-optional-repository-commits',
+    schema: 'shop',
+    settings: { language: 'swift', orm: 'sql', database: 'mysql', paging: 'offset', updates: 'optional', transactions: 'repository', repositoryInterfaces: false, verbs: 'get' },
+    decisions: OTHER_WAY,
+    service: 'mysql',
+  },
+  {
+    id: 'swift-sql-mariadb-caller-dtos-full-by-table',
+    schema: 'shop',
+    settings: { language: 'swift', orm: 'sql', database: 'mariadb', transactions: 'caller', serviceTypes: 'dtos', updates: 'full', architecture: 'table', memoryRepositories: false },
+    service: 'mariadb',
+  },
+  {
+    id: 'swift-sql-sqlite-no-interfaces-services-tests',
+    schema: 'shop',
+    settings: { language: 'swift', orm: 'sql', database: 'sqlite', repositoryInterfaces: false, verbs: 'find', tests: 'services', entities: 'all' },
+  },
+  {
+    id: 'swift-sql-postgresql-conversions-dtos',
+    case: 'shop-swift',
+    settings: { language: 'swift', orm: 'sql', database: 'postgresql', serviceTypes: 'dtos' },
+    service: 'postgresql',
+  },
 ]

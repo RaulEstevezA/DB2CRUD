@@ -683,6 +683,38 @@ export const VERIFIED: readonly VerifiedStack[] = [
     scenarios: ['fluent-sqlite-defaults', 'fluent-sqlite-no-interfaces-services-tests', 'fluent-sqlite-repositories-only'],
     date: '2026-11-19',
   },
+  {
+    language: 'swift',
+    orm: 'sql',
+    database: 'postgresql',
+    execution: 'async',
+    scenarios: ['swift-sql-postgresql-dtos-patch-cursor', 'swift-sql-postgresql-conversions-dtos'],
+    date: '2026-11-24',
+  },
+  {
+    language: 'swift',
+    orm: 'sql',
+    database: 'mysql',
+    execution: 'async',
+    scenarios: ['swift-sql-mysql-decided-offset-optional-repository-commits'],
+    date: '2026-11-24',
+  },
+  {
+    language: 'swift',
+    orm: 'sql',
+    database: 'mariadb',
+    execution: 'async',
+    scenarios: ['swift-sql-mariadb-caller-dtos-full-by-table'],
+    date: '2026-11-24',
+  },
+  {
+    language: 'swift',
+    orm: 'sql',
+    database: 'sqlite',
+    execution: 'async',
+    scenarios: ['swift-sql-sqlite-defaults', 'swift-sql-sqlite-no-interfaces-services-tests'],
+    date: '2026-11-24',
+  },
 ]
 
 /** Whether this stack has passed the verification. */

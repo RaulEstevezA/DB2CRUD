@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Runs the generated Kotlin projects (Exposed) in a clean container: Gradle compiles them and runs their own tests.
+# Runs the generated Kotlin projects (Exposed, JDBC) in a clean container: Gradle compiles them and runs their own tests.
 # Gradle downloads are cached in a Docker volume between runs.
 #
 # Usage: verification/runners/kotlin.sh <scenario-folder>...
