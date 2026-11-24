@@ -2,11 +2,13 @@
 # Starts a database in a container, runs a runner with TEST_DATABASE_URL pointing to it, and removes the
 # database and its network afterwards, whatever the result.
 #
-# Usage: verification/runners/with-database.sh <postgresql|mysql|mariadb> <runner> <scenario-folder>...
+# Usage: verification/runners/with-database.sh <postgresql|mysql|mariadb|mongodb> <runner> <scenario-folder>...
 # The URL uses the driver each language's generated project names in its .env.example (.NET: a connection string).
 set -u
 
 database="$1"
+# What the image runs, when it is not its own command
+command=()
 runner="$2"
 shift 2
 network="db2crud-verify-$$"
@@ -32,6 +34,17 @@ case "$database" in
     url_node="mysql://api:$password@$container:3306/api"
     url_dotnet="Server=$container;Port=3306;Database=api;User ID=api;Password=$password"
     ;;
+  mongodb)
+    image="mongo:8"
+    env=()
+    # Transactions need a replica set: one of a single member
+    command=(--replSet rs0 --bind_ip_all)
+    ready=(mongosh --quiet --eval "try { rs.status().ok } catch { rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: '$container:27017' }] }) } if (!db.hello().isWritablePrimary) quit(1)")
+    url_python="mongodb://$container:27017/app?replicaSet=rs0"
+    url_jdbc="$url_python"
+    url_node="$url_python"
+    url_dotnet="$url_python"
+    ;;
   *)
     echo "Unknown database: $database" >&2
     exit 2
@@ -46,7 +59,7 @@ cleanup() {
 trap cleanup EXIT
 
 docker network create "$network" >/dev/null
-docker run -d --name "$container" --network "$network" "${env[@]}" "$image" >/dev/null
+docker run -d --name "$container" --network "$network" ${env[@]+"${env[@]}"} "$image" ${command[@]+"${command[@]}"} >/dev/null
 for _ in $(seq 1 60); do
   if docker exec "$container" "${ready[@]}" >/dev/null 2>&1; then break; fi
   sleep 2
@@ -54,7 +67,7 @@ done
 # The server may accept pings before it accepts the application user
 sleep 3
 # Django creates a test_* database for its tests: the user may create databases in this throwaway server
-if [ "$database" != postgresql ]; then
+if [ "$database" = mysql ] || [ "$database" = mariadb ]; then
   docker exec "$container" sh -c "mysql -uroot -p$password -e \"GRANT ALL PRIVILEGES ON *.* TO 'api'@'%'; FLUSH PRIVILEGES;\" 2>/dev/null || mariadb -uroot -p$password -e \"GRANT ALL PRIVILEGES ON *.* TO 'api'@'%'; FLUSH PRIVILEGES;\"" >/dev/null 2>&1
 fi
 

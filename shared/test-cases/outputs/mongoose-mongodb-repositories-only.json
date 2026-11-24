@@ -1,0 +1,697 @@
+{
+ "schema": {
+  "format": "db-schema",
+  "version": 1,
+  "dialect": "mongodb",
+  "source": {
+   "kind": "orm",
+   "format": "mongoose"
+  },
+  "tables": [
+   {
+    "name": "customers",
+    "columns": [
+     {
+      "name": "_id",
+      "type": {
+       "sql": "ObjectId",
+       "kind": "text",
+       "length": 24,
+       "fixed": true,
+       "objectId": true
+      },
+      "nullable": false,
+      "generated": "uuid"
+     },
+     {
+      "name": "email",
+      "type": {
+       "sql": "String",
+       "kind": "text",
+       "length": 120
+      },
+      "nullable": false
+     },
+     {
+      "name": "name",
+      "type": {
+       "sql": "String",
+       "kind": "text"
+      },
+      "nullable": false
+     },
+     {
+      "name": "passwordHash",
+      "type": {
+       "sql": "String",
+       "kind": "text"
+      },
+      "nullable": true
+     },
+     {
+      "name": "active",
+      "type": {
+       "sql": "Boolean",
+       "kind": "boolean"
+      },
+      "nullable": true,
+      "default": {
+       "kind": "literal",
+       "value": true
+      }
+     },
+     {
+      "name": "level",
+      "type": {
+       "sql": "String",
+       "kind": "text"
+      },
+      "nullable": true,
+      "default": {
+       "kind": "literal",
+       "value": "basic"
+      }
+     },
+     {
+      "name": "address",
+      "type": {
+       "sql": "Object",
+       "kind": "json",
+       "fields": [
+        {
+         "name": "street",
+         "type": {
+          "sql": "String",
+          "kind": "text"
+         },
+         "nullable": false
+        },
+        {
+         "name": "city",
+         "type": {
+          "sql": "String",
+          "kind": "text"
+         },
+         "nullable": false
+        },
+        {
+         "name": "zip code",
+         "type": {
+          "sql": "String",
+          "kind": "text"
+         },
+         "nullable": true
+        },
+        {
+         "name": "location",
+         "type": {
+          "sql": "Object",
+          "kind": "json",
+          "fields": [
+           {
+            "name": "type",
+            "type": {
+             "sql": "String",
+             "kind": "enum",
+             "name": "customers_address_location_type"
+            },
+            "nullable": true
+           },
+           {
+            "name": "coordinates",
+            "type": {
+             "sql": "[Number]",
+             "kind": "array",
+             "items": {
+              "sql": "Number",
+              "kind": "float",
+              "bits": 64
+             }
+            },
+            "nullable": true
+           }
+          ]
+         },
+         "nullable": true
+        }
+       ]
+      },
+      "nullable": true
+     },
+     {
+      "name": "tags",
+      "type": {
+       "sql": "[String]",
+       "kind": "array",
+       "items": {
+        "sql": "String",
+        "kind": "text"
+       }
+      },
+      "nullable": true
+     },
+     {
+      "name": "preferences",
+      "type": {
+       "sql": "Object",
+       "kind": "json",
+       "fields": [
+        {
+         "name": "theme",
+         "type": {
+          "sql": "String",
+          "kind": "text"
+         },
+         "nullable": true,
+         "default": {
+          "kind": "literal",
+          "value": "light"
+         }
+        },
+        {
+         "name": "newsletter",
+         "type": {
+          "sql": "Boolean",
+          "kind": "boolean"
+         },
+         "nullable": true
+        }
+       ]
+      },
+      "nullable": true
+     },
+     {
+      "name": "extra",
+      "type": {
+       "sql": "Mixed",
+       "kind": "json"
+      },
+      "nullable": true
+     },
+     {
+      "name": "deletedAt",
+      "type": {
+       "sql": "Date",
+       "kind": "datetime",
+       "timezone": true
+      },
+      "nullable": true
+     },
+     {
+      "name": "createdAt",
+      "type": {
+       "sql": "Date",
+       "kind": "datetime",
+       "timezone": true
+      },
+      "nullable": true,
+      "generated": "now"
+     },
+     {
+      "name": "updatedAt",
+      "type": {
+       "sql": "Date",
+       "kind": "datetime",
+       "timezone": true
+      },
+      "nullable": true,
+      "generated": "onUpdateNow"
+     }
+    ],
+    "primaryKey": [
+     "_id"
+    ],
+    "foreignKeys": [],
+    "uniques": [
+     {
+      "columns": [
+       "email"
+      ]
+     }
+    ],
+    "indexes": [],
+    "checks": [
+     {
+      "sql": "LENGTH(name) >= 2",
+      "parsed": {
+       "kind": "length",
+       "column": "name",
+       "op": ">=",
+       "value": 2
+      }
+     },
+     {
+      "sql": "level IN ('basic', 'gold')",
+      "parsed": {
+       "kind": "in",
+       "column": "level",
+       "values": [
+        "basic",
+        "gold"
+       ]
+      }
+     }
+    ],
+    "entity": "Customer",
+    "origin": {
+     "line": 61,
+     "column": 1
+    }
+   },
+   {
+    "name": "products",
+    "columns": [
+     {
+      "name": "_id",
+      "type": {
+       "sql": "ObjectId",
+       "kind": "text",
+       "length": 24,
+       "fixed": true,
+       "objectId": true
+      },
+      "nullable": false,
+      "generated": "uuid"
+     },
+     {
+      "name": "sku",
+      "type": {
+       "sql": "String",
+       "kind": "text"
+      },
+      "nullable": false
+     },
+     {
+      "name": "title",
+      "type": {
+       "sql": "String",
+       "kind": "text"
+      },
+      "nullable": false
+     },
+     {
+      "name": "price",
+      "type": {
+       "sql": "Decimal128",
+       "kind": "decimal"
+      },
+      "nullable": false
+     },
+     {
+      "name": "stock",
+      "type": {
+       "sql": "Number",
+       "kind": "float",
+       "bits": 64
+      },
+      "nullable": true,
+      "default": {
+       "kind": "literal",
+       "value": 0
+      }
+     },
+     {
+      "name": "reference",
+      "type": {
+       "sql": "UUID",
+       "kind": "uuid"
+      },
+      "nullable": true
+     },
+     {
+      "name": "picture",
+      "type": {
+       "sql": "Buffer",
+       "kind": "binary"
+      },
+      "nullable": true
+     },
+     {
+      "name": "related",
+      "type": {
+       "sql": "[ObjectId]",
+       "kind": "array",
+       "items": {
+        "sql": "ObjectId",
+        "kind": "text",
+        "length": 24,
+        "fixed": true,
+        "objectId": true
+       }
+      },
+      "nullable": true
+     }
+    ],
+    "primaryKey": [
+     "_id"
+    ],
+    "foreignKeys": [],
+    "uniques": [
+     {
+      "columns": [
+       "sku"
+      ]
+     }
+    ],
+    "indexes": [
+     {
+      "columns": [
+       "title"
+      ]
+     }
+    ],
+    "checks": [
+     {
+      "sql": "stock >= 0",
+      "parsed": {
+       "kind": "compare",
+       "column": "stock",
+       "op": ">=",
+       "value": 0
+      }
+     }
+    ],
+    "entity": "Product",
+    "origin": {
+     "line": 62,
+     "column": 1
+    }
+   },
+   {
+    "name": "orders",
+    "columns": [
+     {
+      "name": "_id",
+      "type": {
+       "sql": "ObjectId",
+       "kind": "text",
+       "length": 24,
+       "fixed": true,
+       "objectId": true
+      },
+      "nullable": false,
+      "generated": "uuid"
+     },
+     {
+      "name": "number",
+      "type": {
+       "sql": "Number",
+       "kind": "float",
+       "bits": 64
+      },
+      "nullable": false
+     },
+     {
+      "name": "year",
+      "type": {
+       "sql": "Number",
+       "kind": "float",
+       "bits": 64
+      },
+      "nullable": false
+     },
+     {
+      "name": "customer",
+      "type": {
+       "sql": "ObjectId",
+       "kind": "text",
+       "length": 24,
+       "fixed": true,
+       "objectId": true
+      },
+      "nullable": false
+     },
+     {
+      "name": "lines",
+      "type": {
+       "sql": "[Object]",
+       "kind": "array",
+       "items": {
+        "sql": "Object",
+        "kind": "json",
+        "fields": [
+         {
+          "name": "_id",
+          "type": {
+           "sql": "ObjectId",
+           "kind": "text",
+           "length": 24,
+           "fixed": true,
+           "objectId": true
+          },
+          "nullable": true,
+          "generated": "uuid"
+         },
+         {
+          "name": "product",
+          "type": {
+           "sql": "ObjectId",
+           "kind": "text",
+           "length": 24,
+           "fixed": true,
+           "objectId": true
+          },
+          "nullable": false
+         },
+         {
+          "name": "quantity",
+          "type": {
+           "sql": "Number",
+           "kind": "float",
+           "bits": 64
+          },
+          "nullable": false
+         },
+         {
+          "name": "price",
+          "type": {
+           "sql": "Decimal128",
+           "kind": "decimal"
+          },
+          "nullable": false
+         },
+         {
+          "name": "status",
+          "type": {
+           "sql": "String",
+           "kind": "enum",
+           "name": "orders_lines_status"
+          },
+          "nullable": true,
+          "default": {
+           "kind": "literal",
+           "value": "pending"
+          }
+         }
+        ]
+       }
+      },
+      "nullable": false
+     },
+     {
+      "name": "notes",
+      "type": {
+       "sql": "[Object]",
+       "kind": "array",
+       "items": {
+        "sql": "Object",
+        "kind": "json",
+        "fields": [
+         {
+          "name": "_id",
+          "type": {
+           "sql": "ObjectId",
+           "kind": "text",
+           "length": 24,
+           "fixed": true,
+           "objectId": true
+          },
+          "nullable": true,
+          "generated": "uuid"
+         },
+         {
+          "name": "text",
+          "type": {
+           "sql": "String",
+           "kind": "text"
+          },
+          "nullable": true
+         },
+         {
+          "name": "at",
+          "type": {
+           "sql": "Date",
+           "kind": "datetime",
+           "timezone": true
+          },
+          "nullable": true
+         }
+        ]
+       }
+      },
+      "nullable": true
+     },
+     {
+      "name": "placedAt",
+      "type": {
+       "sql": "Date",
+       "kind": "datetime",
+       "timezone": true
+      },
+      "nullable": true,
+      "generated": "now"
+     }
+    ],
+    "primaryKey": [
+     "_id"
+    ],
+    "foreignKeys": [
+     {
+      "columns": [
+       "customer"
+      ],
+      "references": {
+       "table": "customers",
+       "columns": [
+        "_id"
+       ]
+      }
+     }
+    ],
+    "uniques": [
+     {
+      "columns": [
+       "year",
+       "number"
+      ]
+     }
+    ],
+    "indexes": [
+     {
+      "columns": [
+       "customer"
+      ]
+     }
+    ],
+    "checks": [],
+    "entity": "Order",
+    "origin": {
+     "line": 63,
+     "column": 1
+    }
+   },
+   {
+    "name": "countries",
+    "columns": [
+     {
+      "name": "_id",
+      "type": {
+       "sql": "String",
+       "kind": "text"
+      },
+      "nullable": false
+     },
+     {
+      "name": "id",
+      "type": {
+       "sql": "Number",
+       "kind": "float",
+       "bits": 64
+      },
+      "nullable": false
+     },
+     {
+      "name": "name",
+      "type": {
+       "sql": "String",
+       "kind": "text"
+      },
+      "nullable": false
+     }
+    ],
+    "primaryKey": [
+     "_id"
+    ],
+    "foreignKeys": [],
+    "uniques": [
+     {
+      "columns": [
+       "id"
+      ]
+     }
+    ],
+    "indexes": [],
+    "checks": [],
+    "entity": "Country",
+    "origin": {
+     "line": 64,
+     "column": 1
+    }
+   }
+  ],
+  "enums": [
+   {
+    "name": "customers_address_location_type",
+    "values": [
+     "Point"
+    ],
+    "storage": "check"
+   },
+   {
+    "name": "orders_lines_status",
+    "values": [
+     "pending",
+     "sent"
+    ],
+    "storage": "check"
+   }
+  ],
+  "notes": [
+   {
+    "code": "orm.unreadIndex",
+    "params": {
+     "table": "orders",
+     "index": "lines.product"
+    }
+   }
+  ]
+ },
+ "decisions": [],
+ "settings": {
+  "name": "mongoose-mongodb-repositories-only",
+  "language": "typescript",
+  "orm": "mongoose",
+  "database": "mongodb",
+  "services": false
+ },
+ "files": {
+  ".env.example": "# Where the database is\nDATABASE_URL=mongodb://localhost:27017/app\n# The database the tests use (it is emptied by the tests): they need one of the same kind as DATABASE_URL\n# TEST_DATABASE_URL=\n",
+  ".gitignore": "node_modules/\ndist/\n.env\n*.db\n",
+  "README.md": "# mongoose-mongodb-repositories-only\n\nData access layer generated by [DB2CRUD](https://github.com/RaulEstevezA/DB2CRUD) for a database that already exists: entities, repositories and services with Mongoose 8. It does not create or migrate the database.\n\n## Settings\n\n- Database: mongodb; code: asynchronous (every method returns a Promise).\n- Entities: written for the tables the input had no class for.\n- Services: not written.\n- Transactions: one transaction per service operation, committed when it ends.\n- Lists: lists return pages by offset and limit.\n\n## Layout\n\n```text\nsrc/models.ts          the Mongoose models, as the database has the documents\nsrc/database.ts        the database: DATABASE_URL, its connection and models\nsrc/errors.ts          NotFoundError, ConflictError, ValidationFailedError: no HTTP codes\nsrc/unit-of-work.ts    the repositories of every table, and the transaction of each operation\nsrc/entities/          one entity per table\nsrc/repositories/      one repository per table\ntest/                  repositories against a database, services on the in-memory repositories\ncrud-contract.json     what was written, for CRUD2Controller\n```\n\n## Running the tests\n\n```bash\nnpm install\nnpm run typecheck && npm run build\nTEST_DATABASE_URL=mongodb://localhost:27017/app npm test   # a real, disposable database: it is emptied\n```\n\nLook for `TODO` in the code: each one marks a decision the input did not settle.\n",
+  "crud-contract.json": "{\n  \"format\": \"crud-contract\",\n  \"version\": 1,\n  \"stack\": {\n    \"language\": \"typescript\",\n    \"orm\": \"mongoose\",\n    \"database\": \"mongodb\",\n    \"execution\": \"async\"\n  },\n  \"transactions\": \"operation\",\n  \"paging\": \"offset\",\n  \"types\": [\n    {\n      \"name\": \"Customer\",\n      \"module\": \"src/entities/customer\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"length\": 24\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"email\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"length\": 120\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"name\",\n          \"type\": {\n            \"kind\": \"text\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"passwordHash\",\n          \"type\": {\n            \"kind\": \"text\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"active\",\n          \"type\": {\n            \"kind\": \"boolean\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"level\",\n          \"type\": {\n            \"kind\": \"text\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"address\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"fields\": [\n              {\n                \"name\": \"street\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"city\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"zip code\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": true\n              },\n              {\n                \"name\": \"location\",\n                \"type\": {\n                  \"kind\": \"json\",\n                  \"fields\": [\n                    {\n                      \"name\": \"type\",\n                      \"type\": {\n                        \"kind\": \"enum\"\n                      },\n                      \"nullable\": true\n                    },\n                    {\n                      \"name\": \"coordinates\",\n                      \"type\": {\n                        \"kind\": \"array\"\n                      },\n                      \"nullable\": true\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"tags\",\n          \"type\": {\n            \"kind\": \"array\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"preferences\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"fields\": [\n              {\n                \"name\": \"theme\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": true\n              },\n              {\n                \"name\": \"newsletter\",\n                \"type\": {\n                  \"kind\": \"boolean\"\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"extra\",\n          \"type\": {\n            \"kind\": \"json\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"deletedAt\",\n          \"type\": {\n            \"kind\": \"datetime\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"createdAt\",\n          \"type\": {\n            \"kind\": \"datetime\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"updatedAt\",\n          \"type\": {\n            \"kind\": \"datetime\"\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"Product\",\n      \"module\": \"src/entities/product\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"length\": 24\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"sku\",\n          \"type\": {\n            \"kind\": \"text\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"title\",\n          \"type\": {\n            \"kind\": \"text\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"price\",\n          \"type\": {\n            \"kind\": \"decimal\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"stock\",\n          \"type\": {\n            \"kind\": \"float\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"reference\",\n          \"type\": {\n            \"kind\": \"uuid\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"picture\",\n          \"type\": {\n            \"kind\": \"binary\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"related\",\n          \"type\": {\n            \"kind\": \"array\"\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"Order\",\n      \"module\": \"src/entities/order\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"length\": 24\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"number\",\n          \"type\": {\n            \"kind\": \"float\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"year\",\n          \"type\": {\n            \"kind\": \"float\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"customer\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"length\": 24\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"lines\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"fields\": [\n              {\n                \"name\": \"_id\",\n                \"type\": {\n                  \"kind\": \"text\",\n                  \"length\": 24\n                },\n                \"nullable\": true\n              },\n              {\n                \"name\": \"product\",\n                \"type\": {\n                  \"kind\": \"text\",\n                  \"length\": 24\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"quantity\",\n                \"type\": {\n                  \"kind\": \"float\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"price\",\n                \"type\": {\n                  \"kind\": \"decimal\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"status\",\n                \"type\": {\n                  \"kind\": \"enum\"\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"notes\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"fields\": [\n              {\n                \"name\": \"_id\",\n                \"type\": {\n                  \"kind\": \"text\",\n                  \"length\": 24\n                },\n                \"nullable\": true\n              },\n              {\n                \"name\": \"text\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": true\n              },\n              {\n                \"name\": \"at\",\n                \"type\": {\n                  \"kind\": \"datetime\"\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"placedAt\",\n          \"type\": {\n            \"kind\": \"datetime\"\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"Country\",\n      \"module\": \"src/entities/country\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"_id\",\n          \"type\": {\n            \"kind\": \"text\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"float\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"name\",\n          \"type\": {\n            \"kind\": \"text\"\n          },\n          \"nullable\": false\n        }\n      ]\n    }\n  ],\n  \"errors\": [\n    {\n      \"kind\": \"notFound\",\n      \"name\": \"NotFoundError\",\n      \"module\": \"src/errors\"\n    },\n    {\n      \"kind\": \"conflict\",\n      \"name\": \"ConflictError\",\n      \"module\": \"src/errors\"\n    },\n    {\n      \"kind\": \"validation\",\n      \"name\": \"ValidationFailedError\",\n      \"module\": \"src/errors\"\n    }\n  ],\n  \"services\": []\n}\n",
+  "package.json": "{\n  \"name\": \"mongoose-mongodb-repositories-only\",\n  \"version\": \"0.1.0\",\n  \"description\": \"Data access layer (entities, repositories and services) generated by DB2CRUD.\",\n  \"private\": true,\n  \"type\": \"module\",\n  \"engines\": {\n    \"node\": \">=20\"\n  },\n  \"scripts\": {\n    \"typecheck\": \"tsc --noEmit\",\n    \"build\": \"tsc -p tsconfig.build.json\",\n    \"test\": \"vitest run\"\n  },\n  \"dependencies\": {\n    \"mongoose\": \"^8.19.0\"\n  },\n  \"devDependencies\": {\n    \"@types/node\": \"^24.10.0\",\n    \"typescript\": \"^5.9.3\",\n    \"vitest\": \"^3.2.4\"\n  }\n}\n",
+  "src/database.ts": "/** The MongoDB database DATABASE_URL names (see .env.example), through Mongoose. */\nimport { createConnection, Error as MongooseError, type Connection } from 'mongoose'\nimport { ConflictError, ValidationFailedError } from './errors.js'\nimport { defineModels, type Models } from './models.js'\n\nexport const DATABASE_URL = process.env.DATABASE_URL ?? 'mongodb://localhost:27017/app'\n\n/** The database: its connection (close it with `db.connection.close()`) and the model of every collection. */\nexport interface Db {\n  connection: Connection\n  models: Models\n}\n\n/** The database at `url`. It creates no collection and no index: the database already exists. */\nexport async function createDatabase(url: string = DATABASE_URL): Promise<Db> {\n  const connection = await createConnection(url, { autoIndex: false, autoCreate: false }).asPromise()\n  return { connection, models: defineModels(connection) }\n}\n\n/** Whether a text is an identifier of MongoDB: 24 hexadecimal digits. */\nexport const isObjectId = (value: unknown): boolean => /^[0-9a-f]{24}$/i.test(String(value))\n\n/** A value of the driver as the entities keep it: identifiers, exact decimals and UUIDs as text, bytes as a Buffer, and the same inside documents and lists. */\nexport function plain(value: unknown): unknown {\n  if (value === null || value === undefined || value instanceof Date || Buffer.isBuffer(value)) return value\n  if (Array.isArray(value)) return value.map(plain)\n  if (value instanceof Map) return Object.fromEntries([...value].map(([key, item]) => [key, plain(item)]))\n  if (typeof value !== 'object') return typeof value === 'bigint' ? Number(value) : value\n  const { _bsontype: type } = value as { _bsontype?: string }\n  if (type === 'Binary' || type === 'UUID') {\n    const binary = value as { sub_type: number; value(): Uint8Array; toUUID(): { toString(): string } }\n    return binary.sub_type === 4 ? binary.toUUID().toString() : Buffer.from(binary.value())\n  }\n  if (type === 'Long' || type === 'Int32' || type === 'Double') return Number(value)\n  if (type !== undefined) return String(value)\n  return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, plain(item)]))\n}\n\n/** The domain error of a refused write: a repeated value, or values the schema or the validator of the collection do not take. */\nexport function refusal(entity: string, error: unknown): unknown {\n  if (error instanceof MongooseError.ValidationError)\n    return new ValidationFailedError(\n      entity,\n      Object.entries(error.errors).map(([field, item]) => ({ field, message: item.message })),\n    )\n  const code = (error as { code?: unknown } | null)?.code\n  if (code === 11000 || code === 121) return new ConflictError(entity, `the database refused the change: ${(error as Error).message}`)\n  return error\n}\n",
+  "src/entities/country.ts": "/** Entity of the \"countries\" table. */\n\n/** A row of the \"countries\" table, as the repositories read and write it. Its collection is a model of src/models.ts. */\nexport class Country {\n  _id!: string\n\n  id!: number\n\n  name!: string\n}\n",
+  "src/entities/customer.ts": "/** Entity of the \"customers\" table. */\n\n/** A row of the \"customers\" table, as the repositories read and write it. Its collection is a model of src/models.ts. */\nexport class Customer {\n  id!: string\n\n  email!: string\n\n  name!: string\n\n  passwordHash!: string | null\n\n  active!: boolean | null\n\n  level!: string | null\n\n  address!: { street: string; city: string; 'zip code'?: string | null; location?: { type?: string | null; coordinates?: number[] | null } | null } | null\n\n  tags!: string[] | null\n\n  preferences!: { theme?: string | null; newsletter?: boolean | null } | null\n\n  extra!: unknown | null\n\n  deletedAt!: Date | null\n\n  createdAt!: Date | null\n\n  updatedAt!: Date | null\n}\n",
+  "src/entities/order.ts": "/** Entity of the \"orders\" table. */\n\n/** A row of the \"orders\" table, as the repositories read and write it. Its collection is a model of src/models.ts. */\nexport class Order {\n  id!: string\n\n  number!: number\n\n  year!: number\n\n  customer!: string\n\n  lines!: { _id?: string | null; product: string; quantity: number; price: string; status?: string | null }[]\n\n  notes!: { _id?: string | null; text?: string | null; at?: Date | null }[] | null\n\n  placedAt!: Date | null\n}\n",
+  "src/entities/product.ts": "/** Entity of the \"products\" table. */\n\n/** A row of the \"products\" table, as the repositories read and write it. Its collection is a model of src/models.ts. */\nexport class Product {\n  id!: string\n\n  sku!: string\n\n  title!: string\n\n  price!: string\n\n  stock!: number | null\n\n  reference!: string | null\n\n  picture!: Buffer | null\n\n  related!: string[] | null\n}\n",
+  "src/errors.ts": "/** Errors of the data access layer. They carry no HTTP codes: whoever calls the services translates them. */\n\n/** Base of every error a service throws on purpose. */\nexport class DomainError extends Error {}\n\n/** No row has this key. */\nexport class NotFoundError extends DomainError {\n  constructor(\n    readonly entity: string,\n    readonly key: unknown,\n  ) {\n    super(`No ${entity} has the key ${JSON.stringify(key)}`)\n    this.name = 'NotFoundError'\n  }\n}\n\n/** The change clashes with what is stored: a unique value, a newer version, rows that depend on it. */\nexport class ConflictError extends DomainError {\n  constructor(\n    readonly entity: string,\n    readonly reason: string,\n    readonly fields: readonly string[] = [],\n  ) {\n    super(`${entity}: ${reason}`)\n    this.name = 'ConflictError'\n  }\n}\n\n/** What is wrong with one field. */\nexport interface FieldError {\n  field: string\n  message: string\n}\n\n/** The values break the rules of the table: missing, too long, out of range, pointing nowhere. */\nexport class ValidationFailedError extends DomainError {\n  constructor(\n    readonly entity: string,\n    readonly errors: readonly FieldError[],\n  ) {\n    super(`${entity}: ${errors.map((error) => `${error.field}: ${error.message}`).join('; ')}`)\n    this.name = 'ValidationFailedError'\n  }\n}\n",
+  "src/models.ts": "/** The collections of the database, as Mongoose models. They reflect it: Mongoose never creates collections or indexes with them. */\nimport { Schema, type Connection, type Model } from 'mongoose'\n\n/** A document as the driver gives it, by the stored names of its fields */\nexport type Stored = Record<string, unknown>\n\n/** The model of every collection */\nexport interface Models {\n  customers: Model<Stored>\n  products: Model<Stored>\n  orders: Model<Stored>\n  countries: Model<Stored>\n}\n\n/** Defines the model of every collection on `connection`. */\nexport function defineModels(connection: Connection): Models {\n  /** The 'customers' collection. */\n  const customers = new Schema(\n    {\n      email: { type: String, required: true, maxlength: 120 },\n      name: { type: String, required: true, minlength: 2 },\n      passwordHash: String,\n      active: { type: Boolean, default: true },\n      level: { type: String, enum: ['basic', 'gold'], default: 'basic' },\n      address: new Schema({ street: { type: String, required: true }, city: { type: String, required: true }, 'zip code': String, location: new Schema({ type: { type: String, enum: ['Point'] }, coordinates: { type: [Number], default: undefined } }, { _id: false, strict: false, minimize: false }) }, { _id: false, strict: false, minimize: false }),\n      tags: { type: [String], default: undefined },\n      preferences: new Schema({ theme: { type: String, default: 'light' }, newsletter: Boolean }, { _id: false, strict: false, minimize: false }),\n      extra: Schema.Types.Mixed,\n      deletedAt: Date,\n      createdAt: { type: Date, default: () => new Date() },\n      updatedAt: { type: Date, default: () => new Date() },\n    },\n    { collection: 'customers', versionKey: false, minimize: false, autoIndex: false, autoCreate: false },\n  )\n  customers.index({ email: 1 }, { unique: true })\n\n  /** The 'products' collection. */\n  const products = new Schema(\n    {\n      sku: { type: String, required: true },\n      title: { type: String, required: true },\n      price: { type: Schema.Types.Decimal128, required: true },\n      stock: { type: Number, min: 0, default: 0 },\n      reference: Schema.Types.UUID,\n      picture: Buffer,\n      related: { type: [Schema.Types.ObjectId], default: undefined },\n    },\n    { collection: 'products', versionKey: false, minimize: false, autoIndex: false, autoCreate: false },\n  )\n  products.index({ sku: 1 }, { unique: true })\n  products.index({ title: 1 })\n\n  /** The 'orders' collection. */\n  const orders = new Schema(\n    {\n      number: { type: Number, required: true },\n      year: { type: Number, required: true },\n      customer: { type: Schema.Types.ObjectId, required: true },\n      lines: { type: [new Schema({ product: { type: Schema.Types.ObjectId, required: true }, quantity: { type: Number, required: true }, price: { type: Schema.Types.Decimal128, required: true }, status: { type: String, enum: ['pending', 'sent'], default: 'pending' } }, { strict: false, minimize: false })], default: undefined, required: true },\n      notes: { type: [new Schema({ text: String, at: Date }, { strict: false, minimize: false })], default: undefined },\n      placedAt: { type: Date, default: () => new Date() },\n    },\n    { collection: 'orders', versionKey: false, minimize: false, autoIndex: false, autoCreate: false },\n  )\n  orders.index({ year: 1, number: 1 }, { unique: true })\n  orders.index({ customer: 1 })\n\n  /** The 'countries' collection. */\n  const countries = new Schema(\n    {\n      _id: String,\n      id: { type: Number, required: true },\n      name: { type: String, required: true },\n    },\n    { collection: 'countries', versionKey: false, minimize: false, autoIndex: false, autoCreate: false },\n  )\n  countries.index({ id: 1 }, { unique: true })\n\n  return {\n    customers: connection.model<Stored>('Customer', customers as unknown as Schema<Stored>),\n    products: connection.model<Stored>('Product', products as unknown as Schema<Stored>),\n    orders: connection.model<Stored>('Order', orders as unknown as Schema<Stored>),\n    countries: connection.model<Stored>('Country', countries as unknown as Schema<Stored>),\n  }\n}\n",
+  "src/paging.ts": "/** A page of a list: the rows from an offset, and how many there are in all. */\nexport interface Page<T> {\n  items: T[]\n  total: number\n  offset: number\n  limit: number\n}\n",
+  "src/repositories/country.ts": "/** Repository of the \"countries\" table: reads and writes rows, and decides nothing. */\nimport type { ClientSession } from 'mongoose'\nimport { plain, refusal, type Db } from '../database.js'\nimport { Country } from '../entities/country.js'\nimport type { Stored } from '../models.js'\nimport type { Page } from '../paging.js'\n\n/** Where countries rows are kept. Services depend only on this interface. */\nexport interface CountryRepository {\n  findByDocumentId(_id: string): Promise<Country | null>\n  list(offset?: number, limit?: number): Promise<Page<Country>>\n  findById(id: number): Promise<Country | null>\n  insert(entity: Country): Promise<Country>\n  update(entity: Country): Promise<Country>\n  delete(entity: Country): Promise<void>\n}\n\n/** The key of a row, as a list of its key values. */\nfunction keyOf(row: Country): unknown[] {\n  return [row._id]\n}\n\n/** Orders two keys value by value. */\nfunction compareKeys(a: unknown[], b: unknown[]): number {\n  for (let index = 0; index < a.length; index++) {\n    const x = a[index] as number | string\n    const y = b[index] as number | string\n    if (x < y) return -1\n    if (x > y) return 1\n  }\n  return 0\n}\n\n/** The values each entity was read with, by the stored names of its fields: a change writes only those that differ. */\nconst loaded = new WeakMap<Country, Record<string, string>>()\n\n/** The fields of an entity a change may write. */\nfunction changeable(entity: Country): Stored {\n  return {\n    id: entity.id,\n    name: entity.name,\n  }\n}\n\n/** The same fields as text, to compare them later. */\nconst snapshot = (entity: Country): Record<string, string> =>\n  Object.fromEntries(Object.entries(changeable(entity)).map(([name, value]) => [name, JSON.stringify(value ?? null)]))\n\n/** The Country of a document; a field it does not have is null. */\nfunction toEntity(document: Stored): Country {\n  const entity = Object.assign(new Country(), {\n    _id: (plain(document._id) ?? null) as string,\n    id: (plain(document.id) ?? null) as number,\n    name: (plain(document.name) ?? null) as string,\n  })\n  loaded.set(entity, snapshot(entity))\n  return entity\n}\n\n/** The fields of a new document; those left empty are not stored, and take their default. */\nfunction storedValues(entity: Country): Stored {\n  const values: Stored = {\n    _id: entity._id,\n    id: entity.id,\n    name: entity.name,\n  }\n  return Object.fromEntries(Object.entries(values).filter(([, value]) => value !== undefined && value !== null))\n}\n\n/** What a change writes and what it removes: only the fields that are not as they were read. */\nfunction changesOf(entity: Country): { $set: Stored; $unset: Stored } {\n  const before = loaded.get(entity)\n  const $set: Stored = {}\n  const $unset: Stored = {}\n  for (const [name, value] of Object.entries(changeable(entity))) {\n    if (before?.[name] === JSON.stringify(value ?? null)) continue\n    if (value === undefined || value === null) $unset[name] = ''\n    else $set[name] = value\n  }\n  return { $set, $unset }\n}\n\n/** Keeps countries documents in the database, through Mongoose. Queries run in the session it was given. */\nexport class MongoCountryRepository implements CountryRepository {\n  constructor(\n    private readonly db: Db,\n    private readonly session: ClientSession | null = null,\n  ) {}\n\n  /** The row with this primary key, or null. */\n  async findByDocumentId(_id: string): Promise<Country | null> {\n    const foundDocument = await this.db.models.countries.findOne({ _id }).session(this.session).lean<Stored>()\n    return foundDocument === null ? null : toEntity(foundDocument)\n  }\n\n  /** At most `limit` rows from `offset`, by primary key, and how many there are. */\n  async list(offset: number = 0, limit: number = 50): Promise<Page<Country>> {\n    const documents = await this.db.models.countries.find({}).sort({ _id: 1 }).skip(offset).limit(limit).session(this.session).lean<Stored[]>()\n    const total = await this.db.models.countries.countDocuments({}).session(this.session)\n    return { items: documents.map(toEntity), total, offset, limit }\n  }\n\n  /** The row with this id, or null. */\n  async findById(id: number): Promise<Country | null> {\n    const foundDocument = await this.db.models.countries.findOne({ id }).session(this.session).lean<Stored>()\n    return foundDocument === null ? null : toEntity(foundDocument)\n  }\n\n  /** Stores a new row; the values the database fills are read back. */\n  async insert(entity: Country): Promise<Country> {\n    try {\n      const [document] = await this.db.models.countries.create([storedValues(entity)], { session: this.session ?? undefined })\n      const stored = toEntity(document.toObject() as Stored)\n      Object.assign(entity, stored)\n      loaded.set(entity, loaded.get(stored)!)\n      return entity\n    } catch (error) {\n      throw refusal('Country', error)\n    }\n  }\n\n  /** Stores the changes made to a row read from this repository. */\n  async update(entity: Country): Promise<Country> {\n    try {\n      await this.db.models.countries.updateOne({ _id: entity._id }, changesOf(entity), { session: this.session ?? undefined, runValidators: true, timestamps: false })\n    } catch (error) {\n      throw refusal('Country', error)\n    }\n    loaded.set(entity, snapshot(entity))\n    return entity\n  }\n\n  /** Removes a row read from this repository. */\n  async delete(entity: Country): Promise<void> {\n    try {\n      await this.db.models.countries.deleteOne({ _id: entity._id }).session(this.session)\n    } catch (error) {\n      throw refusal('Country', error)\n    }\n  }\n}\n\n/** Keeps countries rows in memory, for tests and for trying the services without a database. */\nexport class MemoryCountryRepository implements CountryRepository {\n  private readonly rows = new Map<string, Country>()\n\n  private visible(): Country[] {\n    return [...this.rows.values()].filter((row) => true).sort((a, b) => compareKeys(keyOf(a), keyOf(b)))\n  }\n\n  /** The row with this primary key, or null. */\n  async findByDocumentId(_id: string): Promise<Country | null> {\n    return this.visible().find((row) => row._id === _id) ?? null\n  }\n\n  /** At most `limit` rows from `offset`, by primary key, and how many there are. */\n  async list(offset: number = 0, limit: number = 50): Promise<Page<Country>> {\n    const rows = this.visible()\n    return { items: rows.slice(offset, offset + limit), total: rows.length, offset, limit }\n  }\n\n  /** The row with this id, or null. */\n  async findById(id: number): Promise<Country | null> {\n    return this.visible().find((row) => row.id === id) ?? null\n  }\n\n  /** Stores a new row; the values the database fills are read back. */\n  async insert(entity: Country): Promise<Country> {\n    this.rows.set(JSON.stringify(keyOf(entity)), entity)\n    return entity\n  }\n\n  /** Stores the changes made to a row read from this repository. */\n  async update(entity: Country): Promise<Country> {\n    this.rows.set(JSON.stringify(keyOf(entity)), entity)\n    return entity\n  }\n\n  /** Removes a row read from this repository. */\n  async delete(entity: Country): Promise<void> {\n    this.rows.delete(JSON.stringify(keyOf(entity)))\n  }\n}\n",
+  "src/repositories/customer.ts": "/** Repository of the \"customers\" table: reads and writes rows, and decides nothing. */\nimport type { ClientSession } from 'mongoose'\nimport { randomBytes } from 'node:crypto'\nimport { isObjectId, plain, refusal, type Db } from '../database.js'\nimport { Customer } from '../entities/customer.js'\nimport type { Stored } from '../models.js'\nimport type { Page } from '../paging.js'\n\n/** Where customers rows are kept. Services depend only on this interface. */\nexport interface CustomerRepository {\n  findById(id: string): Promise<Customer | null>\n  list(offset?: number, limit?: number): Promise<Page<Customer>>\n  findByEmail(email: string): Promise<Customer | null>\n  insert(entity: Customer): Promise<Customer>\n  update(entity: Customer): Promise<Customer>\n  delete(entity: Customer): Promise<void>\n}\n\n/** The key of a row, as a list of its key values. */\nfunction keyOf(row: Customer): unknown[] {\n  return [row.id]\n}\n\n/** Orders two keys value by value. */\nfunction compareKeys(a: unknown[], b: unknown[]): number {\n  for (let index = 0; index < a.length; index++) {\n    const x = a[index] as number | string\n    const y = b[index] as number | string\n    if (x < y) return -1\n    if (x > y) return 1\n  }\n  return 0\n}\n\n/** The values each entity was read with, by the stored names of its fields: a change writes only those that differ. */\nconst loaded = new WeakMap<Customer, Record<string, string>>()\n\n/** The fields of an entity a change may write. */\nfunction changeable(entity: Customer): Stored {\n  return {\n    email: entity.email,\n    name: entity.name,\n    passwordHash: entity.passwordHash,\n    active: entity.active,\n    level: entity.level,\n    address: entity.address,\n    tags: entity.tags,\n    preferences: entity.preferences,\n    extra: entity.extra,\n    deletedAt: entity.deletedAt,\n  }\n}\n\n/** The same fields as text, to compare them later. */\nconst snapshot = (entity: Customer): Record<string, string> =>\n  Object.fromEntries(Object.entries(changeable(entity)).map(([name, value]) => [name, JSON.stringify(value ?? null)]))\n\n/** The Customer of a document; a field it does not have is null. */\nfunction toEntity(document: Stored): Customer {\n  const entity = Object.assign(new Customer(), {\n    id: (plain(document._id) ?? null) as string,\n    email: (plain(document.email) ?? null) as string,\n    name: (plain(document.name) ?? null) as string,\n    passwordHash: (plain(document.passwordHash) ?? null) as string | null,\n    active: (plain(document.active) ?? null) as boolean | null,\n    level: (plain(document.level) ?? null) as string | null,\n    address: (plain(document.address) ?? null) as { street: string; city: string; 'zip code'?: string | null; location?: { type?: string | null; coordinates?: number[] | null } | null } | null,\n    tags: (plain(document.tags) ?? null) as string[] | null,\n    preferences: (plain(document.preferences) ?? null) as { theme?: string | null; newsletter?: boolean | null } | null,\n    extra: (plain(document.extra) ?? null) as unknown | null,\n    deletedAt: (plain(document.deletedAt) ?? null) as Date | null,\n    createdAt: (plain(document.createdAt) ?? null) as Date | null,\n    updatedAt: (plain(document.updatedAt) ?? null) as Date | null,\n  })\n  loaded.set(entity, snapshot(entity))\n  return entity\n}\n\n/** The fields of a new document; those left empty are not stored, and take their default. */\nfunction storedValues(entity: Customer): Stored {\n  const values: Stored = {\n    _id: entity.id,\n    email: entity.email,\n    name: entity.name,\n    passwordHash: entity.passwordHash,\n    active: entity.active,\n    level: entity.level,\n    address: entity.address,\n    tags: entity.tags,\n    preferences: entity.preferences,\n    extra: entity.extra,\n    deletedAt: entity.deletedAt,\n    createdAt: entity.createdAt,\n    updatedAt: entity.updatedAt,\n  }\n  return Object.fromEntries(Object.entries(values).filter(([, value]) => value !== undefined && value !== null))\n}\n\n/** What a change writes and what it removes: only the fields that are not as they were read. */\nfunction changesOf(entity: Customer): { $set: Stored; $unset: Stored } {\n  const before = loaded.get(entity)\n  const $set: Stored = {}\n  const $unset: Stored = {}\n  for (const [name, value] of Object.entries(changeable(entity))) {\n    if (before?.[name] === JSON.stringify(value ?? null)) continue\n    if (value === undefined || value === null) $unset[name] = ''\n    else $set[name] = value\n  }\n  $set.updatedAt = new Date()\n  return { $set, $unset }\n}\n\n/** Keeps customers documents in the database, through Mongoose. Queries run in the session it was given. */\nexport class MongoCustomerRepository implements CustomerRepository {\n  constructor(\n    private readonly db: Db,\n    private readonly session: ClientSession | null = null,\n  ) {}\n\n  /** The row with this primary key, or null. */\n  async findById(id: string): Promise<Customer | null> {\n    if (!isObjectId(id)) return null\n    const foundDocument = await this.db.models.customers.findOne({ _id: id, deletedAt: null }).session(this.session).lean<Stored>()\n    return foundDocument === null ? null : toEntity(foundDocument)\n  }\n\n  /** At most `limit` rows from `offset`, by primary key, and how many there are. */\n  async list(offset: number = 0, limit: number = 50): Promise<Page<Customer>> {\n    const documents = await this.db.models.customers.find({ deletedAt: null }).sort({ _id: 1 }).skip(offset).limit(limit).session(this.session).lean<Stored[]>()\n    const total = await this.db.models.customers.countDocuments({ deletedAt: null }).session(this.session)\n    return { items: documents.map(toEntity), total, offset, limit }\n  }\n\n  /** The row with this email, or null. */\n  async findByEmail(email: string): Promise<Customer | null> {\n    const foundDocument = await this.db.models.customers.findOne({ email, deletedAt: null }).session(this.session).lean<Stored>()\n    return foundDocument === null ? null : toEntity(foundDocument)\n  }\n\n  /** Stores a new row; the values the database fills are read back. */\n  async insert(entity: Customer): Promise<Customer> {\n    try {\n      const [document] = await this.db.models.customers.create([storedValues(entity)], { session: this.session ?? undefined })\n      const stored = toEntity(document.toObject() as Stored)\n      Object.assign(entity, stored)\n      loaded.set(entity, loaded.get(stored)!)\n      return entity\n    } catch (error) {\n      throw refusal('Customer', error)\n    }\n  }\n\n  /** Stores the changes made to a row read from this repository. */\n  async update(entity: Customer): Promise<Customer> {\n    try {\n      await this.db.models.customers.updateOne({ _id: entity.id }, changesOf(entity), { session: this.session ?? undefined, runValidators: true, timestamps: false })\n    } catch (error) {\n      throw refusal('Customer', error)\n    }\n    loaded.set(entity, snapshot(entity))\n    return entity\n  }\n\n  /** Removes a row read from this repository. */\n  async delete(entity: Customer): Promise<void> {\n    try {\n      await this.db.models.customers.deleteOne({ _id: entity.id }).session(this.session)\n    } catch (error) {\n      throw refusal('Customer', error)\n    }\n  }\n}\n\n/** Keeps customers rows in memory, for tests and for trying the services without a database. */\nexport class MemoryCustomerRepository implements CustomerRepository {\n  private readonly rows = new Map<string, Customer>()\n\n  private visible(): Customer[] {\n    return [...this.rows.values()].filter((row) => row.deletedAt == null).sort((a, b) => compareKeys(keyOf(a), keyOf(b)))\n  }\n\n  /** The row with this primary key, or null. */\n  async findById(id: string): Promise<Customer | null> {\n    return this.visible().find((row) => row.id === id) ?? null\n  }\n\n  /** At most `limit` rows from `offset`, by primary key, and how many there are. */\n  async list(offset: number = 0, limit: number = 50): Promise<Page<Customer>> {\n    const rows = this.visible()\n    return { items: rows.slice(offset, offset + limit), total: rows.length, offset, limit }\n  }\n\n  /** The row with this email, or null. */\n  async findByEmail(email: string): Promise<Customer | null> {\n    return this.visible().find((row) => row.email === email) ?? null\n  }\n\n  /** Stores a new row; the values the database fills are read back. */\n  async insert(entity: Customer): Promise<Customer> {\n    if (entity.id === undefined) entity.id = randomBytes(12).toString('hex')\n    if (entity.active === undefined) entity.active = true\n    if (entity.level === undefined) entity.level = 'basic'\n    if (entity.createdAt === undefined) entity.createdAt = new Date()\n    if (entity.updatedAt === undefined) entity.updatedAt = new Date()\n    this.rows.set(JSON.stringify(keyOf(entity)), entity)\n    return entity\n  }\n\n  /** Stores the changes made to a row read from this repository. */\n  async update(entity: Customer): Promise<Customer> {\n    this.rows.set(JSON.stringify(keyOf(entity)), entity)\n    return entity\n  }\n\n  /** Removes a row read from this repository. */\n  async delete(entity: Customer): Promise<void> {\n    this.rows.delete(JSON.stringify(keyOf(entity)))\n  }\n}\n",
+  "src/repositories/order.ts": "/** Repository of the \"orders\" table: reads and writes rows, and decides nothing. */\nimport type { ClientSession } from 'mongoose'\nimport { randomBytes } from 'node:crypto'\nimport { isObjectId, plain, refusal, type Db } from '../database.js'\nimport { Order } from '../entities/order.js'\nimport type { Stored } from '../models.js'\nimport type { Page } from '../paging.js'\n\n/** Where orders rows are kept. Services depend only on this interface. */\nexport interface OrderRepository {\n  findById(id: string): Promise<Order | null>\n  list(offset?: number, limit?: number): Promise<Page<Order>>\n  findByYearAndNumber(year: number, number: number): Promise<Order | null>\n  listByCustomer(customer: string): Promise<Order[]>\n  insert(entity: Order): Promise<Order>\n  update(entity: Order): Promise<Order>\n  delete(entity: Order): Promise<void>\n}\n\n/** The key of a row, as a list of its key values. */\nfunction keyOf(row: Order): unknown[] {\n  return [row.id]\n}\n\n/** Orders two keys value by value. */\nfunction compareKeys(a: unknown[], b: unknown[]): number {\n  for (let index = 0; index < a.length; index++) {\n    const x = a[index] as number | string\n    const y = b[index] as number | string\n    if (x < y) return -1\n    if (x > y) return 1\n  }\n  return 0\n}\n\n/** The values each entity was read with, by the stored names of its fields: a change writes only those that differ. */\nconst loaded = new WeakMap<Order, Record<string, string>>()\n\n/** The fields of an entity a change may write. */\nfunction changeable(entity: Order): Stored {\n  return {\n    number: entity.number,\n    year: entity.year,\n    customer: entity.customer,\n    lines: entity.lines,\n    notes: entity.notes,\n  }\n}\n\n/** The same fields as text, to compare them later. */\nconst snapshot = (entity: Order): Record<string, string> =>\n  Object.fromEntries(Object.entries(changeable(entity)).map(([name, value]) => [name, JSON.stringify(value ?? null)]))\n\n/** The Order of a document; a field it does not have is null. */\nfunction toEntity(document: Stored): Order {\n  const entity = Object.assign(new Order(), {\n    id: (plain(document._id) ?? null) as string,\n    number: (plain(document.number) ?? null) as number,\n    year: (plain(document.year) ?? null) as number,\n    customer: (plain(document.customer) ?? null) as string,\n    lines: (plain(document.lines) ?? null) as { _id?: string | null; product: string; quantity: number; price: string; status?: string | null }[],\n    notes: (plain(document.notes) ?? null) as { _id?: string | null; text?: string | null; at?: Date | null }[] | null,\n    placedAt: (plain(document.placedAt) ?? null) as Date | null,\n  })\n  loaded.set(entity, snapshot(entity))\n  return entity\n}\n\n/** The fields of a new document; those left empty are not stored, and take their default. */\nfunction storedValues(entity: Order): Stored {\n  const values: Stored = {\n    _id: entity.id,\n    number: entity.number,\n    year: entity.year,\n    customer: entity.customer,\n    lines: entity.lines,\n    notes: entity.notes,\n    placedAt: entity.placedAt,\n  }\n  return Object.fromEntries(Object.entries(values).filter(([, value]) => value !== undefined && value !== null))\n}\n\n/** What a change writes and what it removes: only the fields that are not as they were read. */\nfunction changesOf(entity: Order): { $set: Stored; $unset: Stored } {\n  const before = loaded.get(entity)\n  const $set: Stored = {}\n  const $unset: Stored = {}\n  for (const [name, value] of Object.entries(changeable(entity))) {\n    if (before?.[name] === JSON.stringify(value ?? null)) continue\n    if (value === undefined || value === null) $unset[name] = ''\n    else $set[name] = value\n  }\n  return { $set, $unset }\n}\n\n/** Keeps orders documents in the database, through Mongoose. Queries run in the session it was given. */\nexport class MongoOrderRepository implements OrderRepository {\n  constructor(\n    private readonly db: Db,\n    private readonly session: ClientSession | null = null,\n  ) {}\n\n  /** The row with this primary key, or null. */\n  async findById(id: string): Promise<Order | null> {\n    if (!isObjectId(id)) return null\n    const foundDocument = await this.db.models.orders.findOne({ _id: id }).session(this.session).lean<Stored>()\n    return foundDocument === null ? null : toEntity(foundDocument)\n  }\n\n  /** At most `limit` rows from `offset`, by primary key, and how many there are. */\n  async list(offset: number = 0, limit: number = 50): Promise<Page<Order>> {\n    const documents = await this.db.models.orders.find({}).sort({ _id: 1 }).skip(offset).limit(limit).session(this.session).lean<Stored[]>()\n    const total = await this.db.models.orders.countDocuments({}).session(this.session)\n    return { items: documents.map(toEntity), total, offset, limit }\n  }\n\n  /** The row with this year and number, or null. */\n  async findByYearAndNumber(year: number, number: number): Promise<Order | null> {\n    const foundDocument = await this.db.models.orders.findOne({ year, number }).session(this.session).lean<Stored>()\n    return foundDocument === null ? null : toEntity(foundDocument)\n  }\n\n  /** Rows with this customer, by primary key. */\n  async listByCustomer(customer: string): Promise<Order[]> {\n    if (!isObjectId(customer)) return []\n    return (await this.db.models.orders.find({ customer }).sort({ _id: 1 }).session(this.session).lean<Stored[]>()).map(toEntity)\n  }\n\n  /** Stores a new row; the values the database fills are read back. */\n  async insert(entity: Order): Promise<Order> {\n    try {\n      const [document] = await this.db.models.orders.create([storedValues(entity)], { session: this.session ?? undefined })\n      const stored = toEntity(document.toObject() as Stored)\n      Object.assign(entity, stored)\n      loaded.set(entity, loaded.get(stored)!)\n      return entity\n    } catch (error) {\n      throw refusal('Order', error)\n    }\n  }\n\n  /** Stores the changes made to a row read from this repository. */\n  async update(entity: Order): Promise<Order> {\n    try {\n      await this.db.models.orders.updateOne({ _id: entity.id }, changesOf(entity), { session: this.session ?? undefined, runValidators: true, timestamps: false })\n    } catch (error) {\n      throw refusal('Order', error)\n    }\n    loaded.set(entity, snapshot(entity))\n    return entity\n  }\n\n  /** Removes a row read from this repository. */\n  async delete(entity: Order): Promise<void> {\n    try {\n      await this.db.models.orders.deleteOne({ _id: entity.id }).session(this.session)\n    } catch (error) {\n      throw refusal('Order', error)\n    }\n  }\n}\n\n/** Keeps orders rows in memory, for tests and for trying the services without a database. */\nexport class MemoryOrderRepository implements OrderRepository {\n  private readonly rows = new Map<string, Order>()\n\n  private visible(): Order[] {\n    return [...this.rows.values()].filter((row) => true).sort((a, b) => compareKeys(keyOf(a), keyOf(b)))\n  }\n\n  /** The row with this primary key, or null. */\n  async findById(id: string): Promise<Order | null> {\n    return this.visible().find((row) => row.id === id) ?? null\n  }\n\n  /** At most `limit` rows from `offset`, by primary key, and how many there are. */\n  async list(offset: number = 0, limit: number = 50): Promise<Page<Order>> {\n    const rows = this.visible()\n    return { items: rows.slice(offset, offset + limit), total: rows.length, offset, limit }\n  }\n\n  /** The row with this year and number, or null. */\n  async findByYearAndNumber(year: number, number: number): Promise<Order | null> {\n    return this.visible().find((row) => row.year === year && row.number === number) ?? null\n  }\n\n  /** Rows with this customer, by primary key. */\n  async listByCustomer(customer: string): Promise<Order[]> {\n    return this.visible().filter((row) => row.customer === customer)\n  }\n\n  /** Stores a new row; the values the database fills are read back. */\n  async insert(entity: Order): Promise<Order> {\n    if (entity.id === undefined) entity.id = randomBytes(12).toString('hex')\n    if (entity.placedAt === undefined) entity.placedAt = new Date()\n    this.rows.set(JSON.stringify(keyOf(entity)), entity)\n    return entity\n  }\n\n  /** Stores the changes made to a row read from this repository. */\n  async update(entity: Order): Promise<Order> {\n    this.rows.set(JSON.stringify(keyOf(entity)), entity)\n    return entity\n  }\n\n  /** Removes a row read from this repository. */\n  async delete(entity: Order): Promise<void> {\n    this.rows.delete(JSON.stringify(keyOf(entity)))\n  }\n}\n",
+  "src/repositories/product.ts": "/** Repository of the \"products\" table: reads and writes rows, and decides nothing. */\nimport type { ClientSession } from 'mongoose'\nimport { randomBytes } from 'node:crypto'\nimport { isObjectId, plain, refusal, type Db } from '../database.js'\nimport { Product } from '../entities/product.js'\nimport type { Stored } from '../models.js'\nimport type { Page } from '../paging.js'\n\n/** Where products rows are kept. Services depend only on this interface. */\nexport interface ProductRepository {\n  findById(id: string): Promise<Product | null>\n  list(offset?: number, limit?: number): Promise<Page<Product>>\n  findBySku(sku: string): Promise<Product | null>\n  findAllByTitle(title: string): Promise<Product[]>\n  insert(entity: Product): Promise<Product>\n  update(entity: Product): Promise<Product>\n  delete(entity: Product): Promise<void>\n}\n\n/** The key of a row, as a list of its key values. */\nfunction keyOf(row: Product): unknown[] {\n  return [row.id]\n}\n\n/** Orders two keys value by value. */\nfunction compareKeys(a: unknown[], b: unknown[]): number {\n  for (let index = 0; index < a.length; index++) {\n    const x = a[index] as number | string\n    const y = b[index] as number | string\n    if (x < y) return -1\n    if (x > y) return 1\n  }\n  return 0\n}\n\n/** The values each entity was read with, by the stored names of its fields: a change writes only those that differ. */\nconst loaded = new WeakMap<Product, Record<string, string>>()\n\n/** The fields of an entity a change may write. */\nfunction changeable(entity: Product): Stored {\n  return {\n    sku: entity.sku,\n    title: entity.title,\n    price: entity.price,\n    stock: entity.stock,\n    reference: entity.reference,\n    picture: entity.picture,\n    related: entity.related,\n  }\n}\n\n/** The same fields as text, to compare them later. */\nconst snapshot = (entity: Product): Record<string, string> =>\n  Object.fromEntries(Object.entries(changeable(entity)).map(([name, value]) => [name, JSON.stringify(value ?? null)]))\n\n/** The Product of a document; a field it does not have is null. */\nfunction toEntity(document: Stored): Product {\n  const entity = Object.assign(new Product(), {\n    id: (plain(document._id) ?? null) as string,\n    sku: (plain(document.sku) ?? null) as string,\n    title: (plain(document.title) ?? null) as string,\n    price: (plain(document.price) ?? null) as string,\n    stock: (plain(document.stock) ?? null) as number | null,\n    reference: (plain(document.reference) ?? null) as string | null,\n    picture: (plain(document.picture) ?? null) as Buffer | null,\n    related: (plain(document.related) ?? null) as string[] | null,\n  })\n  loaded.set(entity, snapshot(entity))\n  return entity\n}\n\n/** The fields of a new document; those left empty are not stored, and take their default. */\nfunction storedValues(entity: Product): Stored {\n  const values: Stored = {\n    _id: entity.id,\n    sku: entity.sku,\n    title: entity.title,\n    price: entity.price,\n    stock: entity.stock,\n    reference: entity.reference,\n    picture: entity.picture,\n    related: entity.related,\n  }\n  return Object.fromEntries(Object.entries(values).filter(([, value]) => value !== undefined && value !== null))\n}\n\n/** What a change writes and what it removes: only the fields that are not as they were read. */\nfunction changesOf(entity: Product): { $set: Stored; $unset: Stored } {\n  const before = loaded.get(entity)\n  const $set: Stored = {}\n  const $unset: Stored = {}\n  for (const [name, value] of Object.entries(changeable(entity))) {\n    if (before?.[name] === JSON.stringify(value ?? null)) continue\n    if (value === undefined || value === null) $unset[name] = ''\n    else $set[name] = value\n  }\n  return { $set, $unset }\n}\n\n/** Keeps products documents in the database, through Mongoose. Queries run in the session it was given. */\nexport class MongoProductRepository implements ProductRepository {\n  constructor(\n    private readonly db: Db,\n    private readonly session: ClientSession | null = null,\n  ) {}\n\n  /** The row with this primary key, or null. */\n  async findById(id: string): Promise<Product | null> {\n    if (!isObjectId(id)) return null\n    const foundDocument = await this.db.models.products.findOne({ _id: id }).session(this.session).lean<Stored>()\n    return foundDocument === null ? null : toEntity(foundDocument)\n  }\n\n  /** At most `limit` rows from `offset`, by primary key, and how many there are. */\n  async list(offset: number = 0, limit: number = 50): Promise<Page<Product>> {\n    const documents = await this.db.models.products.find({}).sort({ _id: 1 }).skip(offset).limit(limit).session(this.session).lean<Stored[]>()\n    const total = await this.db.models.products.countDocuments({}).session(this.session)\n    return { items: documents.map(toEntity), total, offset, limit }\n  }\n\n  /** The row with this sku, or null. */\n  async findBySku(sku: string): Promise<Product | null> {\n    const foundDocument = await this.db.models.products.findOne({ sku }).session(this.session).lean<Stored>()\n    return foundDocument === null ? null : toEntity(foundDocument)\n  }\n\n  /** Rows with this title, by primary key. */\n  async findAllByTitle(title: string): Promise<Product[]> {\n    return (await this.db.models.products.find({ title }).sort({ _id: 1 }).session(this.session).lean<Stored[]>()).map(toEntity)\n  }\n\n  /** Stores a new row; the values the database fills are read back. */\n  async insert(entity: Product): Promise<Product> {\n    try {\n      const [document] = await this.db.models.products.create([storedValues(entity)], { session: this.session ?? undefined })\n      const stored = toEntity(document.toObject() as Stored)\n      Object.assign(entity, stored)\n      loaded.set(entity, loaded.get(stored)!)\n      return entity\n    } catch (error) {\n      throw refusal('Product', error)\n    }\n  }\n\n  /** Stores the changes made to a row read from this repository. */\n  async update(entity: Product): Promise<Product> {\n    try {\n      await this.db.models.products.updateOne({ _id: entity.id }, changesOf(entity), { session: this.session ?? undefined, runValidators: true, timestamps: false })\n    } catch (error) {\n      throw refusal('Product', error)\n    }\n    loaded.set(entity, snapshot(entity))\n    return entity\n  }\n\n  /** Removes a row read from this repository. */\n  async delete(entity: Product): Promise<void> {\n    try {\n      await this.db.models.products.deleteOne({ _id: entity.id }).session(this.session)\n    } catch (error) {\n      throw refusal('Product', error)\n    }\n  }\n}\n\n/** Keeps products rows in memory, for tests and for trying the services without a database. */\nexport class MemoryProductRepository implements ProductRepository {\n  private readonly rows = new Map<string, Product>()\n\n  private visible(): Product[] {\n    return [...this.rows.values()].filter((row) => true).sort((a, b) => compareKeys(keyOf(a), keyOf(b)))\n  }\n\n  /** The row with this primary key, or null. */\n  async findById(id: string): Promise<Product | null> {\n    return this.visible().find((row) => row.id === id) ?? null\n  }\n\n  /** At most `limit` rows from `offset`, by primary key, and how many there are. */\n  async list(offset: number = 0, limit: number = 50): Promise<Page<Product>> {\n    const rows = this.visible()\n    return { items: rows.slice(offset, offset + limit), total: rows.length, offset, limit }\n  }\n\n  /** The row with this sku, or null. */\n  async findBySku(sku: string): Promise<Product | null> {\n    return this.visible().find((row) => row.sku === sku) ?? null\n  }\n\n  /** Rows with this title, by primary key. */\n  async findAllByTitle(title: string): Promise<Product[]> {\n    return this.visible().filter((row) => row.title === title)\n  }\n\n  /** Stores a new row; the values the database fills are read back. */\n  async insert(entity: Product): Promise<Product> {\n    if (entity.id === undefined) entity.id = randomBytes(12).toString('hex')\n    if (entity.stock === undefined) entity.stock = 0\n    this.rows.set(JSON.stringify(keyOf(entity)), entity)\n    return entity\n  }\n\n  /** Stores the changes made to a row read from this repository. */\n  async update(entity: Product): Promise<Product> {\n    this.rows.set(JSON.stringify(keyOf(entity)), entity)\n    return entity\n  }\n\n  /** Removes a row read from this repository. */\n  async delete(entity: Product): Promise<void> {\n    this.rows.delete(JSON.stringify(keyOf(entity)))\n  }\n}\n",
+  "src/unit-of-work.ts": "/** The repositories of every table, and the transaction of each service operation. Each service operation runs in `transaction()`: committed when it ends, rolled back when it fails. */\nimport type { ClientSession } from 'mongoose'\nimport type { Db } from './database.js'\nimport { MemoryCountryRepository, MongoCountryRepository, type CountryRepository } from './repositories/country.js'\nimport { MemoryCustomerRepository, MongoCustomerRepository, type CustomerRepository } from './repositories/customer.js'\nimport { MemoryOrderRepository, MongoOrderRepository, type OrderRepository } from './repositories/order.js'\nimport { MemoryProductRepository, MongoProductRepository, type ProductRepository } from './repositories/product.js'\n\n/** What services depend on: a repository per table and a transaction. */\nexport interface UnitOfWork {\n  readonly customers: CustomerRepository\n  readonly products: ProductRepository\n  readonly orders: OrderRepository\n  readonly countries: CountryRepository\n  /** Runs `work` with the repositories of the transaction; commits when it ends, rolls back when it throws. */\n  transaction<T>(work: (uow: UnitOfWork) => Promise<T>): Promise<T>\n}\n\n/** The repositories over one database and, when there is one, the session whose transaction every query runs in. */\nexport class MongoUnitOfWork implements UnitOfWork {\n  readonly customers: CustomerRepository\n  readonly products: ProductRepository\n  readonly orders: OrderRepository\n  readonly countries: CountryRepository\n\n  constructor(\n    readonly db: Db,\n    readonly session: ClientSession | null = null,\n  ) {\n    this.customers = new MongoCustomerRepository(db, session)\n    this.products = new MongoProductRepository(db, session)\n    this.orders = new MongoOrderRepository(db, session)\n    this.countries = new MongoCountryRepository(db, session)\n  }\n\n  /** Runs `work` in a transaction of its own, or in the one already open. MongoDB has transactions on replica sets only. */\n  async transaction<T>(work: (uow: UnitOfWork) => Promise<T>): Promise<T> {\n    if (this.session) return work(this)\n    const session = await this.db.connection.startSession()\n    try {\n      return await session.withTransaction(() => work(new MongoUnitOfWork(this.db, session)))\n    } finally {\n      await session.endSession()\n    }\n  }\n}\n\n/** The in-memory repositories, for tests and for trying the services without a database. */\nexport class MemoryUnitOfWork implements UnitOfWork {\n  readonly customers = new MemoryCustomerRepository()\n  readonly products = new MemoryProductRepository()\n  readonly orders = new MemoryOrderRepository()\n  readonly countries = new MemoryCountryRepository()\n\n  /** Memory has no transactions: changes are kept as they are made. */\n  transaction<T>(work: (uow: UnitOfWork) => Promise<T>): Promise<T> {\n    return work(this)\n  }\n}\n",
+  "test/country.test.ts": "/** Tests of the \"countries\" table. */\nimport { describe, expect, it } from 'vitest'\nimport { useTestDatabase } from './database.js'\nimport { addCountry } from './factories.js'\n\n/** The repositories over the test database, opened empty for every test */\nconst mongoUow = useTestDatabase()\n\ndescribe('countries repository', () => {\n  it('is stored and read back', async () => {\n    const uow = mongoUow()\n    const stored = await addCountry(uow, 1)\n    const found = await uow.countries.findByDocumentId(stored._id)\n    expect(found).not.toBeNull()\n    expect(found!._id).toEqual(stored._id)\n    expect(await uow.countries.findById(stored.id)).not.toBeNull()\n  })\n\n  it('lists rows by key', async () => {\n    const uow = mongoUow()\n    await addCountry(uow, 1)\n    await addCountry(uow, 2)\n    const page = await uow.countries.list(0, 1)\n    expect(page.total).toBe(2)\n    expect(page.items).toHaveLength(1)\n  })\n\n  it('stores the changes', async () => {\n    const uow = mongoUow()\n    const stored = await addCountry(uow, 1)\n    stored.name = 'changed'\n    await uow.countries.update(stored)\n    const found = await uow.countries.findByDocumentId(stored._id)\n    expect(found?.name).toBe('changed')\n  })\n\n  it('is deleted', async () => {\n    const uow = mongoUow()\n    const stored = await addCountry(uow, 1)\n    await uow.countries.delete(stored)\n    expect(await uow.countries.findByDocumentId(stored._id)).toBeNull()\n  })\n})\n",
+  "test/customer.test.ts": "/** Tests of the \"customers\" table. */\nimport { describe, expect, it } from 'vitest'\nimport { useTestDatabase } from './database.js'\nimport { addCustomer } from './factories.js'\n\n/** The repositories over the test database, opened empty for every test */\nconst mongoUow = useTestDatabase()\n\ndescribe('customers repository', () => {\n  it('is stored and read back', async () => {\n    const uow = mongoUow()\n    const stored = await addCustomer(uow, 1)\n    const found = await uow.customers.findById(stored.id)\n    expect(found).not.toBeNull()\n    expect(found!.id).toEqual(stored.id)\n    expect(await uow.customers.findByEmail(stored.email)).not.toBeNull()\n  })\n\n  it('lists rows by key', async () => {\n    const uow = mongoUow()\n    await addCustomer(uow, 1)\n    await addCustomer(uow, 2)\n    const page = await uow.customers.list(0, 1)\n    expect(page.total).toBe(2)\n    expect(page.items).toHaveLength(1)\n  })\n})\n",
+  "test/database.test.ts": "/** The tests run on the database they were asked to. */\nimport { describe, expect, it } from 'vitest'\nimport { TEST_DATABASE_URL, useTestDatabase } from './database.js'\n\nconst mongoUow = useTestDatabase()\n\ndescribe('the test database', () => {\n  it('is the one TEST_DATABASE_URL names', () => {\n    expect(mongoUow().db.connection.name).toBe(new URL(TEST_DATABASE_URL).pathname.slice(1))\n  })\n})\n",
+  "test/database.ts": "/** The test database: the MongoDB database TEST_DATABASE_URL names, with every collection created empty for every test. */\nimport { afterEach, beforeEach } from 'vitest'\nimport { createDatabase, type Db } from '../src/database.js'\nimport { MongoUnitOfWork } from '../src/unit-of-work.js'\n\nexport const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL ?? ''\nif (TEST_DATABASE_URL === '')\n  throw new Error('The database tests need a disposable MongoDB database (a replica set, for its transactions): set TEST_DATABASE_URL (it is emptied)')\n\n/** Opens the test database, empty, before every test of the file that calls it, and closes it after each; returns the unit of work of the running test. */\nexport function useTestDatabase(): () => MongoUnitOfWork {\n  let db: Db | undefined\n  beforeEach(async () => {\n    db = await createDatabase(TEST_DATABASE_URL)\n    await db.connection.dropDatabase()\n    // The collections and their indexes, as the models have them\n    for (const model of Object.values(db.models)) {\n      await model.createCollection()\n      await model.createIndexes()\n    }\n  })\n  afterEach(async () => {\n    await db?.connection.close()\n  })\n  return () => new MongoUnitOfWork(db!)\n}\n",
+  "test/factories.ts": "/** Rows for the tests: valid values for every column, and the rows they point to. */\nimport { Country } from '../src/entities/country.js'\nimport { Customer } from '../src/entities/customer.js'\nimport { Order } from '../src/entities/order.js'\nimport { Product } from '../src/entities/product.js'\nimport type { UnitOfWork } from '../src/unit-of-work.js'\n\n/** A valid Customer that is not stored yet; `n` makes its unique values differ, `values` replace any of them. */\nexport function newCustomer(n = 1, values: Partial<Customer> = {}): Customer {\n  return Object.assign(new Customer(), { email: `email-${n}`, name: `name-${n}`, passwordHash: `passwordhash-${n}`, active: true, level: 'basic', address: { street: `street-${n}`, city: `city-${n}`, 'zip code': `zipcode-${n}`, location: { type: 'Point', coordinates: [] } }, tags: [], preferences: { theme: `theme-${n}`, newsletter: true }, extra: { n }, deletedAt: null, updatedAt: new Date(Date.UTC(2026, 0, (n % 28) + 1, 12, 0, 0)) }, values)\n}\n\n/** A stored Customer. */\nexport async function addCustomer(uow: UnitOfWork, n = 1): Promise<Customer> {\n  return uow.customers.insert(newCustomer(n))\n}\n\n/** A valid Product that is not stored yet; `n` makes its unique values differ, `values` replace any of them. */\nexport function newProduct(n = 1, values: Partial<Product> = {}): Product {\n  return Object.assign(new Product(), { sku: `sku-${n}`, title: `title-${n}`, price: `${n % 10000}.50`, stock: n + 0.5, reference: `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`, picture: Buffer.from([n % 256]), related: [] }, values)\n}\n\n/** A stored Product. */\nexport async function addProduct(uow: UnitOfWork, n = 1): Promise<Product> {\n  return uow.products.insert(newProduct(n))\n}\n\n/** A valid Order that is not stored yet; `n` makes its unique values differ, `values` replace any of them. */\nexport function newOrder(n = 1, values: Partial<Order> = {}): Order {\n  return Object.assign(new Order(), { number: n + 0.5, year: n + 0.5, lines: [{ product: n.toString(16).padStart(24, '0'), quantity: n + 0.5, price: `${n % 10000}.50`, status: 'pending' }], notes: [{ text: `text-${n}`, at: new Date(Date.UTC(2026, 0, (n % 28) + 1, 12, 0, 0)) }] }, values)\n}\n\n/** A stored Order, with the rows it points to. */\nexport async function addOrder(uow: UnitOfWork, n = 1): Promise<Order> {\n  const parent0 = await addCustomer(uow, n)\n  return uow.orders.insert(newOrder(n, { customer: parent0.id }))\n}\n\n/** A valid Country that is not stored yet; `n` makes its unique values differ, `values` replace any of them. */\nexport function newCountry(n = 1, values: Partial<Country> = {}): Country {\n  return Object.assign(new Country(), { _id: `id-${n}`, id: n + 0.5, name: `name-${n}` }, values)\n}\n\n/** A stored Country. */\nexport async function addCountry(uow: UnitOfWork, n = 1): Promise<Country> {\n  return uow.countries.insert(newCountry(n))\n}\n",
+  "test/order.test.ts": "/** Tests of the \"orders\" table. */\nimport { describe, expect, it } from 'vitest'\nimport { useTestDatabase } from './database.js'\nimport { addOrder } from './factories.js'\n\n/** The repositories over the test database, opened empty for every test */\nconst mongoUow = useTestDatabase()\n\ndescribe('orders repository', () => {\n  it('is stored and read back', async () => {\n    const uow = mongoUow()\n    const stored = await addOrder(uow, 1)\n    const found = await uow.orders.findById(stored.id)\n    expect(found).not.toBeNull()\n    expect(found!.id).toEqual(stored.id)\n    expect(await uow.orders.findByYearAndNumber(stored.year, stored.number)).not.toBeNull()\n    if (stored.customer != null) expect(await uow.orders.listByCustomer(stored.customer)).toHaveLength(1)\n  })\n\n  it('lists rows by key', async () => {\n    const uow = mongoUow()\n    await addOrder(uow, 1)\n    await addOrder(uow, 2)\n    const page = await uow.orders.list(0, 1)\n    expect(page.total).toBe(2)\n    expect(page.items).toHaveLength(1)\n  })\n\n  it('is deleted', async () => {\n    const uow = mongoUow()\n    const stored = await addOrder(uow, 1)\n    await uow.orders.delete(stored)\n    expect(await uow.orders.findById(stored.id)).toBeNull()\n  })\n})\n",
+  "test/product.test.ts": "/** Tests of the \"products\" table. */\nimport { describe, expect, it } from 'vitest'\nimport { useTestDatabase } from './database.js'\nimport { addProduct } from './factories.js'\n\n/** The repositories over the test database, opened empty for every test */\nconst mongoUow = useTestDatabase()\n\ndescribe('products repository', () => {\n  it('is stored and read back', async () => {\n    const uow = mongoUow()\n    const stored = await addProduct(uow, 1)\n    const found = await uow.products.findById(stored.id)\n    expect(found).not.toBeNull()\n    expect(found!.id).toEqual(stored.id)\n    expect(await uow.products.findBySku(stored.sku)).not.toBeNull()\n  })\n\n  it('lists rows by key', async () => {\n    const uow = mongoUow()\n    await addProduct(uow, 1)\n    await addProduct(uow, 2)\n    const page = await uow.products.list(0, 1)\n    expect(page.total).toBe(2)\n    expect(page.items).toHaveLength(1)\n  })\n\n  it('stores the changes', async () => {\n    const uow = mongoUow()\n    const stored = await addProduct(uow, 1)\n    stored.title = 'changed'\n    await uow.products.update(stored)\n    const found = await uow.products.findById(stored.id)\n    expect(found?.title).toBe('changed')\n  })\n\n  it('is deleted', async () => {\n    const uow = mongoUow()\n    const stored = await addProduct(uow, 1)\n    await uow.products.delete(stored)\n    expect(await uow.products.findById(stored.id)).toBeNull()\n  })\n})\n",
+  "tsconfig.build.json": "{\n  \"extends\": \"./tsconfig.json\",\n  \"compilerOptions\": {\n    \"noEmit\": false,\n    \"rootDir\": \"src\",\n    \"outDir\": \"dist\",\n    \"declaration\": true\n  },\n  \"include\": [\n    \"src\"\n  ]\n}\n",
+  "tsconfig.json": "{\n  \"compilerOptions\": {\n    \"target\": \"ES2022\",\n    \"module\": \"NodeNext\",\n    \"moduleResolution\": \"NodeNext\",\n    \"lib\": [\n      \"ES2022\"\n    ],\n    \"types\": [\n      \"node\"\n    ],\n    \"strict\": true,\n    \"experimentalDecorators\": true,\n    \"useDefineForClassFields\": false,\n    \"isolatedModules\": true,\n    \"skipLibCheck\": true,\n    \"noEmit\": true\n  },\n  \"include\": [\n    \"src\",\n    \"test\"\n  ]\n}\n",
+  "vitest.config.ts": "import { defineConfig } from 'vitest/config'\n\nexport default defineConfig({\n  test: {\n    include: ['test/**/*.test.ts'],\n    // Every test file empties the same test database: they run one after another\n    fileParallelism: false,\n  },\n})\n"
+ }
+}

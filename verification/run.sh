@@ -13,7 +13,7 @@ status=0
 runner_of() {
   case "$1" in
     sqlalchemy-* | django-* | python-sql-*) echo ./runners/python.sh ;;
-    typeorm-* | prisma-* | drizzle-* | sequelize-* | typescript-sql-*) echo ./runners/node.sh ;;
+    typeorm-* | prisma-* | drizzle-* | sequelize-* | mongoose-* | typescript-sql-*) echo ./runners/node.sh ;;
     jpa-* | java-sql-*) echo ./runners/java.sh ;;
     efcore-* | csharp-sql-*) echo ./runners/dotnet.sh ;;
     doctrine-* | eloquent-* | php-sql-*) echo ./runners/php.sh ;;

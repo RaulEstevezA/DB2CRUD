@@ -9,7 +9,7 @@
  */
 
 /** @typedef {{ table: string, decision: string, value: unknown }} Decision */
-/** @typedef {{ id: string, schema?: 'shop', case?: string, ddl?: true, settings: Record<string, unknown>, decisions?: Decision[], service?: 'postgresql' | 'mysql' | 'mariadb' }} Scenario */
+/** @typedef {{ id: string, schema?: 'shop', case?: string, ddl?: true, code?: string, settings: Record<string, unknown>, decisions?: Decision[], service?: 'postgresql' | 'mysql' | 'mariadb' | 'mongodb' }} Scenario */
 
 /** Every pending decision of the shop taken the other way, so the code of the other options runs too. */
 const OTHER_WAY = [
@@ -887,4 +887,12 @@ export const SCENARIOS = [
   { id: 'swift-sql-ddl-mariadb', ddl: true, settings: { language: 'swift', orm: 'sql', database: 'mariadb' }, service: 'mariadb' },
   { id: 'python-sql-ddl-mysql', ddl: true, settings: { language: 'python', orm: 'sql', database: 'mysql' }, service: 'mysql' },
   { id: 'python-sql-ddl-mariadb', ddl: true, settings: { language: 'python', orm: 'sql', database: 'mariadb' }, service: 'mariadb' },
+  // MongoDB: from Mongoose schemas and from the validators of its collections (verification/mongodb/)
+  { id: 'mongoose-mongodb-defaults', code: 'mongodb/shop.ts', settings: { language: 'typescript', orm: 'mongoose', database: 'mongodb' }, service: 'mongodb' },
+  { id: 'mongoose-mongodb-dtos-cursor-by-table', code: 'mongodb/shop.ts', settings: { language: 'typescript', orm: 'mongoose', database: 'mongodb', serviceTypes: 'dtos', paging: 'cursor', architecture: 'table' }, service: 'mongodb' },
+  { id: 'mongoose-mongodb-caller-class-dtos', code: 'mongodb/shop.ts', settings: { language: 'typescript', orm: 'mongoose', database: 'mongodb', transactions: 'caller', serviceTypes: 'dtos', dtoKind: 'class', paging: 'none' }, service: 'mongodb' },
+  { id: 'mongoose-mongodb-no-interfaces-services-tests', code: 'mongodb/shop.ts', settings: { language: 'typescript', orm: 'mongoose', database: 'mongodb', repositoryInterfaces: false, memoryRepositories: false, verbs: 'get', transactions: 'repository' }, service: 'mongodb' },
+  { id: 'mongoose-mongodb-repositories-only', code: 'mongodb/shop.ts', settings: { language: 'typescript', orm: 'mongoose', database: 'mongodb', services: false }, service: 'mongodb' },
+  { id: 'mongoose-mongodb-validators', code: 'mongodb/clinic.js', settings: { language: 'typescript', orm: 'mongoose', database: 'mongodb' }, service: 'mongodb' },
+  { id: 'mongoose-mongodb-validators-dtos', code: 'mongodb/clinic.js', settings: { language: 'typescript', orm: 'mongoose', database: 'mongodb', serviceTypes: 'dtos', transactions: 'repository', paging: 'cursor' }, service: 'mongodb' },
 ]
