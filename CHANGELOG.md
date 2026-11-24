@@ -57,6 +57,16 @@ DB2CRUD starts from the code of Model2API (which continues as Controller2API), k
 ### Fixed
 
 - SQLAlchemy on an existing database: columns named `metadata` or `registry` no longer break the entities, PostgreSQL arrays are mapped as `ARRAY` instead of JSON, types SQLAlchemy has no class for can be written on PostgreSQL, composite foreign keys keep `ON UPDATE`, and asynchronous MySQL and MariaDB projects stay on PyMySQL 1.1, since aiomysql cannot write binary values with 1.2.
+- Every ORM is checked against databases created from their own SQL (`verification/ddl/`), and these no longer fail there:
+  - PostgreSQL arrays, JSON and types an ORM does not know: Django, TypeORM, Prisma, Drizzle, Sequelize, JPA, EF Core, Doctrine, Eloquent, Exposed, SeaORM and Fluent write and read them in the type of the column. Prisma leaves alone the types its client cannot read (`interval`, `tsvector`…).
+  - Schemas of PostgreSQL in Django, Drizzle (`pgSchema`) and Prisma (`@@schema`), and foreign keys across them in Sequelize.
+  - Computed columns in Django (`GeneratedField`), which were written; field names Django refuses (`class_`, `save`).
+  - Keys of bytes, unsigned integers, `TIMESTAMP`, `TIME` and MariaDB's `uuid` in Drizzle, SeaORM, Fluent, Doctrine and others.
+  - Doctrine: names that are words of SQL, keys that hold a date (kept as text), times with a time zone.
+  - Fluent: changing a row with an enum of PostgreSQL lost the changes of the columns before it; a key with a date found no row.
+  - Swift without an ORM and Fluent kept bytes as JSON on MySQL and MariaDB.
+  - TypeORM on MariaDB uses its `mariadb` driver, and no `char` on SQLite.
+- Reading ORM code: Doctrine names between backticks, Drizzle foreign keys of a table to itself, Sequelize references with a schema, Django tables of another schema and computed columns written as `RawSQL`.
 - Python: columns named like a type (`date`, `time`, `str`, `list`…) no longer break the entities and the DTOs.
 
 [Unreleased]: https://github.com/RaulEstevezA/DB2CRUD/commits/main
