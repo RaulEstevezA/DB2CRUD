@@ -1,8 +1,6 @@
-"""The repositories of each table: the protocol services depend on (when the settings want one), its Fluent
-implementation (queries on the table's model, on the database of the unit of work, models turned into entities, a
-database refusal turned into a conflict, what the database fills read back after an insert), and its in-memory one,
-with the same methods. Without protocols, the in-memory repository is a subclass of the database one. Repositories
-decide nothing. Mirrors web/src/core/generators/swift/repositories.ts."""
+"""The repositories of each table: the protocol services depend on (when the settings want one), its database implementation
+(its bodies are the strategy's), and its in-memory one, with the same methods. Without protocols, the in-memory repository
+is a subclass of the database one. Repositories decide nothing. Mirrors web/src/core/generators/swift/repositories.ts."""
 
 import re
 
@@ -10,16 +8,13 @@ from ...js import js_string
 from .context import (
     column_of,
     file_of,
-    is_in,
     key_type,
     memory_repository,
     query_name,
     repository_protocol,
     sql_repository,
-    stored,
     sw_file,
 )
-from .entities import mapped_key, model_path, model_value
 from .swift import imports, sw_string
 
 
@@ -83,206 +78,21 @@ def _signature(method: dict, prefix: str = "") -> list[str]:
     ]
 
 
-# Fluent
-
-
-def _pg_enum(context: dict, column: dict) -> str | None:
-    """The enum of PostgreSQL a column holds: its values go in cast to it, as PostgreSQL takes no text for it."""
-    column_type = column["column"]["type"]
-    if column_type["kind"] != "enum" or context["settings"]["database"] != "postgresql":
-        return None
-    item = next(
-        (candidate for candidate in context["schema"]["enums"] if candidate["name"] == column_type["name"]), None
-    )
-    return item["name"] if item and item.get("storage") == "native" else None
-
-
-def _bound(context: dict, column: dict, value: str) -> str:
-    """A value as it goes into a row: bound, or cast to the enum of PostgreSQL the column holds."""
-    name = _pg_enum(context, column)
-    if name:
-        return f'.custom(SQLQueryString("\\(bind: {value})::\\(unsafeRaw: {sw_string(chr(34) + name + chr(34))})"))'
-    return f".bind({value})"
-
-
-def _soft_filter(info: dict) -> str:
-    """The filter that leaves out rows marked as deleted."""
-    soft = info["soft"]
-    if not soft:
-        return ""
-    path = model_path(info, soft)
-    if soft["column"]["type"]["kind"] != "boolean":
-        return f".filter({path} == nil)"
-    return f".group(.or) {{ $0.filter({path} == false).filter({path} == nil) }}"
-
-
-def _insert_columns(info: dict) -> list[dict]:
-    """The columns written by an insert: not those the database fills (uuids are made first)."""
-    return [column for column in info["columns"] if column["column"].get("generated") in (None, "uuid")]
-
-
-def _update_columns(info: dict) -> list[dict]:
-    """The columns written by an update: not the key, nor those the database fills."""
-    return [
-        column
-        for column in info["columns"]
-        if column["column"].get("generated") is None and not is_in(column, info["key"])
-    ]
-
-
-def _key_filter(info: dict, value) -> str:
-    """The filters of a row, by its key as a source has it: entity.id! or model.id!."""
-    return "".join(f".filter({model_path(info, column)} == {value(column)})" for column in mapped_key(info))
-
-
-def _sort_by_key(info: dict) -> str:
-    """The order of the key, by column name: a key path cannot go through a composite key."""
-    return "".join(f".sort({sw_string(column['column']['name'])})" for column in info["key"])
-
-
-def _key_value(info: dict, variable: str) -> str:
+def key_value(info: dict, variable: str) -> str:
     """The key of an entity known to be stored: $0.id!, or a tuple."""
     if len(info["key"]) == 1:
         return f"{variable}.{info['key'][0]['prop']}!"
     return f"({', '.join(column['key'] + ': ' + variable + '.' + column['prop'] + '!' for column in info['key'])})"
 
 
-def _fluent_body(context: dict, info: dict, method: dict) -> list[str]:
-    columns = [column_of(info, name) for name in method["query"]["columns"]]
-    soft = _soft_filter(info)
-    query = f"{info['model']}.query(on: database)"
-    by_columns = "".join(f".filter({model_path(info, column)} == {column['prop']})" for column in columns)
-    kind = method["query"]["kind"]
-    paging = context["settings"]["paging"]
-    if kind in ("getByKey", "findByUnique"):
-        return [f"try await {query}{by_columns}{soft}.first().map(toEntity)"]
-    if kind in ("listByParent", "findAllBy"):
-        return [f"try await {query}{by_columns}{soft}{_sort_by_key(info)}.all().map(toEntity)"]
-    if kind == "list":
-        if paging == "offset":
-            return [
-                f"let total = try await {query}{soft}.count()",
-                f"let rows = try await {query}{soft}{_sort_by_key(info)}.offset(offset).limit(limit).all()",
-                "return Page(items: rows.map(toEntity), total: total, offset: offset, limit: limit)",
-            ]
-        if paging == "cursor":
-            # After the key (a, b): a greater, or a the same and b greater
-            key = info["key"]
-
-            def value(column: dict) -> str:
-                return "after" if len(key) == 1 else f"after.{column['key']}"
-
-            terms = []
-            for index, column in enumerate(key):
-                before = "".join(f".filter({model_path(info, other)} == {value(other)})" for other in key[:index])
-                greater = f".filter({model_path(info, column)} > {value(column)})"
-                terms.append(f"or{greater}" if index == 0 else f"or.group(.and) {{ and in and{before}{greater} }}")
-            group = (
-                [f"    query.filter({model_path(info, key[0])} > after)"]
-                if len(key) == 1
-                else ["    query.group(.or) { or in", *(f"        {term}" for term in terms), "    }"]
-            )
-            return [
-                f"let query = {query}{soft}",
-                "if let after {",
-                *group,
-                "}",
-                f"let rows = try await query{_sort_by_key(info)}.limit(limit + 1).all()",
-                "let items = rows.prefix(limit).map(toEntity)",
-                f"return CursorPage(items: items, next: rows.count > limit ? items.last.map {{ {_key_value(info, '$0')} }} : nil)",
-            ]
-        return [f"try await {query}{soft}{_sort_by_key(info)}.all().map(toEntity)"]
-    if kind == "insert":
-        key = mapped_key(info)
-        identity = key[0] if len(key) == 1 and key[0]["column"].get("generated") == "identity" else None
-        uuids = [column for column in _insert_columns(info) if column["column"].get("generated") == "uuid"]
-        values = []
-        for column in _insert_columns(info):
-            name = sw_string(column["column"]["name"])
-            if column["column"].get("generated") == "uuid":
-                values.append(f"values[{name}] = .bind({column['prop']})")
-            else:
-                values.append(
-                    f"if let value = entity.{column['prop']} {{ values[{name}] = {_bound(context, column, 'value')} }}"
-                )
-
-        # The row is read back by the key it now has: the one the database numbered, the one made here, or the one given
-        def key_of(column: dict) -> str:
-            if column is identity:
-                return "numbered!"
-            return column["prop"] if is_in(column, uuids) else f"entity.{column['prop']}!"
-
-        if identity:
-            name = sw_string(identity["column"]["name"])
-            run = [
-                f"nonisolated(unsafe) var numbered: {identity['sw']}?",
-                f"try await write {{ try await insert.run {{ numbered = try? $0.decode({name}, as: {identity['sw']}.self) }} }}",
-            ]
-        else:
-            run = ["try await write { try await insert.run() }"]
-        return [
-            # Only the values given: the database fills the others (Fluent's create sends DEFAULT, which SQLite takes as NULL)
-            *(f"let {column['prop']} = entity.{column['prop']} ?? UUID()" for column in uuids),
-            f"{'var' if values else 'let'} values: [FieldKey: DatabaseQuery.Value] = [:]",
-            *values,
-            f"let insert = {query}.set(values)",
-            "insert.query.action = .create",
-            *run,
-            f"let stored = try await {query}{_key_filter(info, key_of)}.first()",
-            "return stored.map(toEntity) ?? entity",
-        ]
-    if kind == "update":
-        changing = _update_columns(info)
-        if not changing:
-            return ["// Nothing of it can change", "return entity"]
-        lines = []
-        for column in changing:
-            key = sw_string(column["column"]["name"])
-            prop = column["prop"]
-            if _pg_enum(context, column):
-                if column["column"]["nullable"]:
-                    lines.append(
-                        f"query.set([{key}: entity.{prop}.map {{ {_bound(context, column, '$0')} }} ?? .null])"
-                    )
-                else:
-                    lines.append(
-                        f"if let value = entity.{prop} {{ query.set([{key}: {_bound(context, column, 'value')}]) }}"
-                    )
-            elif column["column"]["nullable"]:
-                lines.append(f"query.set({model_path(info, column)}, to: entity.{prop})")
-            else:
-                lines.append(f"if let value = entity.{prop} {{ query.set({model_path(info, column)}, to: value) }}")
-        filters = _key_filter(info, lambda column: stored(f"entity.{column['prop']}", column))
-        return [
-            f"let query = {query}{filters}",
-            *lines,
-            "try await write { try await query.update() }",
-            "return entity",
-        ]
-    if kind == "delete":
-        filters = _key_filter(info, lambda column: stored(f"entity.{column['prop']}", column))
-        return [f"try await write {{ try await {query}{filters}.delete() }}"]
-    return ['fatalError("not written")']
-
-
-def _to_entity_function(info: dict) -> list[str]:
-    """toEntity: how a model becomes an entity."""
-    values = ", ".join(f"{column['key']}: {model_value(info, column)}" for column in info["columns"])
-    return [
-        f"fileprivate func toEntity(_ model: {info['model']}) -> {info['entity']} {{",
-        f"    {info['entity']}({values})",
-        "}",
-    ]
-
-
-def _write_function(info: dict, prefix: str) -> list[str]:
+def _write_function(context: dict, info: dict, prefix: str) -> list[str]:
     """write: how a refusal of the database becomes a conflict."""
     return [
         "/// Runs a write; a database refusal (a unique value, a row still pointed to) becomes a conflict.",
         f"{prefix}func write<T>(_ work: () async throws -> T) async throws -> T {{",
         "    do {",
         "        return try await work()",
-        "    } catch let error as any DatabaseError where error.isConstraintFailure {",
+        f"    }} catch {context['orm']['repository']['refusal']} {{",
         f'        throw DomainError.conflict(entity: {sw_string(info["entity"])}, reason: "the database refused the change: \\(error)", fields: [])',
         "    }",
         "}",
@@ -354,7 +164,7 @@ def _memory_body(context: dict, info: dict, method: dict, fills: list[str]) -> l
             return [
                 "let rows = await visible().filter { row in after.map { isAfter(row, $0) } ?? true }",
                 "let items = Array(rows.prefix(limit))",
-                f"return CursorPage(items: items, next: rows.count > limit ? items.last.map {{ {_key_value(info, '$0')} }} : nil)",
+                f"return CursorPage(items: items, next: rows.count > limit ? items.last.map {{ {key_value(info, '$0')} }} : nil)",
             ]
         return ["await visible()"]
     if kind == "insert":
@@ -443,6 +253,7 @@ def _block(method: dict, body: list[str], prefix: str, doc: bool) -> list[str]:
 
 def repository_file(context: dict, info: dict) -> dict:
     interfaces = context["settings"]["repositoryInterfaces"]
+    holder = context["orm"]["holder"]
     methods = repository_methods(context, info)
     entity = info["entity"]
     body: list[str] = []
@@ -461,17 +272,17 @@ def repository_file(context: dict, info: dict) -> dict:
         ]
     sql_bodies: list[str] = []
     for item in methods:
-        sql_bodies += _block(item, _fluent_body(context, info, item), "public ", not interfaces)
+        sql_bodies += _block(item, context["orm"]["repository"]["body"](context, info, item), "public ", not interfaces)
     writes_rows = any(method["query"]["kind"] in ("insert", "update", "delete") for method in methods)
     reads = any(method["query"]["kind"] not in ("delete", "update") for method in methods)
     body += [
-        f"/// Keeps {info['name']} rows in the database, through Fluent: on the database of the unit of work, or on its transaction.",
+        f"/// Keeps {info['name']} rows in the database, through {context['orm']['label']}: on the database of the unit of work, or on its transaction.",
         f"public struct {sql_repository(info)}: {repository_protocol(info)} {{"
         if interfaces
         else f"public class {sql_repository(info)}: @unchecked Sendable {{",
-        "    let database: any Database" if interfaces else "    private let db: (any Database)?",
+        f"    let database: {holder['type']}" if interfaces else f"    private let db: {holder['optional']}",
         "",
-        "    public init(db: any Database) {" if interfaces else "    public init(db: (any Database)?) {",
+        f"    public init(db: {holder['type']}) {{" if interfaces else f"    public init(db: {holder['optional']}) {{",
         "        self.database = db" if interfaces else "        self.db = db",
         "    }",
         *(
@@ -480,13 +291,17 @@ def repository_file(context: dict, info: dict) -> dict:
             else [
                 "",
                 "    /// The database; the in-memory subclass never asks for it.",
-                "    private var database: any Database { db! }",
+                f"    private var database: {holder['type']} {{ db! }}",
             ]
         ),
         *sql_bodies,
-        *(["", *(f"    {line}" for line in _write_function(info, "private "))] if writes_rows else []),
+        *(["", *(f"    {line}" for line in _write_function(context, info, "private "))] if writes_rows else []),
         "}",
-        *(["", *_to_entity_function(info)] if reads or any(m["query"]["kind"] == "insert" for m in methods) else []),
+        *(
+            ["", *context["orm"]["repository"]["functions"](context, info)]
+            if reads or any(m["query"]["kind"] == "insert" for m in methods)
+            else []
+        ),
     ]
     if context["settings"]["memoryRepositories"]:
         fills = [line for line in (_memory_fill(column) for column in info["columns"]) if line is not None]
@@ -515,9 +330,8 @@ def repository_file(context: dict, info: dict) -> dict:
             "}",
             *_memory_helpers(info, cursor),
         ]
-    uses_sql = any(_pg_enum(context, column) for column in info["columns"])
     return sw_file(
         file_of(context, info, "repository", f"{entity}Repository"),
-        imports("FluentKit", "Foundation", *(["FluentSQL"] if uses_sql else [])),
+        imports("Foundation", *context["orm"]["repository"]["modules"](context, info)),
         body,
     )

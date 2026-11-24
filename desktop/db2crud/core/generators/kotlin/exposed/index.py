@@ -54,7 +54,9 @@ def _test_database_files(context: dict) -> list[dict]:
         imports.add(qualified(package_of(context, info, "entity"), info["tableObject"]))
     postgres = database == "postgresql"
     schemas = (
-        [*({name for name in [info["table"].get("schema") for info in context["tables"]] if not not name})]
+        list(
+            dict.fromkeys(name for name in [info["table"].get("schema") for info in context["tables"]] if not not name)
+        )
         if postgres
         else []
     )

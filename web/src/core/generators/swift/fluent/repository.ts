@@ -46,6 +46,18 @@ const keyFilter = (info: TableInfo, value: (column: ColumnInfo) => string) =>
 /** The order of the key, by column name: a key path cannot go through a composite key. */
 const sortByKey = (info: TableInfo) => info.key.map((column) => `.sort(${swString(column.column.name)})`).join('')
 
+/** The line of an update that sets a column. */
+function setLine(context: Context, info: TableInfo, column: ColumnInfo): string {
+  const key = swString(column.column.name)
+  if (pgEnum(context, column))
+    return column.column.nullable
+      ? `query.set([${key}: entity.${column.prop}.map { ${bound(context, column, '$0')} } ?? .null])`
+      : `if let value = entity.${column.prop} { query.set([${key}: ${bound(context, column, 'value')}]) }`
+  return column.column.nullable
+    ? `query.set(${modelPath(info, column)}, to: entity.${column.prop})`
+    : `if let value = entity.${column.prop} { query.set(${modelPath(info, column)}, to: value) }`
+}
+
 export function fluentBody(context: Context, info: TableInfo, method: Method): string[] {
   const columns = method.query.columns.map((name) => columnOf(info, name))
   const soft = softFilter(info)
@@ -121,16 +133,7 @@ export function fluentBody(context: Context, info: TableInfo, method: Method): s
       if (changing.length === 0) return ['// Nothing of it can change', 'return entity']
       return [
         `let query = ${query}${keyFilter(info, (column) => stored(`entity.${column.prop}`, column))}`,
-        ...changing.map((column) => {
-          const key = swString(column.column.name)
-          if (pgEnum(context, column))
-            return column.column.nullable
-              ? `query.set([${key}: entity.${column.prop}.map { ${bound(context, column, '$0')} } ?? .null])`
-              : `if let value = entity.${column.prop} { query.set([${key}: ${bound(context, column, 'value')}]) }`
-          return column.column.nullable
-            ? `query.set(${modelPath(info, column)}, to: entity.${column.prop})`
-            : `if let value = entity.${column.prop} { query.set(${modelPath(info, column)}, to: value) }`
-        }),
+        ...changing.map((column) => setLine(context, info, column)),
         'try await write { try await query.update() }',
         'return entity',
       ]

@@ -2,10 +2,10 @@
 Fluent model, which maps the table's exact name and columns: a column with @Field, or @OptionalField when it takes
 null, and the key with @ID, or @CompositeID when it has several columns. Fluent reads and writes rows through the model;
 the repositories turn models into entities and back. The constraints of the table live in the database: the tests
-create them, and the services check the values. Mirrors web/src/core/generators/swift/entities.ts."""
+create them, and the services check the values. Mirrors web/src/core/generators/swift/fluent/entities.ts."""
 
-from .context import file_of, is_in, sw_file
-from .swift import imports, sw_string
+from ..context import file_of, is_in, sw_file
+from ..swift import imports, sw_string
 
 
 def entity_file(context: dict, info: dict) -> dict:

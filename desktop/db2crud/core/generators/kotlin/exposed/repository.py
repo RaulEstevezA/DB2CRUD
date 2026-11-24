@@ -158,7 +158,7 @@ def exposed_body(context: dict, info: dict, method: dict, imports: KtImports) ->
             uuids.append(f"    entity.{column['prop']} = entity.{column['prop']} ?: UUID.randomUUID()")
         identity = (
             next((column for column in info["key"] if column["column"].get("generated") == "identity"), None)
-            if len(info["table"]["primaryKey"]) == 1
+            if len(info["table"]["primaryKey"] or []) == 1
             else None
         )
         return [

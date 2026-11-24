@@ -4,7 +4,7 @@ database DATABASE_URL names, and the unit of work over the repositories, with it
 Mirrors web/src/core/generators/swift/support.ts."""
 
 from .context import memory_repository, repository_type, shared_file, sql_repository, sw_file, uses_times
-from .swift import imports, sw_string
+from .swift import imports
 
 
 def errors_file(context: dict) -> dict:
@@ -217,24 +217,6 @@ def common_file(context: dict) -> dict:
     return sw_file(shared_file(context, "Common"), header, body)
 
 
-DRIVERS = {
-    "postgresql": {"module": "FluentPostgresDriver", "factory": lambda url: f".postgres(url: {url})", "throws": True},
-    "mysql": {"module": "FluentMySQLDriver", "factory": lambda url: f".mysql(url: {url})", "throws": True},
-    "mariadb": {"module": "FluentMySQLDriver", "factory": lambda url: f".mysql(url: {url})", "throws": True},
-    "sqlite": {
-        "module": "FluentSQLiteDriver",
-        "factory": lambda url: (
-            f'.sqlite(.init(storage: .file(path: {url}.hasPrefix("sqlite://") ? String({url}.dropFirst(9)) : {url})))'
-        ),
-        "throws": False,
-    },
-}
-
-
-def driver_of(context: dict) -> dict:
-    return DRIVERS.get(context["settings"]["database"], DRIVERS["postgresql"])
-
-
 URLS = {
     "postgresql": "postgres://app:app@localhost:5432/app",
     "mysql": "mysql://app:app@localhost:3306/app?ssl-mode=DISABLED",
@@ -247,45 +229,6 @@ def default_url(context: dict) -> str:
     return URLS.get(context["settings"]["database"], URLS["postgresql"])
 
 
-def database_file(context: dict) -> dict:
-    """AppDatabase: the database DATABASE_URL names, through Fluent."""
-    driver = driver_of(context)
-    throws = " throws" if driver["throws"] else ""
-    attempt = "try " if driver["throws"] else ""
-    return sw_file(
-        shared_file(context, "AppDatabase"),
-        imports("FluentKit", driver["module"], "Foundation", "Logging", "NIOCore", "NIOPosix"),
-        [
-            "/// The database DATABASE_URL names, through Fluent. It never migrates: the database already exists.",
-            "public final class AppDatabase: Sendable {",
-            f"    public static let defaultURL = {sw_string(default_url(context))}",
-            "",
-            "    private let databases: Databases",
-            "    /// What the repositories run their queries on.",
-            "    public let database: any Database",
-            "",
-            "    /// The database at url (DATABASE_URL, or defaultURL, by default).",
-            f'    public convenience init(url: String = ProcessInfo.processInfo.environment["DATABASE_URL"] ?? AppDatabase.defaultURL){throws} {{',
-            f"        {attempt}self.init(configuration: {driver['factory']('url')})",
-            "    }",
-            "",
-            "    /// The database a configuration of Fluent names.",
-            "    public init(configuration: DatabaseConfigurationFactory) {",
-            "        let databases = Databases(threadPool: .singleton, on: MultiThreadedEventLoopGroup.singleton)",
-            '        databases.use(configuration, as: DatabaseID(string: "app"))',
-            "        self.databases = databases",
-            '        self.database = databases.database(logger: Logger(label: "app.database"), on: MultiThreadedEventLoopGroup.singleton.any())!',
-            "    }",
-            "",
-            "    /// Closes the connections.",
-            "    public func shutdown() async {",
-            "        await databases.shutdownAsync()",
-            "    }",
-            "}",
-        ],
-    )
-
-
 HOW = {
     "operation": "Each service operation runs in transaction(): committed when it ends, rolled back when it throws.",
     "caller": "Services never commit: whoever holds the database opens and ends its transaction; transaction() only groups the code.",
@@ -296,6 +239,7 @@ HOW = {
 def unit_of_work_file(context: dict) -> dict:
     """UnitOfWork, SqlUnitOfWork and MemoryUnitOfWork."""
     settings = context["settings"]
+    holder = context["orm"]["holder"]
     operation = settings["transactions"] == "operation"
     signature = "func transaction<T: Sendable>(_ work: @escaping @Sendable (any UnitOfWork) async throws -> T) async throws -> T"
     accessors: list[str] = []
@@ -336,7 +280,7 @@ def unit_of_work_file(context: dict) -> dict:
     )
     return sw_file(
         shared_file(context, "UnitOfWork"),
-        imports("FluentKit"),
+        imports(*holder["modules"]),
         [
             f"/// What services depend on: a repository per table and a transaction. {HOW[settings['transactions']]}",
             "public protocol UnitOfWork: Sendable {",
@@ -348,18 +292,16 @@ def unit_of_work_file(context: dict) -> dict:
             "",
             "/// The repositories over one database, and its transaction.",
             "public struct SqlUnitOfWork: UnitOfWork {",
-            "    public let db: any Database",
+            f"    public let db: {holder['type']}",
             "",
-            "    public init(db: any Database) {",
+            f"    public init(db: {holder['type']}) {{",
             "        self.db = db",
             "    }",
             *accessors,
             "",
             doc,
             f"    public {signature} {{",
-            "        try await db.transaction { transaction in try await work(SqlUnitOfWork(db: transaction)) }"
-            if operation
-            else "        try await work(self)",
+            f"        {context['orm']['transaction']}" if operation else "        try await work(self)",
             "    }",
             "}",
             *memory,

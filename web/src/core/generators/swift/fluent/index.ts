@@ -165,6 +165,9 @@ const ACTIONS: Record<string, string> = {
   'no action': '.noAction',
 }
 
+/** The columns of a foreign key in Fluent's schema builder: a name, or a list of them. */
+const fields = (names: string[]) => (names.length > 1 ? `[${names.map(swString).join(', ')}]` : swString(names[0]))
+
 /** The schema builder of a table, as the database has it. */
 function createTable(context: Context, info: TableInfo): string[] {
   const { table } = info
@@ -183,8 +186,6 @@ function createTable(context: Context, info: TableInfo): string[] {
     if (!parent || !parent.writesEntity) continue
     const parentSpace =
       parent.table.schema && context.settings.database === 'postgresql' ? `, inSpace: ${swString(parent.table.schema)}` : ''
-    const many = key.columns.length > 1
-    const fields = (names: string[]) => (many ? `[${names.map(swString).join(', ')}]` : swString(names[0]))
     lines.push(
       `    .foreignKey(${fields(key.columns)}, references: ${swString(parent.name)}${parentSpace}, ${fields(key.references.columns)}, onDelete: ${ACTIONS[key.onDelete ?? 'no action']}${key.name ? `, name: ${swString(key.name)}` : ''})`,
     )

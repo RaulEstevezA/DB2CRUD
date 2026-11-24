@@ -6,7 +6,6 @@ SQLite in memory unless TEST_DATABASE_URL names another. Mirrors web/src/core/ge
 
 import re
 
-from ...js import js_string
 from .context import (
     column_of,
     find_info,
@@ -19,7 +18,6 @@ from .context import (
 )
 from .dtos import create_columns, create_dto, update_columns, update_type
 from .samples import missing_value, sample_value
-from .support import driver_of
 from .swift import imports, sw_string
 
 
@@ -107,9 +105,11 @@ def _factories_file(context: dict, makeable: list[dict]) -> dict:
             # No sample is sure to fit a type that is not known
             if column["column"]["nullable"] and (is_key or column["column"]["type"]["kind"] == "unknown"):
                 continue
-            values.append(
-                f"{column['key']}: {sample_value(column, info['table']['checks'], context['schema']['enums'])}"
-            )
+            if column["column"]["type"]["kind"] == "array":
+                value = context["orm"]["emptyList"](context)
+            else:
+                value = sample_value(column, info["table"]["checks"], context["schema"]["enums"])
+            values.append(f"{column['key']}: {value}")
         insert = query(info, "insert")
         blocks.append(
             [
@@ -154,239 +154,11 @@ def _factories_file(context: dict, makeable: list[dict]) -> dict:
 NAMES = {"postgresql": "PostgreSQL", "mysql": "MySQL", "mariadb": "MariaDB"}
 
 
-def _creation_order(tables: list[dict]) -> list[dict]:
-    """The tables in the order they can be created: the rows they point to first."""
-    order: list[dict] = []
-
-    def visit(info: dict, path: set[str]) -> None:
-        if any(info is item for item in order) or info["name"] in path:
-            return
-        path.add(info["name"])
-        for key in info["table"]["foreignKeys"]:
-            parent = next((item for item in tables if item["name"] == key["references"]["table"]), None)
-            if parent and parent is not info:
-                visit(parent, path)
-        order.append(info)
-
-    for info in tables:
-        visit(info, set())
-    return order
-
-
-def _sql_quote(text: str) -> str:
-    escaped = text.replace("'", "''")
-    return f"'{escaped}'"
-
-
-def _raw(sql: str) -> str:
-    return f".sql(unsafeRaw: {sw_string(sql)})"
-
-
-def _data_type(context: dict, column: dict) -> str:
-    """The data type of a column in Fluent's schema builder, as the database has it."""
-    database = context["settings"]["database"]
-    column_type = column["type"]
-    kind = column_type["kind"]
-    if kind == "enum" and database != "sqlite":
-        item = next(
-            (candidate for candidate in context["schema"]["enums"] if candidate["name"] == column_type["name"]), None
-        )
-        if item and item.get("storage") == "native":
-            if database == "postgresql":
-                return _raw(f'"{item["name"]}"')
-            return _raw(f"ENUM({', '.join(_sql_quote(value) for value in item['values'])})")
-    if kind == "integer":
-        return {16: ".int16", 64: ".int64"}.get(column_type["bits"], ".int32")
-    if kind == "decimal":
-        precision = column_type.get("precision")
-        scale = column_type.get("scale")
-        return _raw(
-            f"DECIMAL({js_string(10 if precision is None else precision)}, {js_string(0 if scale is None else scale)})"
-        )
-    if kind == "float":
-        return ".float" if column_type["bits"] == 32 else ".double"
-    if kind == "boolean":
-        return ".bool"
-    if kind == "text":
-        if column_type.get("length") is None:
-            return ".string"
-        return _raw(f"{'CHAR' if column_type.get('fixed') else 'VARCHAR'}({js_string(column_type['length'])})")
-    if kind == "enum":
-        values = next(
-            (item["values"] for item in context["schema"]["enums"] if item["name"] == column_type["name"]), []
-        )
-        return _raw(f"VARCHAR({max([1, *(len(value) for value in values)])})")
-    if kind == "date":
-        return ".date"
-    if kind == "time":
-        return ".time"
-    if kind == "datetime":
-        return _raw("TIMESTAMPTZ") if column_type.get("timezone") and database == "postgresql" else ".datetime"
-    if kind == "uuid":
-        return ".uuid"
-    if kind == "binary":
-        return ".data"
-    return ".string"
-
-
-def _constraints(context: dict, info: dict, column: dict) -> list[str]:
-    """The constraints of a column in Fluent's schema builder: its key, null, its default."""
-    db = column["column"]
-    result: list[str] = []
-    primary_key = info["table"]["primaryKey"]
-    generated = db.get("generated")
-    default = db.get("default")
-    single = primary_key is not None and len(primary_key) == 1 and primary_key[0] == db["name"]
-    if single:
-        result.append(f".identifier(auto: {'true' if generated == 'identity' else 'false'})")
-    elif not db["nullable"]:
-        result.append(".required")
-    if generated in ("now", "onUpdateNow"):
-        # Fluent writes a datetime as DATETIME(6) on MySQL, whose default must have the same precision
-        if db["type"]["kind"] == "date":
-            result.append(_raw("DEFAULT CURRENT_DATE"))
-        elif context["settings"]["database"] in ("mysql", "mariadb") and _data_type(context, db) == ".datetime":
-            result.append(_raw("DEFAULT CURRENT_TIMESTAMP(6)"))
-        else:
-            result.append(_raw("DEFAULT CURRENT_TIMESTAMP"))
-    elif isinstance(generated, dict):
-        result.append(_raw(f"GENERATED ALWAYS AS ({generated['computed']}) STORED"))
-    elif default is not None and default["kind"] == "literal" and default.get("value") is not None:
-        value = default["value"]
-        if isinstance(value, str):
-            text = _sql_quote(value)
-        elif isinstance(value, bool):
-            text = "TRUE" if value else "FALSE"
-        else:
-            text = js_string(value)
-        result.append(_raw(f"DEFAULT {text}"))
-    elif default is not None and default["kind"] == "expression":
-        result.append(_raw(f"DEFAULT {default['sql']}"))
-    return result
-
-
-ACTIONS = {
-    "cascade": ".cascade",
-    "set null": ".setNull",
-    "set default": ".setDefault",
-    "restrict": ".restrict",
-    "no action": ".noAction",
-}
-
-
-def _create_table(context: dict, info: dict) -> list[str]:
-    """The schema builder of a table, as the database has it."""
-    table = info["table"]
-    postgres = context["settings"]["database"] == "postgresql"
-    space = f", space: {sw_string(table['schema'])}" if table.get("schema") and postgres else ""
-    lines = [f"try await db.schema({sw_string(table['name'])}{space})"]
-    for column in info["columns"]:
-        parts = [
-            sw_string(column["column"]["name"]),
-            _data_type(context, column["column"]),
-            *_constraints(context, info, column),
-        ]
-        lines.append(f"    .field({', '.join(parts)})")
-    if table["primaryKey"] and len(table["primaryKey"]) > 1:
-        lines.append(f"    .compositeIdentifier(over: {', '.join(sw_string(name) for name in table['primaryKey'])})")
-    for unique in table["uniques"]:
-        name = f", name: {sw_string(unique['name'])}" if unique.get("name") else ""
-        lines.append(f"    .unique(on: {', '.join(sw_string(column) for column in unique['columns'])}{name})")
-    for key in table["foreignKeys"]:
-        parent = find_info(context, key["references"]["table"])
-        if not parent or not parent["writesEntity"]:
-            continue
-        parent_space = (
-            f", inSpace: {sw_string(parent['table']['schema'])}" if parent["table"].get("schema") and postgres else ""
-        )
-        many = len(key["columns"]) > 1
-
-        def fields(names: list[str], many: bool = many) -> str:
-            return f"[{', '.join(sw_string(name) for name in names)}]" if many else sw_string(names[0])
-
-        name = f", name: {sw_string(key['name'])}" if key.get("name") else ""
-        action = ACTIONS[key.get("onDelete") or "no action"]
-        lines.append(
-            f"    .foreignKey({fields(key['columns'])}, references: {sw_string(parent['name'])}{parent_space}, {fields(key['references']['columns'])}, onDelete: {action}{name})"
-        )
-    lines.append("    .create()")
-    return lines
-
-
 def _test_database_file(context: dict) -> dict:
     database = context["settings"]["database"]
     sqlite = database == "sqlite"
-    postgres = database == "postgresql"
-    tables = [info for info in context["tables"] if info["writesEntity"]]
-
-    def quote(name: str) -> str:
-        return f"`{name}`" if database in ("mysql", "mariadb") else f'"{name}"'
-
-    def qualified_name(info: dict) -> str:
-        if info["table"].get("schema") and postgres:
-            return f"{quote(info['table']['schema'])}.{quote(info['name'])}"
-        return quote(info["name"])
-
-    schemas: list[str] = []
-    if postgres:
-        for info in context["tables"]:
-            name = info["table"].get("schema")
-            if name and name not in schemas:
-                schemas.append(name)
-    enums = (
-        [
-            item
-            for item in context["schema"]["enums"]
-            if item.get("storage") == "native"
-            and any(
-                column["column"]["type"]["kind"] == "enum" and column["column"]["type"].get("name") == item["name"]
-                for info in context["tables"]
-                for column in info["columns"]
-            )
-        ]
-        if postgres
-        else []
-    )
-
-    def run(sql: str) -> str:
-        return f"try await sql.raw({sw_string(sql)}).run()"
-
-    order = _creation_order(tables)
-    if postgres:
-        check = "SELECT current_database() AS value"
-    elif sqlite:
-        check = "SELECT sqlite_version() AS value"
-    else:
-        check = "SELECT DATABASE() AS value"
     name = NAMES.get(database)
-    recreate = [
-        *(run(f"DROP SCHEMA IF EXISTS {quote(schema)} CASCADE") for schema in schemas),
-        *(
-            run(f"DROP TABLE IF EXISTS {qualified_name(info)}{' CASCADE' if postgres else ''}")
-            for info in reversed(order)
-        ),
-    ]
-    for item in enums:
-        values = ", ".join(_sql_quote(value) for value in item["values"])
-        recreate += [
-            run(f"DROP TYPE IF EXISTS {quote(item['name'])} CASCADE"),
-            run(f"CREATE TYPE {quote(item['name'])} AS ENUM ({values})"),
-        ]
-    recreate += [run(f"CREATE SCHEMA {quote(schema)}") for schema in schemas]
-    for info in order:
-        recreate += _create_table(context, info)
-    if sqlite:
-        opening = [
-            '        let url = ProcessInfo.processInfo.environment["TEST_DATABASE_URL"]',
-            "        let app = if let url { AppDatabase(url: url) } else { AppDatabase(configuration: .sqlite(.memory)) }",
-        ]
-    else:
-        message = f"The database tests need a disposable {name} database: set TEST_DATABASE_URL (it is emptied)"
-        opening = [
-            "        // The tables are written for one kind of database: the tests cannot fall back to SQLite",
-            f'        let url = try #require(ProcessInfo.processInfo.environment["TEST_DATABASE_URL"], {sw_string(message)})',
-            "        let app = try AppDatabase(url: url)",
-        ]
+    pieces = context["orm"]["testDatabase"](context)
     assertion = (
         '                #expect(value.hasPrefix("3."))'
         if sqlite
@@ -394,7 +166,7 @@ def _test_database_file(context: dict) -> dict:
         '                #expect(url.split(separator: "/").last?.split(separator: "?").first.map(String.init) == value)'
     )
     content = [
-        _header(context, True, "FluentKit", "FluentSQL", *([driver_of(context)["module"]] if sqlite else [])),
+        _header(context, True, *pieces["modules"]),
         "",
         "/// Every test is in this suite, one after another: they all empty the same database.",
         "@Suite(.serialized) struct DataTests {}",
@@ -405,7 +177,7 @@ def _test_database_file(context: dict) -> dict:
         "enum TestDatabase {",
         "    /// Runs body with the repositories over the test database, with every table dropped and created again first.",
         "    static func with(_ body: (SqlUnitOfWork) async throws -> Void) async throws {",
-        *opening,
+        *pieces["open"],
         "        do {",
         "            try await recreate(app.database)",
         "            try await body(SqlUnitOfWork(db: app.database))",
@@ -416,11 +188,7 @@ def _test_database_file(context: dict) -> dict:
         "        await app.shutdown()",
         "    }",
         "",
-        "    /// Drops every table, the rows that point to others first, and creates them again as the database has them.",
-        "    private static func recreate(_ db: any Database) async throws {",
-        "        let sql = db as! any SQLDatabase",
-        *_ind(recreate, 8),
-        "    }",
+        *pieces["recreate"],
         "}",
         "",
         "/// The DomainError work throws, or nil when it throws none.",
@@ -448,7 +216,7 @@ def _test_database_file(context: dict) -> dict:
         "    @Suite struct DatabaseTests {",
         "        @Test func isTheTestDatabase() async throws {",
         "            try await TestDatabase.with { uow in",
-        f"                let rows = try await (uow.db as! any SQLDatabase).raw({sw_string(check)}).all()",
+        f"                let rows = try await {pieces['check']}",
         '                let value = try rows[0].decode(column: "value", as: String.self)',
         assertion,
         "            }",
