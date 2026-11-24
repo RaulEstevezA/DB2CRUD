@@ -1,0 +1,217 @@
+{
+ "format": "db-schema",
+ "version": 1,
+ "dialect": "mongodb",
+ "source": {
+  "kind": "orm",
+  "format": "springdata"
+ },
+ "tables": [
+  {
+   "name": "posts",
+   "columns": [
+    {
+     "name": "_id",
+     "type": {
+      "sql": "Integer",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false
+    },
+    {
+     "name": "title",
+     "type": {
+      "sql": "String",
+      "kind": "text"
+     },
+     "nullable": true
+    },
+    {
+     "name": "body",
+     "type": {
+      "sql": "String",
+      "kind": "text"
+     },
+     "nullable": true
+    },
+    {
+     "name": "published",
+     "type": {
+      "sql": "bool",
+      "kind": "boolean"
+     },
+     "nullable": true
+    },
+    {
+     "name": "author_id",
+     "type": {
+      "sql": "String",
+      "kind": "text"
+     },
+     "nullable": true
+    },
+    {
+     "name": "comments",
+     "type": {
+      "sql": "List<Comment>",
+      "kind": "array",
+      "items": {
+       "sql": "Comment",
+       "kind": "json",
+       "fields": [
+        {
+         "name": "text",
+         "type": {
+          "sql": "String",
+          "kind": "text"
+         },
+         "nullable": true
+        },
+        {
+         "name": "written_at",
+         "type": {
+          "sql": "date",
+          "kind": "datetime",
+          "timezone": true
+         },
+         "nullable": true
+        },
+        {
+         "name": "rating",
+         "type": {
+          "sql": "Integer",
+          "kind": "integer",
+          "bits": 32
+         },
+         "nullable": true
+        }
+       ]
+      }
+     },
+     "nullable": true
+    },
+    {
+     "name": "tags",
+     "type": {
+      "sql": "List<String>",
+      "kind": "array",
+      "items": {
+       "sql": "String",
+       "kind": "text"
+      }
+     },
+     "nullable": true
+    }
+   ],
+   "primaryKey": [
+    "_id"
+   ],
+   "foreignKeys": [],
+   "uniques": [],
+   "indexes": [
+    {
+     "name": "ix_posts_author_id",
+     "columns": [
+      "author_id"
+     ]
+    }
+   ],
+   "checks": [],
+   "entity": "Post",
+   "origin": {
+    "line": 14,
+    "column": 1
+   }
+  },
+  {
+   "name": "users",
+   "columns": [
+    {
+     "name": "_id",
+     "type": {
+      "sql": "ObjectId",
+      "kind": "text",
+      "length": 24,
+      "fixed": true,
+      "objectId": true
+     },
+     "nullable": false,
+     "generated": "uuid"
+    },
+    {
+     "name": "email",
+     "type": {
+      "sql": "String",
+      "kind": "text"
+     },
+     "nullable": true
+    },
+    {
+     "name": "name",
+     "type": {
+      "sql": "String",
+      "kind": "text"
+     },
+     "nullable": true
+    },
+    {
+     "name": "profile",
+     "type": {
+      "sql": "Profile",
+      "kind": "json",
+      "fields": [
+       {
+        "name": "bio",
+        "type": {
+         "sql": "String",
+         "kind": "text"
+        },
+        "nullable": true
+       },
+       {
+        "name": "website",
+        "type": {
+         "sql": "String",
+         "kind": "text"
+        },
+        "nullable": true
+       }
+      ]
+     },
+     "nullable": true
+    },
+    {
+     "name": "created_at",
+     "type": {
+      "sql": "date",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": true
+    }
+   ],
+   "primaryKey": [
+    "_id"
+   ],
+   "foreignKeys": [],
+   "uniques": [
+    {
+     "name": "uq_users_email",
+     "columns": [
+      "email"
+     ]
+    }
+   ],
+   "indexes": [],
+   "checks": [],
+   "entity": "User",
+   "origin": {
+    "line": 13,
+    "column": 1
+   }
+  }
+ ],
+ "enums": [],
+ "notes": []
+}

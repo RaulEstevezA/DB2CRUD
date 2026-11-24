@@ -21,7 +21,7 @@ const SYNTAX = { named: '=' } as const
 
 type Call = Expr & { kind: 'call' }
 
-interface Field {
+export interface Field {
   name: string
   /** The Java type as written: `List<OrderLine>` */
   type: string
@@ -32,7 +32,7 @@ interface Field {
   line: number
 }
 
-interface JavaClass {
+export interface JavaClass {
   name: string
   kind: string
   annotations: Expr[]
@@ -230,7 +230,7 @@ function readBody(cursor: Cursor, source: string, declaration: JavaClass, classe
   }
 }
 
-function readClasses(files: SourceFile[]): JavaClass[] {
+export function readClasses(files: SourceFile[]): JavaClass[] {
   const classes: JavaClass[] = []
   for (const file of files) {
     let tokens: Token[]
@@ -261,17 +261,17 @@ function readClasses(files: SourceFile[]): JavaClass[] {
 
 // Reading the annotations
 
-const annotationOf = (annotations: Expr[], ...names: string[]): Expr | undefined =>
+export const annotationOf = (annotations: Expr[], ...names: string[]): Expr | undefined =>
   annotations.find((item) => names.includes(nameOf(item) ?? ''))
 
 /** An argument of an annotation: named, or `value` (the first one without a name). */
-function argumentOf(annotation: Expr | undefined, name: string): Expr | undefined {
+export function argumentOf(annotation: Expr | undefined, name: string): Expr | undefined {
   if (annotation?.kind !== 'call') return undefined
   return annotation.named[name] ?? (name === 'value' ? annotation.args[0] : undefined)
 }
 
 /** The annotations an argument holds: one, or a list of them. */
-const callsOf = (expr: Expr | undefined): Call[] =>
+export const callsOf = (expr: Expr | undefined): Call[] =>
   (expr?.kind === 'list' ? expr.items : expr ? [expr] : []).filter((item): item is Call => item.kind === 'call')
 
 const stringsOf = (expr: Expr | undefined): string[] =>
@@ -280,7 +280,7 @@ const stringsOf = (expr: Expr | undefined): string[] =>
     .filter((item): item is string => item !== undefined)
 
 /** The simple name of a Java type: `java.util.List<OrderLine>` → `List`. */
-const simpleType = (type: string) =>
+export const simpleType = (type: string) =>
   type
     .replace(/<[\s\S]*$/, '')
     .split('.')

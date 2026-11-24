@@ -1,0 +1,382 @@
+{
+ "format": "db-schema",
+ "version": 1,
+ "dialect": "mongodb",
+ "source": {
+  "kind": "orm",
+  "format": "springdata"
+ },
+ "tables": [
+  {
+   "name": "posts",
+   "columns": [
+    {
+     "name": "createdAt",
+     "type": {
+      "sql": "date",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": true,
+     "generated": "now"
+    },
+    {
+     "name": "updated_at",
+     "type": {
+      "sql": "date",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": true,
+     "generated": "onUpdateNow"
+    },
+    {
+     "name": "_id",
+     "type": {
+      "sql": "ObjectId",
+      "kind": "text",
+      "length": 24,
+      "fixed": true,
+      "objectId": true
+     },
+     "nullable": false,
+     "generated": "uuid"
+    },
+    {
+     "name": "title",
+     "type": {
+      "sql": "String",
+      "kind": "text",
+      "length": 80
+     },
+     "nullable": false
+    },
+    {
+     "name": "section",
+     "type": {
+      "sql": "String",
+      "kind": "text"
+     },
+     "nullable": true
+    },
+    {
+     "name": "slug",
+     "type": {
+      "sql": "String",
+      "kind": "text"
+     },
+     "nullable": true
+    },
+    {
+     "name": "status",
+     "type": {
+      "sql": "Status",
+      "kind": "enum",
+      "name": "Status"
+     },
+     "nullable": true,
+     "default": {
+      "kind": "literal",
+      "value": "DRAFT"
+     }
+    },
+    {
+     "name": "views",
+     "type": {
+      "sql": "int",
+      "kind": "integer",
+      "bits": 32
+     },
+     "nullable": false
+    },
+    {
+     "name": "pinned",
+     "type": {
+      "sql": "bool",
+      "kind": "boolean"
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": false
+     }
+    },
+    {
+     "name": "price",
+     "type": {
+      "sql": "decimal",
+      "kind": "decimal"
+     },
+     "nullable": true
+    },
+    {
+     "name": "author",
+     "type": {
+      "sql": "long",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": true
+    },
+    {
+     "name": "reviewers",
+     "type": {
+      "sql": "List<Author>",
+      "kind": "array",
+      "items": {
+       "sql": "long",
+       "kind": "integer",
+       "bits": 64
+      }
+     },
+     "nullable": true
+    },
+    {
+     "name": "oldAuthor",
+     "type": {
+      "sql": "object",
+      "kind": "json"
+     },
+     "nullable": true
+    },
+    {
+     "name": "related",
+     "type": {
+      "sql": "List<String>",
+      "kind": "array",
+      "items": {
+       "sql": "ObjectId",
+       "kind": "text",
+       "length": 24,
+       "fixed": true,
+       "objectId": true
+      }
+     },
+     "nullable": true
+    },
+    {
+     "name": "comments",
+     "type": {
+      "sql": "List<Comment>",
+      "kind": "array",
+      "items": {
+       "sql": "Comment",
+       "kind": "json",
+       "fields": [
+        {
+         "name": "_id",
+         "type": {
+          "sql": "ObjectId",
+          "kind": "text",
+          "length": 24,
+          "fixed": true,
+          "objectId": true
+         },
+         "nullable": true,
+         "generated": "uuid"
+        },
+        {
+         "name": "text",
+         "type": {
+          "sql": "String",
+          "kind": "text"
+         },
+         "nullable": false
+        },
+        {
+         "name": "stars",
+         "type": {
+          "sql": "Integer",
+          "kind": "integer",
+          "bits": 32
+         },
+         "nullable": true,
+         "checks": [
+          {
+           "sql": "stars <= 5",
+           "parsed": {
+            "kind": "compare",
+            "column": "stars",
+            "op": "<=",
+            "value": 5
+           }
+          }
+         ]
+        },
+        {
+         "name": "answers",
+         "type": {
+          "sql": "List<Comment>",
+          "kind": "array",
+          "items": {
+           "sql": "object",
+           "kind": "json"
+          }
+         },
+         "nullable": true
+        }
+       ]
+      }
+     },
+     "nullable": true
+    },
+    {
+     "name": "seo",
+     "type": {
+      "sql": "Seo",
+      "kind": "json",
+      "fields": [
+       {
+        "name": "description",
+        "type": {
+         "sql": "String",
+         "kind": "text"
+        },
+        "nullable": true
+       },
+       {
+        "name": "key words",
+        "type": {
+         "sql": "Set<String>",
+         "kind": "array",
+         "items": {
+          "sql": "String",
+          "kind": "text"
+         }
+        },
+        "nullable": true
+       }
+      ]
+     },
+     "nullable": true
+    },
+    {
+     "name": "extra",
+     "type": {
+      "sql": "object",
+      "kind": "json"
+     },
+     "nullable": true
+    },
+    {
+     "name": "cover",
+     "type": {
+      "sql": "binData",
+      "kind": "binary"
+     },
+     "nullable": true
+    },
+    {
+     "name": "version",
+     "type": {
+      "sql": "long",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": true
+    }
+   ],
+   "primaryKey": [
+    "_id"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "author"
+     ],
+     "references": {
+      "table": "author",
+      "columns": [
+       "_id"
+      ]
+     }
+    }
+   ],
+   "uniques": [
+    {
+     "columns": [
+      "slug"
+     ]
+    },
+    {
+     "name": "ux_slug",
+     "columns": [
+      "section",
+      "slug"
+     ]
+    }
+   ],
+   "indexes": [],
+   "checks": [
+    {
+     "sql": "LENGTH(title) >= 2",
+     "parsed": {
+      "kind": "length",
+      "column": "title",
+      "op": ">=",
+      "value": 2
+     }
+    },
+    {
+     "sql": "views >= 0",
+     "parsed": {
+      "kind": "compare",
+      "column": "views",
+      "op": ">=",
+      "value": 0
+     }
+    }
+   ],
+   "entity": "Post",
+   "origin": {
+    "line": 19,
+    "column": 1
+   }
+  },
+  {
+   "name": "author",
+   "columns": [
+    {
+     "name": "_id",
+     "type": {
+      "sql": "long",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": {
+      "sql": "String",
+      "kind": "text"
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": [
+    "_id"
+   ],
+   "foreignKeys": [],
+   "uniques": [],
+   "indexes": [],
+   "checks": [],
+   "entity": "Author",
+   "origin": {
+    "line": 60,
+    "column": 1
+   }
+  }
+ ],
+ "enums": [
+  {
+   "name": "Status",
+   "values": [
+    "DRAFT",
+    "PUBLISHED"
+   ],
+   "storage": "check"
+  }
+ ],
+ "notes": []
+}
