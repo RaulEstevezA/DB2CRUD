@@ -78,6 +78,14 @@ function readPrimary(cursor: Cursor, source: string, syntax: ExpressionSyntax): 
     cursor.next()
     return { kind: 'number', value: -Number(cursor.next().value.replace(/_/g, '')) }
   }
+  if (cursor.is('lambda') && (cursor.is(':', 1) || cursor.isIdent(1))) {
+    // So is a Python lambda (`lambda: datetime.now(UTC)`)
+    const start = cursor.index
+    cursor.skipUntil([':'])
+    cursor.eat(':')
+    cursor.skipUntil([',', ';'])
+    return { kind: 'other', text: cursor.textBetween(source, start, cursor.index) }
+  }
   if (cursor.is('(') && isArrow(cursor)) {
     // An arrow function (`() => Order`, `(): AnyPgColumn => orders.id`) is kept as text
     const start = cursor.index

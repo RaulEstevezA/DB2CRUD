@@ -76,6 +76,13 @@ def _read_primary(cursor: Cursor, source: str, named_by: str) -> dict:
         cursor.next()
         value = to_number(cursor.next().value.replace("_", ""))
         return {"kind": "number", "value": -value if value is not None else None}
+    if cursor.is_("lambda") and (cursor.is_(":", 1) or cursor.is_ident(1)):
+        # So is a Python lambda (`lambda: datetime.now(UTC)`)
+        start = cursor.index
+        cursor.skip_until([":"])
+        cursor.eat(":")
+        cursor.skip_until([",", ";"])
+        return {"kind": "other", "text": cursor.text_between(source, start, cursor.index)}
     if cursor.is_("(") and _is_arrow(cursor):
         # An arrow function (`() => Order`, `(): AnyPgColumn => orders.id`) is kept as text
         start = cursor.index
