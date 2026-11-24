@@ -18,7 +18,7 @@ runner_of() {
     efcore-* | csharp-sql-*) echo ./runners/dotnet.sh ;;
     doctrine-* | eloquent-* | php-sql-*) echo ./runners/php.sh ;;
     exposed-* | kotlin-sql-*) echo ./runners/kotlin.sh ;;
-    seaorm-*) echo ./runners/rust.sh ;;
+    seaorm-* | rust-sql-*) echo ./runners/rust.sh ;;
     fluent-*) echo ./runners/swift.sh ;;
   esac
 }

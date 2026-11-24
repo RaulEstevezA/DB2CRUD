@@ -686,6 +686,38 @@ export const SCENARIOS = [
     case: 'shop-rust',
     settings: { language: 'rust', orm: 'seaorm', database: 'sqlite', memoryRepositories: false, architecture: 'table', transactions: 'caller' },
   },
+  // Rust without an ORM: SQL through sqlx
+  { id: 'rust-sql-sqlite-defaults', schema: 'shop', settings: { language: 'rust', orm: 'sql', database: 'sqlite' } },
+  {
+    id: 'rust-sql-postgresql-dtos-patch-cursor',
+    schema: 'shop',
+    settings: { language: 'rust', orm: 'sql', database: 'postgresql', serviceTypes: 'dtos', updates: 'patch', paging: 'cursor' },
+    service: 'postgresql',
+  },
+  {
+    id: 'rust-sql-mysql-decided-offset-optional-repository-commits',
+    schema: 'shop',
+    settings: { language: 'rust', orm: 'sql', database: 'mysql', paging: 'offset', updates: 'optional', transactions: 'repository', repositoryInterfaces: false, verbs: 'get' },
+    decisions: OTHER_WAY,
+    service: 'mysql',
+  },
+  {
+    id: 'rust-sql-mariadb-caller-dtos-full-by-table',
+    schema: 'shop',
+    settings: { language: 'rust', orm: 'sql', database: 'mariadb', transactions: 'caller', serviceTypes: 'dtos', updates: 'full', architecture: 'table', memoryRepositories: false },
+    service: 'mariadb',
+  },
+  {
+    id: 'rust-sql-sqlite-no-interfaces-services-tests',
+    schema: 'shop',
+    settings: { language: 'rust', orm: 'sql', database: 'sqlite', repositoryInterfaces: false, verbs: 'find', tests: 'services', entities: 'all' },
+  },
+  {
+    id: 'rust-sql-postgresql-conversions-dtos',
+    case: 'shop-rust',
+    settings: { language: 'rust', orm: 'sql', database: 'postgresql', serviceTypes: 'dtos' },
+    service: 'postgresql',
+  },
   { id: 'fluent-sqlite-defaults', schema: 'shop', settings: { language: 'swift', orm: 'fluent', database: 'sqlite' } },
   {
     id: 'fluent-postgresql-dtos-patch',
