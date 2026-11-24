@@ -522,6 +522,38 @@ export const SCENARIOS = [
     case: 'shop-php',
     settings: { language: 'php', orm: 'eloquent', database: 'sqlite', memoryRepositories: false, architecture: 'table', transactions: 'caller' },
   },
+  // PHP without an ORM: SQL through PDO
+  { id: 'php-sql-sqlite-defaults', schema: 'shop', settings: { language: 'php', orm: 'sql', database: 'sqlite' } },
+  {
+    id: 'php-sql-postgresql-readonly-dtos-patch-cursor',
+    schema: 'shop',
+    settings: { language: 'php', orm: 'sql', database: 'postgresql', serviceTypes: 'dtos', dtoKind: 'readonly', updates: 'patch', paging: 'cursor' },
+    service: 'postgresql',
+  },
+  {
+    id: 'php-sql-mysql-decided-offset-partial-repository-commits',
+    schema: 'shop',
+    settings: { language: 'php', orm: 'sql', database: 'mysql', paging: 'offset', updates: 'partial', transactions: 'repository', repositoryInterfaces: false, verbs: 'get' },
+    decisions: OTHER_WAY,
+    service: 'mysql',
+  },
+  {
+    id: 'php-sql-mariadb-caller-class-dtos-full-by-table',
+    schema: 'shop',
+    settings: { language: 'php', orm: 'sql', database: 'mariadb', transactions: 'caller', serviceTypes: 'dtos', dtoKind: 'class', updates: 'full', architecture: 'table', memoryRepositories: false },
+    service: 'mariadb',
+  },
+  {
+    id: 'php-sql-sqlite-no-interfaces-services-tests',
+    schema: 'shop',
+    settings: { language: 'php', orm: 'sql', database: 'sqlite', repositoryInterfaces: false, verbs: 'find', tests: 'services', entities: 'all' },
+  },
+  {
+    id: 'php-sql-postgresql-conversions-dtos',
+    case: 'shop-php',
+    settings: { language: 'php', orm: 'sql', database: 'postgresql', serviceTypes: 'dtos' },
+    service: 'postgresql',
+  },
   { id: 'exposed-sqlite-defaults', schema: 'shop', settings: { language: 'kotlin', orm: 'exposed', database: 'sqlite' } },
   {
     id: 'exposed-postgresql-data-dtos-patch',
