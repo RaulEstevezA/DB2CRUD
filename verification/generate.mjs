@@ -4,7 +4,7 @@
  *
  * Usage: node --experimental-strip-types verification/generate.mjs [scenario-id-prefix]
  */
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { onOriginalDatabase, originalDdl } from './original-ddl.mjs'
@@ -26,9 +26,11 @@ const SCHEMAS = { shop: SHOP }
 const prefix = process.argv[2] ?? ''
 const work = join(here, '.work')
 
-/** The schema of a file of ORM code or of the validators of a database. */
+/** The schema of a file, or of those of a folder, of ORM code, validators or documents of a database. */
 function readCode(path) {
-  const read = readOrmCode([{ name: path, text: readFileSync(join(here, path), 'utf8') }])
+  const full = join(here, path)
+  const files = statSync(full).isDirectory() ? readdirSync(full).filter((name) => name !== 'expected.json').sort().map((name) => join(full, name)) : [full]
+  const read = readOrmCode(files.map((file) => ({ name: file, text: readFileSync(file, 'utf8') })))
   if (!read.ok) throw new Error(`${path}: ${read.error}`)
   return read.schema
 }
