@@ -5,7 +5,7 @@
  */
 import type { DbCheck, DbEnum } from '../../schema/types.ts'
 import type { ColumnInfo } from './context.ts'
-import { rsLiteral } from './entities.ts'
+import { rsLiteral } from './values.ts'
 import { owned } from './rust.ts'
 
 function checksOf(column: ColumnInfo, checks: DbCheck[]) {

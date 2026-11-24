@@ -17,6 +17,7 @@ import { findPolicy, findRepository, findService } from '../../crud/types.ts'
 import type { DbColumn, DbSchema, DbTable, DbType } from '../../schema/types.ts'
 import type { ProjectSettings } from '../../settings/settings.ts'
 import { toSnakeCase } from '../../model/naming.ts'
+import type { RustOrm } from './orm.ts'
 import { columnVariant, snakeName, typeName } from './rust.ts'
 
 /** The crates a type comes from, besides the standard library. */
@@ -70,6 +71,7 @@ export interface TableInfo {
 }
 
 export interface Context {
+  orm: RustOrm
   schema: DbSchema
   design: CrudDesign
   settings: ProjectSettings
@@ -171,8 +173,9 @@ function tableInfo(schema: DbSchema, design: CrudDesign, settings: ProjectSettin
   }
 }
 
-export function createContext(schema: DbSchema, design: CrudDesign, settings: ProjectSettings): Context {
+export function createContext(orm: RustOrm, schema: DbSchema, design: CrudDesign, settings: ProjectSettings): Context {
   return {
+    orm,
     schema,
     design,
     settings,

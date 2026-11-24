@@ -21,7 +21,6 @@ import {
   type TableInfo,
 } from './context.ts'
 import { createColumns, createDto, updateColumns, updatePath, updateType } from './dtos.ts'
-import { nativeEnum } from './entities.ts'
 import { RsUses, owned, rsString, snakeName } from './rust.ts'
 import { missingValue, sampleValue } from './samples.ts'
 
@@ -42,10 +41,10 @@ export function canMake(context: Context, info: TableInfo, seen = new Set<string
 const newName = (info: TableInfo) => `new_${info.module.replace(/^r#/, '')}`
 const addName = (info: TableInfo) => `add_${info.module.replace(/^r#/, '')}`
 const ind = (items: string[], spaces = 4) => items.map((line) => (line === '' ? '' : ' '.repeat(spaces) + line))
-const TESTS = 'tests/data'
-const UNIT_OF_WORK = (context: Context) => `${context.crate}::unit_of_work`
+export const TESTS = 'tests/data'
+export const UNIT_OF_WORK = (context: Context) => `${context.crate}::unit_of_work`
 /** A path of the crate, as the tests name it: `crate::errors` → `data_access::errors`. */
-const external = (context: Context, path: string) => path.replace(/^crate::/, `${context.crate}::`)
+export const external = (context: Context, path: string) => path.replace(/^crate::/, `${context.crate}::`)
 
 /** The value of a field known to be set, copied: `stored.id.expect(…)`. */
 const known = (expression: string, column: ColumnInfo) =>
@@ -80,7 +79,11 @@ function factoriesFile(context: Context, makeable: TableInfo[]): GeneratedFile {
         if (column === info.soft) return column.column.type.kind === 'boolean' ? [`        ${column.field}: Some(false),`] : []
         // No sample is sure to fit a type that is not known
         if (column.column.nullable && (isKey || column.column.type.kind === 'unknown')) return []
-        return [`        ${column.field}: Some(${sampleValue(column, info.table.checks, context.schema.enums)}),`]
+        const value =
+          column.column.type.kind === 'array'
+            ? context.orm.emptyList(context)
+            : sampleValue(column, info.table.checks, context.schema.enums)
+        return [`        ${column.field}: Some(${value}),`]
       })
     const usesN = values.some((line) => /\bn\b/.test(line))
     const insert = query(info, 'insert')!
@@ -112,125 +115,6 @@ function factoriesFile(context: Context, makeable: TableInfo[]): GeneratedFile {
       '',
       uses.write(),
       ...blocks.flatMap((block) => ['', ...block]),
-      '',
-    ].join('\n'),
-  }
-}
-
-// The test database
-
-const NAMES: Record<string, string> = { postgresql: 'PostgreSQL', mysql: 'MySQL', mariadb: 'MariaDB' }
-
-/** The tables in the order they can be created: the rows they point to first. */
-function creationOrder(tables: TableInfo[]): TableInfo[] {
-  const order: TableInfo[] = []
-  const visit = (info: TableInfo, path: Set<string>) => {
-    if (order.includes(info) || path.has(info.name)) return
-    path.add(info.name)
-    for (const key of info.table.foreignKeys) {
-      const parent = tables.find((item) => item.name === key.references.table)
-      if (parent && parent !== info) visit(parent, path)
-    }
-    order.push(info)
-  }
-  for (const info of tables) visit(info, new Set())
-  return order
-}
-
-function testDatabaseFile(context: Context): GeneratedFile {
-  const database = context.settings.database
-  const sqlite = database === 'sqlite'
-  const postgres = database === 'postgresql'
-  const tables = context.tables.filter((info) => info.writesEntity)
-  const uses = new RsUses().add(
-    'sea_orm::ConnectionTrait',
-    'sea_orm::Database',
-    'sea_orm::DatabaseConnection',
-    'sea_orm::Schema',
-    'sea_orm::Statement',
-    'tokio::sync::Mutex',
-    'tokio::sync::MutexGuard',
-    `${UNIT_OF_WORK(context)}::SqlUnitOfWork`,
-  )
-  if (sqlite) uses.add('std::sync::atomic::AtomicUsize', 'std::sync::atomic::Ordering')
-  // Each table's module by a name of its own: by table, every one of them is `table`
-  const tableModule = (info: TableInfo) => `${info.attr.replace(/^r#/, '')}_table`
-  for (const info of tables) uses.add(`${external(context, moduleOf(context, info, 'table'))} as ${tableModule(info)}`)
-  const quote = (name: string) => (database === 'mysql' || database === 'mariadb' ? `\`${name}\`` : `"${name}"`)
-  const qualifiedName = (info: TableInfo) =>
-    info.table.schema && postgres ? `${quote(info.table.schema)}.${quote(info.name)}` : quote(info.name)
-  const schemas = postgres ? [...new Set(context.tables.map((info) => info.table.schema).filter((name): name is string => !!name))] : []
-  const enums = postgres
-    ? context.schema.enums.filter((item) =>
-        context.tables.some((info) => info.columns.some((column) => nativeEnum(context, column.column) === item)),
-      )
-    : []
-  const sqlQuote = (text: string) => `'${text.replace(/'/g, "''")}'`
-  const run = (sql: string) => `    db.execute_unprepared(${rsString(sql)}).await.expect(${rsString(sql)});`
-  const order = creationOrder(tables)
-  const sql = postgres ? 'SELECT current_database()' : sqlite ? 'SELECT sqlite_version()' : 'SELECT DATABASE()'
-  return {
-    path: `${TESTS}/database.rs`,
-    content: [
-      sqlite
-        ? '//! The test database: TEST_DATABASE_URL, or SQLite in a new temporary file, created from the SeaORM entities before every test.'
-        : `//! The test database: the ${NAMES[database]} database TEST_DATABASE_URL names, created from the SeaORM entities before every test.`,
-      '',
-      uses.write(),
-      '',
-      '/// Every test empties the same database: they take turns',
-      'static TURN: Mutex<()> = Mutex::const_new(());',
-      '',
-      '/// A connection to the test database.',
-      'async fn connect() -> DatabaseConnection {',
-      ...(sqlite
-        ? [
-            '    let url = std::env::var("TEST_DATABASE_URL").unwrap_or_else(|_| {',
-            '        // A new file for every test: SQLite in memory would be another database on every connection',
-            '        static FILES: AtomicUsize = AtomicUsize::new(0);',
-            `        let name = format!(${rsString(`${context.crate}-{}-{}.db`)}, std::process::id(), FILES.fetch_add(1, Ordering::SeqCst));`,
-            '        format!("sqlite://{}?mode=rwc", std::env::temp_dir().join(name).display())',
-            '    });',
-          ]
-        : [
-            '    // The entities are written for one kind of database: the tests cannot fall back to SQLite',
-            `    let url = std::env::var("TEST_DATABASE_URL").expect(${rsString(`The database tests need a disposable ${NAMES[database]} database: set TEST_DATABASE_URL (it is emptied)`)});`,
-          ]),
-      '    Database::connect(&url).await.expect("the test database")',
-      '}',
-      '',
-      '/// The repositories over the test database, with every table dropped and created again, and the turn of the test',
-      '/// that holds it.',
-      "pub async fn open() -> (MutexGuard<'static, ()>, SqlUnitOfWork) {",
-      '    let turn = TURN.lock().await;',
-      '    let db = connect().await;',
-      ...schemas.map((name) => run(`DROP SCHEMA IF EXISTS ${quote(name)} CASCADE`)),
-      // The rows that point to others first
-      ...[...order].reverse().map((info) => run(`DROP TABLE IF EXISTS ${qualifiedName(info)}${postgres ? ' CASCADE' : ''}`)),
-      ...enums.flatMap((item) => [
-        run(`DROP TYPE IF EXISTS ${quote(item.name)} CASCADE`),
-        run(`CREATE TYPE ${quote(item.name)} AS ENUM (${item.values.map(sqlQuote).join(', ')})`),
-      ]),
-      ...schemas.map((name) => run(`CREATE SCHEMA ${quote(name)}`)),
-      '    Schema::new(db.get_database_backend())',
-      '        .builder()',
-      ...tables.map((info) => `        .register(${tableModule(info)}::Entity)`),
-      '        .apply(&db)',
-      '        .await',
-      '        .expect("the tables");',
-      '    (turn, SqlUnitOfWork::new(db))',
-      '}',
-      '',
-      '#[tokio::test]',
-      sqlite ? 'async fn is_sqlite() {' : 'async fn is_the_one_test_database_url_names() {',
-      '    let _turn = TURN.lock().await;',
-      '    let db = connect().await;',
-      `    let row = db.query_one_raw(Statement::from_string(db.get_database_backend(), ${rsString(sql)})).await.expect("a query").expect("a row");`,
-      '    let value: String = row.try_get_by_index(0).expect("a value");',
-      sqlite
-        ? '    assert!(value.starts_with("3."));'
-        : '    let url = std::env::var("TEST_DATABASE_URL").expect("TEST_DATABASE_URL");\n    assert_eq!(url.rsplit(\'/\').next().and_then(|name| name.split(\'?\').next()), Some(value.as_str()));',
-      '}',
       '',
     ].join('\n'),
   }
@@ -579,7 +463,7 @@ export function testFiles(context: Context): GeneratedFile[] {
   const tests = context.settings.tests
   if (tests === 'none' || !writesEntities(context)) return []
   const makeable = context.tables.filter((info) => canMake(context, info))
-  const files: GeneratedFile[] = [testDatabaseFile(context), factoriesFile(context, makeable)]
+  const files: GeneratedFile[] = [context.orm.testDatabaseFile(context), factoriesFile(context, makeable)]
   const modules = ['database', 'factories']
   const memory = context.settings.memoryRepositories
   for (const info of makeable) {

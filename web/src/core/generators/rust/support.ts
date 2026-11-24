@@ -1,6 +1,6 @@
 /**
  * What every Rust project shares: the domain errors services return (no HTTP codes), the pages lists are read in,
- * Patch (a field of an update: absent, or a value that may be None), the connection DATABASE_URL names, and the unit of
+ * Patch (a field of an update: absent, or a value that may be None), and the unit of
  * work over the repositories, with its database and in-memory versions. A unit of work opens a transaction with
  * `begin()`; its changes are kept by `commit()`, and dropped when it is dropped without one.
  */
@@ -16,14 +16,14 @@ import {
   type Context,
   type TableInfo,
 } from './context.ts'
-import { RsUses, rsString } from './rust.ts'
+import { RsUses } from './rust.ts'
 
 export const ERRORS = 'crate::errors'
 export const COMMON = 'crate::common'
 export const DOMAIN_ERROR = `${ERRORS}::DomainError`
 export const UNIT_OF_WORK = 'crate::unit_of_work::UnitOfWork'
 
-export function errorsFile(): GeneratedFile {
+export function errorsFile(context: Context): GeneratedFile {
   return rsFile(
     fileOf(ERRORS),
     '',
@@ -51,7 +51,7 @@ export function errorsFile(): GeneratedFile {
       '    /// The values break the rules of the table: missing, too long, out of range, pointing nowhere.',
       '    ValidationFailed { entity: String, errors: Vec<FieldError> },',
       '    /// The database failed for another reason.',
-      '    Database(sea_orm::DbErr),',
+      `    Database(${context.orm.error}),`,
       '}',
       '',
       'impl DomainError {',
@@ -86,8 +86,8 @@ export function errorsFile(): GeneratedFile {
       '',
       'impl std::error::Error for DomainError {}',
       '',
-      'impl From<sea_orm::DbErr> for DomainError {',
-      '    fn from(error: sea_orm::DbErr) -> Self {',
+      `impl From<${context.orm.error}> for DomainError {`,
+      `    fn from(error: ${context.orm.error}) -> Self {`,
       '        DomainError::Database(error)',
       '    }',
       '}',
@@ -171,39 +171,6 @@ const URLS: Record<string, string> = {
 
 export const defaultUrl = (context: Context) => URLS[context.settings.database] ?? URLS.postgresql
 
-/** `database.rs`: the connection DATABASE_URL names, and Db, what repositories run their queries on. */
-export function databaseFile(context: Context): GeneratedFile {
-  return rsFile(
-    'src/database.rs',
-    'use sea_orm::{DatabaseConnection, DatabaseExecutor, DatabaseTransaction, DbErr};',
-    [
-      `pub const DEFAULT_URL: &str = ${rsString(defaultUrl(context))};`,
-      '',
-      '/// A connection to the database at DATABASE_URL (DEFAULT_URL when it is not set).',
-      'pub async fn connect() -> Result<DatabaseConnection, DbErr> {',
-      '    let url = std::env::var("DATABASE_URL").unwrap_or_else(|_| DEFAULT_URL.to_string());',
-      '    sea_orm::Database::connect(url).await',
-      '}',
-      '',
-      '/// What repositories run their queries on: the connection, or a transaction opened on it.',
-      'pub enum Db {',
-      '    Connection(DatabaseConnection),',
-      '    Transaction(DatabaseTransaction),',
-      '}',
-      '',
-      'impl Db {',
-      "    pub fn executor(&self) -> DatabaseExecutor<'_> {",
-      '        match self {',
-      '            Db::Connection(connection) => connection.into(),',
-      '            Db::Transaction(transaction) => transaction.into(),',
-      '        }',
-      '    }',
-      '}',
-    ],
-    ['The database DATABASE_URL names, through SeaORM. It never migrates: the database already exists.'],
-  )
-}
-
 const HOW = {
   operation: 'Each service operation runs in a transaction of its own: begin() opens it, commit() keeps its changes.',
   caller: 'Services never commit: whoever holds the database opens the transaction (SqlUnitOfWork::in_transaction) and commits it.',
@@ -219,12 +186,8 @@ export function unitOfWorkFile(context: Context): GeneratedFile {
   const settings = context.settings
   const interfaces = settings.repositoryInterfaces
   const memory = settings.memoryRepositories
-  const uses = new RsUses().add(
-    'async_trait::async_trait',
-    'sea_orm::DatabaseConnection',
-    'sea_orm::DatabaseTransaction',
-    'sea_orm::TransactionTrait',
-  )
+  const transactions = context.orm.unitOfWork(context)
+  const uses = new RsUses().add('async_trait::async_trait', ...transactions.uses)
   uses.add('crate::database::Db', DOMAIN_ERROR)
   for (const info of context.tables) {
     const module = moduleOf(context, info, 'repository')
@@ -252,15 +215,7 @@ export function unitOfWorkFile(context: Context): GeneratedFile {
     '}',
     '',
     'impl SqlUnitOfWork {',
-    '    /// The repositories over a connection: every write outside a transaction is committed at once.',
-    '    pub fn new(connection: DatabaseConnection) -> Self {',
-    '        Self { db: Db::Connection(connection) }',
-    '    }',
-    '',
-    '    /// The repositories inside a transaction someone else opened; commit() commits it.',
-    '    pub fn in_transaction(transaction: DatabaseTransaction) -> Self {',
-    '        Self { db: Db::Transaction(transaction) }',
-    '    }',
+    ...transactions.constructors,
     '}',
     '',
     '#[async_trait]',
@@ -272,19 +227,11 @@ export function unitOfWorkFile(context: Context): GeneratedFile {
       '',
     ]),
     '    async fn begin(&self) -> Result<Box<dyn UnitOfWork>, DomainError> {',
-    '        // Inside a transaction, a new one is a savepoint of it',
-    '        let transaction = match &self.db {',
-    '            Db::Connection(connection) => connection.begin().await?,',
-    '            Db::Transaction(transaction) => transaction.begin().await?,',
-    '        };',
-    '        Ok(Box::new(SqlUnitOfWork::in_transaction(transaction)))',
+    ...transactions.begin,
     '    }',
     '',
     '    async fn commit(self: Box<Self>) -> Result<(), DomainError> {',
-    '        if let Db::Transaction(transaction) = self.db {',
-    '            transaction.commit().await?;',
-    '        }',
-    '        Ok(())',
+    ...transactions.commit,
     '    }',
     '}',
     ...(memory

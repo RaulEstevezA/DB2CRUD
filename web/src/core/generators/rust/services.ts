@@ -28,7 +28,7 @@ import {
   type TableInfo,
 } from './context.ts'
 import { createColumns, createDto, readColumns, readDto, updateColumns, updatePath, updateStruct, updateType } from './dtos.ts'
-import { nowOf } from './entities.ts'
+import { nowOf } from './values.ts'
 import { RsUses, rsString, snakeName } from './rust.ts'
 import { COMMON, DOMAIN_ERROR, ERRORS, UNIT_OF_WORK } from './support.ts'
 
