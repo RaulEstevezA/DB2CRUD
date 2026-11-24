@@ -90,6 +90,11 @@ def column_types_file(context: dict) -> dict | None:
 # Entities
 
 
+def _item_of(column_type: dict) -> dict:
+    """The type of the items of an array, however deep."""
+    return _item_of(column_type["items"]) if column_type["kind"] == "array" else column_type
+
+
 def _orm_type(column_type: dict, database: str) -> str:
     """The column type TypeORM writes for the chosen database."""
     kind = column_type["kind"]
@@ -109,7 +114,9 @@ def _orm_type(column_type: dict, database: str) -> str:
             return "real" if postgres else "float"
         return "double precision" if postgres else "double"
     if kind == "text":
-        return "text" if "length" not in column_type else "char" if column_type.get("fixed") else "varchar"
+        return (
+            "text" if "length" not in column_type else "char" if column_type.get("fixed") and not sqlite else "varchar"
+        )
     if kind in ("boolean", "date", "time"):
         return kind
     if kind == "datetime":
@@ -118,8 +125,10 @@ def _orm_type(column_type: dict, database: str) -> str:
         return "varchar" if sqlite else "uuid"
     if kind == "binary":
         return "bytea" if postgres else "blob" if sqlite else "varbinary" if "length" in column_type else "blob"
+    # The column of an array has the type of its items, and `array: true`; the other databases keep arrays as JSON
+    if kind == "array" and postgres:
+        return _orm_type(_item_of(column_type), database)
     if kind in ("json", "array"):
-        # Arrays are portable as JSON; a native PostgreSQL array is a decision for the user
         return "simple-json" if sqlite else "json"
     if kind == "enum":
         return "simple-enum" if sqlite else "enum"
@@ -128,13 +137,16 @@ def _orm_type(column_type: dict, database: str) -> str:
 
 def _column_options(context: dict, column: dict, imports: TsImports, primary: bool) -> list[str]:
     db = column["column"]
-    column_type = db["type"]
-    kind = column_type["kind"]
     database = context["settings"]["database"]
+    native_array = db["type"]["kind"] == "array" and database == "postgresql"
+    column_type = _item_of(db["type"]) if native_array else db["type"]
+    kind = column_type["kind"]
     options = []
     if column["prop"] != db["name"]:
         options.append(f"name: {quote(db['name'])}")
     options.append(f"type: {quote(_orm_type(column_type, database))}")
+    if native_array:
+        options.append("array: true")
     if kind == "text" and "length" in column_type:
         options.append(f"length: {number_text(column_type['length'])}")
     if kind == "uuid" and database == "sqlite":
@@ -149,8 +161,9 @@ def _column_options(context: dict, column: dict, imports: TsImports, primary: bo
                     f"scale: {number_text(column_type.get('scale', 0))}",
                 ]
             )
-        imports.from_("src/column-types", "decimalText")
-        options.append("transformer: decimalText")
+        if not native_array:
+            imports.from_("src/column-types", "decimalText")
+            options.append("transformer: decimalText")
     if kind == "enum":
         item = next(
             (candidate for candidate in context["schema"]["enums"] if candidate["name"] == column_type["name"]), None
@@ -211,7 +224,8 @@ def _column_lines(context: dict, info: dict, column: dict, imports: TsImports) -
     return [
         kind == "unknown" and f'  // TODO: "{db["type"]["sql"]}" has no TypeORM type here; it is mapped as text',
         kind == "array"
-        and f'  // TODO: "{db["type"]["sql"]}" is mapped as JSON; use `array: true` on PostgreSQL if you need the native array',
+        and context["settings"]["database"] != "postgresql"
+        and f'  // "{db["type"]["sql"]}" is kept as JSON: this database has no arrays',
         *(f"  {decorator}" for decorator in decorators),
         f"  {column['prop']}!: {column['ts'] + ' | null' if optional else column['ts']}",
     ]

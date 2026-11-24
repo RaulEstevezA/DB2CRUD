@@ -4,11 +4,12 @@
  * and times, bytes, JSON and enum values); reads leave out rows marked as deleted; pages go by offset or after a
  * key; and a database refusal becomes a ConflictError.
  */
+import type { DbType } from '../../../schema/types.ts'
 import type { Line } from '../../types.ts'
 import type { TsImports } from '../typescript.ts'
-import { columnType, query, type ColumnInfo, type Context, type TableInfo } from '../common/context.ts'
+import { query, tsType, type ColumnInfo, type Context, type TableInfo } from '../common/context.ts'
 import type { RepositoryMethod } from '../common/orm.ts'
-import { fieldOf, memberOf, nativeEnum, renamesValues, enumName } from './schema.ts'
+import { fieldOf, isList, isUnsupported, memberOf, nativeEnum, renamesValues, enumName } from './schema.ts'
 
 /** The module the Prisma client and its types are imported from: the generated one, or the project's own. */
 export function clientModule(context: Context): string {
@@ -23,12 +24,11 @@ export const accessor = (info: TableInfo) => info.entity.charAt(0).toLowerCase()
 const rowType = (info: TableInfo) => `Prisma.${info.entity}Model`
 
 /** Name of the record that turns the Prisma names of an enum's values into the values, and back. */
-const valuesRecord = (context: Context, column: ColumnInfo) => `${enumName(nativeEnum(context, column.column.type)!).toUpperCase()}_VALUES`
-const namesRecord = (context: Context, column: ColumnInfo) => `${enumName(nativeEnum(context, column.column.type)!).toUpperCase()}_NAMES`
+const valuesRecord = (context: Context, type: DbType) => `${enumName(nativeEnum(context, type)!).toUpperCase()}_VALUES`
+const namesRecord = (context: Context, type: DbType) => `${enumName(nativeEnum(context, type)!).toUpperCase()}_NAMES`
 
 /** A value of a Prisma row as the entity keeps it, when it needs converting. */
-function fromRow(context: Context, column: ColumnInfo, value: string): string | null {
-  const type = column.column.type
+function fromRow(context: Context, type: DbType, value: string): string | null {
   const prisma = fieldOf(context, type).type
   switch (type.kind) {
     case 'integer':
@@ -41,11 +41,14 @@ function fromRow(context: Context, column: ColumnInfo, value: string): string | 
       return prisma === 'DateTime' ? `${value}.toISOString().slice(11, 19)` : null
     case 'binary':
       return `Buffer.from(${value})`
-    case 'array':
-      return `${value} as ${columnType(column)}`
+    case 'array': {
+      if (!isList(context, type)) return `${value} as ${tsType(type)}`
+      const item = fromRow(context, type.items, 'item')
+      return item && `${value}.map((item) => ${item})`
+    }
     case 'enum': {
       const item = nativeEnum(context, type)
-      return item && renamesValues(item) ? `${valuesRecord(context, column)}[${value}]` : null
+      return item && renamesValues(item) ? `${valuesRecord(context, type)}[${value}]` : null
     }
     default:
       return null
@@ -53,8 +56,7 @@ function fromRow(context: Context, column: ColumnInfo, value: string): string | 
 }
 
 /** A value of the entity as Prisma writes it, when it needs converting. */
-function toPrisma(context: Context, column: ColumnInfo, value: string, imports: TsImports): string | null {
-  const type = column.column.type
+function toPrisma(context: Context, type: DbType, value: string, imports: TsImports): string | null {
   const prisma = fieldOf(context, type).type
   switch (type.kind) {
     case 'date':
@@ -63,10 +65,14 @@ function toPrisma(context: Context, column: ColumnInfo, value: string, imports: 
       return prisma === 'DateTime' ? `new Date(\`1970-01-01T\${${value}}Z\`)` : null
     case 'binary':
       return `new Uint8Array(${value})`
+    case 'array': {
+      const item = isList(context, type) ? toPrisma(context, type.items, 'item', imports) : null
+      return item && `${value}.map((item) => ${item})`
+    }
     case 'enum': {
       const item = nativeEnum(context, type)
       if (!item) return null
-      if (renamesValues(item)) return `${namesRecord(context, column)}[${value}]`
+      if (renamesValues(item)) return `${namesRecord(context, type)}[${value}]`
       imports.type(clientModule(context), '$Enums')
       return `${value} as $Enums.${enumName(item)}`
     }
@@ -75,41 +81,46 @@ function toPrisma(context: Context, column: ColumnInfo, value: string, imports: 
   }
 }
 
-const isJson = (column: ColumnInfo) => column.column.type.kind === 'json' || column.column.type.kind === 'array'
+const isJson = (context: Context, column: ColumnInfo) =>
+  column.column.type.kind === 'json' || (column.column.type.kind === 'array' && !isList(context, column.column.type))
 
 /** `name: value` of a property read from a row. */
 function readProperty(context: Context, column: ColumnInfo): string {
   const value = `row.${column.prop}`
-  const converted = fromRow(context, column, value)
+  const converted = fromRow(context, column.column.type, value)
   if (!converted) return `${column.prop}: ${value}`
-  const nullable = column.column.nullable && !isJson(column)
+  const nullable = column.column.nullable && !isJson(context, column) && !isList(context, column.column.type)
   return `${column.prop}: ${nullable ? `${value} === null ? null : ${converted}` : converted}`
 }
 
 /** `name: value` of a property written from the entity; undefined values are left for the database to fill. */
 function writeProperty(context: Context, column: ColumnInfo, imports: TsImports): string {
   const value = `entity.${column.prop}`
-  if (isJson(column)) {
+  if (isJson(context, column)) {
     imports.from(clientModule(context), 'Prisma')
     return column.column.nullable
       ? `${column.prop}: ${value} === null ? Prisma.DbNull : (${value} as Prisma.InputJsonValue)`
       : `${column.prop}: ${value} as Prisma.InputJsonValue`
   }
-  const converted = toPrisma(context, column, value, imports)
+  const converted = toPrisma(context, column.column.type, value, imports)
+  // Prisma has no null lists: undefined leaves the column as it is
+  if (isList(context, column.column.type) && column.column.nullable)
+    return `${column.prop}: ${value} == null ? undefined : ${converted ?? value}`
   return converted ? `${column.prop}: ${value} == null ? ${value} : ${converted}` : `${column.prop}: ${value}`
 }
 
 /** A condition on a column, with the value converted as Prisma compares it. */
 function condition(context: Context, column: ColumnInfo, value: string, imports: TsImports): string {
-  const converted = isJson(column) ? null : toPrisma(context, column, value, imports)
+  const converted = isJson(context, column) ? null : toPrisma(context, column.column.type, value, imports)
   return converted ? `${column.prop}: ${converted}` : value === column.prop ? column.prop : `${column.prop}: ${value}`
 }
 
 /** What a computed column or the key of a stored row is never written with. */
-const writable = (column: ColumnInfo) => typeof column.column.generated !== 'object'
+const writable = (context: Context, column: ColumnInfo) =>
+  typeof column.column.generated !== 'object' && !isUnsupported(context, column.column.type)
 // A column the database sets on every change (ON UPDATE) is left for it, or the ORM, to set
-const changeable = (info: TableInfo, column: ColumnInfo) =>
-  writable(column) && !info.key.includes(column) && !column.generated && column.column.generated !== 'onUpdateNow'
+const changeable = (context: Context, info: TableInfo, column: ColumnInfo) =>
+  writable(context, column) && !info.key.includes(column) && !column.generated && column.column.generated !== 'onUpdateNow'
 
 function multiline(open: string, items: string[], close: string): Line[] {
   return [open, ...items.map((item) => `    ${item},`), close]
@@ -119,18 +130,19 @@ function multiline(open: string, items: string[], close: string): Line[] {
 export function prismaHelpers(context: Context, info: TableInfo, imports: TsImports): Line[] {
   imports.from(clientModule(context), 'Prisma')
   const result: Line[] = []
-  const enums = new Map<string, ColumnInfo>()
+  const enums = new Map<string, DbType>()
   for (const column of info.columns) {
-    const item = nativeEnum(context, column.column.type)
-    if (item && renamesValues(item)) enums.set(item.name, column)
+    const type = column.column.type.kind === 'array' ? column.column.type.items : column.column.type
+    const item = nativeEnum(context, type)
+    if (item && renamesValues(item)) enums.set(item.name, type)
   }
-  for (const column of enums.values()) {
-    const item = nativeEnum(context, column.column.type)!
+  for (const type of enums.values()) {
+    const item = nativeEnum(context, type)!
     imports.type(clientModule(context), '$Enums')
     result.push(
       `/** The values of ${item.name} by their Prisma names, and back: the client uses the names. */`,
-      `const ${valuesRecord(context, column)}: Record<$Enums.${enumName(item)}, string> = { ${item.values.map((value) => `${memberOf(value)}: ${JSON.stringify(value).replace(/"/g, "'")}`).join(', ')} }`,
-      `const ${namesRecord(context, column)} = Object.fromEntries(Object.entries(${valuesRecord(context, column)}).map(([name, value]) => [value, name])) as Record<string, $Enums.${enumName(item)}>`,
+      `const ${valuesRecord(context, type)}: Record<$Enums.${enumName(item)}, string> = { ${item.values.map((value) => `${memberOf(value)}: ${JSON.stringify(value).replace(/"/g, "'")}`).join(', ')} }`,
+      `const ${namesRecord(context, type)} = Object.fromEntries(Object.entries(${valuesRecord(context, type)}).map(([name, value]) => [value, name])) as Record<string, $Enums.${enumName(item)}>`,
       '',
     )
   }
@@ -139,7 +151,7 @@ export function prismaHelpers(context: Context, info: TableInfo, imports: TsImpo
     `function toEntity(row: ${rowType(info)}): ${info.entity} {`,
     ...multiline(
       `  return Object.assign(new ${info.entity}(), {`,
-      info.columns.map((column) => readProperty(context, column)),
+      info.columns.filter((column) => !isUnsupported(context, column.column.type)).map((column) => readProperty(context, column)),
       '  })',
     ),
     '}',
@@ -151,13 +163,13 @@ export function prismaHelpers(context: Context, info: TableInfo, imports: TsImpo
       `function createData(entity: ${info.entity}): Prisma.${info.entity}UncheckedCreateInput {`,
       ...multiline(
         '  return {',
-        info.columns.filter(writable).map((column) => writeProperty(context, column, imports)),
+        info.columns.filter((column) => writable(context, column)).map((column) => writeProperty(context, column, imports)),
         '  }',
       ),
       '}',
     )
   if (query(info, 'update')) {
-    const columns = info.columns.filter((column) => changeable(info, column))
+    const columns = info.columns.filter((column) => changeable(context, info, column))
     result.push(
       '',
       `/** The values a change writes: not the key, nor what the database fills. */`,
@@ -245,7 +257,7 @@ export function prismaBody(context: Context, info: TableInfo, method: Repository
         const value = (index: number) => {
           const column = info.key[index]
           const raw = `after[${index}] as ${column.ts}`
-          return isJson(column) ? raw : (toPrisma(context, column, `(${raw})`, imports) ?? raw)
+          return isJson(context, column) ? raw : (toPrisma(context, column.column.type, `(${raw})`, imports) ?? raw)
         }
         const after = info.key.map((column, index) =>
           [

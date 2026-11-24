@@ -203,7 +203,12 @@ def drizzle_body(context: dict, info: dict, method: dict, imports: TsImports) ->
             ]
         else:
             action = [f"await this.db.insert({table}).values(insertValues(entity))"]
+        uuids = [column for column in info["columns"] if column["column"].get("generated") == "uuid"]
+        if uuids:
+            imports.from_("node:crypto", "randomUUID")
         return [
+            # Known before the insert, to read the row back by it
+            *(f"entity.{column['prop']} ??= randomUUID()" for column in uuids),
             *_write(info, action, imports),
             f"const [row] = await {select}.where({_key_of(info, imports)}).limit(1)",
             "return row === undefined ? entity : Object.assign(entity, toEntity(row))",

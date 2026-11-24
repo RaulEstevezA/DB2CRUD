@@ -124,7 +124,33 @@ def field_name(context: dict, info: dict, column: dict) -> str:
     return foreign["name"] if foreign else column["attr"]
 
 
-def _field_type(context: dict, column_type: dict, todos: list[str]) -> tuple[str, list[str]]:
+def _is_mysql(context: dict) -> bool:
+    return context["settings"]["database"] in ("mysql", "mariadb")
+
+
+def _is_sized(context: dict, column_type: dict) -> bool:
+    """A binary column whose length MySQL needs, if it is in a key."""
+    return column_type["kind"] == "binary" and "length" in column_type and _is_mysql(context)
+
+
+def _is_plain_json(context: dict, column_type: dict) -> bool:
+    """A column of PostgreSQL's json type, which Django's JSONField (jsonb) cannot read."""
+    return (
+        column_type["kind"] == "json"
+        and context["settings"]["database"] == "postgresql"
+        and column_type["sql"].lower() == "json"
+    )
+
+
+IMPORTED = {"ArrayField", "SizedBinaryField", "PlainJSONField"}
+
+
+def _field_class(field: str) -> str:
+    """Fields imported by their name; the others are Django's `models`."""
+    return field if field in IMPORTED else f"models.{field}"
+
+
+def _field_type(context: dict, column_type: dict, todos: list[str], imports: Imports) -> tuple[str, list[str]]:
     kind = column_type["kind"]
     sql = column_type["sql"]
     if kind == "integer":
@@ -144,6 +170,12 @@ def _field_type(context: dict, column_type: dict, todos: list[str]) -> tuple[str
         if column_type.get("fixed"):
             todos.append(f'"{sql}" has a fixed length; Django writes it as VARCHAR')
         return "CharField", [f"max_length={column_type['length']}"]
+    if _is_sized(context, column_type):
+        imports.from_("app.fields", "SizedBinaryField")
+        return "SizedBinaryField", [f"max_length={column_type['length']}"]
+    if _is_plain_json(context, column_type):
+        imports.from_("app.fields", "PlainJSONField")
+        return "PlainJSONField", []
     simple = {
         "boolean": "BooleanField",
         "date": "DateField",
@@ -156,9 +188,11 @@ def _field_type(context: dict, column_type: dict, todos: list[str]) -> tuple[str
     if kind in simple:
         return simple[kind], []
     if kind == "array":
-        todos.append(
-            f'"{sql}" is kept as JSON; use django.contrib.postgres ArrayField on PostgreSQL if you need the native array'
-        )
+        if context["settings"]["database"] == "postgresql":
+            imports.from_("django.contrib.postgres.fields", "ArrayField")
+            item, item_args = _field_type(context, column_type["items"], todos, imports)
+            return "ArrayField", [f"{_field_class(item)}({', '.join(item_args)})"]
+        todos.append(f'"{sql}" is kept as JSON: this database has no arrays')
         return "JSONField", []
     if kind == "enum":
         item = next(
@@ -197,7 +231,7 @@ def _field_line(context: dict, info: dict, column: dict, imports: Imports) -> li
             bits = column_type.get("bits") if column_type["kind"] == "integer" else None
             field = "SmallAutoField" if bits == 16 else "AutoField" if bits == 32 else "BigAutoField"
         else:
-            field, extra = _field_type(context, column_type, todos)
+            field, extra = _field_type(context, column_type, todos, imports)
             args += extra
         if column["attr"] != db["name"]:
             args.append(f"db_column={js_json(db['name'])}")
@@ -212,17 +246,22 @@ def _field_line(context: dict, info: dict, column: dict, imports: Imports) -> li
         args.append("db_default=Now()")
         if generated == "onUpdateNow":
             args.append("auto_now=True")
-    if isinstance(generated, dict):
-        todos.append(f"computed by the database as {generated['computed']}; never written by the application")
     default = db.get("default")
     if default and default["kind"] == "literal":
         args.append(f"default={py_literal(default['value'])}")
     if default and default["kind"] == "expression":
         todos.append(f"the database fills it with {default['sql']} when it is left out")
-    if db["nullable"] and not single_key:
+    if isinstance(generated, dict) and not foreign:
+        imports.from_("django.db.models.expressions", "RawSQL")
+        named = [arg for arg in args if arg.startswith("db_column=")]
+        output = f"{_field_class(field)}({', '.join(arg for arg in args if not arg.startswith('db_column='))})"
+        expression = f"RawSQL({js_json(generated['computed'].replace('%', '%%'))}, [])"
+        args = [f"expression={expression}", f"output_field={output}", "db_persist=True", *named]
+        field = "GeneratedField"
+    elif db["nullable"] and not single_key:
         args += ["null=True", "blank=True"]
     name = foreign["name"] if foreign else column["attr"]
-    return [*[f"    # TODO: {todo}" for todo in todos], f"    {name} = models.{field}({', '.join(args)})"]
+    return [*[f"    # TODO: {todo}" for todo in todos], f"    {name} = {_field_class(field)}({', '.join(args)})"]
 
 
 _OPS = {">": "gt", ">=": "gte", "<": "lt", "<=": "lte"}
@@ -317,6 +356,48 @@ def entity_file(context: dict, info: dict) -> dict:
     return {"path": path_of(module_of(context, info, "entity")), "content": content}
 
 
+def _fields_file(context: dict) -> list[dict]:
+    """app/fields.py, when a model needs a field Django does not have."""
+    types = [
+        column["column"]["type"] for info in context["tables"] if info["writesEntity"] for column in info["columns"]
+    ]
+    sized = any(_is_sized(context, column_type) for column_type in types)
+    plain_json = any(_is_plain_json(context, column_type) for column_type in types)
+    if not sized and not plain_json:
+        return []
+    content = lines(
+        '"""Fields Django does not have."""',
+        "",
+        plain_json and ["from typing import Any", ""],
+        "from django.db import models",
+        sized
+        and [
+            "",
+            "",
+            "class SizedBinaryField(models.BinaryField):  # type: ignore[type-arg]",
+            '    """Bytes of a column with a length, which MySQL can use in a key."""',
+            "",
+            "    def db_type(self, connection) -> str:  # type: ignore[no-untyped-def]",
+            '        return f"varbinary({self.max_length})"',
+        ],
+        plain_json
+        and [
+            "",
+            "",
+            "class PlainJSONField(models.JSONField):  # type: ignore[type-arg]",
+            '    """A json column, not jsonb: the driver reads its values already converted."""',
+            "",
+            "    def db_type(self, connection) -> str:  # type: ignore[no-untyped-def]",
+            '        return "json"',
+            "",
+            "    def from_db_value(self, value, expression, connection) -> Any:  # type: ignore[no-untyped-def]",
+            "        return value",
+        ],
+        "",
+    )
+    return [{"path": "app/fields.py", "content": content}]
+
+
 def database_files(context: dict) -> list[dict]:
     written = [entity_file(context, info) for info in context["tables"] if info["writesEntity"]]
-    return [settings_file(context), models_file(context), *written]
+    return [settings_file(context), models_file(context), *_fields_file(context), *written]

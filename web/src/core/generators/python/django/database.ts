@@ -113,7 +113,22 @@ export function fieldName(context: Context, info: TableInfo, column: ColumnInfo)
   return foreignKeyField(context, info, column)?.name ?? column.attr
 }
 
-function fieldType(context: Context, type: DbType, todos: string[]): { field: string; args: string[] } {
+/** A binary column whose length MySQL needs, if it is in a key. */
+const isSized = (context: Context, type: DbType): type is DbType & { kind: 'binary'; length: number } =>
+  type.kind === 'binary' && type.length !== undefined && isMySql(context)
+
+/** A column of PostgreSQL's json type, which Django's JSONField (jsonb) cannot read. */
+const isPlainJson = (context: Context, type: DbType) =>
+  type.kind === 'json' && context.settings.database === 'postgresql' && /^json$/i.test(type.sql)
+
+const isMySql = (context: Context) => context.settings.database === 'mysql' || context.settings.database === 'mariadb'
+
+const IMPORTED = new Set(['ArrayField', 'SizedBinaryField', 'PlainJSONField'])
+
+/** Fields imported by their name; the others are Django's `models`. */
+const fieldClass = (field: string) => (IMPORTED.has(field) ? field : `models.${field}`)
+
+function fieldType(context: Context, type: DbType, todos: string[], imports: Imports): { field: string; args: string[] } {
   switch (type.kind) {
     case 'integer':
       return { field: type.bits === 16 ? 'SmallIntegerField' : type.bits === 64 ? 'BigIntegerField' : 'IntegerField', args: [] }
@@ -140,12 +155,27 @@ function fieldType(context: Context, type: DbType, todos: string[]): { field: st
     case 'uuid':
       return { field: 'UUIDField', args: [] }
     case 'binary':
+      // MySQL has no keys on columns without a length
+      if (isSized(context, type)) {
+        imports.from('app.fields', 'SizedBinaryField')
+        return { field: 'SizedBinaryField', args: [`max_length=${type.length}`] }
+      }
       return { field: 'BinaryField', args: [] }
     case 'json':
+      if (isPlainJson(context, type)) {
+        imports.from('app.fields', 'PlainJSONField')
+        return { field: 'PlainJSONField', args: [] }
+      }
       return { field: 'JSONField', args: [] }
-    case 'array':
-      todos.push(`"${type.sql}" is kept as JSON; use django.contrib.postgres ArrayField on PostgreSQL if you need the native array`)
+    case 'array': {
+      if (context.settings.database === 'postgresql') {
+        imports.from('django.contrib.postgres.fields', 'ArrayField')
+        const item = fieldType(context, type.items, todos, imports)
+        return { field: 'ArrayField', args: [`${fieldClass(item.field)}(${item.args.join(', ')})`] }
+      }
+      todos.push(`"${type.sql}" is kept as JSON: this database has no arrays`)
       return { field: 'JSONField', args: [] }
+    }
     case 'enum': {
       const item = context.schema.enums.find((candidate) => candidate.name === type.name)
       const values = item?.values ?? []
@@ -194,7 +224,7 @@ function fieldLine(context: Context, info: TableInfo, column: ColumnInfo, import
             ? 'AutoField'
             : 'BigAutoField'
     } else {
-      const type = fieldType(context, db.type, todos)
+      const type = fieldType(context, db.type, todos, imports)
       field = type.field
       args.push(...type.args)
     }
@@ -210,12 +240,24 @@ function fieldLine(context: Context, info: TableInfo, column: ColumnInfo, import
     args.push('db_default=Now()')
     if (db.generated === 'onUpdateNow') args.push('auto_now=True')
   }
-  if (typeof db.generated === 'object') todos.push(`computed by the database as ${db.generated.computed}; never written by the application`)
   if (db.default?.kind === 'literal') args.push(`default=${pyLiteral(db.default.value)}`)
   if (db.default?.kind === 'expression') todos.push(`the database fills it with ${db.default.sql} when it is left out`)
-  if (db.nullable && !singleKey) args.push('null=True', 'blank=True')
+  if (typeof db.generated === 'object' && !foreign) {
+    imports.from('django.db.models.expressions', 'RawSQL')
+    const output = `${fieldClass(field)}(${args.filter((arg) => !arg.startsWith('db_column=')).join(', ')})`
+    const named = args.filter((arg) => arg.startsWith('db_column='))
+    args.splice(
+      0,
+      args.length,
+      `expression=RawSQL(${JSON.stringify(db.generated.computed.replace(/%/g, '%%'))}, [])`,
+      `output_field=${output}`,
+      'db_persist=True',
+      ...named,
+    )
+    field = 'GeneratedField'
+  } else if (db.nullable && !singleKey) args.push('null=True', 'blank=True')
   const name = foreign?.name ?? column.attr
-  return [...todos.map((todo) => `    # TODO: ${todo}`), `    ${name} = models.${field}(${args.join(', ')})`]
+  return [...todos.map((todo) => `    # TODO: ${todo}`), `    ${name} = ${fieldClass(field)}(${args.join(', ')})`]
 }
 
 /** The CHECK constraints Django can express, as Q objects; the others become a TODO. */
@@ -300,10 +342,48 @@ export function entityFile(context: Context, info: TableInfo): GeneratedFile {
   return { path: pathOf(moduleOf(context, info, 'entity')), content }
 }
 
+/** `app/fields.py`, when a model needs a field Django does not have. */
+function fieldsFile(context: Context): GeneratedFile[] {
+  const types = context.tables.filter((info) => info.writesEntity).flatMap((info) => info.columns.map(({ column }) => column.type))
+  const sized = types.some((type) => isSized(context, type))
+  const json = types.some((type) => isPlainJson(context, type))
+  if (!sized && !json) return []
+  const content = lines(
+    '"""Fields Django does not have."""',
+    '',
+    json && ['from typing import Any', ''],
+    'from django.db import models',
+    sized && [
+      '',
+      '',
+      'class SizedBinaryField(models.BinaryField):  # type: ignore[type-arg]',
+      '    """Bytes of a column with a length, which MySQL can use in a key."""',
+      '',
+      '    def db_type(self, connection) -> str:  # type: ignore[no-untyped-def]',
+      '        return f"varbinary({self.max_length})"',
+    ],
+    json && [
+      '',
+      '',
+      'class PlainJSONField(models.JSONField):  # type: ignore[type-arg]',
+      '    """A json column, not jsonb: the driver reads its values already converted."""',
+      '',
+      '    def db_type(self, connection) -> str:  # type: ignore[no-untyped-def]',
+      '        return "json"',
+      '',
+      '    def from_db_value(self, value, expression, connection) -> Any:  # type: ignore[no-untyped-def]',
+      '        return value',
+    ],
+    '',
+  )
+  return [{ path: 'app/fields.py', content }]
+}
+
 export function databaseFiles(context: Context): GeneratedFile[] {
   return [
     settingsFile(context),
     modelsFile(context),
+    ...fieldsFile(context),
     ...context.tables.filter((info) => info.writesEntity).map((info) => entityFile(context, info)),
   ]
 }

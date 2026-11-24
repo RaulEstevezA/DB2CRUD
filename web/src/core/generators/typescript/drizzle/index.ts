@@ -9,7 +9,7 @@ import type { GeneratedFile } from '../../../export/files.ts'
 import { lines, type Line } from '../../types.ts'
 import { quote, TsImports } from '../typescript.ts'
 import { plainEntityFile } from '../common/entities.ts'
-import { repositoryInterface, sqlRepositoryClass, writesEntities, type Context } from '../common/context.ts'
+import { pgSchemas, repositoryInterface, sqlRepositoryClass, writesEntities, type Context } from '../common/context.ts'
 import type { TsOrm } from '../common/orm.ts'
 import { drizzleBody, drizzleHelpers } from './repository.ts'
 import { columnTypesFile, dialectOf, schemaFile, type Dialect } from './schema.ts'
@@ -283,6 +283,7 @@ function testDatabase(context: Context): GeneratedFile[] {
         '/** Drops every table of the test database. */',
         `${sqlite ? 'function' : 'async function'} empty(db: Db): ${sqlite ? 'void' : 'Promise<void>'} {`,
         ...EMPTY[dialect],
+        ...pgSchemas(context).map((name) => `  await db.execute(sql.raw('DROP SCHEMA IF EXISTS "${name}" CASCADE'))`),
         '}',
         '',
         '/** Opens the test database, empty, before every test of the file that calls it, and closes it after each; returns the unit of work of the running test. */',

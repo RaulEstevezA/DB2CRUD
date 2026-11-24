@@ -132,7 +132,7 @@ function columnInfo(orm: PythonOrm, column: DbColumn): ColumnInfo {
   const generated = column.generated !== undefined && column.generated !== 'onUpdateNow'
   return {
     column,
-    attr: orm.reserved?.has(snakeName(column.name)) ? `${snakeName(column.name)}_` : snakeName(column.name),
+    attr: orm.attribute?.(snakeName(column.name)) ?? snakeName(column.name),
     py: pyType(column.type),
     generated,
     required: !column.nullable && column.default === undefined && !generated,

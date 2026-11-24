@@ -8,7 +8,7 @@ import re
 
 from ....js import number_text
 from ...types import lines
-from ..common.context import column_of, find_info
+from ..common.context import column_of, find_info, pg_schemas
 from ..typescript import TsImports, member_name, quote
 
 CORE = {
@@ -62,6 +62,11 @@ def schema_module(context: dict) -> str:
     return context["settings"]["entitiesModule"].replace(".", "/")
 
 
+def _item_of(column_type: dict) -> dict:
+    """The type of the items of an array, however deep; any other type as it is."""
+    return _item_of(column_type["items"]) if column_type["kind"] == "array" else column_type
+
+
 def native_enum(context: dict, column_type: dict) -> dict | None:
     """The enum of a column, when the database keeps it as a type of its own; CHECK enums stay text."""
     if column_type["kind"] != "enum" or dialect_of(context) == "sqlite":
@@ -70,6 +75,10 @@ def native_enum(context: dict, column_type: dict) -> dict | None:
         (candidate for candidate in context["schema"]["enums"] if candidate["name"] == column_type["name"]), None
     )
     return item if item is not None and item.get("storage") == "native" else None
+
+
+def _schema_var(name: str) -> str:
+    return f"{member_name(name)}Schema"
 
 
 def _enum_var(item: dict) -> str:
@@ -159,7 +168,12 @@ def _builder_of(context: dict, column: dict, imports: TsImports) -> str:
     if kind == "binary":
         length = column_type.get("length")
         return custom("bytes", f"{{ length: {length} }}" if dialect == "mysql" and length is not None else None)
-    if kind in ("json", "array"):
+    if kind == "array":
+        # The other databases keep arrays as JSON
+        if postgres:
+            return f"{_builder_of(context, {**column, 'type': column_type['items']}, imports)}.array()"
+        return make("text", "{ mode: 'json' }") if sqlite else make("json")
+    if kind == "json":
         if sqlite:
             return make("text", "{ mode: 'json' }")
         if postgres and not re.fullmatch(r"json", column_type["sql"], re.IGNORECASE):
@@ -246,7 +260,8 @@ def _column_line(context: dict, info: dict, column: dict, imports: TsImports) ->
         bool(db.get("comment")) and f"  /** {db['comment']} */",
         kind == "unknown" and f'  // TODO: "{db["type"]["sql"]}" has no Drizzle type here; it is mapped as text',
         kind == "array"
-        and f'  // TODO: "{db["type"]["sql"]}" is mapped as JSON; use `.array()` on PostgreSQL if you need the native array',
+        and dialect != "postgresql"
+        and f'  // "{db["type"]["sql"]}" is kept as JSON: this database has no arrays',
         f"  {column['prop']}: {''.join(parts)},",
     ]
 
@@ -297,18 +312,19 @@ def _constraints(context: dict, info: dict, imports: TsImports) -> list[str]:
 
 def _table_block(context: dict, info: dict, imports: TsImports) -> list:
     core = CORE[dialect_of(context)]
-    imports.from_(core["module"], core["table"])
+    table = info["table"]
+    # PostgreSQL's schemas other than the one tables are in by default
+    schema = table.get("schema") if dialect_of(context) == "postgresql" else None
+    if not schema:
+        imports.from_(core["module"], core["table"])
     columns = [line for column in info["columns"] for line in _column_line(context, info, column, imports)]
     extra = _constraints(context, info, imports)
-    table = info["table"]
     comment = f": {table['comment']}" if table.get("comment") else ""
     return [
         f'/** The "{info["name"]}" table{comment}. */',
         not table.get("primaryKey")
         and "// The table has no primary key: rows are told apart by all their columns, for reading only",
-        bool(table.get("schema"))
-        and f'// TODO: the table is in the "{table.get("schema")}" schema; declare it with pgSchema("{table.get("schema")}").table',
-        f"export const {table_var(info)} = {core['table']}(",
+        f"export const {table_var(info)} = {f'{_schema_var(schema)}.table' if schema else core['table']}(",
         f"  {quote(info['name'])},",
         "  {",
         *((f"  {line}" if isinstance(line, str) else line) for line in columns),
@@ -324,7 +340,7 @@ def schema_file(context: dict) -> dict:
     used = []
     for info in context["tables"]:
         for column in info["columns"]:
-            item = native_enum(context, column["column"]["type"])
+            item = native_enum(context, _item_of(column["column"]["type"]))
             if item is not None and not any(item is other for other in used):
                 used.append(item)
     enums = (
@@ -334,6 +350,9 @@ def schema_file(context: dict) -> dict:
     )
     if enums:
         imports.from_(CORE["postgresql"]["module"], "pgEnum")
+    schemas = pg_schemas(context)
+    if schemas:
+        imports.from_(CORE["postgresql"]["module"], "pgSchema")
     tables = [_table_block(context, info, imports) for info in context["tables"]]
     enum_lines = []
     for item in enums:
@@ -342,6 +361,7 @@ def schema_file(context: dict) -> dict:
     content = lines(
         "/** The tables of the database, as Drizzle reads and writes them. They reflect the database: do not migrate with them. */",
         imports.write(),
+        *[line for name in schemas for line in ("", f"export const {_schema_var(name)} = pgSchema({quote(name)})")],
         *enum_lines,
         *[line for block in tables for line in ("", *block)],
         "",
@@ -353,7 +373,7 @@ def column_types_file(context: dict) -> dict | None:
     """src/column-types.ts, when a column needs it: bytes, and dates SQLite keeps as text."""
     dialect = dialect_of(context)
     kinds = {
-        column["column"]["type"]["kind"]
+        _item_of(column["column"]["type"])["kind"]
         for info in context["tables"]
         if info["writesEntity"]
         for column in info["columns"]

@@ -5,9 +5,9 @@ refusal becomes a ConflictError. Mirrors web/src/core/generators/typescript/pris
 
 import json
 
-from ..common.context import column_type, is_in, query
+from ..common.context import is_in, query, ts_type
 from ..typescript import TsImports
-from .schema import enum_name, field_of, member_of, native_enum, renames_values
+from .schema import enum_name, field_of, is_list, is_unsupported, member_of, native_enum, renames_values
 
 
 def client_module(context: dict) -> str:
@@ -26,18 +26,17 @@ def _row_type(info: dict) -> str:
     return f"Prisma.{info['entity']}Model"
 
 
-def _values_record(context: dict, column: dict) -> str:
+def _values_record(context: dict, column_type: dict) -> str:
     """Name of the record that turns the Prisma names of an enum's values into the values."""
-    return f"{enum_name(native_enum(context, column['column']['type'])).upper()}_VALUES"
+    return f"{enum_name(native_enum(context, column_type)).upper()}_VALUES"
 
 
-def _names_record(context: dict, column: dict) -> str:
-    return f"{enum_name(native_enum(context, column['column']['type'])).upper()}_NAMES"
+def _names_record(context: dict, column_type: dict) -> str:
+    return f"{enum_name(native_enum(context, column_type)).upper()}_NAMES"
 
 
-def _from_row(context: dict, column: dict, value: str) -> str | None:
+def _from_row(context: dict, kind_of: dict, value: str) -> str | None:
     """A value of a Prisma row as the entity keeps it, when it needs converting."""
-    kind_of = column["column"]["type"]
     prisma = field_of(context, kind_of)["type"]
     kind = kind_of["kind"]
     if kind == "integer":
@@ -52,16 +51,18 @@ def _from_row(context: dict, column: dict, value: str) -> str | None:
     if kind == "binary":
         return f"Buffer.from({value})"
     if kind == "array":
-        return f"{value} as {column_type(column)}"
+        if not is_list(context, kind_of):
+            return f"{value} as {ts_type(kind_of)}"
+        item = _from_row(context, kind_of["items"], "item")
+        return f"{value}.map((item) => {item})" if item else None
     if kind == "enum":
         item = native_enum(context, kind_of)
-        return f"{_values_record(context, column)}[{value}]" if item and renames_values(item) else None
+        return f"{_values_record(context, kind_of)}[{value}]" if item and renames_values(item) else None
     return None
 
 
-def _to_prisma(context: dict, column: dict, value: str, imports: TsImports) -> str | None:
+def _to_prisma(context: dict, kind_of: dict, value: str, imports: TsImports) -> str | None:
     """A value of the entity as Prisma writes it, when it needs converting."""
-    kind_of = column["column"]["type"]
     prisma = field_of(context, kind_of)["type"]
     kind = kind_of["kind"]
     if kind == "date":
@@ -70,28 +71,33 @@ def _to_prisma(context: dict, column: dict, value: str, imports: TsImports) -> s
         return f"new Date(`1970-01-01T${{{value}}}Z`)" if prisma == "DateTime" else None
     if kind == "binary":
         return f"new Uint8Array({value})"
+    if kind == "array":
+        item = _to_prisma(context, kind_of["items"], "item", imports) if is_list(context, kind_of) else None
+        return f"{value}.map((item) => {item})" if item else None
     if kind == "enum":
         item = native_enum(context, kind_of)
         if not item:
             return None
         if renames_values(item):
-            return f"{_names_record(context, column)}[{value}]"
+            return f"{_names_record(context, kind_of)}[{value}]"
         imports.type(client_module(context), "$Enums")
         return f"{value} as $Enums.{enum_name(item)}"
     return None
 
 
-def _is_json(column: dict) -> bool:
-    return column["column"]["type"]["kind"] in ("json", "array")
+def _is_json(context: dict, column: dict) -> bool:
+    kind_of = column["column"]["type"]
+    return kind_of["kind"] == "json" or (kind_of["kind"] == "array" and not is_list(context, kind_of))
 
 
 def _read_property(context: dict, column: dict) -> str:
     """name: value of a property read from a row."""
     value = f"row.{column['prop']}"
-    converted = _from_row(context, column, value)
+    converted = _from_row(context, column["column"]["type"], value)
     if not converted:
         return f"{column['prop']}: {value}"
-    nullable = column["column"]["nullable"] and not _is_json(column)
+    as_list = is_list(context, column["column"]["type"])
+    nullable = column["column"]["nullable"] and not _is_json(context, column) and not as_list
     return f"{column['prop']}: {f'{value} === null ? null : {converted}' if nullable else converted}"
 
 
@@ -99,33 +105,38 @@ def _write_property(context: dict, column: dict, imports: TsImports) -> str:
     """name: value of a property written from the entity; undefined values are left for the database to fill."""
     prop = column["prop"]
     value = f"entity.{prop}"
-    if _is_json(column):
+    if _is_json(context, column):
         imports.from_(client_module(context), "Prisma")
         if column["column"]["nullable"]:
             return f"{prop}: {value} === null ? Prisma.DbNull : ({value} as Prisma.InputJsonValue)"
         return f"{prop}: {value} as Prisma.InputJsonValue"
-    converted = _to_prisma(context, column, value, imports)
+    converted = _to_prisma(context, column["column"]["type"], value, imports)
+    # Prisma has no null lists: undefined leaves the column as it is
+    if is_list(context, column["column"]["type"]) and column["column"]["nullable"]:
+        return f"{prop}: {value} == null ? undefined : {converted or value}"
     return f"{prop}: {value} == null ? {value} : {converted}" if converted else f"{prop}: {value}"
 
 
 def _condition(context: dict, column: dict, value: str, imports: TsImports) -> str:
     """A condition on a column, with the value converted as Prisma compares it."""
-    converted = None if _is_json(column) else _to_prisma(context, column, value, imports)
+    converted = None if _is_json(context, column) else _to_prisma(context, column["column"]["type"], value, imports)
     if converted:
         return f"{column['prop']}: {converted}"
     return column["prop"] if value == column["prop"] else f"{column['prop']}: {value}"
 
 
-def _writable(column: dict) -> bool:
-    """A computed column is never written."""
-    return not isinstance(column["column"].get("generated"), dict)
+def _writable(context: dict, column: dict) -> bool:
+    """A computed column is never written, nor one the client does not know."""
+    return not isinstance(column["column"].get("generated"), dict) and not is_unsupported(
+        context, column["column"]["type"]
+    )
 
 
-def _changeable(info: dict, column: dict) -> bool:
+def _changeable(context: dict, info: dict, column: dict) -> bool:
     """Nor the key of a stored row, nor what the database fills."""
     # A column the database sets on every change (ON UPDATE) is left for it, or the ORM, to set
     return (
-        _writable(column)
+        _writable(context, column)
         and not is_in(column, info["key"])
         and not column["generated"]
         and column["column"].get("generated") != "onUpdateNow"
@@ -142,21 +153,23 @@ def prisma_helpers(context: dict, info: dict, imports: TsImports) -> list:
     result: list = []
     enums: dict[str, dict] = {}
     for column in info["columns"]:
-        item = native_enum(context, column["column"]["type"])
+        kind_of = column["column"]["type"]
+        kind_of = kind_of["items"] if kind_of["kind"] == "array" else kind_of
+        item = native_enum(context, kind_of)
         if item and renames_values(item):
-            enums[item["name"]] = column
-    for column in enums.values():
-        item = native_enum(context, column["column"]["type"])
+            enums[item["name"]] = kind_of
+    for kind_of in enums.values():
+        item = native_enum(context, kind_of)
         imports.type(client_module(context), "$Enums")
         pairs = ", ".join(
             f"{member_of(value)}: {json.dumps(value, ensure_ascii=False).replace(chr(34), chr(39))}"
             for value in item["values"]
         )
-        values = _values_record(context, column)
+        values = _values_record(context, kind_of)
         result += [
             f"/** The values of {item['name']} by their Prisma names, and back: the client uses the names. */",
             f"const {values}: Record<$Enums.{enum_name(item)}, string> = {{ {pairs} }}",
-            f"const {_names_record(context, column)} = Object.fromEntries(Object.entries({values}).map(([name, value]) => [value, name])) as Record<string, $Enums.{enum_name(item)}>",
+            f"const {_names_record(context, kind_of)} = Object.fromEntries(Object.entries({values}).map(([name, value]) => [value, name])) as Record<string, $Enums.{enum_name(item)}>",
             "",
         ]
     entity = info["entity"]
@@ -165,7 +178,11 @@ def prisma_helpers(context: dict, info: dict, imports: TsImports) -> list:
         f"function toEntity(row: {_row_type(info)}): {entity} {{",
         *_multiline(
             f"  return Object.assign(new {entity}(), {{",
-            [_read_property(context, column) for column in info["columns"]],
+            [
+                _read_property(context, column)
+                for column in info["columns"]
+                if not is_unsupported(context, column["column"]["type"])
+            ],
             "  })",
         ),
         "}",
@@ -177,13 +194,13 @@ def prisma_helpers(context: dict, info: dict, imports: TsImports) -> list:
             f"function createData(entity: {entity}): Prisma.{entity}UncheckedCreateInput {{",
             *_multiline(
                 "  return {",
-                [_write_property(context, column, imports) for column in info["columns"] if _writable(column)],
+                [_write_property(context, column, imports) for column in info["columns"] if _writable(context, column)],
                 "  }",
             ),
             "}",
         ]
     if query(info, "update"):
-        columns = [column for column in info["columns"] if _changeable(info, column)]
+        columns = [column for column in info["columns"] if _changeable(context, info, column)]
         result += [
             "",
             "/** The values a change writes: not the key, nor what the database fills. */",
@@ -279,9 +296,9 @@ def prisma_body(context: dict, info: dict, method: dict, imports: TsImports) -> 
             def value(index: int) -> str:
                 column = key[index]
                 raw = f"after[{index}] as {column['ts']}"
-                if _is_json(column):
+                if _is_json(context, column):
                     return raw
-                return _to_prisma(context, column, f"({raw})", imports) or raw
+                return _to_prisma(context, column["column"]["type"], f"({raw})", imports) or raw
 
             after = [
                 ", ".join(

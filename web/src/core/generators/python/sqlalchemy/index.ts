@@ -80,7 +80,8 @@ function unitOfWork(context: Context, imports: Imports): Line[] {
 }
 
 export const sqlalchemyOrm: PythonOrm = {
-  reserved: new Set(['metadata', 'registry']),
+  // Every declarative class has these
+  attribute: (name) => (name === 'metadata' || name === 'registry' ? `${name}_` : name),
   id: 'sqlalchemy',
   label: 'SQLAlchemy 2',
   databaseFiles: (context) => [dbFile(context), ...entityFiles(context)],

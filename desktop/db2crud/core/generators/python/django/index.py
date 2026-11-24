@@ -1,5 +1,7 @@
 """Python + Django 5.2 ORM (Strategy of common/orm.py). Mirrors web/src/core/generators/python/django/index.ts."""
 
+import re
+
 from ...types import lines
 from ..common.context import sql_repository_class, writes_entities
 from ..python import Imports
@@ -232,9 +234,32 @@ def _layout(context: dict) -> list[str]:
     return result
 
 
+RESERVED = {
+    "check",
+    "clean",
+    "clean_fields",
+    "delete",
+    "full_clean",
+    "objects",
+    "pk",
+    "refresh_from_db",
+    "save",
+    "save_base",
+    "validate_unique",
+}
+
+
+def _attribute(name: str) -> str:
+    """Django refuses names that end with _ or hold __, and a field must not hide a method of the model."""
+    plain = re.sub(r"_+$", "", re.sub(r"__+", "_", name))
+    return f"{plain}_field" if plain != name or name in RESERVED else name
+
+
 DJANGO_ORM = {
     "id": "django",
     "label": "the Django 5.2 ORM",
+    "attribute": _attribute,
+    "lazyComputed": True,
     "databaseFiles": database_files,
     "repository": {"doc": _doc, "init": lambda _context, _imports: [], "body": body},
     "unset": _unset,

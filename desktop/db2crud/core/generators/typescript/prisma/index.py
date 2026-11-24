@@ -5,7 +5,7 @@ the database TEST_DATABASE_URL names: a Prisma schema is for one kind of databas
 web/src/core/generators/typescript/prisma/index.ts."""
 
 from ...types import lines
-from ..common.context import repository_interface, sql_repository_class, writes_entities
+from ..common.context import pg_schemas, repository_interface, sql_repository_class, writes_entities
 from ..common.entities import plain_entity_file
 from ..typescript import TsImports, quote
 from .repository import client_module, prisma_body, prisma_helpers
@@ -254,6 +254,10 @@ def _test_database(context: dict) -> list[dict]:
         "/** Drops every table of the test database. */",
         "async function empty(client: PrismaClient): Promise<void> {",
         *EMPTY[provider],
+        *(
+            f"""  await client.$executeRawUnsafe('DROP SCHEMA IF EXISTS "{name}" CASCADE')"""
+            for name in pg_schemas(context)
+        ),
         "}",
         "",
         "/** Opens the test database, empty, before every test of the file that calls it, and closes it after each; returns the unit of work of the running test. */",

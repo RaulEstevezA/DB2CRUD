@@ -56,8 +56,10 @@ function dataType(context: Context, type: DbType): string {
       return 'DataTypes.UUID'
     case 'binary':
       return 'DataTypes.BLOB'
-    case 'json':
     case 'array':
+      // The other databases keep arrays as JSON
+      return postgres ? `DataTypes.ARRAY(${dataType(context, type.items)})` : 'DataTypes.JSON'
+    case 'json':
       return postgres && !/^json$/i.test(type.sql) ? 'DataTypes.JSONB' : 'DataTypes.JSON'
     case 'enum': {
       const values = context.schema.enums.find((item) => item.name === type.name)?.values ?? []
@@ -110,7 +112,8 @@ function attributeLines(context: Context, info: TableInfo, column: ColumnInfo): 
       `    // TODO: ${db.name} is computed by the database (${db.generated.computed}); Sequelize cannot say so, and the repositories never write it`,
     db.type.kind === 'unknown' && `    // TODO: "${db.type.sql}" has no Sequelize type here; it is mapped as text`,
     db.type.kind === 'array' &&
-      `    // TODO: "${db.type.sql}" is mapped as JSON; use DataTypes.ARRAY on PostgreSQL if you need the native array`,
+      dialectOf(context) !== 'postgresql' &&
+      `    // "${db.type.sql}" is kept as JSON: this database has no arrays`,
     composite &&
       `    // TODO: (${composite.columns.join(', ')}) points to ${composite.references.table}; Sequelize keeps no foreign key of several columns`,
     `    ${column.prop}: { ${options.join(', ')} },`,

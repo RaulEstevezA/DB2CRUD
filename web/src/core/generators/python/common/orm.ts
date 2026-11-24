@@ -23,8 +23,8 @@ export interface PythonOrm {
   id: OrmId
   /** `SQLAlchemy 2`, for texts */
   label: string
-  /** Attribute names an entity cannot have: those of the base class. A column with one gets a trailing `_` */
-  reserved?: ReadonlySet<string>
+  /** The attribute of a column named `name`, when an entity cannot have that one */
+  attribute?(name: string): string
   /** Connection, settings and entities: every file of the database layer */
   databaseFiles(context: Context): GeneratedFile[]
   /** The database repository of a table: its docstring, the lines of its __init__ and each method's body */
@@ -38,6 +38,8 @@ export interface PythonOrm {
   /** A condition that is true while an attribute of a new entity has no value of its own (the in-memory
    * repositories then fill it as the database would): `entity.x is None`, plus what the ORM puts there instead */
   unset(target: string, imports: Imports): string
+  /** Reading a computed column of an entity that is not stored fails: the in-memory repositories empty it */
+  lazyComputed?: boolean
   /** The class SqlUnitOfWork: the database repositories and the transaction of each operation */
   unitOfWork(context: Context, imports: Imports): Line[]
   /** tests/conftest.py, and the test that proves which database the tests ran on */

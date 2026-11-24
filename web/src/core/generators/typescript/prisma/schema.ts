@@ -9,7 +9,7 @@ import type { DbColumn, DbEnum, DbForeignKey, DbType, ReferentialAction } from '
 import type { GeneratedFile } from '../../../export/files.ts'
 import { lines } from '../../types.ts'
 import { memberName, typeName } from '../typescript.ts'
-import { columnOf, findInfo, type ColumnInfo, type Context, type TableInfo } from '../common/context.ts'
+import { columnOf, findInfo, pgSchemas, type ColumnInfo, type Context, type TableInfo } from '../common/context.ts'
 
 export type Provider = 'postgresql' | 'mysql' | 'sqlite'
 
@@ -41,12 +41,13 @@ export function memberOf(value: string): string {
 /** Whether any value of the enum has another name in Prisma: the client returns the names, not the values. */
 export const renamesValues = (item: DbEnum) => item.values.some((value) => memberOf(value) !== value)
 
-function enumBlock(item: DbEnum): string[] {
+function enumBlock(context: Context, item: DbEnum): string[] {
   return [
     `enum ${enumName(item)} {`,
     ...item.values.map((value) => `  ${memberOf(value)}${memberOf(value) !== value ? ` @map(${prismaString(value)})` : ''}`),
     '',
     `  @@map(${prismaString(item.name)})`,
+    ...(pgSchemas(context).length > 0 ? ['  @@schema("public")'] : []),
     '}',
   ]
 }
@@ -61,6 +62,18 @@ export interface PrismaField {
 
 /** The precision written in the column's SQL type: `timestamp(3)` → 3. */
 const precisionOf = (type: DbType) => /\((\d+)\)/.exec(type.sql)?.[1]
+
+/** Whether Prisma keeps the column as a list: an array of PostgreSQL, of single values. */
+export const isList = (context: Context, type: DbType) =>
+  type.kind === 'array' && type.items.kind !== 'array' && providerOf(context) === 'postgresql'
+
+/** Types of PostgreSQL the Prisma client can neither read nor write. */
+const UNREADABLE =
+  /^(interval|macaddr8?|tsvector|tsquery|point|line|lseg|box|path|polygon|circle|pg_lsn|jsonpath|(int4|int8|num|ts|tstz|date)(multi)?range)\b/i
+
+/** Whether the column is outside the Prisma client (`Unsupported`): the repositories leave it alone. */
+export const isUnsupported = (context: Context, type: DbType) =>
+  type.kind === 'unknown' && providerOf(context) === 'postgresql' && UNREADABLE.test(type.sql)
 
 export function fieldOf(context: Context, type: DbType): PrismaField {
   const provider = providerOf(context)
@@ -106,15 +119,19 @@ export function fieldOf(context: Context, type: DbType): PrismaField {
       return { type: 'Bytes' }
     case 'json':
       return postgres && /^json$/i.test(type.sql) ? { type: 'Json', native: '@db.Json' } : { type: 'Json' }
-    case 'array':
-      // Arrays are portable as JSON; a native PostgreSQL list is a decision for the user
-      return { type: 'Json' }
+    case 'array': {
+      // The other databases keep arrays as JSON, and Prisma has no lists of lists
+      if (!isList(context, type)) return { type: 'Json' }
+      const item = fieldOf(context, (type as DbType & { kind: 'array' }).items)
+      return { ...item, type: `${item.type}[]` }
+    }
     case 'enum': {
       const item = nativeEnum(context, type)
       return item ? { type: enumName(item) } : { type: 'String' }
     }
     case 'unknown':
-      return { type: 'String' }
+      // Optional, or the client could not create rows
+      return { type: isUnsupported(context, type) ? `Unsupported(${prismaString(type.sql)})?` : 'String' }
   }
 }
 
@@ -139,7 +156,9 @@ function scalarLine(context: Context, info: TableInfo, column: ColumnInfo): { li
   const { type, native } = fieldOf(context, db.type)
   const single = info.table.primaryKey?.length === 1 && info.table.primaryKey[0] === db.name
   const notes: string[] = []
-  const parts = [`${column.prop} ${type}${db.nullable && !single ? '?' : ''}`]
+  const parts = [
+    `${column.prop} ${type}${db.nullable && !single && !isList(context, db.type) && !isUnsupported(context, db.type) ? '?' : ''}`,
+  ]
   if (single) parts.push('@id')
   if (db.generated === 'identity') parts.push('@default(autoincrement())')
   else if (db.generated === 'uuid') parts.push('@default(uuid())')
@@ -157,9 +176,11 @@ function scalarLine(context: Context, info: TableInfo, column: ColumnInfo): { li
     notes.push(
       `TODO: ${db.name} is computed by the database (${db.generated.computed}); Prisma cannot say so, and the repositories never write it`,
     )
-  if (db.type.kind === 'unknown') notes.push(`TODO: "${db.type.sql}" has no Prisma type here; it is mapped as text`)
-  if (db.type.kind === 'array')
-    notes.push(`TODO: "${db.type.sql}" is mapped as JSON; use a Prisma list on PostgreSQL if you need the native array`)
+  if (isUnsupported(context, db.type))
+    notes.push(`TODO: the Prisma client cannot read "${db.type.sql}"; the repositories leave ${db.name} alone`)
+  else if (db.type.kind === 'unknown') notes.push(`TODO: "${db.type.sql}" has no Prisma type here; it is mapped as text`)
+  if (db.type.kind === 'array' && !isList(context, db.type)) notes.push(`"${db.type.sql}" is kept as JSON`)
+  if (isList(context, db.type) && db.nullable) notes.push(`Prisma has no null lists: ${db.name} is read as an empty one when it is null`)
   if (db.comment) notes.push(db.comment)
   return { line: parts.join(' '), notes }
 }
@@ -290,6 +311,7 @@ function modelBlock(context: Context, info: TableInfo, relations: Relation[]): s
   for (const index of table.indexes)
     attributes.push(`@@index([${columnList(context, info, index.columns)}]${index.name ? `, map: ${prismaString(index.name)}` : ''})`)
   attributes.push(`@@map(${prismaString(table.name)})`)
+  if (pgSchemas(context).length > 0) attributes.push(`@@schema(${prismaString(table.schema ?? 'public')})`)
   return [
     ...(table.comment ? [`/// ${table.comment}`] : []),
     ...(!table.primaryKey
@@ -298,7 +320,6 @@ function modelBlock(context: Context, info: TableInfo, relations: Relation[]): s
           '/// for reading only (the tests create that unique index; the database keeps none)',
         ]
       : []),
-    ...(table.schema ? [`/// TODO: the table is in the "${table.schema}" schema; enable Prisma's multiSchema and add @@schema`] : []),
     ...table.checks.map((check) => `/// CHECK (${check.sql}): Prisma does not keep CHECK constraints; the services check them`),
     `model ${info.entity} {`,
     ...aligned(fields),
@@ -313,10 +334,13 @@ export function schemaFile(context: Context): GeneratedFile {
   const relations = relationsOf(context)
   const used = new Set(
     context.tables.flatMap((info) =>
-      info.columns.map((column) => nativeEnum(context, column.column.type)).filter((item) => item !== undefined),
+      info.columns
+        .map((column) => nativeEnum(context, column.column.type.kind === 'array' ? column.column.type.items : column.column.type))
+        .filter((item) => item !== undefined),
     ),
   )
   const enums = context.schema.enums.filter((item) => used.has(item))
+  const schemas = pgSchemas(context)
   const content = lines(
     '// Prisma schema of the database, written by DB2CRUD to reflect it: the tables already exist, so do not migrate',
     '// with it. `npm install` generates the client into src/generated/prisma.',
@@ -331,8 +355,9 @@ export function schemaFile(context: Context): GeneratedFile {
     '// The address is in prisma.config.ts (DATABASE_URL); the application connects through src/database.ts',
     'datasource db {',
     `  provider = ${prismaString(provider)}`,
+    schemas.length > 0 && `  schemas  = [${['public', ...schemas].map(prismaString).join(', ')}]`,
     '}',
-    ...enums.flatMap((item) => ['', ...enumBlock(item)]),
+    ...enums.flatMap((item) => ['', ...enumBlock(context, item)]),
     ...context.tables.flatMap((info) => ['', ...modelBlock(context, info, relations)]),
     '',
   )

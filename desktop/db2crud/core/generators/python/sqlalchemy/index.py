@@ -113,7 +113,8 @@ def _layout(context: dict) -> list[str]:
 
 
 SQLALCHEMY_ORM = {
-    "reserved": frozenset({"metadata", "registry"}),
+    # Every declarative class has these
+    "attribute": lambda name: f"{name}_" if name in ("metadata", "registry") else name,
     "id": "sqlalchemy",
     "label": "SQLAlchemy 2",
     "databaseFiles": lambda context: [db_file(context), *entity_files(context)],

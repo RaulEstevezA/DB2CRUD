@@ -80,6 +80,9 @@ export function columnTypesFile(context: Context): GeneratedFile | null {
 
 // Entities
 
+/** The type of the items of an array, however deep. */
+const itemOf = (type: DbType): DbType => (type.kind === 'array' ? itemOf(type.items) : type)
+
 /** The column type TypeORM writes for the chosen database. */
 function ormType(type: DbType, database: Dialect): string {
   const sqlite = database === 'sqlite'
@@ -94,7 +97,7 @@ function ormType(type: DbType, database: Dialect): string {
       if (sqlite) return 'real'
       return type.bits === 32 ? (postgres ? 'real' : 'float') : postgres ? 'double precision' : 'double'
     case 'text':
-      return type.length === undefined ? 'text' : type.fixed ? 'char' : 'varchar'
+      return type.length === undefined ? 'text' : type.fixed && !sqlite ? 'char' : 'varchar'
     case 'boolean':
       return 'boolean'
     case 'date':
@@ -107,9 +110,10 @@ function ormType(type: DbType, database: Dialect): string {
       return sqlite ? 'varchar' : 'uuid'
     case 'binary':
       return postgres ? 'bytea' : sqlite ? 'blob' : type.length !== undefined ? 'varbinary' : 'blob'
-    case 'json':
     case 'array':
-      // Arrays are portable as JSON; a native PostgreSQL array is a decision for the user
+      // The column of an array has the type of its items, and `array: true`; the other databases keep arrays as JSON
+      return postgres ? ormType(itemOf(type), database) : sqlite ? 'simple-json' : 'json'
+    case 'json':
       return sqlite ? 'simple-json' : 'json'
     case 'enum':
       return sqlite ? 'simple-enum' : 'enum'
@@ -120,19 +124,23 @@ function ormType(type: DbType, database: Dialect): string {
 
 function columnOptions(context: Context, column: ColumnInfo, imports: TsImports, primary: boolean): string[] {
   const db = column.column
-  const type = db.type
   const database = context.settings.database
+  const nativeArray = db.type.kind === 'array' && database === 'postgresql'
+  const type = nativeArray ? itemOf(db.type) : db.type
   const options: string[] = []
   if (column.prop !== db.name) options.push(`name: ${quote(db.name)}`)
   options.push(`type: ${quote(ormType(type, database))}`)
+  if (nativeArray) options.push('array: true')
   if (type.kind === 'text' && type.length !== undefined) options.push(`length: ${type.length}`)
   if (type.kind === 'uuid' && database === 'sqlite') options.push('length: 36')
   if (type.kind === 'binary' && type.length !== undefined && database !== 'postgresql' && database !== 'sqlite')
     options.push(`length: ${type.length}`)
   if (type.kind === 'decimal') {
     if (type.precision !== undefined) options.push(`precision: ${type.precision}`, `scale: ${type.scale ?? 0}`)
-    imports.from('src/column-types', 'decimalText')
-    options.push('transformer: decimalText')
+    if (!nativeArray) {
+      imports.from('src/column-types', 'decimalText')
+      options.push('transformer: decimalText')
+    }
   }
   if (type.kind === 'enum') {
     const values = context.schema.enums.find((item) => item.name === type.name)?.values ?? []
@@ -176,7 +184,8 @@ function columnLines(context: Context, info: TableInfo, column: ColumnInfo, impo
   return [
     db.type.kind === 'unknown' && `  // TODO: "${db.type.sql}" has no TypeORM type here; it is mapped as text`,
     db.type.kind === 'array' &&
-      `  // TODO: "${db.type.sql}" is mapped as JSON; use \`array: true\` on PostgreSQL if you need the native array`,
+      context.settings.database !== 'postgresql' &&
+      `  // "${db.type.sql}" is kept as JSON: this database has no arrays`,
     ...decorators.map((decorator) => `  ${decorator}`),
     `  ${column.prop}!: ${optional ? `${column.ts} | null` : column.ts}`,
   ]

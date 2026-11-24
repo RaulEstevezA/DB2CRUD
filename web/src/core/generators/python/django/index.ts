@@ -207,7 +207,26 @@ function databaseTest(): GeneratedFile {
   }
 }
 
+const RESERVED = new Set([
+  'check',
+  'clean',
+  'clean_fields',
+  'delete',
+  'full_clean',
+  'objects',
+  'pk',
+  'refresh_from_db',
+  'save',
+  'save_base',
+  'validate_unique',
+])
+
 export const djangoOrm: PythonOrm = {
+  // Django refuses names that end with `_` or hold `__`, and a field must not hide a method of the model
+  attribute: (name) => {
+    const plain = name.replace(/__+/g, '_').replace(/_+$/, '')
+    return plain !== name || RESERVED.has(name) ? `${plain}_field` : name
+  },
   id: 'django',
   label: 'the Django 5.2 ORM',
   databaseFiles,
@@ -222,6 +241,7 @@ export const djangoOrm: PythonOrm = {
     imports.from('django.db.models.expressions', 'DatabaseDefault')
     return `${target} is None or isinstance(${target}, DatabaseDefault)`
   },
+  lazyComputed: true,
   unitOfWork,
   conftest: (context) => conftest(context),
   databaseTest: () => databaseTest(),

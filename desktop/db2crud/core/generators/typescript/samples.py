@@ -85,7 +85,9 @@ def sample_value(column: dict, checks: list[dict], enums: list[dict]) -> str:
     if kind == "uuid":
         return "`00000000-0000-4000-8000-${String(n).padStart(12, '0')}`"
     if kind == "binary":
-        return "Buffer.from([n % 256])"
+        # As long as the column, when its length may be fixed: the database fills shorter values
+        length = column_type.get("length")
+        return f"Buffer.alloc({length}, n % 256)" if length is not None and length <= 64 else "Buffer.from([n % 256])"
     if kind == "json":
         return "{ n }"
     if kind == "array":
@@ -102,4 +104,9 @@ def missing_value(column_type: dict) -> str:
         return "'999999'"
     if kind == "uuid":
         return "'00000000-0000-4000-8000-000000999999'"
+    if kind == "binary":
+        length = column_type.get("length")
+        return f"Buffer.alloc({length if length is not None and length <= 64 else 4}, 255)"
+    if kind == "datetime":
+        return "new Date(0)"
     return "'missing'"

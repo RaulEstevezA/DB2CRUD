@@ -5,7 +5,7 @@ with the SQL drizzle-kit writes (SQLite in memory, or the database TEST_DATABASE
 one kind of database). Mirrors web/src/core/generators/typescript/drizzle/index.ts."""
 
 from ...types import lines
-from ..common.context import repository_interface, sql_repository_class, writes_entities
+from ..common.context import pg_schemas, repository_interface, sql_repository_class, writes_entities
 from ..common.entities import plain_entity_file
 from ..typescript import TsImports, quote
 from .repository import drizzle_body, drizzle_helpers
@@ -315,6 +315,7 @@ def _test_database(context: dict) -> list[dict]:
         "/** Drops every table of the test database. */",
         f"{'function' if sqlite else 'async function'} empty(db: Db): {'void' if sqlite else 'Promise<void>'} {{",
         *EMPTY[dialect],
+        *(f"""  await db.execute(sql.raw('DROP SCHEMA IF EXISTS "{name}" CASCADE'))""" for name in pg_schemas(context)),
         "}",
         "",
         "/** Opens the test database, empty, before every test of the file that calls it, and closes it after each; returns the unit of work of the running test. */",

@@ -9,7 +9,7 @@ import type { DbColumn, DbEnum, DbType } from '../../../schema/types.ts'
 import type { GeneratedFile } from '../../../export/files.ts'
 import { lines, type Line } from '../../types.ts'
 import { memberName, quote, TsImports } from '../typescript.ts'
-import { columnOf, findInfo, type ColumnInfo, type Context, type TableInfo } from '../common/context.ts'
+import { columnOf, findInfo, pgSchemas, type ColumnInfo, type Context, type TableInfo } from '../common/context.ts'
 
 export type Dialect = 'postgresql' | 'mysql' | 'sqlite'
 
@@ -57,12 +57,17 @@ export function schemaModule(context: Context): string {
   return context.tables.some((info) => info.writesEntity) ? 'src/schema' : context.settings.entitiesModule.replace(/\./g, '/')
 }
 
+/** The type of the items of an array, however deep; any other type as it is. */
+const itemOf = (type: DbType): DbType => (type.kind === 'array' ? itemOf(type.items) : type)
+
 /** The enum of a column, when the database keeps it as a type of its own; CHECK enums stay text. */
 export function nativeEnum(context: Context, type: DbType): DbEnum | undefined {
   if (type.kind !== 'enum' || dialectOf(context) === 'sqlite') return undefined
   const item = context.schema.enums.find((candidate) => candidate.name === type.name)
   return item?.storage === 'native' ? item : undefined
 }
+
+const schemaVar = (name: string) => `${memberName(name)}Schema`
 
 const enumVar = (item: DbEnum) => `${memberName(item.name)}Enum`
 
@@ -128,8 +133,11 @@ function builderOf(context: Context, column: DbColumn, imports: TsImports): stri
       return sqlite ? make('text') : postgres ? make('uuid') : make('char', '{ length: 36 }')
     case 'binary':
       return custom('bytes', dialect === 'mysql' && type.length !== undefined ? `{ length: ${type.length} }` : undefined)
-    case 'json':
     case 'array':
+      // The other databases keep arrays as JSON
+      if (postgres) return `${builderOf(context, { ...column, type: type.items }, imports)}.array()`
+      return sqlite ? make('text', "{ mode: 'json' }") : make('json')
+    case 'json':
       if (sqlite) return make('text', "{ mode: 'json' }")
       return postgres && !/^json$/i.test(type.sql) ? make('jsonb') : make('json')
     case 'enum': {
@@ -203,8 +211,7 @@ function columnLine(context: Context, info: TableInfo, column: ColumnInfo, impor
   return [
     db.comment && `  /** ${db.comment} */`,
     db.type.kind === 'unknown' && `  // TODO: "${db.type.sql}" has no Drizzle type here; it is mapped as text`,
-    db.type.kind === 'array' &&
-      `  // TODO: "${db.type.sql}" is mapped as JSON; use \`.array()\` on PostgreSQL if you need the native array`,
+    db.type.kind === 'array' && dialect !== 'postgresql' && `  // "${db.type.sql}" is kept as JSON: this database has no arrays`,
     `  ${column.prop}: ${parts.join('')},`,
   ]
 }
@@ -259,15 +266,15 @@ function constraints(context: Context, info: TableInfo, imports: TsImports): str
 
 function tableBlock(context: Context, info: TableInfo, imports: TsImports): Line[] {
   const core = CORE[dialectOf(context)]
-  imports.from(core.module, core.table)
+  // PostgreSQL's schemas other than the one tables are in by default
+  const schema = dialectOf(context) === 'postgresql' ? info.table.schema : undefined
+  if (!schema) imports.from(core.module, core.table)
   const columns = info.columns.flatMap((column) => columnLine(context, info, column, imports))
   const extra = constraints(context, info, imports)
   return [
     `/** The "${info.name}" table${info.table.comment ? `: ${info.table.comment}` : ''}. */`,
     !info.table.primaryKey && '// The table has no primary key: rows are told apart by all their columns, for reading only',
-    info.table.schema &&
-      `// TODO: the table is in the "${info.table.schema}" schema; declare it with pgSchema("${info.table.schema}").table`,
-    `export const ${tableVar(info)} = ${core.table}(`,
+    `export const ${tableVar(info)} = ${schema ? `${schemaVar(schema)}.table` : core.table}(`,
     `  ${quote(info.name)},`,
     '  {',
     ...columns.map((line) => (typeof line === 'string' ? `  ${line}` : line)),
@@ -282,15 +289,18 @@ export function schemaFile(context: Context): GeneratedFile {
   const dialect = dialectOf(context)
   const used = new Set(
     context.tables.flatMap((info) =>
-      info.columns.map((column) => nativeEnum(context, column.column.type)).filter((item) => item !== undefined),
+      info.columns.map((column) => nativeEnum(context, itemOf(column.column.type))).filter((item) => item !== undefined),
     ),
   )
   const enums = dialect === 'postgresql' ? context.schema.enums.filter((item) => used.has(item)) : []
   if (enums.length > 0) imports.from(CORE.postgresql.module, 'pgEnum')
+  const schemas = pgSchemas(context)
+  if (schemas.length > 0) imports.from(CORE.postgresql.module, 'pgSchema')
   const tables = context.tables.map((info) => tableBlock(context, info, imports))
   const content = lines(
     '/** The tables of the database, as Drizzle reads and writes them. They reflect the database: do not migrate with them. */',
     imports.write(),
+    ...schemas.flatMap((name) => ['', `export const ${schemaVar(name)} = pgSchema(${quote(name)})`]),
     ...enums.flatMap((item) => [
       '',
       `export const ${enumVar(item)} = pgEnum(${quote(item.name)}, [${item.values.map((value) => quote(value)).join(', ')}])`,
@@ -305,7 +315,7 @@ export function schemaFile(context: Context): GeneratedFile {
 export function columnTypesFile(context: Context): GeneratedFile | null {
   const dialect = dialectOf(context)
   const kinds = new Set(
-    context.tables.filter((info) => info.writesEntity).flatMap((info) => info.columns.map((column) => column.column.type.kind)),
+    context.tables.filter((info) => info.writesEntity).flatMap((info) => info.columns.map((column) => itemOf(column.column.type).kind)),
   )
   const bytes = kinds.has('binary')
   const datetime = dialect === 'sqlite' && kinds.has('datetime')

@@ -9,7 +9,7 @@ import re
 
 from ....js import number_text
 from ...types import lines
-from ..common.context import column_of, find_info
+from ..common.context import column_of, find_info, pg_schemas
 from ..typescript import member_name, type_name
 
 
@@ -54,12 +54,13 @@ def renames_values(item: dict) -> bool:
     return any(member_of(value) != value for value in item["values"])
 
 
-def _enum_block(item: dict) -> list[str]:
+def _enum_block(context: dict, item: dict) -> list[str]:
     members = []
     for value in item["values"]:
         renamed = f" @map({_prisma_string(value)})" if member_of(value) != value else ""
         members.append(f"  {member_of(value)}{renamed}")
-    return [f"enum {enum_name(item)} {{", *members, "", f"  @@map({_prisma_string(item['name'])})", "}"]
+    schema = ['  @@schema("public")'] if pg_schemas(context) else []
+    return [f"enum {enum_name(item)} {{", *members, "", f"  @@map({_prisma_string(item['name'])})", *schema, "}"]
 
 
 # Columns
@@ -69,6 +70,32 @@ def _precision_of(column_type: dict) -> str | None:
     """The precision written in the column's SQL type: timestamp(3) → 3."""
     match = re.search(r"\((\d+)\)", column_type["sql"])
     return match.group(1) if match else None
+
+
+# Types of PostgreSQL the Prisma client can neither read nor write
+UNREADABLE = re.compile(
+    r"^(interval|macaddr8?|tsvector|tsquery|point|line|lseg|box|path|polygon|circle|pg_lsn|jsonpath"
+    r"|(int4|int8|num|ts|tstz|date)(multi)?range)\b",
+    re.IGNORECASE,
+)
+
+
+def is_unsupported(context: dict, column_type: dict) -> bool:
+    """Whether the column is outside the Prisma client (Unsupported): the repositories leave it alone."""
+    return (
+        column_type["kind"] == "unknown"
+        and provider_of(context) == "postgresql"
+        and UNREADABLE.search(column_type["sql"]) is not None
+    )
+
+
+def is_list(context: dict, column_type: dict) -> bool:
+    """Whether Prisma keeps the column as a list: an array of PostgreSQL, of single values."""
+    return (
+        column_type["kind"] == "array"
+        and column_type["items"]["kind"] != "array"
+        and provider_of(context) == "postgresql"
+    )
 
 
 def field_of(context: dict, column_type: dict) -> dict:
@@ -135,11 +162,17 @@ def field_of(context: dict, column_type: dict) -> dict:
             return {"type": "Json", "native": "@db.Json"}
         return {"type": "Json"}
     if kind == "array":
-        # Arrays are portable as JSON; a native PostgreSQL list is a decision for the user
-        return {"type": "Json"}
+        # The other databases keep arrays as JSON, and Prisma has no lists of lists
+        if not is_list(context, column_type):
+            return {"type": "Json"}
+        item = field_of(context, column_type["items"])
+        return {**item, "type": f"{item['type']}[]"}
     if kind == "enum":
         item = native_enum(context, column_type)
         return {"type": enum_name(item)} if item else {"type": "String"}
+    # Optional, or the client could not create rows
+    if is_unsupported(context, column_type):
+        return {"type": f"Unsupported({_prisma_string(column_type['sql'])})?"}
     return {"type": "String"}
 
 
@@ -168,7 +201,10 @@ def _scalar_line(context: dict, info: dict, column: dict) -> dict:
     primary_key = info["table"].get("primaryKey")
     single = primary_key is not None and len(primary_key) == 1 and primary_key[0] == db["name"]
     notes = []
-    parts = [f"{column['prop']} {field['type']}{'?' if db['nullable'] and not single else ''}"]
+    as_list = is_list(context, db["type"])
+    unsupported = is_unsupported(context, db["type"])
+    optional = db["nullable"] and not single and not as_list and not unsupported
+    parts = [f"{column['prop']} {field['type']}{'?' if optional else ''}"]
     if single:
         parts.append("@id")
     generated = db.get("generated")
@@ -199,12 +235,16 @@ def _scalar_line(context: dict, info: dict, column: dict) -> dict:
             f"TODO: {db['name']} is computed by the database ({generated['computed']}); Prisma cannot say so, "
             "and the repositories never write it"
         )
-    if db["type"]["kind"] == "unknown":
-        notes.append(f'TODO: "{db["type"]["sql"]}" has no Prisma type here; it is mapped as text')
-    if db["type"]["kind"] == "array":
+    if unsupported:
         notes.append(
-            f'TODO: "{db["type"]["sql"]}" is mapped as JSON; use a Prisma list on PostgreSQL if you need the native array'
+            f'TODO: the Prisma client cannot read "{db["type"]["sql"]}"; the repositories leave {db["name"]} alone'
         )
+    elif db["type"]["kind"] == "unknown":
+        notes.append(f'TODO: "{db["type"]["sql"]}" has no Prisma type here; it is mapped as text')
+    if db["type"]["kind"] == "array" and not as_list:
+        notes.append(f'"{db["type"]["sql"]}" is kept as JSON')
+    if as_list and db["nullable"]:
+        notes.append(f"Prisma has no null lists: {db['name']} is read as an empty one when it is null")
     if db.get("comment"):
         notes.append(db["comment"])
     return {"line": " ".join(parts), "notes": notes}
@@ -355,6 +395,8 @@ def _model_block(context: dict, info: dict, relations: list[dict]) -> list[str]:
         name = f", map: {_prisma_string(index['name'])}" if index.get("name") else ""
         attributes.append(f"@@index([{_column_list(context, info, index['columns'])}]{name})")
     attributes.append(f"@@map({_prisma_string(table['name'])})")
+    if pg_schemas(context):
+        attributes.append(f"@@schema({_prisma_string(table.get('schema') or 'public')})")
     header = []
     if table.get("comment"):
         header.append(f"/// {table['comment']}")
@@ -363,10 +405,6 @@ def _model_block(context: dict, info: dict, relations: list[dict]) -> list[str]:
             "/// The table has no primary key: Prisma needs a unique set of fields, so rows are told apart by all of them,",
             "/// for reading only (the tests create that unique index; the database keeps none)",
         ]
-    if table.get("schema"):
-        header.append(
-            f'/// TODO: the table is in the "{table["schema"]}" schema; enable Prisma\'s multiSchema and add @@schema'
-        )
     header += [
         f"/// CHECK ({check['sql']}): Prisma does not keep CHECK constraints; the services check them"
         for check in table["checks"]
@@ -380,10 +418,12 @@ def schema_file(context: dict) -> dict:
     used = []
     for info in context["tables"]:
         for column in info["columns"]:
-            item = native_enum(context, column["column"]["type"])
+            kind_of = column["column"]["type"]
+            item = native_enum(context, kind_of["items"] if kind_of["kind"] == "array" else kind_of)
             if item is not None and not any(item is other for other in used):
                 used.append(item)
     enums = [item for item in context["schema"]["enums"] if any(item is other for other in used)]
+    schemas = pg_schemas(context)
     content = lines(
         "// Prisma schema of the database, written by DB2CRUD to reflect it: the tables already exist, so do not migrate",
         "// with it. `npm install` generates the client into src/generated/prisma.",
@@ -398,8 +438,9 @@ def schema_file(context: dict) -> dict:
         "// The address is in prisma.config.ts (DATABASE_URL); the application connects through src/database.ts",
         "datasource db {",
         f"  provider = {_prisma_string(provider)}",
+        bool(schemas) and f"  schemas  = [{', '.join(_prisma_string(name) for name in ('public', *schemas))}]",
         "}",
-        *[line for item in enums for line in ("", *_enum_block(item))],
+        *[line for item in enums for line in ("", *_enum_block(context, item))],
         *[line for info in context["tables"] for line in ("", *_model_block(context, info, relations))],
         "",
     )

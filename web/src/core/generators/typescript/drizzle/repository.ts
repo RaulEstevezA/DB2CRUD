@@ -184,7 +184,11 @@ export function drizzleBody(context: Context, info: TableInfo, method: Repositor
         )
       // MySQL returns only the new key: the row is read back by it
       const identity = info.columns.some((column) => column.column.generated === 'identity')
+      const uuids = info.columns.filter((column) => column.column.generated === 'uuid')
+      if (uuids.length > 0) imports.from('node:crypto', 'randomUUID')
       return [
+        // Known before the insert, to read the row back by it
+        ...uuids.map((column) => `entity.${column.prop} ??= randomUUID()`),
         ...write(
           info,
           identity

@@ -91,6 +91,9 @@ def _memory_fill(context: dict, column: dict, imports: Imports) -> str | None:
     attr = f"entity.{column['attr']}"
     unset = context["orm"]["unset"](attr, imports)
     generated = db.get("generated")
+    if isinstance(generated, dict):
+        # Reading it before it has a value would ask the database
+        return f"{attr} = None" if context["orm"].get("lazyComputed") else None
     if generated == "identity":
         return f"if {unset}:\n    {attr} = self._next_id\n    self._next_id += 1"
     if generated == "uuid":

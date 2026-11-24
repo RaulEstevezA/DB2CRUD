@@ -126,6 +126,8 @@ function memoryFill(context: Context, column: ColumnInfo, imports: Imports): Lin
   const db = column.column
   const attr = `entity.${column.attr}`
   const unset = context.orm.unset(attr, imports)
+  // Reading it before it has a value would ask the database
+  if (typeof db.generated === 'object') return context.orm.lazyComputed ? `${attr} = None` : null
   if (db.generated === 'identity') return `if ${unset}:\n    ${attr} = self._next_id\n    self._next_id += 1`
   if (db.generated === 'uuid') {
     imports.from('uuid', 'uuid4')

@@ -68,7 +68,10 @@ def _data_type(context: dict, column_type: dict) -> str:
         return "DataTypes.UUID"
     if kind == "binary":
         return "DataTypes.BLOB"
-    if kind in ("json", "array"):
+    if kind == "array":
+        # The other databases keep arrays as JSON
+        return f"DataTypes.ARRAY({_data_type(context, column_type['items'])})" if postgres else "DataTypes.JSON"
+    if kind == "json":
         if postgres and not re.fullmatch(r"json", column_type["sql"], re.IGNORECASE):
             return "DataTypes.JSONB"
         return "DataTypes.JSON"
@@ -136,7 +139,8 @@ def _attribute_lines(context: dict, info: dict, column: dict) -> list:
         and f"    // TODO: {db['name']} is computed by the database ({generated['computed']}); Sequelize cannot say so, and the repositories never write it",
         kind == "unknown" and f'    // TODO: "{db["type"]["sql"]}" has no Sequelize type here; it is mapped as text',
         kind == "array"
-        and f'    // TODO: "{db["type"]["sql"]}" is mapped as JSON; use DataTypes.ARRAY on PostgreSQL if you need the native array',
+        and dialect_of(context) != "postgresql"
+        and f'    // "{db["type"]["sql"]}" is kept as JSON: this database has no arrays',
         composite is not None
         and f"    // TODO: ({', '.join(composite['columns'])}) points to {composite['references']['table']}; Sequelize keeps no foreign key of several columns",
         f"    {column['prop']}: {{ {', '.join(options)} }},",

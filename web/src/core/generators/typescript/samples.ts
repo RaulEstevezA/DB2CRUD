@@ -69,7 +69,8 @@ export function sampleValue(column: DbColumn, checks: DbCheck[], enums: DbEnum[]
     case 'uuid':
       return "`00000000-0000-4000-8000-${String(n).padStart(12, '0')}`"
     case 'binary':
-      return 'Buffer.from([n % 256])'
+      // As long as the column, when its length may be fixed: the database fills shorter values
+      return type.length !== undefined && type.length <= 64 ? `Buffer.alloc(${type.length}, n % 256)` : 'Buffer.from([n % 256])'
     case 'json':
       return '{ n }'
     case 'array':
@@ -89,6 +90,10 @@ export function missingValue(type: DbType): string {
       return "'999999'"
     case 'uuid':
       return "'00000000-0000-4000-8000-000000999999'"
+    case 'binary':
+      return `Buffer.alloc(${type.length !== undefined && type.length <= 64 ? type.length : 4}, 255)`
+    case 'datetime':
+      return 'new Date(0)'
     default:
       return "'missing'"
   }

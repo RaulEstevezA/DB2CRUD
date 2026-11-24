@@ -65,7 +65,7 @@ def _column_info(orm, column: dict) -> dict:
     generated = column.get("generated") is not None and column.get("generated") != "onUpdateNow"
     return {
         "column": column,
-        "attr": f"{attr}_" if attr in orm.get("reserved", ()) else attr,
+        "attr": orm["attribute"](attr) if "attribute" in orm else attr,
         "py": _py_type(column["type"]),
         "generated": generated,
         "required": not column["nullable"] and "default" not in column and not generated,
