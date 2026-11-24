@@ -10,6 +10,7 @@ from .java.jpa.index import JPA_ORM
 from .java.sql.index import SQL_ORM as JAVA_SQL_ORM
 from .kotlin.exposed.index import EXPOSED_ORM
 from .kotlin.generator import kotlin_generator
+from .kotlin.sql.index import SQL_ORM as KOTLIN_SQL_ORM
 from .php.common.generator import php_generator
 from .php.doctrine.index import DOCTRINE_ORM
 from .php.eloquent.index import ELOQUENT_ORM
@@ -44,6 +45,7 @@ GENERATORS = [
     php_generator(ELOQUENT_ORM),
     php_generator(PHP_SQL_ORM),
     kotlin_generator(EXPOSED_ORM),
+    kotlin_generator(KOTLIN_SQL_ORM),
     RUST_GENERATOR,
     SWIFT_GENERATOR,
 ]

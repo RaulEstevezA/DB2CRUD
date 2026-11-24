@@ -92,7 +92,10 @@ def _factories_file(context: dict, makeable: list[dict]) -> dict:
             # No sample is sure to fit a type that is not known
             if column["column"]["nullable"] and (is_key or column["column"]["type"]["kind"] == "unknown"):
                 continue
-            sample = sample_value(column, info["table"]["checks"], context["schema"]["enums"], imports)
+            if column["column"]["type"]["kind"] == "array":
+                sample = context["orm"]["emptyList"](context)
+            else:
+                sample = sample_value(column, info["table"]["checks"], context["schema"]["enums"], imports)
             values.append(f"        {column['prop']} = {sample},")
         insert = query(info, "insert")
         blocks.append(

@@ -184,6 +184,7 @@ EXPOSED_ORM = {
         "ktImport": "org.jetbrains.exposed.v1.jdbc.Database",
         "text": "database",
     },
+    "emptyList": lambda *_: '"[]"',
     "databaseFiles": lambda context: [_database_file(context), enum_column_file(context)],
     "entityFiles": lambda context, info: [entity_file(context, info), table_object_file(context, info)],
     "repository": {
