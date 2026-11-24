@@ -93,6 +93,46 @@ def _query_es(kind: str, columns: list[str]) -> str:
     }[kind]
 
 
+def _note_en(note: dict) -> str:
+    params = note.get("params") or {}
+    table, column = params.get("table", ""), params.get("column", "")
+    count, types, target = params.get("count", 0), params.get("types", ""), params.get("target", "")
+    known = {
+        "documents.unnamed": f"Nothing says the name of the collection: it is read as “{table}”. Name the file like the collection, or paste db.name.find() with what it prints.",
+        "documents.few": f"{table}: {count} {_plural(count, 'document', 'documents')}. With fewer than 5 nothing is taken as required.",
+        "documents.deduced": f"{table}: deduced from {count} documents. A field all of them have is required; unique values, limits and lists of values are not deduced.",
+        "documents.mixedTypes": f"{table}.{column} has values of several types ({types}): any value is taken.",
+        "documents.onlyNull": f"{table}.{column} is always empty: any value is taken.",
+        "documents.emptyList": f"{table}.{column} is always an empty list: its items may be anything.",
+        "documents.dataKeys": f"{table}.{column} seems to keep data in its keys: it is read as a free document.",
+        "documents.cut": f"{table}.{column} is not printed whole ([Object]): it is read as a free document. Use mongoexport, or config.set('inspectDepth', Infinity) in mongosh.",
+        "documents.otherType": f"{table}.{column} has a type without a common one: it is read as a free document.",
+        "documents.reference": f"{table}.{column} points to {target}: their identifiers match.",
+    }
+    fallback = " · ".join([note["code"], *(str(value) for value in params.values())])
+    return known.get(note["code"], fallback)
+
+
+def _note_es(note: dict) -> str:
+    params = note.get("params") or {}
+    table, column = params.get("table", ""), params.get("column", "")
+    count, types, target = params.get("count", 0), params.get("types", ""), params.get("target", "")
+    known = {
+        "documents.unnamed": f"Nada dice el nombre de la colección: se lee como «{table}». Llama al archivo como la colección, o pega db.nombre.find() con lo que imprime.",
+        "documents.few": f"{table}: {count} {_plural(count, 'documento', 'documentos')}. Con menos de 5 no se da nada por obligatorio.",
+        "documents.deduced": f"{table}: deducida de {count} documentos. Un campo que todos tienen es obligatorio; no se deducen valores únicos, límites ni listas de valores.",
+        "documents.mixedTypes": f"{table}.{column} tiene valores de varios tipos ({types}): se acepta cualquiera.",
+        "documents.onlyNull": f"{table}.{column} está siempre vacío: se acepta cualquier valor.",
+        "documents.emptyList": f"{table}.{column} es siempre una lista vacía: sus elementos pueden ser cualquier cosa.",
+        "documents.dataKeys": f"{table}.{column} parece guardar datos en sus claves: se lee como un documento libre.",
+        "documents.cut": f"{table}.{column} no está impreso entero ([Object]): se lee como un documento libre. Usa mongoexport, o config.set('inspectDepth', Infinity) en mongosh.",
+        "documents.otherType": f"{table}.{column} tiene un tipo sin equivalente común: se lee como un documento libre.",
+        "documents.reference": f"{table}.{column} apunta a {target}: sus identificadores coinciden.",
+    }
+    fallback = " · ".join([note["code"], *(str(value) for value in params.values())])
+    return known.get(note["code"], fallback)
+
+
 def _read_error_en(error: str, path: str | None = None) -> str:
     return {
         "notJson": "It is not JSON: open the .model2db.json file Model2DB saves.",
@@ -102,7 +142,7 @@ def _read_error_en(error: str, path: str | None = None) -> str:
         "unreadableInput": "The models inside the project cannot be read.",
         "noModels": "The project has no models.",
         "notRelational": "The project is for a database without tables (MongoDB, Redis, Cassandra…): not supported yet. For MongoDB, paste the Mongoose schemas, the Spring Data or Beanie documents or the validators Model2DB writes.",
-        "unknownInput": "It is neither a Model2DB project, nor SQL DDL, nor ORM code it can read (SQLAlchemy, SQLModel, Django, Tortoise, Prisma, TypeORM, Sequelize, Drizzle, JPA/Hibernate, EF Core, Doctrine, Eloquent, Mongoose, Spring Data MongoDB and Beanie so far), nor validators of MongoDB.",
+        "unknownInput": "It is neither a Model2DB project, nor SQL DDL, nor ORM code it can read (SQLAlchemy, SQLModel, Django, Tortoise, Prisma, TypeORM, Sequelize, Drizzle, JPA/Hibernate, EF Core, Doctrine, Eloquent, Mongoose, Spring Data MongoDB and Beanie so far), nor validators or documents (with their _id) of MongoDB.",
         "noTables": "The code declares no table: a SQLAlchemy class needs its __tablename__, a SQLModel one table=True, a Django or Tortoise one Model, a Prisma schema a model block, a TypeORM class @Entity(), Sequelize models Model.init() or sequelize.define(), a Drizzle schema pgTable(), mysqlTable() or sqliteTable(), a JPA class @Entity, an EF Core model a DbContext with its DbSet<…>, a Doctrine class #[ORM\\Entity], Eloquent the migrations with Schema::create, SQL DDL a CREATE TABLE, Mongoose a model(), a Spring Data MongoDB class @Document, Beanie a Document class, and MongoDB a createCollection() with its validator.",
     }[error]
 
@@ -116,7 +156,7 @@ def _read_error_es(error: str, path: str | None = None) -> str:
         "unreadableInput": "No se pueden leer los modelos del proyecto.",
         "noModels": "El proyecto no tiene modelos.",
         "notRelational": "El proyecto es para una base de datos sin tablas (MongoDB, Redis, Cassandra…): todavía no se admite. Para MongoDB, pega los esquemas de Mongoose, los documentos de Spring Data o Beanie o los validadores que escribe Model2DB.",
-        "unknownInput": "No es un proyecto de Model2DB, ni DDL de SQL, ni código ORM que sepa leer (por ahora, SQLAlchemy, SQLModel, Django, Tortoise, Prisma, TypeORM, Sequelize, Drizzle, JPA/Hibernate, EF Core, Doctrine, Eloquent, Mongoose, Spring Data MongoDB y Beanie), ni validadores de MongoDB.",
+        "unknownInput": "No es un proyecto de Model2DB, ni DDL de SQL, ni código ORM que sepa leer (por ahora, SQLAlchemy, SQLModel, Django, Tortoise, Prisma, TypeORM, Sequelize, Drizzle, JPA/Hibernate, EF Core, Doctrine, Eloquent, Mongoose, Spring Data MongoDB y Beanie), ni validadores ni documentos (con su _id) de MongoDB.",
         "noTables": "El código no declara ninguna tabla: una clase de SQLAlchemy necesita su __tablename__; una de SQLModel, table=True, una de Django o Tortoise, Model; un schema de Prisma, un bloque model, una clase de TypeORM, @Entity(), los modelos de Sequelize, Model.init() o sequelize.define(), un schema de Drizzle, pgTable(), mysqlTable() o sqliteTable(), una clase JPA, @Entity, un modelo de EF Core, un DbContext con sus DbSet<…>, una clase de Doctrine, #[ORM\\Entity]; Eloquent, las migraciones con Schema::create, el DDL de SQL, un CREATE TABLE; Mongoose, un model(), una clase de Spring Data MongoDB, @Document; Beanie, una clase Document, y MongoDB, un createCollection() con su validador.",
     }[error]
 
@@ -241,7 +281,7 @@ EN = SimpleNamespace(
     },
     confirm_replace="Your current database and the decisions made on it will be replaced. Continue?",
     input_label="Database to read",
-    input_placeholder="Paste a Model2DB project (the .model2db.json file Model2DB saves) or ORM models (SQLAlchemy, SQLModel, Django, Tortoise, a Prisma schema, TypeORM entities, Sequelize models, a Drizzle schema, JPA entities, an EF Core model, Doctrine entities, Laravel migrations and Eloquent models, Mongoose schemas, Spring Data MongoDB or Beanie documents) or SQL DDL (CREATE TABLE…) or the validators of MongoDB collections, or drop the files or the folder of a project here…",
+    input_placeholder="Paste a Model2DB project (the .model2db.json file Model2DB saves) or ORM models (SQLAlchemy, SQLModel, Django, Tortoise, a Prisma schema, TypeORM entities, Sequelize models, a Drizzle schema, JPA entities, an EF Core model, Doctrine entities, Laravel migrations and Eloquent models, Mongoose schemas, Spring Data MongoDB or Beanie documents) or SQL DDL (CREATE TABLE…) or the validators or sample documents of MongoDB collections (they stay on your computer), or drop the files or the folder of a project here…",
     editor_keys="Tab indents. To leave the editor with the keyboard, press Escape and then Tab.",
     input_sources_label="What to read",
     input_sources={"database": "Database schema", "models": "Application models"},
@@ -298,6 +338,7 @@ EN = SimpleNamespace(
     file_error=lambda name: f"“{name}” could not be read.",
     input_empty="Open files or a folder, or paste a Model2DB project, ORM code or SQL DDL, to start.",
     warnings_count=lambda count: f"{_en_number(count)} {_plural(count, 'note', 'notes')}",
+    note=_note_en,
     read_error=_read_error_en,
     database_summary=lambda source, dialect, tables, columns: (
         f"{source} · {dialect or 'any database'} · {_en_number(tables)} {_plural(tables, 'table', 'tables')} · "
@@ -455,7 +496,7 @@ ES = SimpleNamespace(
     },
     confirm_replace="Se sustituirán tu base de datos actual y las decisiones tomadas sobre ella. ¿Continuar?",
     input_label="Base de datos que leer",
-    input_placeholder="Pega un proyecto de Model2DB (el archivo .model2db.json que guarda Model2DB) o modelos de un ORM (SQLAlchemy, SQLModel, Django, Tortoise, un schema de Prisma, entidades de TypeORM, modelos de Sequelize, un schema de Drizzle, entidades JPA, un modelo de EF Core, entidades de Doctrine, migraciones de Laravel y modelos de Eloquent, esquemas de Mongoose, documentos de Spring Data MongoDB o Beanie) o DDL de SQL (CREATE TABLE…) o los validadores de colecciones de MongoDB, o suelta aquí los archivos o la carpeta de un proyecto…",
+    input_placeholder="Pega un proyecto de Model2DB (el archivo .model2db.json que guarda Model2DB) o modelos de un ORM (SQLAlchemy, SQLModel, Django, Tortoise, un schema de Prisma, entidades de TypeORM, modelos de Sequelize, un schema de Drizzle, entidades JPA, un modelo de EF Core, entidades de Doctrine, migraciones de Laravel y modelos de Eloquent, esquemas de Mongoose, documentos de Spring Data MongoDB o Beanie) o DDL de SQL (CREATE TABLE…) o los validadores o documentos de ejemplo de colecciones de MongoDB (no salen de tu equipo), o suelta aquí los archivos o la carpeta de un proyecto…",
     editor_keys="Tab sangra. Para salir del editor con el teclado, pulsa Escape y después Tab.",
     input_sources_label="Qué leer",
     input_sources={"database": "Esquema de la base de datos", "models": "Modelos de aplicación"},
@@ -512,6 +553,7 @@ ES = SimpleNamespace(
     file_error=lambda name: f"No se ha podido leer «{name}».",
     input_empty="Abre archivos o una carpeta, o pega un proyecto de Model2DB, código ORM o DDL de SQL, para empezar.",
     warnings_count=lambda count: f"{_es_number(count)} {_plural(count, 'nota', 'notas')}",
+    note=_note_es,
     read_error=_read_error_es,
     database_summary=lambda source, dialect, tables, columns: (
         f"{source} · {dialect or 'cualquier base de datos'} · {_es_number(tables)} {_plural(tables, 'tabla', 'tablas')} · "

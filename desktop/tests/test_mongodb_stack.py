@@ -7,7 +7,8 @@ from db2crud.core.settings.settings import (
     settings_for,
     stacks_for,
 )
-from db2crud.workspace import input_language, read_database
+from db2crud.ui.i18n import EN, ES
+from db2crud.workspace import input_language, read_database, source_label
 
 VALIDATOR = '{ $jsonSchema: { bsonType: "object", title: "users", properties: { name: { bsonType: "string" } } } }'
 
@@ -35,3 +36,23 @@ def test_reads_one_validator():
     assert input_language({"text": VALIDATOR}) == "typescript"
     # Any other object is a Model2DB project
     assert read_database({"text": '{"a": 1}'})["ok"] is False
+
+
+def test_reads_sample_documents():
+    text = '{ "_id": { "$oid": "65a000000000000000000001" }, "name": "Ana" }'
+    read = read_database({"text": text, "fileName": "shop.people.json"})
+    tables = read["schema"]["tables"]
+    assert [(table["name"], [column["name"] for column in table["columns"]]) for table in tables] == [
+        ("people", ["_id", "name"])
+    ]
+    assert source_label(read["schema"]) == "MongoDB documents"
+    # No value of a document goes into the schema
+    assert "Ana" not in str(read)
+    assert read_database({"text": '{ "name": "Ana" }'})["ok"] is False
+
+
+def test_notes_are_explained_in_both_languages():
+    note = {"code": "documents.few", "params": {"table": "people", "count": 1}}
+    assert EN.note(note).startswith("people: 1 document.")
+    assert ES.note(note).startswith("people: 1 documento.")
+    assert EN.note({"code": "other", "params": {"table": "people"}}) == "other · people"

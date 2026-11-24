@@ -12,6 +12,7 @@ import re
 from pathlib import Path
 
 from .core.importers.ddl.ddl import detect_ddl, read_ddl
+from .core.importers.orm.documents import holds_documents
 from .core.importers.orm.registry import ORM_READERS, detect_orm, read_orm_code
 from .core.importers.registry import accepted_extensions, detect_format, find_parser, parse_input
 from .core.interop.mapper.read import is_mapper_project, mapper_models, read_mapper_project
@@ -27,12 +28,19 @@ def _is_validator(text: str) -> bool:
     )
 
 
+def _is_project(text: str) -> bool:
+    """A JSON text that is a Model2DB project, or tries to be: it is no validator and holds no documents of MongoDB."""
+    if not text.startswith("{") or _is_validator(text):
+        return False
+    return bool(re.search(r"""["']format["']\s*:\s*["']model2db""", text)) or not holds_documents(text)
+
+
 def _read_text(text: str, name: str) -> dict | None:
-    """One text: a Model2DB project when it is JSON; else ORM code, or else SQL DDL."""
+    """One text: a Model2DB project when it is JSON, unless it holds documents of MongoDB; else ORM code, or else SQL
+    DDL."""
     if trim(text) == "":
         return None
-    # A validator of MongoDB is an object too
-    if trim(text).startswith("{") and not _is_validator(trim(text)):
+    if _is_project(trim(text)):
         return read_model2db_project(text)
     return _read_files([{"name": name, "text": text}])
 
@@ -91,7 +99,7 @@ def input_language(state: dict) -> str:
         if language:
             return language
     text = trim_start(state["text"])
-    if text == "" or (text.startswith("{") and not _is_validator(text)):
+    if text == "" or _is_project(text):
         return "json"
     reader = detect_orm([{"name": coalesce(state.get("fileName"), "input"), "text": state["text"]}])
     if reader:
@@ -175,6 +183,8 @@ READABLE = {
     ".prisma",
     ".sql",
     ".json",
+    ".ndjson",
+    ".jsonl",
     ".properties",
     ".yml",
     ".yaml",

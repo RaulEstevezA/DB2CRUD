@@ -8,6 +8,7 @@ A result is {"ok": True, "schema", "reader"} or {"ok": False, "error": "unknownO
 from .beanie import BEANIE_READER
 from .django import DJANGO_READER
 from .doctrine import DOCTRINE_READER
+from .documents import DOCUMENTS_READER
 from .drizzle import DRIZZLE_READER
 from .efcore import EFCORE_READER
 from .eloquent import ELOQUENT_READER
@@ -40,6 +41,7 @@ ORM_READERS: list[OrmReader] = [
     MONGODB_READER,
     SPRING_DATA_READER,
     BEANIE_READER,
+    DOCUMENTS_READER,
 ]
 
 

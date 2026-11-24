@@ -128,7 +128,8 @@ class DatabasePane(Pane):
             self,
             t.open_dialog,
             "",
-            f"{t.project_files} (*.json *.py *.prisma *.ts *.js *.java *.cs *.php *.sql);;{t.all_files} (*)",
+            f"{t.project_files} (*.json *.ndjson *.jsonl *.txt *.py *.prisma *.ts *.js *.java *.cs *.php *.sql);;"
+            f"{t.all_files} (*)",
         )
         if paths:
             self.open_paths(paths)
@@ -289,7 +290,7 @@ class DatabasePane(Pane):
                 )
                 if schema["notes"]:
                     text += f" · {t.warnings_count(len(schema['notes']))}"
-                tooltip = "\n".join(note["code"] for note in schema["notes"])
+                tooltip = "\n".join(t.note(note) for note in schema["notes"])
                 role = "success"
         self.editor.highlight_error_line(None)
         self.status.setText(text)
