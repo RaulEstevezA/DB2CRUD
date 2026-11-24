@@ -408,6 +408,38 @@ export const SCENARIOS = [
     case: 'shop-csharp',
     settings: { language: 'csharp', orm: 'efcore', database: 'sqlite', memoryRepositories: false, architecture: 'table', transactions: 'caller' },
   },
+  // C# without an ORM: SQL through ADO.NET
+  { id: 'csharp-sql-sqlite-defaults', schema: 'shop', settings: { language: 'csharp', orm: 'sql', database: 'sqlite' } },
+  {
+    id: 'csharp-sql-postgresql-record-dtos-patch-cursor',
+    schema: 'shop',
+    settings: { language: 'csharp', orm: 'sql', database: 'postgresql', serviceTypes: 'dtos', dtoKind: 'record', updates: 'patch', paging: 'cursor' },
+    service: 'postgresql',
+  },
+  {
+    id: 'csharp-sql-mysql-decided-offset-repository-commits',
+    schema: 'shop',
+    settings: { language: 'csharp', orm: 'sql', database: 'mysql', paging: 'offset', updates: 'patch', transactions: 'repository', repositoryInterfaces: false, verbs: 'get' },
+    decisions: OTHER_WAY,
+    service: 'mysql',
+  },
+  {
+    id: 'csharp-sql-mariadb-caller-class-dtos-full-by-table',
+    schema: 'shop',
+    settings: { language: 'csharp', orm: 'sql', database: 'mariadb', transactions: 'caller', serviceTypes: 'dtos', dtoKind: 'class', updates: 'full', architecture: 'table', memoryRepositories: false },
+    service: 'mariadb',
+  },
+  {
+    id: 'csharp-sql-sqlite-no-interfaces-services-tests',
+    schema: 'shop',
+    settings: { language: 'csharp', orm: 'sql', database: 'sqlite', repositoryInterfaces: false, verbs: 'find', tests: 'services', entities: 'all' },
+  },
+  {
+    id: 'csharp-sql-postgresql-conversions-dtos',
+    case: 'shop-csharp',
+    settings: { language: 'csharp', orm: 'sql', database: 'postgresql', serviceTypes: 'dtos' },
+    service: 'postgresql',
+  },
   { id: 'doctrine-sqlite-defaults', schema: 'shop', settings: { language: 'php', orm: 'doctrine', database: 'sqlite' } },
   {
     id: 'doctrine-postgresql-readonly-dtos-patch',
