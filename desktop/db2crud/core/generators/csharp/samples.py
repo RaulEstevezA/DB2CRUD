@@ -95,7 +95,13 @@ def sample_value(column: dict, checks: list[dict], enums: list[dict]) -> str:
     if kind == "uuid":
         return 'Guid.Parse($"00000000-0000-4000-8000-{n:D12}")'
     if kind == "binary":
-        return "new byte[] { (byte)n }"
+        # As long as the column, when its length may be fixed: the database fills shorter values
+        length = column_type.get("length")
+        return (
+            f"Enumerable.Repeat((byte)n, {length}).ToArray()"
+            if length is not None and length <= 64
+            else "new byte[] { (byte)n }"
+        )
     if kind == "json":
         return '$"{{\\"n\\": {n}}}"'
     if kind == "array":
@@ -114,4 +120,5 @@ def missing_value(column: dict) -> str:
         "float": "999999f",
         "Guid": 'Guid.Parse("00000000-0000-4000-8000-000000999999")',
         "DateOnly": "new DateOnly(1999, 1, 1)",
+        "byte[]": "new byte[] { 255, 255 }",
     }.get(column["cs"], '"missing"')

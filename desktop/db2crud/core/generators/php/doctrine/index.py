@@ -19,7 +19,7 @@ from ..common.repositories import uuid_fills
 from ..common.support import repository_assignments, repository_properties
 from ..common.tests import TESTS_NS, schemas_of, test_file
 from .entities import doctrine_entity_file, doctrine_php_type, id_columns, pg_enums, quoted
-from .types import PRECISE_TYPES, type_files, types_namespace, uses_precise_types
+from .types import PRECISE_TYPES, type_files, types_namespace, uses_pg_array, uses_precise_types, uses_time_tz
 
 URLS = {
     "postgresql": "postgresql://app:app@localhost:5432/app",
@@ -53,6 +53,16 @@ def _database_file(context: dict) -> dict:
                 [
                     f"        if (!Type::hasType({item['name']}::NAME)) {{",
                     f"            Type::addType({item['name']}::NAME, {item['name']}::class);",
+                    "        }",
+                ]
+            )
+    for used, name in ((uses_time_tz(context), "PreciseTimeTzType"), (uses_pg_array(context), "PgArrayType")):
+        if used:
+            uses.add("Doctrine\\DBAL\\Types\\Type", class_name(types_namespace(context), name))
+            registration.extend(
+                [
+                    f"        if (!Type::hasType({name}::NAME)) {{",
+                    f"            Type::addType({name}::NAME, {name}::class);",
                     "        }",
                 ]
             )
@@ -364,7 +374,15 @@ def _test_database(context: dict) -> list[dict]:
                 "        $connection = $em->getConnection();",
                 "        $tool = new SchemaTool($em);",
                 *drops,
-                "        $tool->dropDatabase();",
+                *(
+                    [
+                        "        // DBAL cannot read a column of an array either: everything goes",
+                        "        $connection->executeStatement('DROP SCHEMA IF EXISTS public CASCADE');",
+                        "        $connection->executeStatement('CREATE SCHEMA public');",
+                    ]
+                    if uses_pg_array(context)
+                    else ["        $tool->dropDatabase();"]
+                ),
                 *creates,
                 "        $schema = $tool->getSchemaFromMetadata($em->getMetadataFactory()->getAllMetadata());",
                 *(
@@ -425,6 +443,7 @@ DOCTRINE_ORM = {
     "label": "Doctrine ORM 3",
     "property": lambda column: field_name(column["name"]),
     "phpType": doctrine_php_type,
+    "textDateKeys": True,
     "entityFile": doctrine_entity_file,
     "databaseFiles": lambda context: [_database_file(context), *type_files(context)],
     "repository": {

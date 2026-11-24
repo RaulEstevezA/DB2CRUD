@@ -6,6 +6,7 @@ constraints are named in the table's comment: the services check them. Mirrors
 web/src/core/generators/kotlin/exposed/entities.ts."""
 
 from ....js import js_string
+from ....schema.ddl import type_sql
 from ..context import column_of, common_package, find_info, kt_file, optional_type, package_of, path_of, qualified
 from ..kotlin import KtImports, kt_string
 from ..repositories import kt_literal
@@ -50,6 +51,31 @@ def uses_enum_columns(context: dict) -> bool:
     return any(
         info["writesEntity"] and any(native_enum(context, column["column"]) for column in info["columns"])
         for info in context["tables"]
+    )
+
+
+def _is_mysql(context: dict) -> bool:
+    return context["settings"]["database"] in ("mysql", "mariadb")
+
+
+def _uses_column(context: dict, test) -> bool:
+    return any(
+        info["writesEntity"] and any(test(column["column"]["type"]) for column in info["columns"])
+        for info in context["tables"]
+    )
+
+
+def uses_native_text(context: dict) -> bool:
+    """Whether a table object uses the column type of the values PostgreSQL keeps in a type Exposed does not have."""
+    return context["settings"]["database"] == "postgresql" and _uses_column(
+        context, lambda column_type: column_type["kind"] in ("json", "array", "unknown")
+    )
+
+
+def _uses_long_binary(context: dict) -> bool:
+    """Whether a table object uses the column type of MySQL's bytes without a length."""
+    return _is_mysql(context) and _uses_column(
+        context, lambda column_type: column_type["kind"] == "binary" and column_type.get("length") is None
     )
 
 
@@ -109,6 +135,9 @@ def _column_call(context: dict, column: dict, imports: KtImports) -> str:
         imports.add(f"{EXPOSED}.java.javaUUID")
         return f"javaUUID({name})"
     if kind == "binary":
+        if column_type.get("length") is None and _is_mysql(context):
+            imports.add(qualified(common_package(context), "longBinary"))
+            return f"longBinary({name})"
         length = column_type.get("length")
         return f"binary({name}, {js_string(length)})" if length is not None else f"binary({name})"
     if kind == "enum":
@@ -119,6 +148,9 @@ def _column_call(context: dict, column: dict, imports: KtImports) -> str:
         )
         length = max([1, *(len(value) for value in values)])
         return f"varchar({name}, {length})"
+    if database == "postgresql":
+        imports.add(qualified(common_package(context), "nativeText"))
+        return f"nativeText({name}, {kt_string(type_sql(context['schema'], 'postgresql', column_type))})"
     return f"text({name})"
 
 
@@ -288,5 +320,59 @@ def enum_column_file(context: dict) -> dict | None:
             "/** A column of an enum of the database. */",
             f"fun Table.databaseEnum(name: String, sql: String{', typeName: String' if postgres else ''}): Column<String> =",
             f"    registerColumn(name, DatabaseEnumColumnType(sql{', typeName' if postgres else ''}))",
+        ],
+    )
+
+
+def native_text_file(context: dict) -> dict | None:
+    """NativeText.kt: the column type of a value kept as its text that PostgreSQL has in a type of its own (json, arrays…)."""
+    if not uses_native_text(context):
+        return None
+    pkg = common_package(context)
+    imports = KtImports(pkg).add(
+        f"{EXPOSED}.Column", f"{EXPOSED}.Table", f"{EXPOSED}.TextColumnType", "org.postgresql.util.PGobject"
+    )
+    return kt_file(
+        path_of(pkg, "NativeText"),
+        pkg,
+        imports.write(),
+        [
+            "/** A value kept as its text, in a column of another type of PostgreSQL. */",
+            "class NativeTextColumnType(private val sql: String) : TextColumnType() {",
+            "    override fun sqlType(): String = sql",
+            "",
+            "    // Of no type yet: PostgreSQL gives it the type of the column",
+            "    override fun notNullValueToDB(value: String): Any = PGobject().also {",
+            '        it.type = "unknown"',
+            "        it.value = value",
+            "    }",
+            "",
+            "    override fun valueFromDB(value: Any): String = if (value is PGobject) value.value!! else value.toString()",
+            "}",
+            "",
+            "/** A column of a type Exposed does not have, read and written as text. */",
+            "fun Table.nativeText(name: String, sql: String): Column<String> = registerColumn(name, NativeTextColumnType(sql))",
+        ],
+    )
+
+
+def long_binary_file(context: dict) -> dict | None:
+    """LongBinary.kt: the column type of MySQL's bytes without a length, which Exposed has only as streams."""
+    if not _uses_long_binary(context):
+        return None
+    pkg = common_package(context)
+    imports = KtImports(pkg).add(f"{EXPOSED}.BasicBinaryColumnType", f"{EXPOSED}.Column", f"{EXPOSED}.Table")
+    return kt_file(
+        path_of(pkg, "LongBinary"),
+        pkg,
+        imports.write(),
+        [
+            "/** Bytes without a length. */",
+            "class LongBinaryColumnType : BasicBinaryColumnType() {",
+            '    override fun sqlType(): String = "LONGBLOB"',
+            "}",
+            "",
+            "/** A column of bytes without a length. */",
+            "fun Table.longBinary(name: String): Column<ByteArray> = registerColumn(name, LongBinaryColumnType())",
         ],
     )

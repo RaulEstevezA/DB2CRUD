@@ -141,6 +141,12 @@ function unitOfWork(context: Context, imports: Imports): Line[] {
 
 function conftest(context: Context): GeneratedFile {
   const imports = new Imports().module('pytest').from('app.unit_of_work', 'SqlUnitOfWork')
+  const schemas =
+    context.settings.database === 'postgresql'
+      ? [...new Set(context.tables.map((info) => info.table.schema).filter((name): name is string => !!name))]
+      : []
+  if (schemas.length > 0)
+    imports.from('django.db', 'connections').from('django.db.models.signals', 'pre_migrate').from('django.dispatch', 'receiver')
   if (context.settings.memoryRepositories) imports.from('app.unit_of_work', 'MemoryUnitOfWork')
   return {
     path: 'tests/conftest.py',
@@ -148,6 +154,15 @@ function conftest(context: Context): GeneratedFile {
       '"""Fixtures of the tests: the test database pytest-django creates from the models, and the units of work."""',
       '',
       imports.write('app'),
+      schemas.length > 0 && [
+        '',
+        '',
+        '@receiver(pre_migrate)',
+        'def create_schemas(using: str, **_: object) -> None:',
+        '    """The schemas the tables are in: Django creates tables only."""',
+        '    with connections[using].cursor() as cursor:',
+        ...schemas.map((name) => `        cursor.execute('CREATE SCHEMA IF NOT EXISTS "${name}"')`),
+      ],
       '',
       '',
       '@pytest.fixture',

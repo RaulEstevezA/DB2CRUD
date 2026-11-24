@@ -6,6 +6,7 @@
  * into entities and back. CHECK constraints are named in the table's comment: the services check them.
  */
 import type { GeneratedFile } from '../../../export/files.ts'
+import { typeSql } from '../../../schema/ddl.ts'
 import type { DbColumn, DbEnum, DbType } from '../../../schema/types.ts'
 import {
   columnOf,
@@ -50,6 +51,19 @@ export function nativeEnum(context: Context, column: DbColumn): DbEnum | undefin
 export const usesEnumColumns = (context: Context) =>
   context.tables.some((info) => info.writesEntity && info.columns.some((column) => nativeEnum(context, column.column)))
 
+const isMySql = (context: Context) => context.settings.database === 'mysql' || context.settings.database === 'mariadb'
+
+const usesColumn = (context: Context, test: (column: DbColumn) => boolean) =>
+  context.tables.some((info) => info.writesEntity && info.columns.some((column) => test(column.column)))
+
+/** Whether a table object uses the column type of the values PostgreSQL keeps in a type Exposed does not have. */
+export const usesNativeText = (context: Context) =>
+  context.settings.database === 'postgresql' && usesColumn(context, ({ type }) => ['json', 'array', 'unknown'].includes(type.kind))
+
+/** Whether a table object uses the column type of MySQL's bytes without a length. */
+const usesLongBinary = (context: Context) =>
+  isMySql(context) && usesColumn(context, ({ type }) => type.kind === 'binary' && type.length === undefined)
+
 const quoteSql = (text: string) => `'${text.replace(/'/g, "''")}'`
 
 /** The Exposed call that registers a column, without its modifiers. */
@@ -90,6 +104,10 @@ function columnCall(context: Context, column: ColumnInfo, imports: KtImports): s
       imports.add(`${EXPOSED}.java.javaUUID`)
       return `javaUUID(${name})`
     case 'binary':
+      if (type.length === undefined && isMySql(context)) {
+        imports.add(qualified(commonPackage(context), 'longBinary'))
+        return `longBinary(${name})`
+      }
       return type.length !== undefined ? `binary(${name}, ${type.length})` : `binary(${name})`
     case 'enum': {
       // An enum kept with a CHECK: its text, as long as its longest value
@@ -100,6 +118,10 @@ function columnCall(context: Context, column: ColumnInfo, imports: KtImports): s
     case 'json':
     case 'array':
     case 'unknown':
+      if (context.settings.database === 'postgresql') {
+        imports.add(qualified(commonPackage(context), 'nativeText'))
+        return `nativeText(${name}, ${ktString(typeSql(context.schema, 'postgresql', type))})`
+      }
       return `text(${name})`
   }
 }
@@ -235,5 +257,50 @@ export function enumColumnFile(context: Context): GeneratedFile | null {
     '/** A column of an enum of the database. */',
     `fun Table.databaseEnum(name: String, sql: String${postgres ? ', typeName: String' : ''}): Column<String> =`,
     `    registerColumn(name, DatabaseEnumColumnType(sql${postgres ? ', typeName' : ''}))`,
+  ])
+}
+
+/** `NativeText.kt`: the column type of a value kept as its text that PostgreSQL has in a type of its own (json, arrays…). */
+export function nativeTextFile(context: Context): GeneratedFile | null {
+  if (!usesNativeText(context)) return null
+  const pkg = commonPackage(context)
+  const imports = new KtImports(pkg).add(
+    `${EXPOSED}.Column`,
+    `${EXPOSED}.Table`,
+    `${EXPOSED}.TextColumnType`,
+    'org.postgresql.util.PGobject',
+  )
+  return ktFile(pathOf(pkg, 'NativeText'), pkg, imports.write(), [
+    '/** A value kept as its text, in a column of another type of PostgreSQL. */',
+    'class NativeTextColumnType(private val sql: String) : TextColumnType() {',
+    '    override fun sqlType(): String = sql',
+    '',
+    '    // Of no type yet: PostgreSQL gives it the type of the column',
+    '    override fun notNullValueToDB(value: String): Any = PGobject().also {',
+    '        it.type = "unknown"',
+    '        it.value = value',
+    '    }',
+    '',
+    '    override fun valueFromDB(value: Any): String = if (value is PGobject) value.value!! else value.toString()',
+    '}',
+    '',
+    '/** A column of a type Exposed does not have, read and written as text. */',
+    'fun Table.nativeText(name: String, sql: String): Column<String> = registerColumn(name, NativeTextColumnType(sql))',
+  ])
+}
+
+/** `LongBinary.kt`: the column type of MySQL's bytes without a length, which Exposed has only as streams. */
+export function longBinaryFile(context: Context): GeneratedFile | null {
+  if (!usesLongBinary(context)) return null
+  const pkg = commonPackage(context)
+  const imports = new KtImports(pkg).add(`${EXPOSED}.BasicBinaryColumnType`, `${EXPOSED}.Column`, `${EXPOSED}.Table`)
+  return ktFile(pathOf(pkg, 'LongBinary'), pkg, imports.write(), [
+    '/** Bytes without a length. */',
+    'class LongBinaryColumnType : BasicBinaryColumnType() {',
+    '    override fun sqlType(): String = "LONGBLOB"',
+    '}',
+    '',
+    '/** A column of bytes without a length. */',
+    'fun Table.longBinary(name: String): Column<ByteArray> = registerColumn(name, LongBinaryColumnType())',
   ])
 }

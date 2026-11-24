@@ -6,6 +6,7 @@ database has them. Mirrors web/src/core/generators/php/eloquent/index.ts."""
 import re
 
 from ....js import number_text
+from ....schema.ddl import type_sql
 from ..common.context import (
     class_name,
     column_of,
@@ -21,7 +22,7 @@ from ..common.php import PhpUses, php_literal, php_string
 from ..common.repositories import filled_by_database, uuid_fills
 from ..common.support import repository_assignments, repository_properties
 from ..common.tests import TESTS_NS, schemas_of, test_file
-from .models import eloquent_model_file, eloquent_php_type
+from .models import eloquent_model_file, eloquent_php_type, pg_array_file
 
 URLS = {
     "postgresql": "postgresql://app:app@localhost:5432/app",
@@ -312,8 +313,15 @@ def _column_call(context: dict, table: dict, column: dict, native_enum: bool) ->
     if kind == "uuid":
         return f"$table->uuid({name})"
     if kind == "binary":
-        return f"$table->binary({name})"
-    if kind in ("json", "array"):
+        # MySQL has no keys on columns without a length
+        length = column_type.get("length")
+        return f"$table->binary({name}, {length})" if length is not None else f"$table->binary({name})"
+    if kind == "array":
+        if context["settings"]["database"] == "postgresql":
+            sql = type_sql(context["schema"], "postgresql", column_type)
+            return f"$table->rawColumn({name}, {php_string(sql)})"
+        return f"$table->json({name})"
+    if kind == "json":
         jsonb = context["settings"]["database"] == "postgresql" and re.search(
             "jsonb", column_type["sql"], re.IGNORECASE
         )
@@ -576,7 +584,9 @@ ELOQUENT_ORM = {
     "property": lambda column: column["name"],
     "phpType": eloquent_php_type,
     "entityFile": eloquent_model_file,
-    "databaseFiles": lambda context: [_database_file(context)],
+    "databaseFiles": lambda context: [
+        file for file in (_database_file(context), pg_array_file(context)) if file is not None
+    ],
     "repository": {
         "doc": lambda context: "through its Eloquent model and the query builder, by every column of its key.",
         "init": lambda context, info, uses: [],

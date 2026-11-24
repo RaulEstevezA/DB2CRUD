@@ -7,6 +7,7 @@ the repositories. Mirrors web/src/core/generators/java/entities.ts."""
 import re
 
 from ....js import number_text
+from ....schema.ddl import type_sql
 from ...types import lines
 from ..context import find_info, is_in, jpql_name, package_of, qualified
 from ..java import JavaImports, java_path, java_string
@@ -44,6 +45,14 @@ def enum_types(context: dict) -> list[str]:
     ]
 
 
+def _native_text(context: dict, column: dict) -> str | None:
+    """The type of PostgreSQL of a column JPA keeps as its text: an array, or a type JPA does not know."""
+    column_type = column["column"]["type"]
+    if context["settings"]["database"] != "postgresql" or column_type["kind"] not in ("array", "unknown"):
+        return None
+    return type_sql(context["schema"], "postgresql", column_type)
+
+
 def _column_annotations(context: dict, info: dict, column: dict, imports: JavaImports) -> list[str]:
     db = column["column"]
     column_type = db["type"]
@@ -77,6 +86,9 @@ def _column_annotations(context: dict, info: dict, column: dict, imports: JavaIm
         else:
             definition = f"enum({', '.join(_quote_sql(value) for value in enum_type['values'])})"
         options.append(f"columnDefinition = {java_string(definition)}")
+    native = _native_text(context, column)
+    if native:
+        options.append(f"columnDefinition = {java_string(native)}")
     if isinstance(generated, dict):
         options += ["insertable = false", "updatable = false"]
     if primary:
@@ -100,7 +112,11 @@ def _column_annotations(context: dict, info: dict, column: dict, imports: JavaIm
     if kind == "uuid" and database != "postgresql":
         imports.add(f"{HIBERNATE}.JdbcTypeCode", "org.hibernate.type.SqlTypes")
         result.append("@JdbcTypeCode(SqlTypes.CHAR)")
-    if kind in ("json", "array"):
+    if native:
+        # Kept as its text, which PostgreSQL converts only when it is told to
+        imports.add(f"{HIBERNATE}.ColumnTransformer")
+        result.append(f"@ColumnTransformer(write = {java_string(f'?::{native}')})")
+    elif kind in ("json", "array"):
         imports.add(f"{HIBERNATE}.JdbcTypeCode", "org.hibernate.type.SqlTypes")
         result.append("@JdbcTypeCode(SqlTypes.JSON)")
     # A uuid that is not the key is made by Hibernate before the insert: SQLite and MySQL have no default for it
@@ -257,7 +273,8 @@ def entity_file(context: dict, info: dict) -> dict:
         fields += [
             "" if index > 0 else None,
             kind == "unknown" and f'    // TODO: "{sql}" has no JPA type here; it is mapped as text',
-            kind == "array" and f'    // TODO: "{sql}" is kept as its JSON text',
+            kind == "array"
+            and f'    // "{sql}" is kept as its {"text: {a,b}" if context["settings"]["database"] == "postgresql" else "JSON text"}',
             *(f"    {line}" for line in _column_annotations(context, info, column, imports)),
             f"    private {column['java']} {column['prop']};",
         ]

@@ -6,7 +6,16 @@ from ..context import kt_file, package_of, path_of, qualified
 from ..kotlin import KtImports, kt_string
 from ..support import default_url
 from ..tests import test_path
-from .entities import entity_file, enum_column_file, native_enum, table_object_file, uses_enum_columns
+from .entities import (
+    entity_file,
+    enum_column_file,
+    long_binary_file,
+    native_enum,
+    native_text_file,
+    table_object_file,
+    uses_enum_columns,
+    uses_native_text,
+)
 from .repository import exposed_body, exposed_helpers
 
 _EXPOSED = "1.6.1"
@@ -71,8 +80,14 @@ def _test_database_files(context: dict) -> list[dict]:
         else []
     )
 
+    nullable_computed = database == "mariadb" and any(
+        isinstance(column["column"].get("generated"), dict) and column["column"]["nullable"]
+        for info in tables
+        for column in info["columns"]
+    )
+
     def quote(text: str):
-        return "'" + text.replace(r"'", "''", 1) + "'"
+        return "'" + text.replace("'", "''") + "'"
 
     def statement(sql: str):
         return f"            exec({kt_string(sql)})"
@@ -129,7 +144,14 @@ def _test_database_files(context: dict) -> list[dict]:
                     ]
                 ),
                 *(statement(f'CREATE SCHEMA "{name}"') for name in schemas),
-                "            SchemaUtils.create(*TABLES)",
+                *(
+                    [
+                        "            // MariaDB takes no NULL after a computed column, which Exposed writes",
+                        '            SchemaUtils.createStatements(*TABLES).forEach { exec(it.replace(" STORED NULL", " STORED")) }',
+                    ]
+                    if nullable_computed
+                    else ["            SchemaUtils.create(*TABLES)"]
+                ),
                 "        }",
                 "        return SqlUnitOfWork(db)",
                 "    }",
@@ -184,8 +206,13 @@ EXPOSED_ORM = {
         "ktImport": "org.jetbrains.exposed.v1.jdbc.Database",
         "text": "database",
     },
-    "emptyList": lambda *_: '"[]"',
-    "databaseFiles": lambda context: [_database_file(context), enum_column_file(context)],
+    "emptyList": lambda context: '"{}"' if context["settings"]["database"] == "postgresql" else '"[]"',
+    "databaseFiles": lambda context: [
+        _database_file(context),
+        enum_column_file(context),
+        native_text_file(context),
+        long_binary_file(context),
+    ],
     "entityFiles": lambda context, info: [entity_file(context, info), table_object_file(context, info)],
     "repository": {
         "imports": lambda context, info: [
@@ -210,7 +237,7 @@ EXPOSED_ORM = {
         f'    implementation("org.jetbrains.exposed:exposed-core:{_EXPOSED}")',
         f'    implementation("org.jetbrains.exposed:exposed-jdbc:{_EXPOSED}")',
         f'    implementation("org.jetbrains.exposed:exposed-java-time:{_EXPOSED}")',
-        f'    {("implementation" if uses_enum_columns(context) else "runtimeOnly")}("{driver}")',
+        f'    {("implementation" if (uses_enum_columns(context) or uses_native_text(context)) else "runtimeOnly")}("{driver}")',
     ],
     "readme": {
         "intro": f"entities and table objects for Exposed {_EXPOSED}, repositories and services",

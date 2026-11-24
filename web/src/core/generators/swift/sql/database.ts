@@ -7,7 +7,7 @@ import type { GeneratedFile } from '../../../export/files.ts'
 import { quoteName, typeSql } from '../../../schema/ddl.ts'
 import type { Dialect } from '../../../schema/types.ts'
 import { fileOf, sharedFile, swFile, type ColumnInfo, type Context, type TableInfo } from '../context.ts'
-import { defaultUrl } from '../support.ts'
+import { defaultUrl, MYSQL_DATA, usesMysqlData } from '../support.ts'
 import { imports, swString } from '../swift.ts'
 
 const isMysql = (database: Dialect) => database === 'mysql' || database === 'mariadb'
@@ -192,7 +192,15 @@ export function databaseFile(context: Context): GeneratedFile {
   const inserts = mysql && context.tables.some((info) => info.queries.some((item) => item.kind === 'insert'))
   return swFile(
     sharedFile(context, 'AppDatabase'),
-    imports('AsyncKit', 'Foundation', 'Logging', 'NIOPosix', 'SQLKit', driver.module, ...(database === 'sqlite' ? ['NIOCore'] : [])),
+    imports(
+      'AsyncKit',
+      'Foundation',
+      'Logging',
+      'NIOPosix',
+      'SQLKit',
+      driver.module,
+      ...(database === 'sqlite' || usesMysqlData(context) ? ['NIOCore'] : []),
+    ),
     [
       `/// The database DATABASE_URL names, through ${driver.module}. It never migrates: the database already exists.`,
       'public final class AppDatabase: Sendable {',
@@ -278,6 +286,7 @@ export function databaseFile(context: Context): GeneratedFile {
       '',
       ...refusalLines(database),
       ...(database === 'sqlite' && uses(context, 'Date') ? DATES : []),
+      ...(usesMysqlData(context) ? MYSQL_DATA : []),
     ],
   )
 }

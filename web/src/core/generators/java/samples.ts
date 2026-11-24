@@ -85,7 +85,10 @@ export function sampleValue(column: ColumnInfo, checks: DbCheck[], enums: DbEnum
     case 'uuid':
       return 'UUID.fromString(String.format("00000000-0000-4000-8000-%012d", n))'
     case 'binary':
-      return 'new byte[] { (byte) n }'
+      // As long as the column, when its length may be fixed: the database fills shorter values
+      return type.length !== undefined && type.length <= 64
+        ? `java.util.Arrays.copyOf(new byte[] { (byte) n }, ${type.length})`
+        : 'new byte[] { (byte) n }'
     case 'json':
       return '"{\\"n\\": " + n + "}"'
     case 'array':
@@ -114,6 +117,8 @@ export function missingValue(column: ColumnInfo): string {
       return 'UUID.fromString("00000000-0000-4000-8000-000000999999")'
     case 'LocalDate':
       return 'LocalDate.of(1999, 1, 1)'
+    case 'byte[]':
+      return 'new byte[] { -1, -1 }'
     default:
       return '"missing"'
   }

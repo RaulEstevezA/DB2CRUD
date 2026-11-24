@@ -28,7 +28,7 @@ def eloquent_php_type(column_type: dict) -> str:
     return "string"
 
 
-def _cast(column: dict) -> str | None:
+def _cast(context: dict, column: dict) -> str | None:
     """The cast of a column, when its value needs one."""
     column_type = column["column"]["type"]
     kind = column_type["kind"]
@@ -44,9 +44,113 @@ def _cast(column: dict) -> str | None:
         return "immutable_date"
     if kind == "datetime":
         return "immutable_datetime"
+    if kind == "array" and context["settings"]["database"] == "postgresql":
+        return f"\\{context['base']}\\PgArray::class{_array_item(column_type)}"
     if kind in ("json", "array"):
         return "json"
     return None
+
+
+def _array_item(column_type: dict) -> str:
+    """The argument of the cast of an array: the PHP type of its items, when it is not text."""
+    item = column_type["items"] if column_type["kind"] == "array" else column_type
+    if item["kind"] == "array":
+        return _array_item(item)
+    php = {"integer": "int", "float": "float", "boolean": "bool"}.get(item["kind"])
+    return f" . ':{php}'" if php else ""
+
+
+def pg_array_file(context: dict) -> dict | None:
+    """PgArray.php, when a model has an array of PostgreSQL: its cast."""
+    if context["settings"]["database"] != "postgresql" or not any(
+        info["writesEntity"] and any(column["column"]["type"]["kind"] == "array" for column in info["columns"])
+        for info in context["tables"]
+    ):
+        return None
+    return php_file(
+        path_of(context["base"], "PgArray"),
+        context["base"],
+        "use Illuminate\\Contracts\\Database\\Eloquent\\CastsAttributes;",
+        [
+            "/**",
+            " * An array of PostgreSQL ({a,b}) as a PHP array; its items are text, or of the type the cast names.",
+            " *",
+            " * @implements CastsAttributes<array<int, mixed>, array<int, mixed>>",
+            " */",
+            "final class PgArray implements CastsAttributes",
+            "{",
+            "    public function __construct(private readonly string $item = 'string')",
+            "    {",
+            "    }",
+            "",
+            "    public function get($model, string $key, mixed $value, array $attributes): ?array",
+            "    {",
+            "        if ($value === null) {",
+            "            return null;",
+            "        }",
+            "        $at = 0;",
+            "        return $this->read((string) $value, $at);",
+            "    }",
+            "",
+            "    public function set($model, string $key, mixed $value, array $attributes): ?string",
+            "    {",
+            "        return is_array($value) ? $this->write($value) : $value;",
+            "    }",
+            "",
+            "    /** The array that starts at a position of the text, which is left after it. */",
+            "    private function read(string $text, int &$at): array",
+            "    {",
+            "        $items = [];",
+            "        $at++;",
+            "        while ($text[$at] !== '}') {",
+            "            if ($text[$at] === ',') {",
+            "                $at++;",
+            "            } elseif ($text[$at] === '{') {",
+            "                $items[] = $this->read($text, $at);",
+            "            } elseif ($text[$at] === '\"') {",
+            "                $item = '';",
+            "                for ($at++; $text[$at] !== '\"'; $at++) {",
+            "                    if ($text[$at] === '\\\\') {",
+            "                        $at++;",
+            "                    }",
+            "                    $item .= $text[$at];",
+            "                }",
+            "                $at++;",
+            "                $items[] = $this->item($item);",
+            "            } else {",
+            "                $length = strcspn($text, ',}', $at);",
+            "                $item = substr($text, $at, $length);",
+            "                $at += $length;",
+            "                $items[] = $item === 'NULL' ? null : $this->item($item);",
+            "            }",
+            "        }",
+            "        $at++;",
+            "        return $items;",
+            "    }",
+            "",
+            "    private function item(string $text): int|float|bool|string",
+            "    {",
+            "        return match ($this->item) {",
+            "            'int' => (int) $text,",
+            "            'float' => (float) $text,",
+            "            'bool' => $text === 't',",
+            "            default => $text,",
+            "        };",
+            "    }",
+            "",
+            "    private function write(array $items): string",
+            "    {",
+            "        $written = array_map(fn (mixed $item): string => match (true) {",
+            "            $item === null => 'NULL',",
+            "            is_array($item) => $this->write($item),",
+            "            is_bool($item) => $item ? 't' : 'f',",
+            "            default => '\"' . addcslashes((string) $item, '\"\\\\') . '\"',",
+            "        }, $items);",
+            "        return '{' . implode(',', $written) . '}';",
+            "    }",
+            "}",
+        ],
+    )
 
 
 def single_key(info: dict) -> bool:
@@ -58,7 +162,7 @@ def eloquent_model_file(context: dict, info: dict) -> dict:
     ns = namespace_of(context, info, "entity")
     table = info["table"]
     key = info["key"][0] if single_key(info) else None
-    casts = [(column, _cast(column)) for column in info["columns"] if _cast(column) is not None]
+    casts = [(column, _cast(context, column)) for column in info["columns"] if _cast(context, column) is not None]
 
     def literal(column: dict) -> bool:
         default = column["column"].get("default")
@@ -137,7 +241,10 @@ def eloquent_model_file(context: dict, info: dict) -> dict:
                 "",
                 "    /** @var array<string, string> */",
                 "    protected $casts = [",
-                *(f"        {php_string(column['column']['name'])} => {php_string(item)}," for column, item in casts),
+                *(
+                    f"        {php_string(column['column']['name'])} => {item if '::class' in item else php_string(item)},"
+                    for column, item in casts
+                ),
                 "    ];",
             ]
         )

@@ -215,7 +215,7 @@ export const seaormOrm: RustOrm = {
   id: 'seaorm',
   label: 'SeaORM',
   error: 'sea_orm::DbErr',
-  emptyList: () => '"[]".to_string()',
+  emptyList: (context) => (context.settings.database === 'postgresql' ? '"{}".to_string()' : '"[]".to_string()'),
   databaseFile,
   entityFiles: (context, info) => [entityFile(context, info), tableFile(context, info)],
   repository: {

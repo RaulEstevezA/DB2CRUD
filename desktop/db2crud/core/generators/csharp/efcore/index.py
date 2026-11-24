@@ -6,7 +6,7 @@ from ..context import writes_entities
 from ..csharp import CsUsings, cs_string
 from ..support import default_connection, file
 from ..tests import test_file, tests_ns
-from .entities import db_context_file, entity_file, enum_type_name, pg_enums, pg_enums_file
+from .entities import db_context_file, entity_file, enum_type_name, native_text_file, pg_enums, pg_enums_file
 from .repository import ef_body, ef_tail
 
 VERSIONS = {"efCore": "9.0.23", "npgsql": "9.0.4", "pomelo": "9.0.0"}
@@ -198,8 +198,13 @@ EFCORE_ORM = {
     "id": "efcore",
     "holder": "AppDbContext",
     "forget": "uow.Db.ChangeTracker.Clear();",
-    "emptyList": lambda context: '"[]"',
-    "databaseFiles": lambda context: [db_context_file(context), pg_enums_file(context), _database_file(context)],
+    "emptyList": lambda context: '"{}"' if context["settings"]["database"] == "postgresql" else '"[]"',
+    "databaseFiles": lambda context: [
+        db_context_file(context),
+        pg_enums_file(context),
+        native_text_file(context),
+        _database_file(context),
+    ],
     "entityFile": entity_file,
     "repository": {
         "usings": ["Microsoft.EntityFrameworkCore"],

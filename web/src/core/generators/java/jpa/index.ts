@@ -231,7 +231,9 @@ function testSession(context: Context, imports: JavaImports): Line[] {
 /** Hibernate (with the dialects of SQLite) and, for JSON columns, Jackson. */
 function dependencies(context: Context): (Line | Line[])[] {
   const json = context.tables.some((info) =>
-    info.columns.some((column) => column.column.type.kind === 'json' || column.column.type.kind === 'array'),
+    info.columns.some(
+      (column) => column.column.type.kind === 'json' || (column.column.type.kind === 'array' && context.settings.database !== 'postgresql'),
+    ),
   )
   return [
     ...dependency('org.hibernate.orm', 'hibernate-core', VERSIONS.hibernate),
@@ -245,7 +247,7 @@ export const jpaOrm: JavaOrm = {
   id: 'jpa',
   holder: 'EntityManager',
   forget: 'uow.entityManager().clear();',
-  emptyList: () => '"[]"',
+  emptyList: (context) => (context.settings.database === 'postgresql' ? '"{}"' : '"[]"'),
   databaseFiles: (context) => [databaseFile(context)],
   entityFile,
   repository: {

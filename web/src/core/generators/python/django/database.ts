@@ -253,6 +253,7 @@ function fieldLine(context: Context, info: TableInfo, column: ColumnInfo, import
       `output_field=${output}`,
       'db_persist=True',
       ...named,
+      ...(db.nullable ? ['null=True'] : []),
     )
     field = 'GeneratedField'
   } else if (db.nullable && !singleKey) args.push('null=True', 'blank=True')
@@ -311,7 +312,8 @@ export function entityFile(context: Context, info: TableInfo): GeneratedFile {
     (index) =>
       `models.Index(fields=[${names(index.columns)}], name=${JSON.stringify(indexName(index.name ?? `ix_${info.name}_${index.columns.join('_')}`))})`,
   )
-  if (info.table.schema) todos.push(`the table is in the "${info.table.schema}" schema; set the search path or db_table for it`)
+  // Django leaves a name already quoted as it is
+  const tableName = info.table.schema && context.settings.database === 'postgresql' ? `"${info.table.schema}"."${info.name}"` : info.name
   const compositeKey = info.table.primaryKey ? info.table.primaryKey.length > 1 : true
   const content = lines(
     `"""Entity of the "${info.name}" table${info.table.comment ? `: ${info.table.comment}` : ''}."""`,
@@ -329,7 +331,7 @@ export function entityFile(context: Context, info: TableInfo): GeneratedFile {
     fields,
     '',
     '    class Meta:',
-    `        db_table = ${JSON.stringify(info.name)}`,
+    `        db_table = ${tableName === info.name ? JSON.stringify(tableName) : `'${tableName}'`}`,
     !info.table.primaryKey && [
       '        # Read only: Django never creates or changes this table, so the key above stays in the ORM',
       '        managed = False',

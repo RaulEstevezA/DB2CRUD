@@ -80,7 +80,8 @@ export function sampleValue(column: ColumnInfo, checks: DbCheck[], enums: DbEnum
     case 'uuid':
       return 'UUID.fromString("00000000-0000-4000-8000-%012d".format(n))'
     case 'binary':
-      return 'byteArrayOf(n.toByte())'
+      // As long as the column, when its length may be fixed: the database fills shorter values
+      return type.length !== undefined && type.length <= 64 ? `ByteArray(${type.length}) { n.toByte() }` : 'byteArrayOf(n.toByte())'
     case 'json':
       return '"{\\"n\\": $n}"'
     case 'array':
@@ -110,6 +111,8 @@ export function missingValue(column: ColumnInfo, imports: KtImports): string {
       return 'UUID.fromString("00000000-0000-4000-8000-000000999999")'
     case 'LocalDate':
       return 'LocalDate.of(1999, 1, 1)'
+    case 'ByteArray':
+      return 'byteArrayOf(-1, -1)'
     default:
       return '"missing"'
   }

@@ -125,7 +125,7 @@ def _test_database_file(context: dict) -> dict:
     )
 
     def sql_quote(text: str):
-        return "'" + text.replace(r"'", "''", 1) + "'"
+        return "'" + text.replace("'", "''") + "'"
 
     def run(sql: str):
         return f"    db.execute_unprepared({rs_string(sql)}).await.expect({rs_string(sql)});"
@@ -276,7 +276,9 @@ SEAORM_ORM = {
     "id": "seaorm",
     "label": "SeaORM",
     "error": "sea_orm::DbErr",
-    "emptyList": lambda *_: '"[]".to_string()',
+    "emptyList": lambda context: (
+        '"{}".to_string()' if context["settings"]["database"] == "postgresql" else '"[]".to_string()'
+    ),
     "databaseFile": _database_file,
     "entityFiles": lambda context, info: [entity_file(context, info), table_file(context, info)],
     "repository": {

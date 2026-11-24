@@ -6,6 +6,7 @@ database fills, which EF Core reads back after an insert. Mirrors web/src/core/g
 import re
 
 from ....js import number_text
+from ....schema.ddl import type_sql
 from ...types import lines
 from ..context import column_of, find_info, is_in, namespace_of, path_of, writes_entities
 from ..csharp import CsUsings, cs_string, pascal_name
@@ -23,7 +24,8 @@ def entity_file(context: dict, info: dict) -> dict:
             "" if index > 0 else None,
             bool(column["column"].get("comment")) and f"    /// <summary>{column['column'].get('comment')}</summary>",
             kind == "unknown" and f'    // TODO: "{sql}" has no EF Core type here; it is mapped as text',
-            kind == "array" and f'    // TODO: "{sql}" is kept as its JSON text',
+            kind == "array"
+            and f'    // "{sql}" is kept as its {"text: {a,b}" if context["settings"]["database"] == "postgresql" else "JSON text"}',
             f"    public {column['propType']} {column['prop']} {{ get; set; }}{initializer}",
         ]
     content = lines(
@@ -76,6 +78,83 @@ def _mysql(context: dict) -> bool:
     return context["settings"]["database"] in ("mysql", "mariadb")
 
 
+def _is_native_text(context: dict, column: dict) -> bool:
+    """A column kept as its text, of a type of PostgreSQL EF Core has no text for: an array, or a type not known here."""
+    return context["settings"]["database"] == "postgresql" and column["column"]["type"]["kind"] in ("array", "unknown")
+
+
+def native_text_file(context: dict) -> dict | None:
+    """NativeText.cs, when a column needs it: how its text reaches PostgreSQL and comes back."""
+    if not any(
+        info["writesEntity"] and any(_is_native_text(context, column) for column in info["columns"])
+        for info in context["tables"]
+    ):
+        return None
+    ns = context["base"]
+    usings = CsUsings(ns).add(
+        "System.Collections",
+        "System.Data.Common",
+        "System.Globalization",
+        "System.Linq.Expressions",
+        "System.Reflection",
+        "Microsoft.EntityFrameworkCore.Storage",
+        "Npgsql",
+        "NpgsqlTypes",
+    )
+    content = lines(
+        usings.write(),
+        "",
+        f"namespace {ns};",
+        "",
+        [
+            "/// <summary>The text of a value of PostgreSQL that has no type of its own here: it is sent without a type, so the database converts it, and what the driver reads is written as PostgreSQL does.</summary>",
+            "public sealed class NativeText : StringTypeMapping",
+            "{",
+            "    public NativeText(string storeType) : base(storeType, null) { }",
+            "",
+            "    private NativeText(RelationalTypeMappingParameters parameters) : base(parameters) { }",
+            "",
+            "    protected override RelationalTypeMapping Clone(RelationalTypeMappingParameters parameters) => new NativeText(parameters);",
+            "",
+            "    protected override void ConfigureParameter(DbParameter parameter) => ((NpgsqlParameter)parameter).NpgsqlDbType = NpgsqlDbType.Unknown;",
+            "",
+            "    public override MethodInfo GetDataReaderMethod() => typeof(DbDataReader).GetMethod(nameof(DbDataReader.GetValue), [typeof(int)])!;",
+            "",
+            "    public override Expression CustomizeDataReaderExpression(Expression expression) =>",
+            "        Expression.Call(typeof(NativeText).GetMethod(nameof(Text), [typeof(object)])!, expression);",
+            "",
+            "    /// <summary>A value as PostgreSQL writes it.</summary>",
+            "    public static string Text(object value) => value switch",
+            "    {",
+            "        string text => text,",
+            '        bool flag => flag ? "t" : "f",',
+            '        byte[] bytes => "\\\\x" + Convert.ToHexStringLower(bytes),',
+            '        DateTime time => time.ToString("yyyy-MM-dd HH:mm:ss.FFFFFF", CultureInfo.InvariantCulture) + (time.Kind == DateTimeKind.Utc ? "+00" : ""),',
+            '        DateOnly date => date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),',
+            '        TimeSpan span => string.Create(CultureInfo.InvariantCulture, $"{span.Days} days {span - TimeSpan.FromDays(span.Days):c}"),',
+            '        IEnumerable items => "{" + string.Join(",", items.Cast<object?>().Select(Item)) + "}",',
+            "        IFormattable other => other.ToString(null, CultureInfo.InvariantCulture),",
+            "        _ => value.ToString()!,",
+            "    };",
+            "",
+            "    private static string Item(object? value) => value switch",
+            "    {",
+            '        null => "NULL",',
+            "        string text => Quoted(text),",
+            "        byte[] bytes => Quoted(Text(bytes)),",
+            "        IEnumerable => Text(value),",
+            "        bool => Text(value),",
+            "        _ => Quoted(Text(value)),",
+            "    };",
+            "",
+            '    private static string Quoted(string text) => "\\"" + text.Replace("\\\\", "\\\\\\\\").Replace("\\"", "\\\\\\"") + "\\"";',
+            "}",
+        ],
+        "",
+    )
+    return {"path": path_of(ns, "NativeText"), "content": content}
+
+
 def _property_lines(context: dict, info: dict, column: dict) -> list[str]:
     """The calls that map one property."""
     db = column["column"]
@@ -92,7 +171,8 @@ def _property_lines(context: dict, info: dict, column: dict) -> list[str]:
         scale = column_type.get("scale")
         calls.append(f".HasPrecision({column_type['precision']}, {scale if scale is not None else 0})")
     database = context["settings"]["database"]
-    if kind in ("json", "array") and database != "sqlite":
+    native = _is_native_text(context, column)
+    if kind in ("json", "array") and database != "sqlite" and not native:
         json_type = (
             "jsonb"
             if database == "postgresql" and not re.fullmatch(r"json", column_type["sql"], re.IGNORECASE)
@@ -131,6 +211,10 @@ def _property_lines(context: dict, info: dict, column: dict) -> list[str]:
         calls.append(f".HasDefaultValueSql({cs_string(default['sql'])})")
     if db.get("comment"):
         calls.append(f".HasComment({cs_string(db['comment'])})")
+    if native:
+        calls.append(".Metadata")
+        sql = cs_string(type_sql(context["schema"], "postgresql", column_type))
+        return [f"{calls[0]}{''.join(calls[1:])}.SetTypeMapping(new NativeText({sql}));"]
     return [f"{calls[0]}{''.join(calls[1:])};"]
 
 

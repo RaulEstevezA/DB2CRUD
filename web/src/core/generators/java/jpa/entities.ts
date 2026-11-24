@@ -7,6 +7,7 @@
  */
 import type { GeneratedFile } from '../../../export/files.ts'
 import type { DbEnum, Dialect } from '../../../schema/types.ts'
+import { typeSql } from '../../../schema/ddl.ts'
 import { lines, type Line } from '../../types.ts'
 import { javaPath, javaString, JavaImports } from '../java.ts'
 import { findInfo, jpqlName, packageOf, qualified, type ColumnInfo, type Context, type TableInfo } from '../context.ts'
@@ -32,6 +33,13 @@ export function enumTypes(context: Context): string[] {
     .map((item) => `CREATE TYPE "${item.name}" AS ENUM (${item.values.map(quoteSql).join(', ')})`)
 }
 
+/** The type of PostgreSQL of a column JPA keeps as its text: an array, or a type JPA does not know. */
+function nativeText(context: Context, column: ColumnInfo): string | null {
+  const type = column.column.type
+  if (context.settings.database !== 'postgresql' || (type.kind !== 'array' && type.kind !== 'unknown')) return null
+  return typeSql(context.schema, 'postgresql', type)
+}
+
 function columnAnnotations(context: Context, info: TableInfo, column: ColumnInfo, imports: JavaImports): string[] {
   const db = column.column
   const type = db.type
@@ -53,6 +61,8 @@ function columnAnnotations(context: Context, info: TableInfo, column: ColumnInfo
     options.push(
       `columnDefinition = ${javaString(database === 'postgresql' ? `"${enumType.name}"` : `enum(${enumType.values.map(quoteSql).join(', ')})`)}`,
     )
+  const native = nativeText(context, column)
+  if (native) options.push(`columnDefinition = ${javaString(native)}`)
   if (typeof db.generated === 'object') options.push('insertable = false', 'updatable = false')
   if (primary) {
     imports.add(`${PERSISTENCE}.Id`)
@@ -81,7 +91,11 @@ function columnAnnotations(context: Context, info: TableInfo, column: ColumnInfo
     imports.add(`${HIBERNATE}.JdbcTypeCode`, 'org.hibernate.type.SqlTypes')
     result.push('@JdbcTypeCode(SqlTypes.CHAR)')
   }
-  if (type.kind === 'json' || type.kind === 'array') {
+  if (native) {
+    // Kept as its text, which PostgreSQL converts only when it is told to
+    imports.add(`${HIBERNATE}.ColumnTransformer`)
+    result.push(`@ColumnTransformer(write = ${javaString(`?::${native}`)})`)
+  } else if (type.kind === 'json' || type.kind === 'array') {
     imports.add(`${HIBERNATE}.JdbcTypeCode`, 'org.hibernate.type.SqlTypes')
     result.push('@JdbcTypeCode(SqlTypes.JSON)')
   }
@@ -214,7 +228,8 @@ export function entityFile(context: Context, info: TableInfo): GeneratedFile {
   const fields = info.columns.flatMap((column, index) => [
     index > 0 ? '' : null,
     column.column.type.kind === 'unknown' && `    // TODO: "${column.column.type.sql}" has no JPA type here; it is mapped as text`,
-    column.column.type.kind === 'array' && `    // TODO: "${column.column.type.sql}" is kept as its JSON text`,
+    column.column.type.kind === 'array' &&
+      `    // "${column.column.type.sql}" is kept as its ${context.settings.database === 'postgresql' ? 'text: {a,b}' : 'JSON text'}`,
     ...columnAnnotations(context, info, column, imports).map((line) => `    ${line}`),
     `    private ${column.java} ${column.prop};`,
   ])

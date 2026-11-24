@@ -5,10 +5,11 @@ web/src/core/generators/php/doctrine/entities.ts."""
 
 import re
 
+from ....schema.ddl import type_sql
 from ..common.context import is_in, namespace_of, optional_type, path_of, php_file
 from ..common.php import php_literal, php_string
 from ..common.repositories import default_literal
-from .types import PRECISE, PRECISE_TZ
+from .types import PG_ARRAY, PRECISE, PRECISE_TIME_TZ, PRECISE_TZ
 
 DATE_TIME = "\\DateTimeImmutable"
 
@@ -31,8 +32,17 @@ def doctrine_php_type(column_type: dict) -> str:
     return "string"
 
 
-def _dbal_type(column_type: dict) -> dict:
+def _is_text_date(column: dict) -> bool:
+    return column["php"] == "string" and column["column"]["type"]["kind"] in ("date", "time", "datetime")
+
+
+def _dbal_type(context: dict, column: dict) -> dict:
     """The DBAL type of a column, with its length or precision."""
+    column_type = column["column"]["type"]
+    # A date of a key: text (textDateKeys of the ORM)
+    if _is_text_date(column):
+        return {"name": "string"}
+    postgres = context["settings"]["database"] == "postgresql"
     kind = column_type["kind"]
     if kind == "integer":
         return {"name": {16: "smallint", 64: "bigint"}.get(column_type["bits"], "integer")}
@@ -55,7 +65,7 @@ def _dbal_type(column_type: dict) -> dict:
     if kind == "date":
         return {"name": "date_immutable"}
     if kind == "time":
-        return {"name": "time_immutable"}
+        return {"name": PRECISE_TIME_TZ if column_type.get("timezone") and postgres else "time_immutable"}
     if kind == "datetime":
         # DBAL's own timestamps expect no fractions of a second, which a real database often keeps (types.py)
         return {"name": PRECISE_TZ if column_type.get("timezone") else PRECISE}
@@ -65,7 +75,9 @@ def _dbal_type(column_type: dict) -> dict:
         if column_type.get("length") is not None:
             return {"name": "binary", "length": column_type["length"]}
         return {"name": "blob"}
-    if kind in ("json", "array"):
+    if kind == "array":
+        return {"name": PG_ARRAY if postgres else "json"}
+    if kind == "json":
         return {"name": "json"}
     return {"name": "string"}
 
@@ -76,7 +88,21 @@ RESERVED = set(
         "current_timestamp default delete desc distinct drop else end except exists false fetch for foreign from full "
         "grant group having in index inner insert intersect into is join key left like limit not null offset on or order "
         "outer primary range rank references right row rows select set table then to true union unique update user "
-        "using values when where window with"
+        "using values when where window with "
+        # Words of MySQL and MariaDB, then of PostgreSQL
+        "accessible add alter analyze before bigint binary blob both by call cascade change char character collate condition "
+        "continue convert cube cume_dist cursor database databases day_hour day_minute day_second dec decimal declare delayed "
+        "dense_rank describe deterministic distinctrow div double dual each elseif empty enclosed escaped exit explain first_value "
+        "float force fulltext function generated get grouping groups high_priority if ignore infile inout insensitive int integer "
+        "interval io_after_gtids iterate json_table keys kill lag last_value lateral lead leading leave linear lines load localtime "
+        "localtimestamp lock long longblob longtext loop low_priority match mediumblob mediumint mediumtext middleint mod modifies "
+        "natural nth_value ntile numeric of optimize option optionally out outfile over partition percent_rank precision procedure "
+        "purge read reads real recursive regexp release rename repeat replace require resignal return revoke rlike row_number schema "
+        "schemas sensitive separator show signal smallint spatial specific sql sqlexception sqlstate sqlwarning ssl starting stored "
+        "straight_join system terminated tinyblob tinyint tinytext trailing trigger undo unlock unsigned usage use utc_date utc_time "
+        "utc_timestamp varbinary varchar varying virtual while write xor year_month zerofill "
+        "array asymmetric collation concurrently current_catalog current_role current_schema current_user deferrable do freeze ilike "
+        "initially isnull notnull only overlaps placing returning session_user similar some symmetric tablesample variadic verbose"
     ).split(" ")
 )
 
@@ -115,7 +141,7 @@ def id_columns(info: dict) -> list[dict]:
 
 def _column_lines(context: dict, info: dict, column: dict) -> list:
     db = column["column"]
-    dbal = _dbal_type(db["type"])
+    dbal = _dbal_type(context, column)
     args = [f"name: {php_string(quoted(db['name']))}", f"type: {php_string(dbal['name'])}"]
     if dbal.get("length") is not None:
         args.append(f"length: {dbal['length']}")
@@ -156,6 +182,8 @@ def _column_lines(context: dict, info: dict, column: dict) -> list:
         todo.append(
             f"// TODO: the database fills it on insert with {default['sql']}; Doctrine sends no value for it then"
         )
+    if definition is None and (_is_text_date(column) or dbal["name"] in (PG_ARRAY, PRECISE_TIME_TZ)):
+        definition = f"{type_sql(context['schema'], context['settings']['database'], db['type'])}{not_null}"
     enum_type = _native_enum(context, column)
     if enum_type:
         if context["settings"]["database"] == "postgresql":
@@ -170,7 +198,7 @@ def _column_lines(context: dict, info: dict, column: dict) -> list:
         args.append(f"options: [{', '.join(options)}]")
     if db["type"]["kind"] == "unknown":
         todo.append(f'// TODO: "{db["type"]["sql"]}" has no Doctrine type here; it is mapped as text')
-    if db["type"]["kind"] == "array":
+    if db["type"]["kind"] == "array" and dbal["name"] != PG_ARRAY:
         todo.append(f'// TODO: "{db["type"]["sql"]}" is kept as JSON')
     literal = default and default["kind"] == "literal" and default["value"] is not None
     initial = (

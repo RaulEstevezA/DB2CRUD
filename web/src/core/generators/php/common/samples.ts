@@ -59,15 +59,18 @@ export function sampleValue(column: ColumnInfo, checks: DbCheck[], enums: DbEnum
     case 'boolean':
       return 'true'
     case 'date':
+      if (column.php === 'string') return "sprintf('2026-01-%02d', $n % 28 + 1)"
       return `new ${DATE_TIME}(sprintf('2026-01-%02d', $n % 28 + 1))`
     case 'time':
       return column.php === DATE_TIME ? `new ${DATE_TIME}(sprintf('12:%02d:00', $n % 60))` : "sprintf('12:%02d:00', $n % 60)"
     case 'datetime':
+      if (column.php === 'string') return "sprintf('2026-01-%02d 12:00:00', $n % 28 + 1)"
       return `new ${DATE_TIME}(sprintf('2026-01-%02d 12:00:00', $n % 28 + 1))`
     case 'uuid':
       return "sprintf('00000000-0000-4000-8000-%012d', $n)"
     case 'binary':
-      return 'chr($n % 256)'
+      // As long as the column, when its length may be fixed: the database fills shorter values
+      return type.length !== undefined && type.length <= 64 ? `str_repeat(chr($n % 256), ${type.length})` : 'chr($n % 256)'
     case 'json':
       return "['n' => $n]"
     case 'array':
@@ -89,8 +92,10 @@ export function missingValue(column: ColumnInfo): string {
     default:
       return column.column.type.kind === 'uuid'
         ? "'00000000-0000-4000-8000-000000999999'"
-        : column.column.type.kind === 'decimal'
-          ? "'999999'"
-          : "'missing'"
+        : column.column.type.kind === 'date'
+          ? "'1999-01-01'"
+          : column.column.type.kind === 'decimal'
+            ? "'999999'"
+            : "'missing'"
   }
 }

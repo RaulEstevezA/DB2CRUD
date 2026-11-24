@@ -279,3 +279,23 @@ export function unitOfWorkFile(context: Context): GeneratedFile {
       : []),
   ])
 }
+
+/** MySQL's driver would keep bytes as JSON. */
+export const usesMysqlData = (context: Context) =>
+  ['mysql', 'mariadb'].includes(context.settings.database) &&
+  context.tables.some((info) => info.columns.some((column) => column.sw === 'Data'))
+
+export const MYSQL_DATA = [
+  '',
+  '/// Bytes go to the database and come back as they are.',
+  'extension Data: @retroactive MySQLDataConvertible {',
+  '    public init?(mysqlData: MySQLData) {',
+  '        guard let buffer = mysqlData.buffer else { return nil }',
+  '        self = Data(buffer.readableBytesView)',
+  '    }',
+  '',
+  '    public var mysqlData: MySQLData? {',
+  '        MySQLData(type: .blob, format: .binary, buffer: ByteBuffer(bytes: self), isUnsigned: true)',
+  '    }',
+  '}',
+]

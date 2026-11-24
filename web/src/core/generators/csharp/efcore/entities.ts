@@ -5,6 +5,7 @@
  * and the values the database fills, which EF Core reads back after an insert.
  */
 import type { GeneratedFile } from '../../../export/files.ts'
+import { typeSql } from '../../../schema/ddl.ts'
 import type { DbEnum } from '../../../schema/types.ts'
 import { lines, type Line } from '../../types.ts'
 import { csString, CsUsings, pascalName } from '../csharp.ts'
@@ -22,7 +23,8 @@ export function entityFile(context: Context, info: TableInfo): GeneratedFile {
       index > 0 ? '' : null,
       column.column.comment && `    /// <summary>${column.column.comment}</summary>`,
       column.column.type.kind === 'unknown' && `    // TODO: "${column.column.type.sql}" has no EF Core type here; it is mapped as text`,
-      column.column.type.kind === 'array' && `    // TODO: "${column.column.type.sql}" is kept as its JSON text`,
+      column.column.type.kind === 'array' &&
+        `    // "${column.column.type.sql}" is kept as its ${context.settings.database === 'postgresql' ? 'text: {a,b}' : 'JSON text'}`,
       `    public ${column.propType} ${column.prop} { get; set; }${!column.optional && !column.valueType ? ' = null!;' : ''}`,
     ]),
     '}',
@@ -67,6 +69,77 @@ function defaultLiteral(column: ColumnInfo, value: string | number | boolean): s
 
 const mysql = (context: Context) => context.settings.database === 'mysql' || context.settings.database === 'mariadb'
 
+/** A column kept as its text, of a type of PostgreSQL EF Core has no text for: an array, or a type not known here. */
+const isNativeText = (context: Context, column: ColumnInfo) =>
+  context.settings.database === 'postgresql' && (column.column.type.kind === 'array' || column.column.type.kind === 'unknown')
+
+/** `NativeText.cs`, when a column needs it: how its text reaches PostgreSQL and comes back. */
+export function nativeTextFile(context: Context): GeneratedFile | null {
+  if (!context.tables.some((info) => info.writesEntity && info.columns.some((column) => isNativeText(context, column)))) return null
+  const ns = context.base
+  const content = lines(
+    new CsUsings(ns)
+      .add(
+        'System.Collections',
+        'System.Data.Common',
+        'System.Globalization',
+        'System.Linq.Expressions',
+        'System.Reflection',
+        'Microsoft.EntityFrameworkCore.Storage',
+        'Npgsql',
+        'NpgsqlTypes',
+      )
+      .write(),
+    '',
+    `namespace ${ns};`,
+    '',
+    '/// <summary>The text of a value of PostgreSQL that has no type of its own here: it is sent without a type, so the database converts it, and what the driver reads is written as PostgreSQL does.</summary>',
+    'public sealed class NativeText : StringTypeMapping',
+    '{',
+    '    public NativeText(string storeType) : base(storeType, null) { }',
+    '',
+    '    private NativeText(RelationalTypeMappingParameters parameters) : base(parameters) { }',
+    '',
+    '    protected override RelationalTypeMapping Clone(RelationalTypeMappingParameters parameters) => new NativeText(parameters);',
+    '',
+    '    protected override void ConfigureParameter(DbParameter parameter) => ((NpgsqlParameter)parameter).NpgsqlDbType = NpgsqlDbType.Unknown;',
+    '',
+    '    public override MethodInfo GetDataReaderMethod() => typeof(DbDataReader).GetMethod(nameof(DbDataReader.GetValue), [typeof(int)])!;',
+    '',
+    '    public override Expression CustomizeDataReaderExpression(Expression expression) =>',
+    '        Expression.Call(typeof(NativeText).GetMethod(nameof(Text), [typeof(object)])!, expression);',
+    '',
+    '    /// <summary>A value as PostgreSQL writes it.</summary>',
+    '    public static string Text(object value) => value switch',
+    '    {',
+    '        string text => text,',
+    '        bool flag => flag ? "t" : "f",',
+    '        byte[] bytes => "\\\\x" + Convert.ToHexStringLower(bytes),',
+    '        DateTime time => time.ToString("yyyy-MM-dd HH:mm:ss.FFFFFF", CultureInfo.InvariantCulture) + (time.Kind == DateTimeKind.Utc ? "+00" : ""),',
+    '        DateOnly date => date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),',
+    '        TimeSpan span => string.Create(CultureInfo.InvariantCulture, $"{span.Days} days {span - TimeSpan.FromDays(span.Days):c}"),',
+    '        IEnumerable items => "{" + string.Join(",", items.Cast<object?>().Select(Item)) + "}",',
+    '        IFormattable other => other.ToString(null, CultureInfo.InvariantCulture),',
+    '        _ => value.ToString()!,',
+    '    };',
+    '',
+    '    private static string Item(object? value) => value switch',
+    '    {',
+    '        null => "NULL",',
+    '        string text => Quoted(text),',
+    '        byte[] bytes => Quoted(Text(bytes)),',
+    '        IEnumerable => Text(value),',
+    '        bool => Text(value),',
+    '        _ => Quoted(Text(value)),',
+    '    };',
+    '',
+    '    private static string Quoted(string text) => "\\"" + text.Replace("\\\\", "\\\\\\\\").Replace("\\"", "\\\\\\"") + "\\"";',
+    '}',
+    '',
+  )
+  return { path: pathOf(ns, 'NativeText'), content }
+}
+
 /** The calls that map one property. */
 function propertyLines(context: Context, info: TableInfo, column: ColumnInfo): string[] {
   const db = column.column
@@ -77,7 +150,8 @@ function propertyLines(context: Context, info: TableInfo, column: ColumnInfo): s
   if (type.kind === 'binary' && type.length !== undefined) calls.push(`.HasMaxLength(${type.length})`)
   if (type.kind === 'decimal' && type.precision !== undefined) calls.push(`.HasPrecision(${type.precision}, ${type.scale ?? 0})`)
   const database = context.settings.database
-  if ((type.kind === 'json' || type.kind === 'array') && database !== 'sqlite')
+  const native = isNativeText(context, column)
+  if ((type.kind === 'json' || type.kind === 'array') && database !== 'sqlite' && !native)
     calls.push(`.HasColumnType(${csString(database === 'postgresql' && !/^json$/i.test(type.sql) ? 'jsonb' : 'json')})`)
   // Npgsql maps a DateTime to a timestamp with a time zone unless told otherwise
   if (type.kind === 'datetime' && !type.timezone && database === 'postgresql') calls.push('.HasColumnType("timestamp without time zone")')
@@ -101,6 +175,12 @@ function propertyLines(context: Context, info: TableInfo, column: ColumnInfo): s
     calls.push(`.HasDefaultValue(${defaultLiteral(column, db.default.value)})`)
   else if (db.default?.kind === 'expression') calls.push(`.HasDefaultValueSql(${csString(db.default.sql)})`)
   if (db.comment) calls.push(`.HasComment(${csString(db.comment)})`)
+  if (native) {
+    calls.push('.Metadata')
+    return [
+      `${calls[0]}${calls.slice(1).join('')}.SetTypeMapping(new NativeText(${csString(typeSql(context.schema, 'postgresql', type))}));`,
+    ]
+  }
   return [`${calls[0]}${calls.slice(1).join('')};`]
 }
 

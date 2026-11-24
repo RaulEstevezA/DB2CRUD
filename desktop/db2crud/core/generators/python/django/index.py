@@ -153,10 +153,28 @@ def conftest(context: dict) -> dict:
     imports = Imports().module("pytest").from_("app.unit_of_work", "SqlUnitOfWork")
     if context["settings"]["memoryRepositories"]:
         imports.from_("app.unit_of_work", "MemoryUnitOfWork")
+    schemas = (
+        list(dict.fromkeys(info["table"]["schema"] for info in context["tables"] if info["table"].get("schema")))
+        if context["settings"]["database"] == "postgresql"
+        else []
+    )
+    if schemas:
+        imports.from_("django.db", "connections").from_("django.db.models.signals", "pre_migrate")
+        imports.from_("django.dispatch", "receiver")
     content = lines(
         '"""Fixtures of the tests: the test database pytest-django creates from the models, and the units of work."""',
         "",
         imports.write("app"),
+        bool(schemas)
+        and [
+            "",
+            "",
+            "@receiver(pre_migrate)",
+            "def create_schemas(using: str, **_: object) -> None:",
+            '    """The schemas the tables are in: Django creates tables only."""',
+            "    with connections[using].cursor() as cursor:",
+            *(f"""        cursor.execute('CREATE SCHEMA IF NOT EXISTS "{name}"')""" for name in schemas),
+        ],
         "",
         "",
         "@pytest.fixture",

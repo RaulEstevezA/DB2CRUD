@@ -82,13 +82,30 @@ function blockingLinks(schema: DbSchema, table: DbTable): ChildLink[] {
 
 const included = <T extends { include: { value: boolean } }>(items: T[]) => items.filter((item) => item.include.value)
 
-function columnInfo(orm: PhpOrm, column: DbColumn): ColumnInfo {
+const DATES = new Set(['date', 'time', 'datetime'])
+
+/** Whether a column is a date in the key of its table, or points to one (through other tables too). */
+function isDateKey(schema: DbSchema, table: DbTable, name: string, seen: Set<string> = new Set()): boolean {
+  const column = table.columns.find((item) => item.name === name)
+  if (!column || !DATES.has(column.type.kind)) return false
+  if (table.primaryKey?.includes(name)) return true
+  const id = `${table.name}.${name}`
+  if (seen.has(id)) return false
+  seen.add(id)
+  return table.foreignKeys.some((key) => {
+    const position = key.columns.indexOf(name)
+    const parent = position >= 0 ? schema.tables.find((item) => item.name === key.references.table) : undefined
+    return parent !== undefined && isDateKey(schema, parent, key.references.columns[position], seen)
+  })
+}
+
+function columnInfo(orm: PhpOrm, schema: DbSchema, table: DbTable, column: DbColumn): ColumnInfo {
   const generated = column.generated !== undefined && column.generated !== 'onUpdateNow'
   return {
     column,
     prop: orm.property(column),
     field: fieldName(column.name),
-    php: orm.phpType(column.type),
+    php: orm.textDateKeys && isDateKey(schema, table, column.name) ? 'string' : orm.phpType(column.type),
     generated,
     required: !column.nullable && column.default === undefined && !generated,
   }
@@ -99,7 +116,7 @@ function tableInfo(orm: PhpOrm, schema: DbSchema, design: CrudDesign, settings: 
   const repository = findRepository(design, table.name)!
   const service = settings.services ? (findService(design, table.name) ?? null) : null
   const entity = pascalName(repository.entity)
-  const columns = table.columns.map((column) => columnInfo(orm, column))
+  const columns = table.columns.map((column) => columnInfo(orm, schema, table, column))
   const byName = (name: string) => columns.find((info) => info.column.name === name)!
   // A table without a primary key is read only; its rows are told apart by all their columns
   const key = (table.primaryKey ?? table.columns.map((column) => column.name)).map(byName)

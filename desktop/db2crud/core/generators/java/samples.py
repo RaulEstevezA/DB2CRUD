@@ -108,7 +108,13 @@ def sample_value(column: dict, checks: list[dict], enums: list[dict]) -> str:
     if kind == "uuid":
         return 'UUID.fromString(String.format("00000000-0000-4000-8000-%012d", n))'
     if kind == "binary":
-        return "new byte[] { (byte) n }"
+        # As long as the column, when its length may be fixed: the database fills shorter values
+        length = column_type.get("length")
+        return (
+            f"java.util.Arrays.copyOf(new byte[] {{ (byte) n }}, {length})"
+            if length is not None and length <= 64
+            else "new byte[] { (byte) n }"
+        )
     if kind == "json":
         return '"{\\"n\\": " + n + "}"'
     if kind == "array":
@@ -127,4 +133,5 @@ def missing_value(column: dict) -> str:
         "Float": "999999f",
         "UUID": 'UUID.fromString("00000000-0000-4000-8000-000000999999")',
         "LocalDate": "LocalDate.of(1999, 1, 1)",
+        "byte[]": "new byte[] { -1, -1 }",
     }.get(column["java"], '"missing"')

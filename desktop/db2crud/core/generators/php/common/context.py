@@ -27,13 +27,36 @@ def _included(items: list[dict]) -> list[dict]:
     return [item for item in items if item["include"]["value"]]
 
 
-def _column_info(orm: dict, column: dict) -> dict:
+def _is_date_key(schema: dict, table: dict, name: str, seen: set[str] | None = None) -> bool:
+    """Whether a column is a date in the key of its table, or points to one (through other tables too)."""
+    seen = set() if seen is None else seen
+    column = next((item for item in table["columns"] if item["name"] == name), None)
+    if not column or column["type"]["kind"] not in ("date", "time", "datetime"):
+        return False
+    if name in (table["primaryKey"] or []):
+        return True
+    path = f"{table['name']}.{name}"
+    if path in seen:
+        return False
+    seen.add(path)
+    for key in table["foreignKeys"]:
+        if name not in key["columns"]:
+            continue
+        parent = next((item for item in schema["tables"] if item["name"] == key["references"]["table"]), None)
+        if parent and _is_date_key(schema, parent, key["references"]["columns"][key["columns"].index(name)], seen):
+            return True
+    return False
+
+
+def _column_info(orm: dict, schema: dict, table: dict, column: dict) -> dict:
     generated = column.get("generated") is not None and column.get("generated") != "onUpdateNow"
     return {
         "column": column,
         "prop": orm["property"](column),
         "field": field_name(column["name"]),
-        "php": orm["phpType"](column["type"]),
+        "php": "string"
+        if orm.get("textDateKeys") and _is_date_key(schema, table, column["name"])
+        else orm["phpType"](column["type"]),
         "generated": generated,
         "required": not column["nullable"] and "default" not in column and not generated,
     }
@@ -44,7 +67,7 @@ def _table_info(orm: dict, schema: dict, design: dict, settings: dict, table: di
     repository = find_repository(design, table["name"])
     service = find_service(design, table["name"]) if settings["services"] else None
     entity = pascal_name(repository["entity"])
-    columns = [_column_info(orm, column) for column in table["columns"]]
+    columns = [_column_info(orm, schema, table, column) for column in table["columns"]]
 
     def by_name(name: str) -> dict:
         return next(info for info in columns if info["column"]["name"] == name)

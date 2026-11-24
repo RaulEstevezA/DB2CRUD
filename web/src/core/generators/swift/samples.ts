@@ -71,7 +71,10 @@ export function sampleValue(column: ColumnInfo, checks: DbCheck[], enums: DbEnum
     case 'uuid':
       return 'UUID(uuidString: String(format: "00000000-0000-4000-8000-%012d", n))!'
     case 'binary':
-      return 'Data([UInt8(n % 256)])'
+      // As long as the column, when its length may be fixed: the database fills shorter values
+      return type.length !== undefined && type.length <= 64
+        ? `Data(repeating: UInt8(n % 256), count: ${type.length})`
+        : 'Data([UInt8(n % 256)])'
     case 'json':
       return '"{\\"n\\": \\(n)}"'
     case 'array':

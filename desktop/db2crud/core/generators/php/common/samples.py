@@ -72,17 +72,23 @@ def sample_value(column: dict, checks: list[dict], enums: list[dict]) -> str:
     if kind == "boolean":
         return "true"
     if kind == "date":
+        if column["php"] == "string":
+            return "sprintf('2026-01-%02d', $n % 28 + 1)"
         return f"new {DATE_TIME}(sprintf('2026-01-%02d', $n % 28 + 1))"
     if kind == "time":
         if column["php"] == DATE_TIME:
             return f"new {DATE_TIME}(sprintf('12:%02d:00', $n % 60))"
         return "sprintf('12:%02d:00', $n % 60)"
     if kind == "datetime":
+        if column["php"] == "string":
+            return "sprintf('2026-01-%02d 12:00:00', $n % 28 + 1)"
         return f"new {DATE_TIME}(sprintf('2026-01-%02d 12:00:00', $n % 28 + 1))"
     if kind == "uuid":
         return "sprintf('00000000-0000-4000-8000-%012d', $n)"
     if kind == "binary":
-        return "chr($n % 256)"
+        # As long as the column, when its length may be fixed: the database fills shorter values
+        length = column_type.get("length")
+        return f"str_repeat(chr($n % 256), {length})" if length is not None and length <= 64 else "chr($n % 256)"
     if kind == "json":
         return "['n' => $n]"
     if kind == "array":
@@ -101,6 +107,8 @@ def missing_value(column: dict) -> str:
     kind = column["column"]["type"]["kind"]
     if kind == "uuid":
         return "'00000000-0000-4000-8000-000000999999'"
+    if kind == "date":
+        return "'1999-01-01'"
     if kind == "decimal":
         return "'999999'"
     return "'missing'"

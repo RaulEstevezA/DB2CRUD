@@ -77,7 +77,8 @@ export function sampleValue(column: ColumnInfo, checks: DbCheck[], enums: DbEnum
     case 'uuid':
       return 'uuid::Uuid::from_u128(n as u128)'
     case 'binary':
-      return 'vec![n as u8]'
+      // As long as the column, when its length may be fixed: the database fills shorter values
+      return type.length !== undefined && type.length <= 64 ? `vec![n as u8; ${type.length}]` : 'vec![n as u8]'
     case 'json':
       return 'format!("{{\\"n\\": {n}}}")'
     case 'array':

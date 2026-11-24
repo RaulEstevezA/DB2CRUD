@@ -6,12 +6,13 @@
  * comment, the services check them, and the tests add the foreign keys to the database they create.
  */
 import type { GeneratedFile } from '../../../export/files.ts'
+import { typeSql } from '../../../schema/ddl.ts'
 import type { DbType } from '../../../schema/types.ts'
 import type { Line } from '../../types.ts'
 import { namespaceOf, optionalType, pathOf, phpFile, type ColumnInfo, type Context, type TableInfo } from '../common/context.ts'
 import { phpLiteral, phpString } from '../common/php.ts'
 import { defaultLiteral } from '../common/repositories.ts'
-import { PRECISE, PRECISE_TZ } from './types.ts'
+import { PG_ARRAY, PRECISE, PRECISE_TIME_TZ, PRECISE_TZ } from './types.ts'
 
 /** The PHP type of a value as Doctrine reads it. */
 export function doctrinePhpType(type: DbType): string {
@@ -41,8 +42,16 @@ export function doctrinePhpType(type: DbType): string {
   }
 }
 
+const isTextDate = (column: ColumnInfo) => column.php === 'string' && ['date', 'time', 'datetime'].includes(column.column.type.kind)
+
 /** The DBAL type of a column, with its length or precision. */
-function dbalType(type: DbType): { name: string; length?: number; precision?: number; scale?: number; fixed?: boolean } {
+function dbalType(
+  context: Context,
+  column: ColumnInfo,
+): { name: string; length?: number; precision?: number; scale?: number; fixed?: boolean } {
+  const type = column.column.type
+  // A date of a key: text (PhpOrm.textDateKeys)
+  if (isTextDate(column)) return { name: 'string' }
   switch (type.kind) {
     case 'integer':
       return { name: type.bits === 16 ? 'smallint' : type.bits === 64 ? 'bigint' : 'integer' }
@@ -57,7 +66,7 @@ function dbalType(type: DbType): { name: string; length?: number; precision?: nu
     case 'date':
       return { name: 'date_immutable' }
     case 'time':
-      return { name: 'time_immutable' }
+      return { name: type.timezone && context.settings.database === 'postgresql' ? PRECISE_TIME_TZ : 'time_immutable' }
     // DBAL's own timestamps expect no fractions of a second, which a real database often keeps (types.ts)
     case 'datetime':
       return { name: type.timezone ? PRECISE_TZ : PRECISE }
@@ -65,8 +74,9 @@ function dbalType(type: DbType): { name: string; length?: number; precision?: nu
       return { name: 'guid' }
     case 'binary':
       return type.length !== undefined ? { name: 'binary', length: type.length } : { name: 'blob' }
-    case 'json':
     case 'array':
+      return { name: context.settings.database === 'postgresql' ? PG_ARRAY : 'json' }
+    case 'json':
       return { name: 'json' }
     case 'enum':
     case 'unknown':
@@ -79,7 +89,22 @@ const RESERVED = new Set(
     'all and any as asc between by case check column constraint create cross current_date current_time current_timestamp ' +
     'default delete desc distinct drop else end except exists false fetch for foreign from full grant group having in index ' +
     'inner insert intersect into is join key left like limit not null offset on or order outer primary range rank references ' +
-    'right row rows select set table then to true union unique update user using values when where window with'
+    'right row rows select set table then to true union unique update user using values when where window with ' +
+    // Words of MySQL and MariaDB
+    'accessible add alter analyze before bigint binary blob both by call cascade change char character collate condition ' +
+    'continue convert cube cume_dist cursor database databases day_hour day_minute day_second dec decimal declare delayed ' +
+    'dense_rank describe deterministic distinctrow div double dual each elseif empty enclosed escaped exit explain first_value ' +
+    'float force fulltext function generated get grouping groups high_priority if ignore infile inout insensitive int integer ' +
+    'interval io_after_gtids iterate json_table keys kill lag last_value lateral lead leading leave linear lines load localtime ' +
+    'localtimestamp lock long longblob longtext loop low_priority match mediumblob mediumint mediumtext middleint mod modifies ' +
+    'natural nth_value ntile numeric of optimize option optionally out outfile over partition percent_rank precision procedure ' +
+    'purge read reads real recursive regexp release rename repeat replace require resignal return revoke rlike row_number schema ' +
+    'schemas sensitive separator show signal smallint spatial specific sql sqlexception sqlstate sqlwarning ssl starting stored ' +
+    'straight_join system terminated tinyblob tinyint tinytext trailing trigger undo unlock unsigned usage use utc_date utc_time ' +
+    'utc_timestamp varbinary varchar varying virtual while write xor year_month zerofill ' +
+    // Words of PostgreSQL
+    'array asymmetric collation concurrently current_catalog current_role current_schema current_user deferrable do freeze ilike ' +
+    'initially isnull notnull only overlaps placing returning session_user similar some symmetric tablesample variadic verbose'
   ).split(' '),
 )
 
@@ -106,7 +131,7 @@ export function idColumns(info: TableInfo): ColumnInfo[] {
 
 function columnLines(context: Context, info: TableInfo, column: ColumnInfo): Line[] {
   const db = column.column
-  const type = dbalType(db.type)
+  const type = dbalType(context, column)
   const args: string[] = [`name: ${phpString(quoted(db.name))}`, `type: ${phpString(type.name)}`]
   if (type.length !== undefined) args.push(`length: ${type.length}`)
   if (type.precision !== undefined) args.push(`precision: ${type.precision}`, `scale: ${type.scale ?? 0}`)
@@ -133,6 +158,8 @@ function columnLines(context: Context, info: TableInfo, column: ColumnInfo): Lin
     definition = `${db.type.sql}${notNull} DEFAULT ${db.default.sql}`
     todo.push(`// TODO: the database fills it on insert with ${db.default.sql}; Doctrine sends no value for it then`)
   }
+  if (definition === null && (isTextDate(column) || type.name === PG_ARRAY || type.name === PRECISE_TIME_TZ))
+    definition = `${typeSql(context.schema, context.settings.database, db.type)}${notNull}`
   const enumType = nativeEnum(context, column)
   if (enumType)
     definition =
@@ -143,7 +170,7 @@ function columnLines(context: Context, info: TableInfo, column: ColumnInfo): Lin
   if (definition) args.push(`columnDefinition: ${phpString(definition)}`)
   if (options.length > 0) args.push(`options: [${options.join(', ')}]`)
   if (db.type.kind === 'unknown') todo.push(`// TODO: "${db.type.sql}" has no Doctrine type here; it is mapped as text`)
-  if (db.type.kind === 'array') todo.push(`// TODO: "${db.type.sql}" is kept as JSON`)
+  if (db.type.kind === 'array' && type.name !== PG_ARRAY) todo.push(`// TODO: "${db.type.sql}" is kept as JSON`)
   const initial =
     db.default?.kind === 'literal' && db.default.value !== null && column.php !== '\\DateTimeImmutable' && column.php !== 'mixed'
       ? defaultLiteral(column, db.default.value)

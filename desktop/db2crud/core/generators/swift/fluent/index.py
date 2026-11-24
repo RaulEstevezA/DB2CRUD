@@ -4,11 +4,11 @@ web/src/core/generators/swift/fluent/index.ts."""
 
 from ....js import coalesce
 from ..context import find_info, ind, shared_file, sw_file, uses_times
-from ..support import default_url
+from ..support import MYSQL_DATA, default_url, uses_mysql_data
 from ..swift import imports, sw_string
 from ..tests import NAMES
 from .entities import entity_file, model_file
-from .repository import fluent_body, pg_enum, to_entity_function
+from .repository import fluent_body, to_entity_function, uses_sql
 
 _VERSIONS = {
     "fluentKit": "1.57.0",
@@ -77,6 +77,7 @@ def _database_file(context: dict) -> dict:
             "        await databases.shutdownAsync()",
             "    }",
             "}",
+            *(MYSQL_DATA if uses_mysql_data(context) else []),
         ],
     )
 
@@ -101,7 +102,7 @@ def _creation_order(tables: list) -> list:
 
 
 def _sql_quote(text: str):
-    return "'" + text.replace(r"'", "''", 1) + "'"
+    return "'" + text.replace("'", "''") + "'"
 
 
 def _data_type(context: dict, column: dict) -> str:
@@ -151,7 +152,12 @@ def _data_type(context: dict, column: dict) -> str:
     if type_["kind"] == "uuid":
         return ".uuid"
     if type_["kind"] == "binary":
-        return ".data"
+        # MySQL has no keys on columns without a length
+        return (
+            raw(f"VARBINARY({type_.get('length')})")
+            if type_.get("length") is not None and (database == "mysql" or database == "mariadb")
+            else ".data"
+        )
     return ".string"
 
 
@@ -391,17 +397,14 @@ FLUENT_ORM = {
     "id": "fluent",
     "label": "Fluent",
     "holder": {"type": "any Database", "optional": "(any Database)?", "modules": ["FluentKit"]},
-    "emptyList": lambda *_: '"[]"',
+    "emptyList": lambda context: '"{}"' if context["settings"]["database"] == "postgresql" else '"[]"',
     "databaseFile": _database_file,
     "entityFiles": lambda context, info: [entity_file(context, info), model_file(context, info)],
     "repository": {
-        "modules": lambda context, info: [
-            "FluentKit",
-            *(["FluentSQL"] if any(pg_enum(context, column) for column in info["columns"]) else []),
-        ],
+        "modules": lambda context, info: ["FluentKit", *(["FluentSQL"] if uses_sql(context, info) else [])],
         "body": fluent_body,
         "refusal": "let error as any DatabaseError where error.isConstraintFailure",
-        "functions": lambda _context, info: to_entity_function(info),
+        "functions": lambda context, info: to_entity_function(context, info),
     },
     "transaction": "try await db.transaction { transaction in try await work(SqlUnitOfWork(db: transaction)) }",
     "testDatabase": _test_database,

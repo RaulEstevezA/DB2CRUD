@@ -307,3 +307,26 @@ def unit_of_work_file(context: dict) -> dict:
             *memory,
         ],
     )
+
+
+def uses_mysql_data(context: dict) -> bool:
+    """MySQL's driver would keep bytes as JSON."""
+    return context["settings"]["database"] in ("mysql", "mariadb") and any(
+        column["sw"] == "Data" for info in context["tables"] for column in info["columns"]
+    )
+
+
+MYSQL_DATA = [
+    "",
+    "/// Bytes go to the database and come back as they are.",
+    "extension Data: @retroactive MySQLDataConvertible {",
+    "    public init?(mysqlData: MySQLData) {",
+    "        guard let buffer = mysqlData.buffer else { return nil }",
+    "        self = Data(buffer.readableBytesView)",
+    "    }",
+    "",
+    "    public var mysqlData: MySQLData? {",
+    "        MySQLData(type: .blob, format: .binary, buffer: ByteBuffer(bytes: self), isUnsigned: true)",
+    "    }",
+    "}",
+]

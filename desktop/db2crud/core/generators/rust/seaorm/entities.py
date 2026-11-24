@@ -8,6 +8,7 @@ web/src/core/generators/rust/seaorm/entities.ts."""
 import re
 
 from ....js import js_string
+from ....schema.ddl import type_sql
 from ..context import column_of, file_of, find_info, is_in, module_of, rs_file, stored_type
 from ..rust import rs_string
 
@@ -44,6 +45,28 @@ def _quote_sql(text: str) -> str:
     return f"'{escaped}'"
 
 
+def _native_text(context: dict, column: dict) -> str | None:
+    """The type of PostgreSQL of a column kept as its text: JSON, an array, or a type SeaORM does not know."""
+    column_type = column["column"]["type"]
+    if context["settings"]["database"] != "postgresql" or column_type["kind"] not in ("json", "array", "unknown"):
+        return None
+    return type_sql(context["schema"], "postgresql", column_type)
+
+
+def _is_mysql(dialect: str | None) -> bool:
+    return dialect in ("mysql", "mariadb")
+
+
+def _is_maria_uuid(context: dict, column: dict) -> bool:
+    """A column of MariaDB's own uuid type; the driver sends and reads the 16 bytes of one."""
+    return (
+        column["type"]["kind"] == "uuid"
+        and context["settings"]["database"] == "mariadb"
+        and context["schema"].get("dialect") == "mariadb"
+        and column["type"]["sql"].lower() == "uuid"
+    )
+
+
 def _column_type(context: dict, column: dict) -> str | None:
     """The column_type of a column, when its Rust type alone does not say it."""
     column_type = column["column"]["type"]
@@ -65,6 +88,8 @@ def _column_type(context: dict, column: dict) -> str | None:
         precision = column_type.get("precision")
         scale = column_type.get("scale")
         return f"Decimal(Some(({js_string(10 if precision is None else precision)}, {js_string(0 if scale is None else scale)})))"
+    if kind == "uuid":
+        return 'custom("uuid")' if _is_maria_uuid(context, column["column"]) else None
     if kind == "binary":
         return f"Binary({js_string(column_type['length'])})" if column_type.get("length") is not None else None
     if kind == "enum":
@@ -74,7 +99,8 @@ def _column_type(context: dict, column: dict) -> str | None:
         )
         return f"String(StringLen::N({max([1, *(len(value) for value in values)])}))"
     if kind in ("json", "array", "unknown"):
-        return "Text"
+        native = _native_text(context, column)
+        return f"custom({rs_string(native)})" if native else "Text"
     return None
 
 
@@ -100,6 +126,29 @@ def _attributes(context: dict, info: dict, column: dict, key_columns: list[dict]
     if enum_type and context["settings"]["database"] == "postgresql":
         # PostgreSQL takes and gives a value of the enum, not a text
         attrs += ['select_as = "text"', f"save_as = {rs_string(chr(34) + enum_type['name'] + chr(34))}"]
+    native = _native_text(context, column)
+    # Kept as its text, which PostgreSQL converts only when it is told to
+    if native:
+        attrs += ['select_as = "text"', f"save_as = {rs_string(native)}"]
+    database = context["settings"]["database"]
+    dialect = context["schema"].get("dialect")
+    mysql = _is_mysql(database) and _is_mysql(dialect)
+    kind = db["type"]["kind"]
+    sql = db["type"]["sql"].lower()
+    # The driver gives each type of MySQL only as its own Rust type: the others are converted by the database
+    if mysql and kind == "integer" and "unsigned" in sql:
+        attrs.append('select_as = "signed"')
+    if mysql and kind == "json":
+        attrs.append('select_as = "char"')
+    if mysql and kind == "datetime" and sql.startswith("timestamp"):
+        attrs.append('select_as = "datetime(6)"')
+    if database == "postgresql" and kind == "time" and db["type"].get("timezone"):
+        attrs += ['select_as = "time"', 'save_as = "timetz"']
+    # SQLite keeps 3.00 as a whole number
+    if database == "sqlite" and dialect == "sqlite" and kind == "decimal":
+        attrs.append('select_as = "real"')
+    if _is_maria_uuid(context, db):
+        attrs += ['select_as = "binary(16)"', 'save_as = "uuid"']
     if db["nullable"]:
         attrs.append("nullable")
     for unique in info["table"]["uniques"]:

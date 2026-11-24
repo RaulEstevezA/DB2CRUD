@@ -137,6 +137,9 @@ const test = (name: string, body: (Line | Line[])[]): Line[] => [
   '        }',
 ]
 
+/** The assertion that two values of a column are the same: arrays are compared by what they hold. */
+const same = (column: ColumnInfo) => (column.java === 'byte[]' ? 'org.junit.jupiter.api.Assertions.assertArrayEquals' : 'assertEquals')
+
 function repositoryTests(context: Context, info: TableInfo): Line[][] {
   const repo = `uow.${info.attr}()`
   const keyOf = (variable: string) => info.key.map((column) => `${variable}.${column.getter}()`).join(', ')
@@ -150,7 +153,7 @@ function repositoryTests(context: Context, info: TableInfo): Line[][] {
       context.orm.forget,
       getByKey && [
         `${info.entity} found = ${repo}.${queryName(context, getByKey)}(${keyOf('stored')}).orElseThrow();`,
-        ...info.key.map((column) => `assertEquals(stored.${column.getter}(), found.${column.getter}());`),
+        ...info.key.map((column) => `${same(column)}(stored.${column.getter}(), found.${column.getter}());`),
       ],
       ...info.table.uniques
         .map((unique) => query(info, 'findByUnique', unique.columns))
@@ -283,7 +286,7 @@ function serviceTests(context: Context, info: TableInfo, imports: JavaImports): 
         `var created = service.${name}(${input('row')});`,
         get && [
           `var found = service.${operationName(context, get)}(${keyOf('created')});`,
-          ...info.key.map((column) => `assertEquals(${valueOf('created', column)}, ${valueOf('found', column)});`),
+          ...info.key.map((column) => `${same(column)}(${valueOf('created', column)}, ${valueOf('found', column)});`),
         ],
       ]),
     )

@@ -140,6 +140,9 @@ function whenSet(columns: ColumnInfo[], assert: string): string[] {
   return [`if (${optional.map((column) => `stored.${column.prop} != null`).join(' && ')}) ${assert}`]
 }
 
+/** The assertion that two values of a column are the same: arrays are compared by what they hold. */
+const same = (column: ColumnInfo) => (column.kt === 'ByteArray' ? 'kotlin.test.assertContentEquals' : 'assertEquals')
+
 function repositoryTests(context: Context, info: TableInfo): string[][] {
   const repo = `uow.${info.attr}`
   const keyOf = (variable: string) => info.key.map((column) => stored(`${variable}.${column.prop}`, column)).join(', ')
@@ -154,7 +157,7 @@ function repositoryTests(context: Context, info: TableInfo): string[][] {
       getByKey && [
         `val found = ${repo}.${queryName(context, getByKey)}(${keyOf('stored')})`,
         'assertNotNull(found)',
-        ...info.key.map((column) => `assertEquals(stored.${column.prop}, found.${column.prop})`),
+        ...info.key.map((column) => `${same(column)}(stored.${column.prop}, found.${column.prop})`),
       ],
       ...info.table.uniques
         .map((unique) => query(info, 'findByUnique', unique.columns))
@@ -283,7 +286,7 @@ function serviceTests(context: Context, info: TableInfo, imports: KtImports): st
         get
           ? [
               `val found = service.${operationName(context, get)}(${keyOf('created')})`,
-              ...info.key.map((column) => `assertEquals(created.${column.prop}, found.${column.prop})`),
+              ...info.key.map((column) => `${same(column)}(created.${column.prop}, found.${column.prop})`),
             ]
           : info.key.map((column) => `assertNotNull(created.${column.prop})`),
       ]),

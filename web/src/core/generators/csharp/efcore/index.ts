@@ -9,7 +9,7 @@ import { writesEntities, type Context } from '../context.ts'
 import type { CsharpOrm } from '../orm.ts'
 import { defaultConnection, file } from '../support.ts'
 import { testFile, testsNs } from '../tests.ts'
-import { dbContextFile, entityFile, enumTypeName, pgEnums, pgEnumsFile } from './entities.ts'
+import { dbContextFile, entityFile, enumTypeName, nativeTextFile, pgEnums, pgEnumsFile } from './entities.ts'
 import { efBody, efTail } from './repository.ts'
 
 const VERSIONS = {
@@ -176,8 +176,8 @@ export const efcoreOrm: CsharpOrm = {
   id: 'efcore',
   holder: 'AppDbContext',
   forget: 'uow.Db.ChangeTracker.Clear();',
-  emptyList: () => '"[]"',
-  databaseFiles: (context) => [dbContextFile(context), pgEnumsFile(context), databaseFile(context)],
+  emptyList: (context) => (context.settings.database === 'postgresql' ? '"{}"' : '"[]"'),
+  databaseFiles: (context) => [dbContextFile(context), pgEnumsFile(context), nativeTextFile(context), databaseFile(context)],
   entityFile,
   repository: {
     usings: ['Microsoft.EntityFrameworkCore'],

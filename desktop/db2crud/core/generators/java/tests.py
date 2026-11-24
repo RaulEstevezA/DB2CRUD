@@ -168,6 +168,11 @@ def _test(name: str, body: list) -> list:
     ]
 
 
+def _same(column: dict) -> str:
+    """The assertion that two values of a column are the same: arrays are compared by what they hold."""
+    return "org.junit.jupiter.api.Assertions.assertArrayEquals" if column["java"] == "byte[]" else "assertEquals"
+
+
 def _repository_tests(context: dict, info: dict) -> list[list]:
     repo = f"uow.{info['attr']}()"
     entity = info["entity"]
@@ -211,7 +216,7 @@ def _repository_tests(context: dict, info: dict) -> list[list]:
                 and [
                     f"{entity} found = {repo}.{query_name(context, get_by_key)}({key_of('stored')}).orElseThrow();",
                     *(
-                        f"assertEquals(stored.{column['getter']}(), found.{column['getter']}());"
+                        f"{_same(column)}(stored.{column['getter']}(), found.{column['getter']}());"
                         for column in info["key"]
                     ),
                 ],
@@ -364,7 +369,7 @@ def _service_tests(context: dict, info: dict, imports: JavaImports) -> list[list
                     and [
                         f"var found = service.{operation_name(context, get)}({key_of('created')});",
                         *(
-                            f"assertEquals({value_of('created', column)}, {value_of('found', column)});"
+                            f"{_same(column)}({value_of('created', column)}, {value_of('found', column)});"
                             for column in info["key"]
                         ),
                     ],

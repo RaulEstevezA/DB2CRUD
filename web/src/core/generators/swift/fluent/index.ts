@@ -6,11 +6,11 @@ import type { GeneratedFile } from '../../../export/files.ts'
 import type { DbColumn } from '../../../schema/types.ts'
 import { findInfo, ind, sharedFile, swFile, usesTimes, type ColumnInfo, type Context, type TableInfo } from '../context.ts'
 import type { SwiftOrm } from '../orm.ts'
-import { defaultUrl } from '../support.ts'
+import { defaultUrl, MYSQL_DATA, usesMysqlData } from '../support.ts'
 import { imports, swString } from '../swift.ts'
 import { NAMES } from '../tests.ts'
 import { entityFile, modelFile } from './entities.ts'
-import { fluentBody, pgEnum, toEntityFunction } from './repository.ts'
+import { fluentBody, toEntityFunction, usesSql } from './repository.ts'
 
 const VERSIONS = {
   fluentKit: '1.57.0',
@@ -71,6 +71,7 @@ function databaseFile(context: Context): GeneratedFile {
     '        await databases.shutdownAsync()',
     '    }',
     '}',
+    ...(usesMysqlData(context) ? MYSQL_DATA : []),
   ])
 }
 
@@ -126,7 +127,8 @@ function dataType(context: Context, column: DbColumn): string {
     case 'uuid':
       return '.uuid'
     case 'binary':
-      return '.data'
+      // MySQL has no keys on columns without a length
+      return type.length !== undefined && (database === 'mysql' || database === 'mariadb') ? raw(`VARBINARY(${type.length})`) : '.data'
     default:
       return '.string'
   }
@@ -284,14 +286,14 @@ export const fluentOrm: SwiftOrm = {
   id: 'fluent',
   label: 'Fluent',
   holder: { type: 'any Database', optional: '(any Database)?', modules: ['FluentKit'] },
-  emptyList: () => '"[]"',
+  emptyList: (context) => (context.settings.database === 'postgresql' ? '"{}"' : '"[]"'),
   databaseFile,
   entityFiles: (context, info) => [entityFile(context, info), modelFile(context, info)],
   repository: {
-    modules: (context, info) => ['FluentKit', ...(info.columns.some((column) => pgEnum(context, column)) ? ['FluentSQL'] : [])],
+    modules: (context, info) => ['FluentKit', ...(usesSql(context, info) ? ['FluentSQL'] : [])],
     body: fluentBody,
     refusal: 'let error as any DatabaseError where error.isConstraintFailure',
-    functions: (_context, info) => toEntityFunction(info),
+    functions: (context, info) => toEntityFunction(context, info),
   },
   transaction: 'try await db.transaction { transaction in try await work(SqlUnitOfWork(db: transaction)) }',
   testDatabase,

@@ -8,7 +8,16 @@ import { KtImports, ktString } from '../kotlin.ts'
 import type { KotlinOrm } from '../orm.ts'
 import { defaultUrl } from '../support.ts'
 import { testPath } from '../tests.ts'
-import { entityFile, enumColumnFile, nativeEnum, tableObjectFile, usesEnumColumns } from './entities.ts'
+import {
+  entityFile,
+  enumColumnFile,
+  longBinaryFile,
+  nativeEnum,
+  nativeTextFile,
+  tableObjectFile,
+  usesEnumColumns,
+  usesNativeText,
+} from './entities.ts'
 import { exposedBody, exposedHelpers } from './repository.ts'
 
 const EXPOSED = '1.6.1'
@@ -53,6 +62,9 @@ function testDatabaseFiles(context: Context): GeneratedFile[] {
         context.tables.some((info) => info.columns.some((column) => nativeEnum(context, column.column) === item)),
       )
     : []
+  const nullableComputed =
+    database === 'mariadb' &&
+    tables.some((info) => info.columns.some(({ column }) => typeof column.generated === 'object' && column.nullable))
   const quote = (text: string) => `'${text.replace(/'/g, "''")}'`
   const statement = (sql: string) => `            exec(${ktString(sql)})`
   if (sqlite) imports.add('java.io.File')
@@ -86,7 +98,12 @@ function testDatabaseFiles(context: Context): GeneratedFile[] {
         statement(`CREATE TYPE "${item.name}" AS ENUM (${item.values.map(quote).join(', ')})`),
       ]),
       ...schemas.map((name) => statement(`CREATE SCHEMA "${name}"`)),
-      '            SchemaUtils.create(*TABLES)',
+      ...(nullableComputed
+        ? [
+            '            // MariaDB takes no NULL after a computed column, which Exposed writes',
+            '            SchemaUtils.createStatements(*TABLES).forEach { exec(it.replace(" STORED NULL", " STORED")) }',
+          ]
+        : ['            SchemaUtils.create(*TABLES)']),
       '        }',
       '        return SqlUnitOfWork(db)',
       '    }',
@@ -127,8 +144,8 @@ function transaction(imports: KtImports): string[] {
 export const exposedOrm: KotlinOrm = {
   id: 'exposed',
   holder: { name: 'db', type: 'Database', ktImport: 'org.jetbrains.exposed.v1.jdbc.Database', text: 'database' },
-  emptyList: () => '"[]"',
-  databaseFiles: (context) => [databaseFile(context), enumColumnFile(context)],
+  emptyList: (context) => (context.settings.database === 'postgresql' ? '"{}"' : '"[]"'),
+  databaseFiles: (context) => [databaseFile(context), enumColumnFile(context), nativeTextFile(context), longBinaryFile(context)],
   entityFiles: (context, info) => [entityFile(context, info), tableObjectFile(context, info)],
   repository: {
     imports: (context, info) => [qualified(packageOf(context, info, 'entity'), info.tableObject), EXPOSED_TRANSACTION],
@@ -149,8 +166,8 @@ export const exposedOrm: KotlinOrm = {
     `    implementation("org.jetbrains.exposed:exposed-core:${EXPOSED}")`,
     `    implementation("org.jetbrains.exposed:exposed-jdbc:${EXPOSED}")`,
     `    implementation("org.jetbrains.exposed:exposed-java-time:${EXPOSED}")`,
-    // The column type of PostgreSQL's enums sends a PGobject: the driver is needed to compile, not only to run
-    `    ${usesEnumColumns(context) ? 'implementation' : 'runtimeOnly'}("${driver}")`,
+    // The column types of PostgreSQL's own types send a PGobject: the driver is needed to compile, not only to run
+    `    ${usesEnumColumns(context) || usesNativeText(context) ? 'implementation' : 'runtimeOnly'}("${driver}")`,
   ],
   readme: {
     intro: `entities and table objects for Exposed ${EXPOSED}, repositories and services`,

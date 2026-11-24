@@ -5,6 +5,7 @@
  * builder creates as the database has them.
  */
 import type { GeneratedFile } from '../../../export/files.ts'
+import { typeSql } from '../../../schema/ddl.ts'
 import type { DbColumn, DbTable } from '../../../schema/types.ts'
 import type { Line } from '../../types.ts'
 import {
@@ -25,7 +26,7 @@ import { phpLiteral, phpString, PhpUses } from '../common/php.ts'
 import { filledByDatabase, uuidFills, type RepositoryMethod } from '../common/repositories.ts'
 import { repositoryAssignments, repositoryProperties } from '../common/support.ts'
 import { schemasOf, testFile, TESTS_NS } from '../common/tests.ts'
-import { eloquentModelFile, eloquentPhpType } from './models.ts'
+import { eloquentModelFile, eloquentPhpType, pgArrayFile } from './models.ts'
 
 const URLS: Record<string, string> = {
   postgresql: 'postgresql://app:app@localhost:5432/app',
@@ -272,9 +273,13 @@ function columnCall(context: Context, table: DbTable, column: DbColumn, nativeEn
     case 'uuid':
       return `$table->uuid(${name})`
     case 'binary':
-      return `$table->binary(${name})`
-    case 'json':
+      // MySQL has no keys on columns without a length
+      return type.length !== undefined ? `$table->binary(${name}, ${type.length})` : `$table->binary(${name})`
     case 'array':
+      if (context.settings.database === 'postgresql')
+        return `$table->rawColumn(${name}, ${phpString(typeSql(context.schema, 'postgresql', type))})`
+      return `$table->json(${name})`
+    case 'json':
       return `$table->${context.settings.database === 'postgresql' && /jsonb/i.test(type.sql) ? 'jsonb' : 'json'}(${name})`
     case 'enum': {
       const values = context.schema.enums.find((item) => item.name === type.name)?.values ?? []
@@ -465,7 +470,7 @@ export const eloquentOrm: PhpOrm = {
   property: (column) => column.name,
   phpType: eloquentPhpType,
   entityFile: eloquentModelFile,
-  databaseFiles: (context) => [databaseFile(context)],
+  databaseFiles: (context) => [databaseFile(context), pgArrayFile(context)].filter((file) => file !== null),
   repository: {
     doc: () => 'through its Eloquent model and the query builder, by every column of its key.',
     init: () => [],

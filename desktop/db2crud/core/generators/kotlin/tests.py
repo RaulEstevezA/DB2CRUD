@@ -181,6 +181,11 @@ def _when_set(columns: list[dict], assertion: str) -> list[str]:
     return [f"if ({conditions}) {assertion}"]
 
 
+def _same(column: dict) -> str:
+    """The assertion that two values of a column are the same: arrays are compared by what they hold."""
+    return "kotlin.test.assertContentEquals" if column["kt"] == "ByteArray" else "assertEquals"
+
+
 def _repository_tests(context: dict, info: dict) -> list[list[str]]:
     repo = f"uow.{info['attr']}"
 
@@ -216,7 +221,7 @@ def _repository_tests(context: dict, info: dict) -> list[list[str]]:
                 and [
                     f"val found = {repo}.{query_name(context, get_by_key)}({key_of('stored')})",
                     "assertNotNull(found)",
-                    *(f"assertEquals(stored.{column['prop']}, found.{column['prop']})" for column in info["key"]),
+                    *(f"{_same(column)}(stored.{column['prop']}, found.{column['prop']})" for column in info["key"]),
                 ],
                 *checks,
             ],
@@ -356,7 +361,10 @@ def _service_tests(context: dict, info: dict, imports: KtImports) -> list[list[s
                     f"val created = service.{name}({input_of('row')})",
                     [
                         f"val found = service.{operation_name(context, get)}({key_of('created')})",
-                        *(f"assertEquals(created.{column['prop']}, found.{column['prop']})" for column in info["key"]),
+                        *(
+                            f"{_same(column)}(created.{column['prop']}, found.{column['prop']})"
+                            for column in info["key"]
+                        ),
                     ]
                     if get
                     else [f"assertNotNull(created.{column['prop']})" for column in info["key"]],

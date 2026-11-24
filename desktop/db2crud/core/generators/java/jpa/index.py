@@ -254,7 +254,8 @@ def _test_session(context: dict, imports: JavaImports) -> list:
 def _dependencies(context: dict) -> list:
     """Hibernate (with the dialects of SQLite) and, for JSON columns, Jackson."""
     uses_json = any(
-        column["column"]["type"]["kind"] in ("json", "array")
+        column["column"]["type"]["kind"] == "json"
+        or (column["column"]["type"]["kind"] == "array" and context["settings"]["database"] != "postgresql")
         for info in context["tables"]
         for column in info["columns"]
     )
@@ -280,7 +281,7 @@ JPA_ORM = {
     "id": "jpa",
     "holder": "EntityManager",
     "forget": "uow.entityManager().clear();",
-    "emptyList": lambda context: '"[]"',
+    "emptyList": lambda context: '"{}"' if context["settings"]["database"] == "postgresql" else '"[]"',
     "databaseFiles": lambda context: [database_file(context)],
     "entityFile": entity_file,
     "repository": {"doc": _doc, "head": jpa_head, "body": jpa_body, "tail": jpa_tail},

@@ -22,6 +22,8 @@ export interface PhpOrm {
   property(column: DbColumn): string
   /** The PHP type of a value of the column, without null: `int`, `string`, `\DateTimeImmutable` */
   phpType(type: DbType): string
+  /** The ORM cannot keep a date in a key (nor, then, in the columns that point to it): they are text */
+  textDateKeys?: boolean
   /** The entity of a table */
   entityFile(context: Context, info: TableInfo): GeneratedFile
   /** `Database.php` and any other file the connection needs */

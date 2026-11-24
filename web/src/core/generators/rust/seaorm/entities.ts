@@ -6,6 +6,7 @@
  * CHECK constraints are named in the module's documentation: the services check them.
  */
 import type { GeneratedFile } from '../../../export/files.ts'
+import { typeSql } from '../../../schema/ddl.ts'
 import type { DbColumn, DbEnum } from '../../../schema/types.ts'
 import { columnOf, fileOf, findInfo, moduleOf, rsFile, storedType, type ColumnInfo, type Context, type TableInfo } from '../context.ts'
 import { rsString } from '../rust.ts'
@@ -32,6 +33,22 @@ export function nativeEnum(context: Context, column: DbColumn): DbEnum | undefin
 
 const quoteSql = (text: string) => `'${text.replace(/'/g, "''")}'`
 
+/** The type of PostgreSQL of a column kept as its text: JSON, an array, or a type SeaORM does not know. */
+function nativeText(context: Context, column: ColumnInfo): string | null {
+  const type = column.column.type
+  if (context.settings.database !== 'postgresql' || !['json', 'array', 'unknown'].includes(type.kind)) return null
+  return typeSql(context.schema, 'postgresql', type)
+}
+
+const isMysql = (dialect: string) => dialect === 'mysql' || dialect === 'mariadb'
+
+/** A column of MariaDB's own uuid type; the driver sends and reads the 16 bytes of one. */
+const isMariaUuid = (context: Context, column: DbColumn) =>
+  column.type.kind === 'uuid' &&
+  context.settings.database === 'mariadb' &&
+  context.schema.dialect === 'mariadb' &&
+  /^uuid$/i.test(column.type.sql)
+
 /** The `column_type` of a column, when its Rust type alone does not say it. */
 function columnType(context: Context, column: ColumnInfo): string | null {
   const type = column.column.type
@@ -47,6 +64,8 @@ function columnType(context: Context, column: ColumnInfo): string | null {
       return type.fixed ? `Char(Some(${type.length}))` : `String(StringLen::N(${type.length}))`
     case 'decimal':
       return `Decimal(Some((${type.precision ?? 10}, ${type.scale ?? 0})))`
+    case 'uuid':
+      return isMariaUuid(context, column.column) ? 'custom("uuid")' : null
     case 'binary':
       return type.length !== undefined ? `Binary(${type.length})` : null
     case 'enum': {
@@ -56,8 +75,10 @@ function columnType(context: Context, column: ColumnInfo): string | null {
     }
     case 'json':
     case 'array':
-    case 'unknown':
-      return 'Text'
+    case 'unknown': {
+      const native = nativeText(context, column)
+      return native ? `custom(${rsString(native)})` : 'Text'
+    }
     default:
       return null
   }
@@ -81,6 +102,20 @@ function attributes(context: Context, info: TableInfo, column: ColumnInfo, keyCo
     // PostgreSQL takes and gives a value of the enum, not a text
     attrs.push('select_as = "text"', `save_as = ${rsString(`"${enumType.name}"`)}`)
   }
+  const native = nativeText(context, column)
+  // Kept as its text, which PostgreSQL converts only when it is told to
+  if (native) attrs.push('select_as = "text"', `save_as = ${rsString(native)}`)
+  const mysql = isMysql(context.settings.database) && isMysql(context.schema.dialect ?? '')
+  // The driver gives each type of MySQL only as its own Rust type: the others are converted by the database
+  if (mysql && db.type.kind === 'integer' && /unsigned/i.test(db.type.sql)) attrs.push('select_as = "signed"')
+  if (mysql && db.type.kind === 'json') attrs.push('select_as = "char"')
+  if (mysql && db.type.kind === 'datetime' && /^timestamp/i.test(db.type.sql)) attrs.push('select_as = "datetime(6)"')
+  if (context.settings.database === 'postgresql' && db.type.kind === 'time' && db.type.timezone)
+    attrs.push('select_as = "time"', 'save_as = "timetz"')
+  // SQLite keeps 3.00 as a whole number
+  if (context.settings.database === 'sqlite' && context.schema.dialect === 'sqlite' && db.type.kind === 'decimal')
+    attrs.push('select_as = "real"')
+  if (isMariaUuid(context, db)) attrs.push('select_as = "binary(16)"', 'save_as = "uuid"')
   if (db.nullable) attrs.push('nullable')
   const uniques = info.table.uniques.filter((unique) => unique.columns.includes(db.name))
   for (const unique of uniques) {

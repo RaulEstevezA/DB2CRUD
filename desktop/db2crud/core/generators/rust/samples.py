@@ -86,7 +86,9 @@ def sample_value(column: dict, checks: list[dict], enums: list[dict]) -> str:
     if kind == "uuid":
         return "uuid::Uuid::from_u128(n as u128)"
     if kind == "binary":
-        return "vec![n as u8]"
+        # As long as the column, when its length may be fixed: the database fills shorter values
+        length = column_type.get("length")
+        return f"vec![n as u8; {length}]" if length is not None and length <= 64 else "vec![n as u8]"
     if kind == "json":
         return 'format!("{{\\"n\\": {n}}}")'
     if kind == "array":

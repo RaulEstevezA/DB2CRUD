@@ -77,7 +77,10 @@ export function sampleValue(column: ColumnInfo, checks: DbCheck[], enums: DbEnum
     case 'uuid':
       return 'Guid.Parse($"00000000-0000-4000-8000-{n:D12}")'
     case 'binary':
-      return 'new byte[] { (byte)n }'
+      // As long as the column, when its length may be fixed: the database fills shorter values
+      return type.length !== undefined && type.length <= 64
+        ? `Enumerable.Repeat((byte)n, ${type.length}).ToArray()`
+        : 'new byte[] { (byte)n }'
     case 'json':
       return '$"{{\\"n\\": {n}}}"'
     case 'array':
@@ -106,6 +109,8 @@ export function missingValue(column: ColumnInfo): string {
       return 'Guid.Parse("00000000-0000-4000-8000-000000999999")'
     case 'DateOnly':
       return 'new DateOnly(1999, 1, 1)'
+    case 'byte[]':
+      return 'new byte[] { 255, 255 }'
     default:
       return '"missing"'
   }

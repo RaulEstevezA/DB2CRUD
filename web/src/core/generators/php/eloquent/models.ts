@@ -39,7 +39,7 @@ export function eloquentPhpType(type: DbType): string {
 }
 
 /** The cast of a column, when its value needs one. */
-function cast(column: ColumnInfo): string | null {
+function cast(context: Context, column: ColumnInfo): string | null {
   const type = column.column.type
   switch (type.kind) {
     case 'integer':
@@ -54,12 +54,106 @@ function cast(column: ColumnInfo): string | null {
       return 'immutable_date'
     case 'datetime':
       return 'immutable_datetime'
-    case 'json':
     case 'array':
+      return context.settings.database === 'postgresql' ? `\\${context.base}\\PgArray::class${arrayItem(type)}` : 'json'
+    case 'json':
       return 'json'
     default:
       return null
   }
+}
+
+/** The argument of the cast of an array: the PHP type of its items, when it is not text. */
+function arrayItem(type: DbType): string {
+  const item = type.kind === 'array' ? type.items : type
+  if (item.kind === 'array') return arrayItem(item)
+  const php = item.kind === 'integer' ? 'int' : item.kind === 'float' ? 'float' : item.kind === 'boolean' ? 'bool' : null
+  return php ? ` . ':${php}'` : ''
+}
+
+/** `PgArray.php`, when a model has an array of PostgreSQL: its cast. */
+export function pgArrayFile(context: Context): GeneratedFile | null {
+  if (context.settings.database !== 'postgresql') return null
+  if (!context.tables.some((info) => info.writesEntity && info.columns.some((column) => column.column.type.kind === 'array'))) return null
+  return phpFile(pathOf(context.base, 'PgArray'), context.base, 'use Illuminate\\Contracts\\Database\\Eloquent\\CastsAttributes;', [
+    '/**',
+    ' * An array of PostgreSQL ({a,b}) as a PHP array; its items are text, or of the type the cast names.',
+    ' *',
+    ' * @implements CastsAttributes<array<int, mixed>, array<int, mixed>>',
+    ' */',
+    'final class PgArray implements CastsAttributes',
+    '{',
+    "    public function __construct(private readonly string $item = 'string')",
+    '    {',
+    '    }',
+    '',
+    '    public function get($model, string $key, mixed $value, array $attributes): ?array',
+    '    {',
+    '        if ($value === null) {',
+    '            return null;',
+    '        }',
+    '        $at = 0;',
+    '        return $this->read((string) $value, $at);',
+    '    }',
+    '',
+    '    public function set($model, string $key, mixed $value, array $attributes): ?string',
+    '    {',
+    '        return is_array($value) ? $this->write($value) : $value;',
+    '    }',
+    '',
+    '    /** The array that starts at a position of the text, which is left after it. */',
+    '    private function read(string $text, int &$at): array',
+    '    {',
+    '        $items = [];',
+    '        $at++;',
+    "        while ($text[$at] !== '}') {",
+    "            if ($text[$at] === ',') {",
+    '                $at++;',
+    "            } elseif ($text[$at] === '{') {",
+    '                $items[] = $this->read($text, $at);',
+    "            } elseif ($text[$at] === '\"') {",
+    "                $item = '';",
+    "                for ($at++; $text[$at] !== '\"'; $at++) {",
+    "                    if ($text[$at] === '\\\\') {",
+    '                        $at++;',
+    '                    }',
+    '                    $item .= $text[$at];',
+    '                }',
+    '                $at++;',
+    '                $items[] = $this->item($item);',
+    '            } else {',
+    "                $length = strcspn($text, ',}', $at);",
+    '                $item = substr($text, $at, $length);',
+    '                $at += $length;',
+    "                $items[] = $item === 'NULL' ? null : $this->item($item);",
+    '            }',
+    '        }',
+    '        $at++;',
+    '        return $items;',
+    '    }',
+    '',
+    '    private function item(string $text): int|float|bool|string',
+    '    {',
+    '        return match ($this->item) {',
+    "            'int' => (int) $text,",
+    "            'float' => (float) $text,",
+    "            'bool' => $text === 't',",
+    '            default => $text,',
+    '        };',
+    '    }',
+    '',
+    '    private function write(array $items): string',
+    '    {',
+    '        $written = array_map(fn (mixed $item): string => match (true) {',
+    "            $item === null => 'NULL',",
+    '            is_array($item) => $this->write($item),',
+    "            is_bool($item) => $item ? 't' : 'f',",
+    "            default => '\"' . addcslashes((string) $item, '\"\\\\') . '\"',",
+    '        }, $items);',
+    "        return '{' . implode(',', $written) . '}';",
+    '    }',
+    '}',
+  ])
 }
 
 /** Whether Eloquent can key the model by its primary key: one column. */
@@ -70,7 +164,7 @@ export function eloquentModelFile(context: Context, info: TableInfo): GeneratedF
   const { table } = info
   const key = singleKey(info) ? info.key[0] : null
   const casts = info.columns
-    .map((column) => [column, cast(column)] as const)
+    .map((column) => [column, cast(context, column)] as const)
     .filter((item): item is [ColumnInfo, string] => item[1] !== null)
   const defaults = info.columns.filter(
     (column) => column.column.default?.kind === 'literal' && column.column.default.value !== null && column.php !== '\\DateTimeImmutable',
@@ -128,7 +222,9 @@ export function eloquentModelFile(context: Context, info: TableInfo): GeneratedF
           '',
           '    /** @var array<string, string> */',
           '    protected $casts = [',
-          ...casts.map(([column, item]) => `        ${phpString(column.column.name)} => ${phpString(item)},`),
+          ...casts.map(
+            ([column, item]) => `        ${phpString(column.column.name)} => ${item.includes('::class') ? item : phpString(item)},`,
+          ),
           '    ];',
         ]
       : []),

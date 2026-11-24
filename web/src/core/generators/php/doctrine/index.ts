@@ -24,7 +24,7 @@ import { uuidFills, type RepositoryMethod } from '../common/repositories.ts'
 import { repositoryAssignments, repositoryProperties } from '../common/support.ts'
 import { schemasOf, testFile, TESTS_NS } from '../common/tests.ts'
 import { doctrineEntityFile, doctrinePhpType, idColumns, pgEnums, quoted } from './entities.ts'
-import { PRECISE_TYPES, typeFiles, typesNamespace, usesPreciseTypes } from './types.ts'
+import { PRECISE_TYPES, typeFiles, typesNamespace, usesPgArray, usesPreciseTypes, usesTimeTz } from './types.ts'
 
 const URLS: Record<string, string> = {
   postgresql: 'postgresql://app:app@localhost:5432/app',
@@ -46,10 +46,12 @@ function databaseFile(context: Context): GeneratedFile {
     'Doctrine\\ORM\\EntityManager',
     'Doctrine\\ORM\\ORMSetup',
   )
-  if (precise) {
-    uses.add('Doctrine\\DBAL\\Types\\Type')
-    for (const type of PRECISE_TYPES) uses.add(className(typesNamespace(context), type.name))
-  }
+  const array = usesPgArray(context)
+  const timeTz = usesTimeTz(context)
+  if (timeTz) uses.add(className(typesNamespace(context), 'PreciseTimeTzType'))
+  if (precise || array || timeTz) uses.add('Doctrine\\DBAL\\Types\\Type')
+  if (precise) for (const type of PRECISE_TYPES) uses.add(className(typesNamespace(context), type.name))
+  if (array) uses.add(className(typesNamespace(context), 'PgArrayType'))
   const registration = precise
     ? [
         '        // The timestamps of the entities keep their fractions of a second',
@@ -77,6 +79,20 @@ function databaseFile(context: Context): GeneratedFile {
     '    public static function open(?string $url = null): EntityManager',
     '    {',
     ...registration,
+    ...(timeTz
+      ? [
+          '        if (!Type::hasType(PreciseTimeTzType::NAME)) {',
+          '            Type::addType(PreciseTimeTzType::NAME, PreciseTimeTzType::class);',
+          '        }',
+        ]
+      : []),
+    ...(array
+      ? [
+          '        if (!Type::hasType(PgArrayType::NAME)) {',
+          '            Type::addType(PgArrayType::NAME, PgArrayType::class);',
+          '        }',
+        ]
+      : []),
     '        // The mapping is read from the attributes of the classes under src/',
     '        $config = ORMSetup::createAttributeMetadataConfiguration([__DIR__], true);',
     '        $config->enableNativeLazyObjects(true);',
@@ -307,7 +323,13 @@ function testDatabase(context: Context): GeneratedFile[] {
         ? ['        // DBAL cannot read a column of an enum type: the types go first, and their columns with them']
         : []),
       ...enums.map((item) => `        $connection->executeStatement(${phpString(`DROP TYPE IF EXISTS "${item.name}" CASCADE`)});`),
-      '        $tool->dropDatabase();',
+      ...(usesPgArray(context)
+        ? [
+            '        // DBAL cannot read a column of an array either: everything goes',
+            "        $connection->executeStatement('DROP SCHEMA IF EXISTS public CASCADE');",
+            "        $connection->executeStatement('CREATE SCHEMA public');",
+          ]
+        : ['        $tool->dropDatabase();']),
       ...enums.map(
         (item) =>
           `        $connection->executeStatement(${phpString(`CREATE TYPE "${item.name}" AS ENUM (${item.values.map(quote).join(', ')})`)});`,
@@ -352,6 +374,7 @@ export const doctrineOrm: PhpOrm = {
   label: 'Doctrine ORM 3',
   property: (column) => fieldName(column.name),
   phpType: doctrinePhpType,
+  textDateKeys: true,
   entityFile: doctrineEntityFile,
   databaseFiles: (context) => [databaseFile(context), ...typeFiles(context)],
   repository: {

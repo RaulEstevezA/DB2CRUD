@@ -5,7 +5,7 @@ web/src/core/generators/swift/sql/database.ts."""
 
 from ....schema.ddl import quote_name, type_sql
 from ..context import file_of, shared_file, sw_file
-from ..support import default_url
+from ..support import MYSQL_DATA, default_url, uses_mysql_data
 from ..swift import imports, sw_string
 
 
@@ -224,7 +224,7 @@ def database_file(context: dict) -> dict:
             "NIOPosix",
             "SQLKit",
             driver["module"],
-            *(["NIOCore"] if database == "sqlite" else []),
+            *(["NIOCore"] if database == "sqlite" or uses_mysql_data(context) else []),
         ),
         [
             f"/// The database DATABASE_URL names, through {driver['module']}. It never migrates: the database already exists.",
@@ -317,6 +317,7 @@ def database_file(context: dict) -> dict:
             "",
             *_refusal_lines(database),
             *(_DATES if database == "sqlite" and _uses(context, "Date") else []),
+            *(MYSQL_DATA if uses_mysql_data(context) else []),
         ],
     )
 

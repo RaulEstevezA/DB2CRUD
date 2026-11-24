@@ -256,7 +256,13 @@ def _field_line(context: dict, info: dict, column: dict, imports: Imports) -> li
         named = [arg for arg in args if arg.startswith("db_column=")]
         output = f"{_field_class(field)}({', '.join(arg for arg in args if not arg.startswith('db_column='))})"
         expression = f"RawSQL({js_json(generated['computed'].replace('%', '%%'))}, [])"
-        args = [f"expression={expression}", f"output_field={output}", "db_persist=True", *named]
+        args = [
+            f"expression={expression}",
+            f"output_field={output}",
+            "db_persist=True",
+            *named,
+            *(["null=True"] if db["nullable"] else []),
+        ]
         field = "GeneratedField"
     elif db["nullable"] and not single_key:
         args += ["null=True", "blank=True"]
@@ -318,8 +324,9 @@ def entity_file(context: dict, info: dict) -> dict:
     for index in table["indexes"]:
         name = index.get("name") if index.get("name") is not None else f"ix_{info['name']}_{'_'.join(index['columns'])}"
         indexes.append(f"models.Index(fields=[{names(index['columns'])}], name={js_json(_index_name(name))})")
-    if table.get("schema"):
-        todos.append(f'the table is in the "{table["schema"]}" schema; set the search path or db_table for it')
+    # Django leaves a name already quoted as it is
+    qualified = table.get("schema") if context["settings"]["database"] == "postgresql" else None
+    table_name = f"""'"{qualified}"."{info["name"]}"'""" if qualified else js_json(info["name"])
     composite = len(table["primaryKey"]) > 1 if table["primaryKey"] else True
     comment = f": {table['comment']}" if table.get("comment") else ""
     key = attrs([column["column"]["name"] for column in info["key"]])
@@ -341,7 +348,7 @@ def entity_file(context: dict, info: dict) -> dict:
         fields,
         "",
         "    class Meta:",
-        f"        db_table = {js_json(info['name'])}",
+        f"        db_table = {table_name}",
         not table["primaryKey"]
         and [
             "        # Read only: Django never creates or changes this table, so the key above stays in the ORM",

@@ -85,7 +85,13 @@ def sample_value(column: dict, checks: list[dict], enums: list[dict]) -> str:
     if kind == "uuid":
         return 'UUID(uuidString: String(format: "00000000-0000-4000-8000-%012d", n))!'
     if kind == "binary":
-        return "Data([UInt8(n % 256)])"
+        # As long as the column, when its length may be fixed: the database fills shorter values
+        length = column_type.get("length")
+        return (
+            f"Data(repeating: UInt8(n % 256), count: {length})"
+            if length is not None and length <= 64
+            else "Data([UInt8(n % 256)])"
+        )
     if kind == "json":
         return '"{\\"n\\": \\(n)}"'
     if kind == "array":
