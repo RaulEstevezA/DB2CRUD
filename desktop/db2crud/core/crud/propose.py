@@ -156,7 +156,21 @@ def _query_indexes(table: dict) -> list[dict]:
     ]
 
 
-def _propose_queries(table: dict, role: str, previous: dict | None) -> list[dict]:
+def _nested_lists(schema: dict, table: dict) -> list[dict]:
+    """The lists inside the documents of a collection: their items are added and removed one by one."""
+    if schema.get("dialect") != "mongodb":
+        return []
+    return [column for column in table["columns"] if column["type"]["kind"] == "array"]
+
+
+def _item_name(column: dict) -> str:
+    """lines → Line; delivery_notes → DeliveryNote."""
+    words = split_words(column["name"])
+    last = words[-1] if words else column["name"]
+    return to_pascal_case(" ".join([*words[:-1], singularize(last)]))
+
+
+def _propose_queries(schema: dict, table: dict, role: str, previous: dict | None) -> list[dict]:
     queries: list[dict] = []
 
     def add(query: dict) -> None:
@@ -223,6 +237,12 @@ def _propose_queries(table: dict, role: str, previous: dict | None) -> list[dict
         if role == "entity":
             add(entry("update", "update", "update", [], "one", _include("exact", writes)))
         add(entry("delete", "delete", "delete", key or [], "none", _include("exact", writes)))
+    if role == "entity":
+        for column in _nested_lists(schema, table):
+            name = column["name"]
+            proposal = _include("exact", [reason("nestedList", {"column": name})])
+            add(entry(f"addItem:{name}", "addItem", f"add{_item_name(column)}", [name], "optional", proposal))
+            add(entry(f"removeItem:{name}", "removeItem", f"remove{_item_name(column)}", [name], "optional", proposal))
     return queries
 
 
@@ -289,6 +309,29 @@ def _propose_operations(schema: dict, table: dict, policy: dict, previous: dict 
             {"columns": columns},
         )
 
+    if role == "entity":
+        for column in _nested_lists(schema, table):
+            name = column["name"]
+            proposal = _include("exact", [reason("nestedList", {"column": name})])
+            add(
+                f"addItem:{name}",
+                "addItem",
+                f"add{_item_name(column)}",
+                ["validate", versioned and "version"],
+                ["NotFound", "ValidationFailed", versioned and "Conflict"],
+                {"columns": [name]},
+                proposal,
+            )
+            add(
+                f"removeItem:{name}",
+                "removeItem",
+                f"remove{_item_name(column)}",
+                [versioned and "version"],
+                ["NotFound", "Conflict"],
+                {"columns": [name]},
+                proposal,
+            )
+
     # Links through the join tables that point to this table, when the user keeps them as join tables
     if role == "entity":
         for other in schema["tables"]:
@@ -353,7 +396,7 @@ def propose_crud(
                 "entity": entity_name(table),
                 "entityMissing": not table.get("entity"),
                 "queries": _propose_queries(
-                    table, role, find_repository(previous, table["name"]) if previous else None
+                    schema, table, role, find_repository(previous, table["name"]) if previous else None
                 ),
             }
         )

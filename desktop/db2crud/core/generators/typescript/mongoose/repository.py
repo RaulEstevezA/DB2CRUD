@@ -5,6 +5,7 @@ that are not as they were read, so two people changing different fields do not u
 web/src/core/generators/typescript/mongoose/repository.ts."""
 
 from ..common.context import column_type, is_in, query
+from ..common.documents import list_of
 from ..typescript import TsImports, quote
 from .models import IDENTIFIER, field_key, models_module
 
@@ -108,6 +109,10 @@ def _soft_condition(info: dict) -> str | None:
     return f"{name}: {{ $ne: true }}" if soft["column"]["type"]["kind"] == "boolean" else f"{name}: null"
 
 
+def _braces(items: list[str]) -> str:
+    return f"{{ {', '.join(items)} }}"
+
+
 def _filter_of(conditions: list) -> str:
     present = [item for item in conditions if item is not None]
     return f"{{ {', '.join(present)} }}" if present else "{}"
@@ -127,6 +132,63 @@ def _write(info: dict, action: list[str], imports: TsImports) -> list[str]:
         "} catch (error) {",
         f"  throw refusal('{info['entity']}', error)",
         "}",
+    ]
+
+
+def _item_body(info: dict, method: dict, model: str, imports: TsImports) -> list[str]:
+    """One item of a list added or removed in the database, whatever the rest of the list is by then."""
+    listed = list_of(info, method["query"])
+    stored = listed["column"]["column"]["name"]
+    name = field_key(stored)
+    keys = [_equal(column, column["prop"]) for column in info["key"]]
+    guards = []
+    for column in info["key"]:
+        if column["column"]["type"].get("objectId"):
+            imports.from_("src/database", "isObjectId")
+            guards.append(f"if (!isObjectId({column['prop']})) return null")
+    touched = [
+        f"{field_key(column['column']['name'])}: new Date()"
+        for column in info["columns"]
+        if column["column"].get("generated") == "onUpdateNow"
+    ]
+    version = info["version"]
+    version_name = version["column"]["name"] if version else None
+    also = [f"$set: {{ {', '.join(touched)} }}"] if touched else []
+    if version:
+        also.append(f"$inc: {{ {field_key(version_name)}: 1 }}")
+    soft = _soft_condition(info)
+    condition = _filter_of([*keys, soft])
+    param, item = listed["params"][0]["name"], listed["item"]
+    if method["query"]["kind"] == "addItem":
+        change = _braces([f"$push: {{ {name}: {item} }}", *also])
+    elif listed["by"] == "position":
+        # MongoDB removes by position only by writing the list without it; the size says it is still the list that was seen
+        condition = _filter_of([*keys, soft, f"{name}: {{ $size: size }}"])
+        path = quote(f"${stored}")
+        fields = [
+            f"{name}: {{ $concatArrays: [{{ $slice: [{path}, {param}] }}, {{ $slice: [{path}, {param} + 1, size] }}] }}",
+            *touched,
+        ]
+        if version:
+            fields.append(f"{field_key(version_name)}: {{ $add: [{quote('$' + version_name)}, 1] }}")
+        change = f"[{{ $set: {{ {', '.join(fields)} }} }}]"
+    else:
+        which = f"{{ _id: {param} }}" if listed["by"] == "id" else param
+        change = _braces([f"$pull: {{ {name}: {which} }}", *also])
+    return [
+        *guards,
+        "let changed: Stored | null",
+        *_write(
+            info,
+            [
+                f"changed = await {model}",
+                f"  .findOneAndUpdate({condition}, {change}, {{ returnDocument: 'after', runValidators: true, timestamps: false }})",
+                "  .session(this.session)",
+                "  .lean<Stored>()",
+            ],
+            imports,
+        ),
+        "return changed === null ? null : toEntity(changed)",
     ]
 
 
@@ -219,6 +281,8 @@ def mongoose_body(context: dict, info: dict, method: dict, imports: TsImports) -
             "loaded.set(entity, snapshot(entity))",
             "return entity",
         ]
+    if kind in ("addItem", "removeItem"):
+        return _item_body(info, method, model, imports)
     if kind == "delete":
         return _write(info, [f"await {model}.deleteOne({key}).session(this.session)"], imports)
     return ["throw new Error('not written')"]

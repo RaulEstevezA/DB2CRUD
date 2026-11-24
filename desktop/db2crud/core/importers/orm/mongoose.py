@@ -303,7 +303,7 @@ def _fields_of(expr: dict | None, where: str, reading: dict) -> list[dict]:
         text = column["type"]["kind"] == "text"
         if values and text and nested_field:
             column["type"] = _enum_type(path, values, reading)
-        elif values and not nested_field:
+        elif values:
             checks.append(check_of(f"{name} IN ({quoted(values)})"))
 
         def limit(key: str, settings: dict = settings):
@@ -311,13 +311,16 @@ def _fields_of(expr: dict | None, where: str, reading: dict) -> list[dict]:
 
         if column["type"]["kind"] == "text" and limit("maxlength") is not None:
             column["type"] = {**column["type"], "length": limit("maxlength")}
-        if not nested_field:
-            if limit("min") is not None and column["type"]["kind"] != "datetime":
-                checks.append(check_of(f"{name} >= {number_text(limit('min'))}"))
-            if limit("max") is not None and column["type"]["kind"] != "datetime":
-                checks.append(check_of(f"{name} <= {number_text(limit('max'))}"))
-            if limit("minlength") is not None:
-                checks.append(check_of(f"LENGTH({name}) >= {number_text(limit('minlength'))}"))
+        if limit("min") is not None and column["type"]["kind"] != "datetime":
+            checks.append(check_of(f"{name} >= {number_text(limit('min'))}"))
+        if limit("max") is not None and column["type"]["kind"] != "datetime":
+            checks.append(check_of(f"{name} <= {number_text(limit('max'))}"))
+        if limit("minlength") is not None:
+            checks.append(check_of(f"LENGTH({name}) >= {number_text(limit('minlength'))}"))
+        # Those of a nested document are its fields' own
+        if nested_field and checks:
+            column["checks"] = checks
+            checks = []
         initial = settings.get("default")
         if initial is not None:
             other = initial["text"] if initial["kind"] == "other" else ""

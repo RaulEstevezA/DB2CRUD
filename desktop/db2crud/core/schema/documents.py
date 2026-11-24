@@ -19,3 +19,12 @@ def nested_fields(column_type: dict) -> list[dict] | None:
     if column_type["kind"] == "array":
         return nested_fields(column_type["items"])
     return column_type.get("fields") if column_type["kind"] == "json" else None
+
+
+def item_key(items: dict) -> str:
+    """How an item of a list of documents is told from the others: by its identifier ("id"), by its value ("value") or,
+    a document without an identifier, by its "position"."""
+    if items["kind"] not in ("json", "array"):
+        return "value"
+    fields = nested_fields(items) or []
+    return "id" if items["kind"] == "json" and any(field["name"] == "_id" for field in fields) else "position"

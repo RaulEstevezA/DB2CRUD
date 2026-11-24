@@ -152,15 +152,17 @@ def _fields_of(schema: dict, where: str, reading: dict) -> list[dict]:
 
         if column["type"]["kind"] == "text" and number("maxLength") is not None and not is_object_id(column["type"]):
             column["type"] = {**column["type"], "length": number("maxLength")}
-        if not nested:
-            if number("minimum") is not None:
-                op = ">" if boolean_of(field.get("exclusiveMinimum")) is True else ">="
-                checks.append(check_of(f"{name} {op} {number_text(number('minimum'))}"))
-            if number("maximum") is not None:
-                op = "<" if boolean_of(field.get("exclusiveMaximum")) is True else "<="
-                checks.append(check_of(f"{name} {op} {number_text(number('maximum'))}"))
-            if number("minLength") is not None:
-                checks.append(check_of(f"LENGTH({name}) >= {number_text(number('minLength'))}"))
+        if number("minimum") is not None:
+            op = ">" if boolean_of(field.get("exclusiveMinimum")) is True else ">="
+            checks.append(check_of(f"{name} {op} {number_text(number('minimum'))}"))
+        if number("maximum") is not None:
+            op = "<" if boolean_of(field.get("exclusiveMaximum")) is True else "<="
+            checks.append(check_of(f"{name} {op} {number_text(number('maximum'))}"))
+        if number("minLength") is not None:
+            checks.append(check_of(f"LENGTH({name}) >= {number_text(number('minLength'))}"))
+        if nested and checks:
+            column["checks"] = checks
+            checks = []
         comment = string_of(field.get("description"))
         if comment:
             column["comment"] = comment

@@ -66,6 +66,21 @@ def find_generator(settings: dict) -> dict | None:
     )
 
 
+def _without_items(design: dict, settings: dict) -> dict:
+    """The design without the operations on one item of a list, which only document databases have."""
+    if settings["database"] == "mongodb":
+        return design
+
+    def whole(items: list[dict]) -> list[dict]:
+        return [item for item in items if item["kind"] not in ("addItem", "removeItem")]
+
+    return {
+        **design,
+        "repositories": [{**item, "queries": whole(item["queries"])} for item in design["repositories"]],
+        "services": [{**item, "operations": whole(item["operations"])} for item in design["services"]],
+    }
+
+
 def generate_project(schema: dict, design: dict, settings: dict, models: dict | None = None) -> list[dict]:
     """The files of the project, sorted by path, for settings made consistent first. With application models, their
     conversions are written only when the models are in the project's language, or in none (`conversions_available`);
@@ -75,4 +90,7 @@ def generate_project(schema: dict, design: dict, settings: dict, models: dict | 
     if not generator:
         return []
     usable = models if models and conversions_available(models, normalized["language"])["ok"] else None
-    return sorted(generator["generate"](schema, design, normalized, usable), key=lambda file: file["path"])
+    return sorted(
+        generator["generate"](schema, _without_items(design, normalized), normalized, usable),
+        key=lambda file: file["path"],
+    )

@@ -15,7 +15,7 @@ from ..core.crud.edit import pending_decisions
 from ..core.crud.propose import propose_crud
 from ..core.generators.registry import generate_project
 from ..core.js import trim
-from ..core.settings.settings import DEFAULT_SETTINGS, normalize_settings, settings_for
+from ..core.settings.settings import DEFAULT_SETTINGS, change_settings, normalize_settings, settings_for
 from ..examples import find_example
 from ..workspace import EMPTY_INPUT, read_database, read_models
 
@@ -188,7 +188,7 @@ class Session(QObject):
     # Settings
 
     def set_settings(self, **change) -> None:
-        settings = normalize_settings({**self.settings, **change})
+        settings = change_settings(self.settings, change)
         if settings == self.settings:
             return
         self._chosen = settings

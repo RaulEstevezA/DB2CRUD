@@ -99,6 +99,8 @@ STACKS = [
         "orm": "mongoose",
         "label": "Mongoose 8 (MongoDB)",
         "databases": ["mongodb"],
+        # MongoDB has transactions on replica sets only, and a document is always written whole
+        "transactions": "repository",
         "execution": ["async"],
         "errors": ["exceptions"],
         "dtoKinds": ["interface", "class"],
@@ -296,7 +298,20 @@ def settings_for(dialect: str | None, settings: dict) -> dict:
     stacks = stacks_for(dialect)
     if any(stack["language"] == settings["language"] and stack["orm"] == settings["orm"] for stack in stacks):
         return settings
-    return normalize_settings({**settings, "language": stacks[0]["language"], "orm": stacks[0]["orm"]})
+    return change_settings(settings, {"language": stacks[0]["language"], "orm": stacks[0]["orm"]})
+
+
+def change_settings(settings: dict, change: dict) -> dict:
+    """The settings with a change; a stack of the other kind of database brings its own place for transactions."""
+
+    def documents(item: dict) -> bool:
+        stack = find_stack(item["language"], item["orm"])
+        return stack is not None and "mongodb" in stack["databases"]
+
+    following = {**settings, **change}
+    if documents(settings) != documents(following) and "transactions" not in change:
+        following["transactions"] = None
+    return normalize_settings(following)
 
 
 def _pick(value, options: list, fallback):
@@ -342,7 +357,9 @@ def normalize_settings(settings: dict) -> dict:
         "serviceTypes": _pick(settings.get("serviceTypes"), SERVICE_TYPES, DEFAULT_SETTINGS["serviceTypes"]),
         "dtoKind": _pick(settings.get("dtoKind"), stack["dtoKinds"], stack["dtoKinds"][0]),
         "updates": _pick(settings.get("updates"), stack["updates"], stack["updates"][0]),
-        "transactions": _pick(settings.get("transactions"), TRANSACTIONS, DEFAULT_SETTINGS["transactions"]),
+        "transactions": _pick(
+            settings.get("transactions"), TRANSACTIONS, stack.get("transactions", DEFAULT_SETTINGS["transactions"])
+        ),
         "execution": _pick(settings.get("execution"), stack["execution"], stack["execution"][0]),
         "errors": _pick(settings.get("errors"), stack["errors"], stack["errors"][0]),
         "repositoryInterfaces": _bool(settings.get("repositoryInterfaces"), DEFAULT_SETTINGS["repositoryInterfaces"]),

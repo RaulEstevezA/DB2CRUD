@@ -19,6 +19,7 @@ from .context import (
     query_name,
     service_class,
 )
+from .documents import document_rules, list_of
 from .dtos import create_columns, create_dto, read_columns, read_dto, update_dto
 
 
@@ -98,6 +99,7 @@ def _validate_method(writer: dict) -> list:
         "src/unit-of-work", "UnitOfWork"
     )
     blocks = []
+    documents = document_rules(context, info)
     for column in create_columns(info):
         name = column["column"]["name"]
         prop = column["prop"]
@@ -110,6 +112,9 @@ def _validate_method(writer: dict) -> list:
         else:
             missing = None
         rules = _value_rules(column, info["table"]["checks"])
+        if any(item["column"] is column for item in documents):
+            imports.from_("src/documents", "problems")
+            rules.append(f"errors.push(...problems(value, DOCUMENTS.{prop}, '{name}'))")
         if not missing and not rules:
             continue
         blocks.append(
@@ -482,9 +487,75 @@ def _operation_lines(writer: dict, operation: dict) -> list:
             f"  return ({rows}).map((entity) => {service}.read(entity))" if dtos else f"  return {rows}",
             "}",
         ]
+    if kind in ("addItem", "removeItem"):
+        return _item_lines(writer, operation, name)
     if kind in ("link", "unlink"):
         return _link_lines(writer, operation, name)
     return []
+
+
+def _item_lines(writer: dict, operation: dict, name: str) -> list:
+    """Adds or removes one item of a list, so two people changing the same list do not undo each other."""
+    context, info, imports = writer["context"], writer["info"], writer["imports"]
+    adds = operation["kind"] == "addItem"
+    change = query(info, "addItem" if adds else "removeItem", operation["columns"])
+    if not change or not query(info, "getByKey"):
+        return []
+    listed = list_of(info, change)
+    by = listed["by"]
+    prop = listed["column"]["prop"]
+    stored = listed["column"]["column"]["name"]
+    params = [{"name": listed["item"], "type": listed["type"]}] if adds else listed["params"]
+    version = f", version: {info['version']['ts']}" if info["version"] else ""
+    rule = any(item["column"] is listed["column"] for item in document_rules(context, info))
+    param = params[0]["name"]
+    items = f"(current.{prop} ?? [])"
+    found = {
+        "id": f"!{items}.some((item) => item._id === {param})",
+        "value": f"!{items}.includes({param})",
+        "position": f"!({param} in {items})",
+    }[by]
+    label = listed["item"][:1].upper() + listed["item"][1:]
+    if adds and rule:
+        imports.from_("src/documents", "problems").from_("src/errors", "ValidationFailedError")
+    if not adds:
+        imports.from_("src/errors", "NotFoundError")
+    position = not adds and by == "position"
+    if position:
+        imports.from_("src/errors", "ConflictError")
+        gone = f"if (updated === null) throw new ConflictError('{info['entity']}', 'was changed by someone else since it was read', ['{prop}'])"
+    else:
+        imports.from_("src/errors", "NotFoundError")
+        gone = f"if (updated === null) throw new NotFoundError('{info['entity']}', {_key_value(info)})"
+    read_at = ", read at `version`" if info["version"] else ""
+    if adds:
+        doc = f"/** Adds an item to {stored}{read_at}. */"
+    else:
+        doc = f"/** Removes an item from {stored}, by its {'identifier' if by == 'id' else by}{read_at}. */"
+    written = ", ".join(f"{item['name']}: {item['type']}" for item in params)
+    args = ", ".join([_key_args(info), *(item["name"] for item in params), *([f"{items}.length"] if position else [])])
+    return [
+        doc,
+        f"async {name}({_key_params(info)}, {written}{version}): Promise<{_result_type(writer)}> {{",
+        adds and rule and f"  const errors = problems([{listed['item']}], DOCUMENTS.{prop}, '{stored}')",
+        adds and rule and f"  if (errors.length > 0) throw new ValidationFailedError('{info['entity']}', errors)",
+        indent(
+            lines(
+                *_in_transaction(
+                    [
+                        f"{'' if adds and not info['version'] else 'const current = '}await this.find(uow, {_key_args(info)})",
+                        *_version_check(writer),
+                        not adds and f"if ({found}) throw new NotFoundError('{label}', {param})",
+                        f"const updated = await {_repo(info)}.{query_name(context, change)}({args})",
+                        gone,
+                        f"return {_out(writer, 'updated')}",
+                    ]
+                )
+            ),
+            2,
+        ),
+        "}",
+    ]
 
 
 def _link_lines(writer: dict, operation: dict, name: str) -> list:
@@ -580,6 +651,9 @@ def service_file(context: dict, info: dict) -> dict | None:
     if writes:
         helpers = [_validate_method(writer), _unique_method(writer), _check_method(writer), *helpers]
     hidden = bool(info["hidden"]) and not dtos
+    rules = document_rules(context, info) if writes else []
+    if rules:
+        imports.type("src/documents", "Rule")
     one = len(info["hidden"]) == 1
     fields = _quoted([column["prop"] for column in create_columns(info)])
     content = lines(
@@ -590,6 +664,14 @@ def service_file(context: dict, info: dict) -> dict | None:
         and [
             "/** Properties a client may send: the database fills the others */",
             f"const FIELDS = new Set([{fields}])",
+            "",
+        ],
+        bool(rules)
+        and [
+            "/** The rules of the documents and lists inside each one */",
+            "const DOCUMENTS = {",
+            *(f"  {item['column']['prop']}: {item['rule']}," for item in rules),
+            "} satisfies Record<string, Rule>",
             "",
         ],
         f"/** Operations on {info['name']}. {TRANSACTIONS[context['settings']['transactions']]} */",

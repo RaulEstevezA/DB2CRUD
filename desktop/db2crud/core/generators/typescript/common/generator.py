@@ -6,6 +6,7 @@ import re
 from ....conversions.plan import plan_conversions
 from .context import create_context
 from .conversions import conversion_files, conversion_test_file, service_plans
+from .documents import documents_file
 from .dtos import dtos_file
 from .project import contract_file, env_example_file, gitignore_file, package_file, readme_file, tsconfig_files
 from .repositories import repository_file
@@ -16,7 +17,13 @@ from .unit_of_work import unit_of_work_file
 
 
 def _code(context: dict) -> list[dict]:
-    files = [*context["orm"]["databaseFiles"](context), errors_file(), paging_file(context), unit_of_work_file(context)]
+    files = [
+        *context["orm"]["databaseFiles"](context),
+        errors_file(),
+        paging_file(context),
+        documents_file(context),
+        unit_of_work_file(context),
+    ]
     settings = context["settings"]
     for info in context["tables"]:
         files.append(repository_file(context, info))

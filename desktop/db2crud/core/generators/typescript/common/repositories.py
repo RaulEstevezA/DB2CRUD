@@ -15,6 +15,7 @@ from .context import (
     repository_interface,
     sql_repository_class,
 )
+from .documents import list_of
 
 
 def repository_methods(context: dict, info: dict, imports: TsImports) -> list[dict]:
@@ -22,6 +23,7 @@ def repository_methods(context: dict, info: dict, imports: TsImports) -> list[di
     entity = info["entity"]
     paging = context["settings"]["paging"]
     methods = []
+    key_params = [{"name": column["prop"], "type": column["ts"]} for column in info["key"]]
     for query in info["queries"]:
         name = query_name(context, query)
         by_columns = [
@@ -68,6 +70,24 @@ def repository_methods(context: dict, info: dict, imports: TsImports) -> list[di
                 [{"name": "entity", "type": entity}],
                 entity,
                 "Stores the changes made to a row read from this repository.",
+            )
+        elif kind == "addItem":
+            listed = list_of(info, query)
+            add(
+                [*key_params, {"name": listed["item"], "type": listed["type"]}],
+                f"{entity} | null",
+                f"Adds an item to {query['columns'][0]}, and returns the row as it is then, or null when there is none.",
+            )
+        elif kind == "removeItem":
+            listed = list_of(info, query)
+            # Told apart by its position, it is only removed from a list of the size it was seen in
+            by_position = listed["by"] == "position"
+            size = [{"name": "size", "type": "number"}] if by_position else []
+            sized = " that has this size" if by_position else ""
+            add(
+                [*key_params, *listed["params"], *size],
+                f"{entity} | null",
+                f"Removes an item from {query['columns'][0]}{sized}, and returns the row as it is then, or null when there is none.",
             )
         elif kind == "delete":
             add([{"name": "entity", "type": entity}], "void", "Removes a row read from this repository.")
@@ -136,6 +156,40 @@ def _memory_visible(info: dict) -> str:
     return f"!row.{soft['prop']}" if soft["column"]["type"]["kind"] == "boolean" else f"row.{soft['prop']} == null"
 
 
+def _memory_item(info: dict, method: dict, rows: str, imports: TsImports) -> list:
+    """One item of a list added or removed in memory."""
+    listed = list_of(info, method["query"])
+    target = f"row.{listed['column']['prop']}"
+    keys = " && ".join(f"row.{column['prop']} === {column['prop']}" for column in info["key"])
+    version = info["version"]
+    touched = [f"row.{version['prop']} = (row.{version['prop']} ?? 0) + 1"] if version else []
+    touched += [
+        f"row.{column['prop']} = new Date()"
+        for column in info["columns"]
+        if column["column"].get("generated") == "onUpdateNow"
+    ]
+    find = [f"const row = {rows}.find((row) => {keys})", "if (row === undefined) return null"]
+    if method["query"]["kind"] == "addItem":
+        item = listed["item"]
+        if listed["by"] == "id":
+            imports.from_("node:crypto", "randomBytes")
+            item = f"{{ _id: randomBytes(12).toString('hex'), ...{item} }}"
+        return [*find, f"{target} = [...({target} ?? []), {item}]", *touched, "return row"]
+    name = listed["params"][0]["name"]
+    kept = {
+        "id": f"(item) => item._id !== {name}",
+        "value": f"(item) => item !== {name}",
+        "position": f"(_, index) => index !== {name}",
+    }[listed["by"]]
+    return [
+        *find,
+        listed["by"] == "position" and f"if (({target} ?? []).length !== size) return null",
+        f"{target} = ({target} ?? []).filter({kept})",
+        *touched,
+        "return row",
+    ]
+
+
 def _memory_body(context: dict, info: dict, method: dict, imports: TsImports) -> list:
     rows = "this.visible()"
     conditions = " && ".join(f"row.{param['name']} === {param['name']}" for param in method["params"])
@@ -165,6 +219,8 @@ def _memory_body(context: dict, info: dict, method: dict, imports: TsImports) ->
         return [*fills, "this.rows.set(JSON.stringify(keyOf(entity)), entity)", "return entity"]
     if kind == "update":
         return ["this.rows.set(JSON.stringify(keyOf(entity)), entity)", "return entity"]
+    if kind in ("addItem", "removeItem"):
+        return _memory_item(info, method, rows, imports)
     if kind == "delete":
         return ["this.rows.delete(JSON.stringify(keyOf(entity)))"]
     return ["throw new Error('not written')"]

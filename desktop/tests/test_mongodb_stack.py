@@ -1,6 +1,6 @@
 """A document database is offered the stacks made for it, and a relational one the others."""
 
-from db2crud.core.settings.settings import DEFAULT_SETTINGS, normalize_settings, settings_for, stacks_for
+from db2crud.core.settings.settings import DEFAULT_SETTINGS, change_settings, normalize_settings, settings_for, stacks_for
 from db2crud.workspace import input_language, read_database
 
 VALIDATOR = '{ $jsonSchema: { bsonType: "object", title: "users", properties: { name: { bsonType: "string" } } } }'
@@ -13,6 +13,14 @@ def test_stack_follows_the_database():
     assert settings_for("postgresql", settings) == settings
     assert settings_for("postgresql", settings_for("mongodb", settings))["orm"] != "mongoose"
     assert settings_for(None, settings) == settings
+
+
+def test_brings_its_own_place_for_transactions():
+    settings = normalize_settings({**DEFAULT_SETTINGS, "transactions": "operation"})
+    documents = settings_for("mongodb", settings)
+    assert documents["transactions"] == "repository"
+    assert change_settings(documents, {"transactions": "operation"})["transactions"] == "operation"
+    assert settings_for("postgresql", documents)["transactions"] == "operation"
 
 
 def test_reads_one_validator():

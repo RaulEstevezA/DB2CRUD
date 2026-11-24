@@ -17,6 +17,7 @@ from .context import (
     service_class,
     writes_entities,
 )
+from .documents import list_of
 from .dtos import create_columns, create_dto, update_columns
 
 
@@ -243,6 +244,37 @@ def _repository_tests(context: dict, info: dict, imports: TsImports) -> list[lis
                 ],
             )
         )
+    for adding in [item for item in info["queries"] if item["kind"] == "addItem"]:
+        listed = list_of(info, adding)
+        removing = query(info, "removeItem", adding["columns"])
+        if not removing or not get_by_key:
+            continue
+        prop = listed["column"]["prop"]
+        by = listed["by"]
+        which = {
+            "id": f"added!.{prop}!.at(-1)!._id!",
+            "value": "item",
+            "position": f"added!.{prop}!.length - 1, added!.{prop}!.length",
+        }[by]
+        added = "toEqual" if by == "value" else "toMatchObject"
+        tests.append(
+            _test(
+                f"adds and removes one item of {adding['columns'][0]}",
+                [
+                    opening,
+                    f"const stored = await {add}(uow, 1)",
+                    f"const before = stored.{prop}?.length ?? 0",
+                    f"const item = {_item_sample(context, listed)}",
+                    f"const added = await {repo}.{query_name(context, adding)}({key_of('stored')}, item)",
+                    f"expect(added?.{prop}).toHaveLength(before + 1)",
+                    f"expect(added?.{prop}?.at(-1)).{added}(item)",
+                    f"const removed = await {repo}.{query_name(context, removing)}({key_of('stored')}, {which})",
+                    f"expect(removed?.{prop}).toHaveLength(before)",
+                    by == "position"
+                    and f"expect(await {repo}.{query_name(context, removing)}({key_of('stored')}, 0, before + 5)).toBeNull()",
+                ],
+            )
+        )
     remove = query(info, "delete")
     if remove and get_by_key and not info["soft"]:
         tests.append(
@@ -257,6 +289,14 @@ def _repository_tests(context: dict, info: dict, imports: TsImports) -> list[lis
             )
         )
     return tests
+
+
+def _item_sample(context: dict, listed: dict) -> str:
+    """A value for an item of a list, as a TypeScript expression."""
+    column = listed["column"]["column"]
+    # Not one of those the factories give
+    sample = sample_value({**column, "type": column["type"]["items"]}, [], context["schema"]["enums"])
+    return f"((n: number) => ({sample}))(7)"
 
 
 # Service tests
@@ -446,6 +486,45 @@ def _service_tests(context: dict, info: dict, imports: TsImports, memory: bool) 
                     f"const created = await service.{operation_name(context, create)}({fresh(1)})",
                     f"const updated = await service.{operation_name(context, update)}({key_of('created')}, {{ {text['prop']}: 'changed' }}{version})",
                     f"expect(updated.{text['prop']}).toBe('changed')",
+                ],
+            )
+        )
+    for operation in [item for item in info["operations"] if item["kind"] == "addItem"]:
+        listed = list_of(info, operation)
+        without = op("removeItem", operation["columns"])
+        if not create or not without or listed["column"]["column"]["name"] in info["hidden"]:
+            continue
+        prop = listed["column"]["prop"]
+        by = listed["by"]
+
+        def later(variable: str) -> str:
+            version_of = info["version"]
+            if not version_of:
+                return ""
+            return f", {variable}.{version_of['prop']}{'!' if version_of['column']['nullable'] else ''}"
+
+        which = {
+            "id": f"added.{prop}!.at(-1)!._id!",
+            "value": "item",
+            "position": f"added.{prop}!.length - 1",
+        }[by]
+        missing = {"id": f"'{'f' * 24}'", "value": None, "position": "99"}[by]
+        imports.from_("src/errors", "NotFoundError")
+        remove_name = operation_name(context, without)
+        tests.append(
+            _test(
+                f"adds and removes one item of {operation['columns'][0]}",
+                [
+                    *start,
+                    f"const created = await service.{operation_name(context, create)}({fresh(1)})",
+                    f"const before = created.{prop}?.length ?? 0",
+                    f"const item = {_item_sample(context, listed)}",
+                    f"const added = await service.{operation_name(context, operation)}({key_of('created')}, item{version})",
+                    f"expect(added.{prop}).toHaveLength(before + 1)",
+                    f"const removed = await service.{remove_name}({key_of('created')}, {which}{later('added')})",
+                    f"expect(removed.{prop}).toHaveLength(before)",
+                    missing is not None
+                    and f"await expect(service.{remove_name}({key_of('created')}, {missing}{later('removed')})).rejects.toBeInstanceOf(NotFoundError)",
                 ],
             )
         )

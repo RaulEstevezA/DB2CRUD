@@ -58,7 +58,9 @@ def _nested_schema(context: dict, fields: list[dict]) -> str:
     """A schema inside another. The fields it does not name are kept when the document is written again."""
     own = [field for field in fields if field["name"] != "_id"]
     identifier = "" if len(own) < len(fields) else "_id: false, "
-    written = ", ".join(f"{field_key(field['name'])}: {_definition(context, field, [])}" for field in own)
+    written = ", ".join(
+        f"{field_key(field['name'])}: {_definition(context, field, field.get('checks') or [])}" for field in own
+    )
     return f"new Schema({{ {written} }}, {{ {identifier}strict: false, minimize: false }})"
 
 

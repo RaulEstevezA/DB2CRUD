@@ -72,6 +72,8 @@ def _query_en(kind: str, columns: list[str]) -> str:
         "insert": "stores a new row",
         "update": "stores changes",
         "delete": "removes a row",
+        "addItem": f"adds one item to {joined}",
+        "removeItem": f"removes one item from {joined}",
     }[kind]
 
 
@@ -86,6 +88,8 @@ def _query_es(kind: str, columns: list[str]) -> str:
         "insert": "guarda una fila nueva",
         "update": "guarda cambios",
         "delete": "elimina una fila",
+        "addItem": f"añade un elemento a {joined}",
+        "removeItem": f"quita un elemento de {joined}",
     }[kind]
 
 
@@ -122,6 +126,8 @@ def _reason_en(reason: dict) -> str:
     return {
         "primaryKey": f"The primary key ({_p(params, 'columns')}) identifies each row.",
         "uniqueConstraint": f"{_p(params, 'columns')} is unique: at most one row has each value.",
+        "nestedList": f"“{_p(params, 'column')}” is a list inside each document: changing one item does not undo what "
+        "others change in the rest.",
         "indexOnly": f"There is an index on {_p(params, 'columns')}, but it may exist only for speed: keep the query if "
         "the application looks rows up by it.",
         "foreignKey": f"Each row points to a row of {_p(params, 'table')}.",
@@ -171,6 +177,8 @@ def _reason_es(reason: dict) -> str:
     return {
         "primaryKey": f"La clave primaria ({_p(params, 'columns')}) identifica cada fila.",
         "uniqueConstraint": f"{_p(params, 'columns')} es único: como mucho una fila tiene cada valor.",
+        "nestedList": f"«{_p(params, 'column')}» es una lista dentro de cada documento: cambiar un elemento no deshace lo "
+        "que otros cambien en el resto.",
         "indexOnly": f"Hay un índice en {_p(params, 'columns')}, pero puede existir solo por rendimiento: mantén la "
         "consulta si la aplicación busca filas por él.",
         "foreignKey": f"Cada fila apunta a una fila de {_p(params, 'table')}.",
