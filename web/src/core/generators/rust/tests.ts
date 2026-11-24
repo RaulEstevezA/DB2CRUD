@@ -78,7 +78,8 @@ function factoriesFile(context: Context, makeable: TableInfo[]): GeneratedFile {
       .flatMap((column) => {
         const isKey = info.table.foreignKeys.some((key) => key.columns.includes(column.column.name))
         if (column === info.soft) return column.column.type.kind === 'boolean' ? [`        ${column.field}: Some(false),`] : []
-        if (column.column.nullable && isKey) return []
+        // No sample is sure to fit a type that is not known
+        if (column.column.nullable && (isKey || column.column.type.kind === 'unknown')) return []
         return [`        ${column.field}: Some(${sampleValue(column, info.table.checks, context.schema.enums)}),`]
       })
     const usesN = values.some((line) => /\bn\b/.test(line))

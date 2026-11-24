@@ -187,7 +187,7 @@ export function readCall(context: Context, column: ColumnInfo, index: number): s
 }
 
 /** How each driver takes the values of the entities: what it cannot take is turned into what the column keeps. */
-function valueLines(database: Dialect): string[] {
+function valueLines(database: Dialect, offsetTimes: boolean): (string | false)[] {
   if (database === 'postgresql') return ['return value;']
   if (isMysql(database))
     return [
@@ -198,6 +198,7 @@ function valueLines(database: Dialect): string[] {
       'return value;',
     ]
   return [
+    offsetTimes && 'if (value instanceof OffsetTime time) return time.withOffsetSameInstant(ZoneOffset.UTC).toLocalTime().toString();',
     '// SQLite keeps dates, times and uuids as their text, and decimals as numbers',
     'if (value instanceof UUID || value instanceof TemporalAccessor) return value.toString();',
     'if (value instanceof BigDecimal decimal) return decimal.toPlainString();',
@@ -258,6 +259,7 @@ function sqlFile(context: Context): GeneratedFile {
   if (!postgres) imports.add('java.sql.Statement')
   if (isMysql(database)) imports.add('java.util.UUID', 'java.time.OffsetDateTime', 'java.time.OffsetTime', 'java.time.ZoneOffset')
   if (database === 'sqlite') imports.add('java.util.UUID', 'java.time.temporal.TemporalAccessor', 'java.math.BigDecimal')
+  const offsetTimes = database === 'sqlite' && context.tables.some((info) => info.columns.some((column) => column.java === 'OffsetTime'))
   const readers = new Map<string, Reader>()
   for (const info of context.tables)
     for (const column of info.columns) {
@@ -365,7 +367,7 @@ function sqlFile(context: Context): GeneratedFile {
     '',
     `    /** A value as the driver takes it. */`,
     '    private static Object value(Object value) {',
-    ...valueLines(database).map((line) => `        ${line}`),
+    ...valueLines(database, offsetTimes).map((line) => line && `        ${line}`),
     '    }',
     ...readerLines,
     '}',

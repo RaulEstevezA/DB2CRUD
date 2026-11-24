@@ -70,7 +70,8 @@ def _factories_file(context: dict, makeable: list[dict]) -> dict:
             # A new row is not marked as deleted
             if column is info["soft"]:
                 value = "False" if column["column"]["type"]["kind"] == "boolean" else "None"
-            elif column["column"]["nullable"] and is_key:
+            elif column["column"]["nullable"] and (is_key or column["column"]["type"]["kind"] == "unknown"):
+                # No sample is sure to fit a type that is not known
                 value = "None"
             else:
                 value = sample_value(column["column"], info["table"]["checks"], context["schema"]["enums"], imports)

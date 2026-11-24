@@ -52,6 +52,9 @@ const orderBy = (context: Context, info: TableInfo) => ` ORDER BY ${info.key.map
 const params = (values: string[]) => (values.length === 0 ? '()' : `(${values.join(', ')},)`)
 const toDb = (expression: string) => `to_db(${expression})`
 
+/** psycopg writes a list as an array of PostgreSQL by itself: to_db would make it JSON. */
+const isArray = (context: Context, column: ColumnInfo) => context.settings.database === 'postgresql' && column.column.type.kind === 'array'
+
 /** The key of the entity as the parameters of a query. */
 const keyParams = (info: TableInfo, target = 'entity') => params(info.key.map((column) => toDb(`${target}.${column.attr}`)))
 
@@ -159,7 +162,11 @@ function body(context: Context, info: TableInfo, method: RepositoryMethod, impor
         'names = ", ".join(column for column, _ in given)',
         `marks = ", ".join(${sql(m)} for _ in given)`,
       ]
-      const values = 'tuple(to_db(value) for _, value in given)'
+      const arrays = columns.filter((column) => isArray(context, column)).map((column) => sql(q(context, column.column.name)))
+      const values =
+        arrays.length > 0
+          ? `tuple(value if column in ${params(arrays)} else to_db(value) for column, value in given)`
+          : 'tuple(to_db(value) for _, value in given)'
       const into = `INSERT INTO ${table(context, info)}`
       if (returning) {
         const defaults = `${into} DEFAULT VALUES RETURNING `
@@ -199,7 +206,7 @@ function body(context: Context, info: TableInfo, method: RepositoryMethod, impor
       ]
       if (sets.length === 0) return readBack(context, info, 'entity')
       const values = params([
-        ...changes.map((column) => toDb(`entity.${column.attr}`)),
+        ...changes.map((column) => (isArray(context, column) ? `entity.${column.attr}` : toDb(`entity.${column.attr}`))),
         ...info.key.map((column) => toDb(`entity.${column.attr}`)),
       ])
       return write(

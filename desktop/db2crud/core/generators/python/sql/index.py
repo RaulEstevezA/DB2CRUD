@@ -86,6 +86,11 @@ def _to_db(expression: str) -> str:
     return f"to_db({expression})"
 
 
+def _is_array(context: dict, column: dict) -> bool:
+    """psycopg writes a list as an array of PostgreSQL by itself: to_db would make it JSON."""
+    return context["settings"]["database"] == "postgresql" and column["column"]["type"]["kind"] == "array"
+
+
 def _key_params(info: dict, target: str = "entity") -> str:
     """The key of the entity as the parameters of a query."""
     return _params([_to_db(f"{target}.{column['attr']}") for column in info["key"]])
@@ -219,7 +224,12 @@ def _body(context: dict, info: dict, method: dict, imports: Imports) -> list:
             'names = ", ".join(column for column, _ in given)',
             f'marks = ", ".join({_sql(m)} for _ in given)',
         ]
-        values = "tuple(to_db(value) for _, value in given)"
+        arrays = [_sql(_q(context, column["column"]["name"])) for column in columns if _is_array(context, column)]
+        values = (
+            f"tuple(value if column in {_params(arrays)} else to_db(value) for column, value in given)"
+            if arrays
+            else "tuple(to_db(value) for _, value in given)"
+        )
         into = f"INSERT INTO {_table(context, info)}"
         if _returns(context):
             defaults = f"{into} DEFAULT VALUES RETURNING "
@@ -263,7 +273,10 @@ def _body(context: dict, info: dict, method: dict, imports: Imports) -> list:
             return _read_back(context, info, "entity")
         values = _params(
             [
-                *(_to_db(f"entity.{column['attr']}") for column in changes),
+                *(
+                    f"entity.{column['attr']}" if _is_array(context, column) else _to_db(f"entity.{column['attr']}")
+                    for column in changes
+                ),
                 *(_to_db(f"entity.{column['attr']}") for column in info["key"]),
             ]
         )

@@ -110,6 +110,11 @@ def db_file(context: dict) -> dict:
             ),
             "    return value",
         ]
+    times = database not in ("postgresql", "sqlite") and any(
+        column["column"]["type"]["kind"] == "time" for info in context["tables"] for column in info["columns"]
+    )
+    if times:
+        imports.from_("datetime", "datetime", "timedelta")
     content = lines(
         f'"""The connection to the database through {label}, and the helpers the repositories run SQL with.',
         "",
@@ -190,6 +195,14 @@ def db_file(context: dict) -> dict:
             '    """Bytes, which the driver may give as a bytearray."""',
             "    return bytes(value) if value is not None else None",
         ],
+        times
+        and [
+            "",
+            "",
+            "def read_time(value: Any) -> Any:",
+            '    """A time of the day, which the driver gives as the time since midnight."""',
+            "    return (datetime.min + value).time() if isinstance(value, timedelta) else value",
+        ],
         sqlite
         and [
             "",
@@ -224,12 +237,12 @@ _READERS = {
     "uuid": "read_uuid",
     "boolean": "read_bool",
     "binary": "read_bytes",
+    "time": "read_time",
 }
 _SQLITE_READERS = {
     "decimal": "read_decimal",
     "datetime": "read_datetime",
     "date": "read_date",
-    "time": "read_time",
 }
 
 

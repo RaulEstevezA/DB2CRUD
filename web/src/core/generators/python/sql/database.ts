@@ -70,6 +70,8 @@ export function dbFile(context: Context): GeneratedFile {
   if (!postgres) imports.module('json')
   if (sqlite) imports.from('datetime', 'date', 'datetime', 'time').from('decimal', 'Decimal').from('uuid', 'UUID')
   else if (!postgres) imports.from('uuid', 'UUID')
+  const times = !postgres && !sqlite && context.tables.some((info) => info.columns.some((column) => column.column.type.kind === 'time'))
+  if (times) imports.from('datetime', 'datetime', 'timedelta')
   const content = lines(
     `"""The connection to the database through ${driverLabel(context)}, and the helpers the repositories run SQL with.`,
     '',
@@ -169,6 +171,13 @@ export function dbFile(context: Context): GeneratedFile {
       '    """Bytes, which the driver may give as a bytearray."""',
       '    return bytes(value) if value is not None else None',
     ],
+    times && [
+      '',
+      '',
+      'def read_time(value: Any) -> Any:',
+      '    """A time of the day, which the driver gives as the time since midnight."""',
+      '    return (datetime.min + value).time() if isinstance(value, timedelta) else value',
+    ],
     sqlite && [
       '',
       '',
@@ -218,7 +227,7 @@ export function readerOf(context: Context, kind: string): string | null {
     case 'date':
       return sqlite ? 'read_date' : null
     case 'time':
-      return sqlite ? 'read_time' : null
+      return 'read_time'
     default:
       return null
   }

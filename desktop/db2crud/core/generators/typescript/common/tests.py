@@ -88,7 +88,8 @@ def _factories_file(context: dict, makeable: list[dict]) -> dict:
             )
             if soft is not None:
                 value = soft
-            elif column["column"]["nullable"] and is_key:
+            elif column["column"]["nullable"] and (is_key or column["column"]["type"]["kind"] == "unknown"):
+                # No sample is sure to fit a type that is not known
                 value = "null"
             else:
                 value = sample_value(column["column"], info["table"]["checks"], context["schema"]["enums"])

@@ -112,7 +112,8 @@ def _factories_file(context: dict, makeable: list[dict]) -> dict:
                 if column["column"]["type"]["kind"] == "boolean":
                     values.append(f"        {column['field']}: Some(false),")
                 continue
-            if column["column"]["nullable"] and is_key:
+            # No sample is sure to fit a type that is not known
+            if column["column"]["nullable"] and (is_key or column["column"]["type"]["kind"] == "unknown"):
                 continue
             sample = sample_value(column, info["table"]["checks"], context["schema"]["enums"])
             values.append(f"        {column['field']}: Some({sample}),")

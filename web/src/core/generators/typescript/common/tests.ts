@@ -65,10 +65,13 @@ function factoriesFile(context: Context, makeable: TableInfo[]): GeneratedFile {
       .filter((column) => !column.generated && !parentOf.has(column.column.name))
       .map((column) => {
         const isKey = info.table.foreignKeys.some((key) => key.columns.includes(column.column.name))
-        // A new row is not marked as deleted
+        // A new row is not marked as deleted; no sample is sure to fit a type that is not known
         const soft = column === info.soft ? (column.column.type.kind === 'boolean' ? 'false' : 'null') : null
         const value =
-          soft ?? (column.column.nullable && isKey ? 'null' : sampleValue(column.column, info.table.checks, context.schema.enums))
+          soft ??
+          (column.column.nullable && (isKey || column.column.type.kind === 'unknown')
+            ? 'null'
+            : sampleValue(column.column, info.table.checks, context.schema.enums))
         return `${column.prop}: ${value}`
       })
     const insert = query(info, 'insert')!

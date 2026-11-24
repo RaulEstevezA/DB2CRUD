@@ -202,7 +202,7 @@ def read_call(context: dict, column: dict, index: int) -> str:
     return f"Sql.{reader['name']}(row, {index}{scale})"
 
 
-def _value_lines(database: str) -> list[str]:
+def _value_lines(database: str, offset_times: bool) -> list:
     """How each driver takes the values of the entities: what it cannot take is turned into what the column keeps."""
     if database == "postgresql":
         return ["return value;"]
@@ -215,6 +215,8 @@ def _value_lines(database: str) -> list[str]:
             "return value;",
         ]
     return [
+        offset_times
+        and "if (value instanceof OffsetTime time) return time.withOffsetSameInstant(ZoneOffset.UTC).toLocalTime().toString();",
         "// SQLite keeps dates, times and uuids as their text, and decimals as numbers",
         "if (value instanceof UUID || value instanceof TemporalAccessor) return value.toString();",
         "if (value instanceof BigDecimal decimal) return decimal.toPlainString();",
@@ -299,6 +301,9 @@ def _sql_file(context: dict) -> dict:
         imports.add("java.util.UUID", "java.time.OffsetDateTime", "java.time.OffsetTime", "java.time.ZoneOffset")
     if database == "sqlite":
         imports.add("java.util.UUID", "java.time.temporal.TemporalAccessor", "java.math.BigDecimal")
+    offset_times = database == "sqlite" and any(
+        column["java"] == "OffsetTime" for info in context["tables"] for column in info["columns"]
+    )
     readers: dict[str, dict] = {}
     for info in context["tables"]:
         for column in info["columns"]:
@@ -401,7 +406,7 @@ def _sql_file(context: dict) -> dict:
         "",
         "    /** A value as the driver takes it. */",
         "    private static Object value(Object value) {",
-        *(f"        {line}" for line in _value_lines(database)),
+        *(line and f"        {line}" for line in _value_lines(database, offset_times)),
         "    }",
         *reader_lines,
         "}",
