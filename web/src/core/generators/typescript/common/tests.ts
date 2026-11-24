@@ -22,6 +22,7 @@ import {
   type Context,
   type TableInfo,
 } from './context.ts'
+import { listOf, type ListInfo } from './documents.ts'
 import { createColumns, createDto, updateColumns } from './dtos.ts'
 
 type Block = (Line | Line[])[]
@@ -121,6 +122,14 @@ const describeBlock = (name: string, tests: Line[][]): Line[] => [
   '})',
 ]
 
+/** A value for an item of a list, as a TypeScript expression. */
+function itemSample(context: Context, list: ListInfo): string {
+  const type = list.column.column.type
+  if (type.kind !== 'array') return 'null'
+  // Not one of those the factories give
+  return `((n: number) => (${sampleValue({ ...list.column.column, type: type.items }, [], context.schema.enums)}))(7)`
+}
+
 // Repository tests
 
 function repositoryTests(context: Context, info: TableInfo, imports: TsImports): Line[][] {
@@ -197,6 +206,32 @@ function repositoryTests(context: Context, info: TableInfo, imports: TsImports):
         `expect(found?.${text.prop}).toBe('changed')`,
       ]),
     )
+  for (const add of info.queries.filter((item) => item.kind === 'addItem')) {
+    const list = listOf(info, add)
+    const remove = query(info, 'removeItem', add.columns)
+    if (!remove || !getByKey) continue
+    const prop = list.column.prop
+    const which =
+      list.by === 'id'
+        ? `added!.${prop}!.at(-1)!._id!`
+        : list.by === 'value'
+          ? 'item'
+          : `added!.${prop}!.length - 1, added!.${prop}!.length`
+    tests.push(
+      test(`adds and removes one item of ${add.columns[0]}`, [
+        open,
+        `const stored = await ${addName(info)}(uow, 1)`,
+        `const before = stored.${prop}?.length ?? 0`,
+        `const item = ${itemSample(context, list)}`,
+        `const added = await ${repo}.${queryName(context, add)}(${keyOf('stored')}, item)`,
+        `expect(added?.${prop}).toHaveLength(before + 1)`,
+        list.by === 'value' ? `expect(added?.${prop}?.at(-1)).toEqual(item)` : `expect(added?.${prop}?.at(-1)).toMatchObject(item)`,
+        `const removed = await ${repo}.${queryName(context, remove)}(${keyOf('stored')}, ${which})`,
+        `expect(removed?.${prop}).toHaveLength(before)`,
+        list.by === 'position' && `expect(await ${repo}.${queryName(context, remove)}(${keyOf('stored')}, 0, before + 5)).toBeNull()`,
+      ]),
+    )
+  }
   const remove = query(info, 'delete')
   if (remove && getByKey && !info.soft)
     tests.push(
@@ -346,6 +381,30 @@ function serviceTests(context: Context, info: TableInfo, imports: TsImports, mem
         `expect(updated.${text.prop}).toBe('changed')`,
       ]),
     )
+  for (const operation of info.operations.filter((item) => item.kind === 'addItem')) {
+    const list = listOf(info, operation)
+    const without = op('removeItem', operation.columns)
+    if (!create || !without || info.hidden.includes(list.column.column.name)) continue
+    const prop = list.column.prop
+    const later = info.version ? `, added.${info.version.prop}${info.version.column.nullable ? '!' : ''}` : ''
+    const which = list.by === 'id' ? `added.${prop}!.at(-1)!._id!` : list.by === 'value' ? 'item' : `added.${prop}!.length - 1`
+    const missing = list.by === 'id' ? `'${'f'.repeat(24)}'` : list.by === 'value' ? null : '99'
+    imports.from('src/errors', 'NotFoundError')
+    tests.push(
+      test(`adds and removes one item of ${operation.columns[0]}`, [
+        ...start,
+        `const created = await service.${operationName(context, create)}(${fresh(1)})`,
+        `const before = created.${prop}?.length ?? 0`,
+        `const item = ${itemSample(context, list)}`,
+        `const added = await service.${operationName(context, operation)}(${keyOf('created')}, item${version})`,
+        `expect(added.${prop}).toHaveLength(before + 1)`,
+        `const removed = await service.${operationName(context, without)}(${keyOf('created')}, ${which}${later})`,
+        `expect(removed.${prop}).toHaveLength(before)`,
+        missing &&
+          `await expect(service.${operationName(context, without)}(${keyOf('created')}, ${missing}${info.version ? `, removed.${info.version.prop}${info.version.column.nullable ? '!' : ''}` : ''})).rejects.toBeInstanceOf(NotFoundError)`,
+      ]),
+    )
+  }
   if (create && remove && get) {
     imports.from('src/errors', 'NotFoundError')
     tests.push(

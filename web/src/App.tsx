@@ -15,7 +15,13 @@ import { ProjectPane } from './components/project/ProjectPane.tsx'
 import { conversionsAvailable } from './core/conversions/plan.ts'
 import { pendingDecisions } from './core/crud/edit.ts'
 import { generateProject } from './core/generators/registry.ts'
-import { DEFAULT_SETTINGS, normalizeSettings, settingsFor, type ProjectSettings } from './core/settings/settings.ts'
+import {
+  changeSettings as changed,
+  DEFAULT_SETTINGS,
+  normalizeSettings,
+  settingsFor,
+  type ProjectSettings,
+} from './core/settings/settings.ts'
 import { findExample, type ExampleId } from './examples/index.ts'
 import { useCrudDesign } from './hooks/useCrudDesign.ts'
 import { useStoredState } from './hooks/useStoredState.ts'
@@ -62,7 +68,7 @@ function App() {
   const hasWork = input.text.trim() !== ''
 
   function changeSettings(change: Partial<ProjectSettings>) {
-    setStored(normalizeSettings({ ...settings, ...change }))
+    setStored(changed(settings, change))
   }
 
   function replaceInput(next: InputState): boolean {

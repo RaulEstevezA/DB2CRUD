@@ -256,14 +256,16 @@ function fieldsOf(expr: Expr | undefined, where: string, reading: Reading): Fiel
     const values = enumValues(settings.get('enum'))
     if (values && column.type.kind === 'text' && !nestedField) checks.push(checkOf(`${name} IN (${quoted(values)})`))
     else if (values && column.type.kind === 'text') column.type = enumType(path, values, reading)
-    else if (values && !nestedField) checks.push(checkOf(`${name} IN (${quoted(values)})`))
+    else if (values) checks.push(checkOf(`${name} IN (${quoted(values)})`))
     const limit = (key: string) => numberOf(setting(settings.get(key)))
     if (column.type.kind === 'text' && limit('maxlength') !== undefined) column.type = { ...column.type, length: limit('maxlength') }
-    if (!nestedField) {
+    {
       if (limit('min') !== undefined && column.type.kind !== 'datetime') checks.push(checkOf(`${name} >= ${limit('min')}`))
       if (limit('max') !== undefined && column.type.kind !== 'datetime') checks.push(checkOf(`${name} <= ${limit('max')}`))
       if (limit('minlength') !== undefined) checks.push(checkOf(`LENGTH(${name}) >= ${limit('minlength')}`))
     }
+    // Those of a nested document are its fields' own
+    if (nestedField && checks.length > 0) column.checks = checks.splice(0)
     const initial = settings.get('default')
     if (initial?.kind === 'name' && initial.path.join('.') === 'Date.now') column.generated = 'now'
     else if (initial?.kind === 'other' && /Date\.now\(\)|new Date\(\)/.test(initial.text)) column.generated = 'now'

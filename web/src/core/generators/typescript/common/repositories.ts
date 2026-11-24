@@ -5,6 +5,7 @@
  * ConflictError, for the races the services' checks cannot prevent.
  */
 import type { GeneratedFile } from '../../../export/files.ts'
+import { listOf } from './documents.ts'
 import { isObjectId } from '../../../schema/documents.ts'
 import { indent, lines, type Line } from '../../types.ts'
 import { tsLiteral, TsImports } from '../typescript.ts'
@@ -26,6 +27,7 @@ import type { RepositoryMethod } from './orm.ts'
 export function repositoryMethods(context: Context, info: TableInfo, imports: TsImports): RepositoryMethod[] {
   const entity = info.entity
   const methods: RepositoryMethod[] = []
+  const keyParams = info.key.map((column) => ({ name: column.prop, type: column.ts }))
   for (const query of info.queries) {
     const name = queryName(context, query)
     const byColumns = query.columns.map((column) => ({ name: columnOf(info, column).prop, type: columnOf(info, column).ts }))
@@ -70,6 +72,26 @@ export function repositoryMethods(context: Context, info: TableInfo, imports: Ts
       case 'update':
         add([{ name: 'entity', type: entity }], entity, 'Stores the changes made to a row read from this repository.')
         break
+      case 'addItem': {
+        const list = listOf(info, query)
+        add(
+          [...keyParams, { name: list.item, type: list.type }],
+          `${entity} | null`,
+          `Adds an item to ${query.columns[0]}, and returns the row as it is then, or null when there is none.`,
+        )
+        break
+      }
+      case 'removeItem': {
+        const list = listOf(info, query)
+        // Told apart by its position, it is only removed from a list of the size it was seen in
+        const size = list.by === 'position' ? [{ name: 'size', type: 'number' }] : []
+        add(
+          [...keyParams, ...list.params, ...size],
+          `${entity} | null`,
+          `Removes an item from ${query.columns[0]}${list.by === 'position' ? ' that has this size' : ''}, and returns the row as it is then, or null when there is none.`,
+        )
+        break
+      }
       case 'delete':
         add([{ name: 'entity', type: entity }], 'void', 'Removes a row read from this repository.')
         break
@@ -156,6 +178,41 @@ function memoryBody(context: Context, info: TableInfo, method: RepositoryMethod,
     }
     case 'update':
       return ['this.rows.set(JSON.stringify(keyOf(entity)), entity)', 'return entity']
+    case 'addItem':
+    case 'removeItem': {
+      const list = listOf(info, method.query)
+      const target = `row.${list.column.prop}`
+      const keys = info.key.map((column) => `row.${column.prop} === ${column.prop}`).join(' && ')
+      const touched = [
+        ...(info.version ? [`row.${info.version.prop} = (row.${info.version.prop} ?? 0) + 1`] : []),
+        ...info.columns.filter(({ column }) => column.generated === 'onUpdateNow').map((column) => `row.${column.prop} = new Date()`),
+      ]
+      const find = [`const row = ${rows}.find((row) => ${keys})`, 'if (row === undefined) return null']
+      if (method.query.kind === 'addItem') {
+        const id = list.by === 'id'
+        if (id) imports.from('node:crypto', 'randomBytes')
+        return [
+          ...find,
+          `${target} = [...(${target} ?? []), ${id ? `{ _id: randomBytes(12).toString('hex'), ...${list.item} }` : list.item}]`,
+          ...touched,
+          'return row',
+        ]
+      }
+      const [param] = list.params
+      const kept =
+        list.by === 'id'
+          ? `(item) => item._id !== ${param.name}`
+          : list.by === 'value'
+            ? `(item) => item !== ${param.name}`
+            : `(_, index) => index !== ${param.name}`
+      return [
+        ...find,
+        list.by === 'position' && `if ((${target} ?? []).length !== size) return null`,
+        `${target} = (${target} ?? []).filter(${kept})`,
+        ...touched,
+        'return row',
+      ]
+    }
     case 'delete':
       return ['this.rows.delete(JSON.stringify(keyOf(entity)))']
     default:

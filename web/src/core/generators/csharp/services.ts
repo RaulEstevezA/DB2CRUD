@@ -458,6 +458,10 @@ function operationLines(writer: Writer, operation: OperationDesign): Block {
     case 'link':
     case 'unlink':
       return linkLines(writer, operation, name)
+    // One item of a list: only document databases have them
+    case 'addItem':
+    case 'removeItem':
+      return []
   }
 }
 

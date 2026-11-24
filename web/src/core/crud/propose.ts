@@ -158,8 +158,19 @@ function queryIndexes(table: DbTable) {
   )
 }
 
-function proposeQueries(table: DbTable, role: TableRole, previous: RepositoryDesign | undefined): QueryDesign[] {
+/** The lists inside the documents of a collection: their items are added and removed one by one. */
+const nestedLists = (schema: DbSchema, table: DbTable) =>
+  schema.dialect === 'mongodb' ? table.columns.filter((column) => column.type.kind === 'array') : []
+
+/** `lines` → `Line`; `delivery_notes` → `DeliveryNote`. */
+function itemName(list: DbColumn): string {
+  const words = splitWords(list.name)
+  return toPascalCase([...words.slice(0, -1), singularize(words[words.length - 1] ?? list.name)].join(' '))
+}
+
+function proposeQueries(schema: DbSchema, table: DbTable, role: TableRole, previous: RepositoryDesign | undefined): QueryDesign[] {
   const queries: QueryDesign[] = []
+  const lists = nestedLists(schema, table)
   const add = (query: QueryDesign) => {
     const before = previous?.queries.find((item) => item.id === query.id)
     queries.push({ ...query, include: keep(before?.include, query.include) })
@@ -210,6 +221,26 @@ function proposeQueries(table: DbTable, role: TableRole, previous: RepositoryDes
       add({ id: 'update', kind: 'update', name: 'update', columns: [], returns: 'one', include: include('exact', writes) })
     add({ id: 'delete', kind: 'delete', name: 'delete', columns: key ?? [], returns: 'none', include: include('exact', writes) })
   }
+  if (role === 'entity')
+    for (const list of lists) {
+      const proposal = include('exact', [reason('nestedList', { column: list.name })])
+      add({
+        id: `addItem:${list.name}`,
+        kind: 'addItem',
+        name: `add${itemName(list)}`,
+        columns: [list.name],
+        returns: 'optional',
+        include: proposal,
+      })
+      add({
+        id: `removeItem:${list.name}`,
+        kind: 'removeItem',
+        name: `remove${itemName(list)}`,
+        columns: [list.name],
+        returns: 'optional',
+        include: proposal,
+      })
+    }
   return queries
 }
 
@@ -280,6 +311,30 @@ function proposeOperations(schema: DbSchema, table: DbTable, policy: TablePolicy
       columns: foreignKey.columns,
     })
 
+  if (role === 'entity')
+    for (const list of nestedLists(schema, table)) {
+      const proposal = include('exact', [reason('nestedList', { column: list.name })])
+      const columns = [list.name]
+      add(
+        `addItem:${list.name}`,
+        'addItem',
+        `add${itemName(list)}`,
+        ['validate', versioned && 'version'],
+        ['NotFound', 'ValidationFailed', versioned && 'Conflict'],
+        { columns },
+        proposal,
+      )
+      add(
+        `removeItem:${list.name}`,
+        'removeItem',
+        `remove${itemName(list)}`,
+        [versioned && 'version'],
+        ['NotFound', 'Conflict'],
+        { columns },
+        proposal,
+      )
+    }
+
   // Links through the join tables that point to this table, when the user keeps them as join tables
   if (role === 'entity')
     for (const other of schema.tables) {
@@ -330,7 +385,7 @@ export function proposeCrud(
       table: table.name,
       entity: entityName(table),
       entityMissing: !table.entity,
-      queries: proposeQueries(table, role, previous ? findRepository(previous, table.name) : undefined),
+      queries: proposeQueries(schema, table, role, previous ? findRepository(previous, table.name) : undefined),
     })
     if (role === 'join') return
     services.push({

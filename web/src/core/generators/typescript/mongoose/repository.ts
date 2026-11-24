@@ -7,6 +7,7 @@
 import type { Line } from '../../types.ts'
 import { quote, type TsImports } from '../typescript.ts'
 import { columnType, query, type ColumnInfo, type Context, type TableInfo } from '../common/context.ts'
+import { listOf } from '../common/documents.ts'
 import type { RepositoryMethod } from '../common/orm.ts'
 import { fieldKey, modelsModule } from './models.ts'
 
@@ -116,6 +117,57 @@ function write(info: TableInfo, action: Line[], imports: TsImports): Line[] {
   ]
 }
 
+/** One item of a list added or removed in the database, whatever the rest of the list is by then. */
+function itemBody(info: TableInfo, method: RepositoryMethod, model: string, imports: TsImports): Line[] {
+  const list = listOf(info, method.query)
+  const name = fieldKey(list.column.column.name)
+  const keys = info.key.map((column) => equal(column, column.prop))
+  const guards = info.key
+    .filter((column) => column.column.type.kind === 'text' && column.column.type.objectId)
+    .map((column) => {
+      imports.from('src/database', 'isObjectId')
+      return `if (!isObjectId(${column.prop})) return null`
+    })
+  const touched = info.columns
+    .filter(({ column }) => column.generated === 'onUpdateNow')
+    .map(({ column }) => `${fieldKey(column.name)}: new Date()`)
+  const version = info.version ? [`${fieldKey(info.version.column.name)}: 1`] : []
+  const also = [
+    ...(touched.length > 0 ? [`$set: { ${touched.join(', ')} }`] : []),
+    ...(version.length > 0 ? [`$inc: { ${version.join(', ')} }`] : []),
+  ]
+  const [param] = list.params
+  let filter = filterOf([...keys, softCondition(info)])
+  let change: string
+  if (method.query.kind === 'addItem') change = `{ ${[`$push: { ${name}: ${list.item} }`, ...also].join(', ')} }`
+  else if (list.by === 'position') {
+    // MongoDB removes by position only by writing the list without it; the size says it is still the list that was seen
+    filter = filterOf([...keys, softCondition(info), `${name}: { $size: size }`])
+    const path = quote(`$${list.column.column.name}`)
+    const set = [
+      `${name}: { $concatArrays: [{ $slice: [${path}, ${param.name}] }, { $slice: [${path}, ${param.name} + 1, size] }] }`,
+      ...touched,
+      ...(info.version ? [`${fieldKey(info.version.column.name)}: { $add: [${quote(`$${info.version.column.name}`)}, 1] }`] : []),
+    ]
+    change = `[{ $set: { ${set.join(', ')} } }]`
+  } else change = `{ ${[`$pull: { ${name}: ${list.by === 'id' ? `{ _id: ${param.name} }` : param.name} }`, ...also].join(', ')} }`
+  return [
+    ...guards,
+    'let changed: Stored | null',
+    ...write(
+      info,
+      [
+        `changed = await ${model}`,
+        `  .findOneAndUpdate(${filter}, ${change}, { returnDocument: 'after', runValidators: true, timestamps: false })`,
+        '  .session(this.session)',
+        '  .lean<Stored>()',
+      ],
+      imports,
+    ),
+    'return changed === null ? null : toEntity(changed)',
+  ]
+}
+
 export function mongooseBody(context: Context, info: TableInfo, method: RepositoryMethod, imports: TsImports): Line[] {
   const model = `this.db.models.${info.attr}`
   const columns = method.query.columns.map((name) => info.columns.find((item) => item.column.name === name)!)
@@ -193,6 +245,9 @@ export function mongooseBody(context: Context, info: TableInfo, method: Reposito
         'loaded.set(entity, snapshot(entity))',
         'return entity',
       ]
+    case 'addItem':
+    case 'removeItem':
+      return itemBody(info, method, model, imports)
     case 'delete':
       return write(info, [`await ${model}.deleteOne(${key}).session(this.session)`], imports)
     default:

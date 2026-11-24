@@ -114,7 +114,7 @@ function fieldsOf(schema: Map<string, Expr>, where: string, reading: Reading): {
     const number = (key: string) => numberOf(field.get(key))
     if (column.type.kind === 'text' && number('maxLength') !== undefined && !isObjectId(column.type))
       column.type = { ...column.type, length: number('maxLength') }
-    if (!nested) {
+    {
       const exclusive = (key: string) => booleanOf(field.get(key)) === true
       if (number('minimum') !== undefined)
         checks.push(checkOf(`${name} ${exclusive('exclusiveMinimum') ? '>' : '>='} ${number('minimum')}`))
@@ -122,6 +122,7 @@ function fieldsOf(schema: Map<string, Expr>, where: string, reading: Reading): {
         checks.push(checkOf(`${name} ${exclusive('exclusiveMaximum') ? '<' : '<='} ${number('maximum')}`))
       if (number('minLength') !== undefined) checks.push(checkOf(`LENGTH(${name}) >= ${number('minLength')}`))
     }
+    if (nested && checks.length > 0) column.checks = checks.splice(0)
     const comment = stringOf(field.get('description'))
     if (comment) column.comment = comment
     return { column, checks }

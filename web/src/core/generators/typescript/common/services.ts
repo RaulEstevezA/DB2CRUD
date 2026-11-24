@@ -22,6 +22,7 @@ import {
   type Context,
   type TableInfo,
 } from './context.ts'
+import { documentRules, listOf } from './documents.ts'
 import { createColumns, createDto, readColumns, readDto, updateDto } from './dtos.ts'
 
 type Block = (Line | Line[])[]
@@ -82,6 +83,7 @@ function validateMethod(writer: Writer): Block {
   const { context, info, imports } = writer
   imports.from('src/errors', 'ValidationFailedError').type('src/errors', 'FieldError').type('src/unit-of-work', 'UnitOfWork')
   const blocks: string[] = []
+  const documents = documentRules(context, info)
   for (const column of createColumns(info)) {
     const name = column.column.name
     const prop = column.prop
@@ -91,6 +93,10 @@ function validateMethod(writer: Writer): Block {
         ? `if ('${prop}' in values && !creating) errors.push({ field: '${name}', message: 'cannot be empty' })`
         : null
     const rules = valueRules(column, info.table.checks)
+    if (documents.some((item) => item.column === column)) {
+      imports.from('src/documents', 'problems')
+      rules.push(`errors.push(...problems(value, DOCUMENTS.${prop}, '${name}'))`)
+    }
     if (!missing && rules.length === 0) continue
     blocks.push(
       lines(
@@ -425,10 +431,67 @@ function operationLines(writer: Writer, operation: OperationDesign): Block {
         '}',
       ]
     }
+    case 'addItem':
+    case 'removeItem':
+      return itemLines(writer, operation, name)
     case 'link':
     case 'unlink':
       return linkLines(writer, operation, name)
   }
+}
+
+/** Adds or removes one item of a list, so two people changing the same list do not undo each other. */
+function itemLines(writer: Writer, operation: OperationDesign, name: string): Block {
+  const { context, info, imports } = writer
+  const adds = operation.kind === 'addItem'
+  const change = query(info, adds ? 'addItem' : 'removeItem', operation.columns)
+  if (!change || !query(info, 'getByKey')) return []
+  const list = listOf(info, change)
+  const prop = list.column.prop
+  const stored = list.column.column.name
+  const params = adds ? [{ name: list.item, type: list.type }] : list.params
+  const version = info.version ? `, version: ${info.version.ts}` : ''
+  const rule = documentRules(context, info).some((item) => item.column === list.column)
+  const [param] = params
+  const items = `(current.${prop} ?? [])`
+  const found =
+    list.by === 'id'
+      ? `${items}.some((item) => item._id === ${param.name})`
+      : list.by === 'value'
+        ? `${items}.includes(${param.name})`
+        : `${param.name} in ${items}`
+  const label = list.item.charAt(0).toUpperCase() + list.item.slice(1)
+  if (adds && rule) imports.from('src/documents', 'problems').from('src/errors', 'ValidationFailedError')
+  if (adds && rule) imports.from('src/errors', 'ValidationFailedError')
+  if (!adds) imports.from('src/errors', 'NotFoundError')
+  const position = !adds && list.by === 'position'
+  if (position) imports.from('src/errors', 'ConflictError')
+  else imports.from('src/errors', 'NotFoundError')
+  const gone = position
+    ? `if (updated === null) throw new ConflictError('${info.entity}', 'was changed by someone else since it was read', ['${prop}'])`
+    : `if (updated === null) throw new NotFoundError('${info.entity}', ${keyValue(info)})`
+  return [
+    adds
+      ? `/** Adds an item to ${stored}${info.version ? ', read at `version`' : ''}. */`
+      : `/** Removes an item from ${stored}, by its ${list.by === 'id' ? 'identifier' : list.by}${info.version ? ', read at `version`' : ''}. */`,
+    `async ${name}(${keyParams(info)}, ${params.map((item) => `${item.name}: ${item.type}`).join(', ')}${version}): Promise<${resultType(writer)}> {`,
+    adds && rule && `  const errors = problems([${list.item}], DOCUMENTS.${prop}, '${stored}')`,
+    adds && rule && `  if (errors.length > 0) throw new ValidationFailedError('${info.entity}', errors)`,
+    indent(
+      lines(
+        ...inTransaction([
+          `${adds && !info.version ? '' : 'const current = '}await this.find(uow, ${keyArgs(info)})`,
+          ...versionCheck(writer),
+          !adds && `if (!${position ? `(${found})` : found}) throw new NotFoundError('${label}', ${param.name})`,
+          `const updated = await ${repo(info)}.${queryName(context, change)}(${[keyArgs(info), ...params.map((item) => item.name), ...(position ? [`${items}.length`] : [])].join(', ')})`,
+          gone,
+          `return ${out(writer, 'updated')}`,
+        ]),
+      ),
+      2,
+    ),
+    '}',
+  ]
 }
 
 function linkLines(writer: Writer, operation: OperationDesign, name: string): Block {
@@ -506,6 +569,8 @@ export function serviceFile(context: Context, info: TableInfo): GeneratedFile | 
   const helpers: Block[] = [findMethod(writer), readMethod(writer)]
   if (writes) helpers.unshift(validateMethod(writer), uniqueMethod(writer), checkMethod(writer))
   const hidden = info.hidden.length > 0 && !dtos
+  const rules = writes ? documentRules(context, info) : []
+  if (rules.length > 0) imports.type('src/documents', 'Rule')
   const content = lines(
     `/** Operations on ${info.name}: what each one checks before it writes. */`,
     imports.write(),
@@ -515,6 +580,13 @@ export function serviceFile(context: Context, info: TableInfo): GeneratedFile | 
       `const FIELDS = new Set([${createColumns(info)
         .map((column) => `'${column.prop}'`)
         .join(', ')}])`,
+      '',
+    ],
+    rules.length > 0 && [
+      '/** The rules of the documents and lists inside each one */',
+      'const DOCUMENTS = {',
+      ...rules.map(({ column, rule }) => `  ${column.prop}: ${rule},`),
+      '} satisfies Record<string, Rule>',
       '',
     ],
     `/** Operations on ${info.name}. ${TRANSACTIONS[context.settings.transactions]} */`,

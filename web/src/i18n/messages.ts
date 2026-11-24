@@ -142,6 +142,8 @@ const en = {
       insert: 'stores a new row',
       update: 'stores changes',
       delete: 'removes a row',
+      addItem: `adds one item to ${columns.join(', ')}`,
+      removeItem: `removes one item from ${columns.join(', ')}`,
     })[kind],
   operationDescription: (operation: OperationDesign): string => {
     const names: Record<OperationCheck, string> = {
@@ -266,6 +268,8 @@ const en = {
         return `The primary key (${p(params, 'columns')}) identifies each row.`
       case 'uniqueConstraint':
         return `${p(params, 'columns')} is unique: at most one row has each value.`
+      case 'nestedList':
+        return `“${p(params, 'column')}” is a list inside each document: changing one item does not undo what others change in the rest.`
       case 'indexOnly':
         return `There is an index on ${p(params, 'columns')}, but it may exist only for speed: keep the query if the application looks rows up by it.`
       case 'foreignKey':
@@ -464,6 +468,8 @@ const es: Messages = {
       insert: 'guarda una fila nueva',
       update: 'guarda cambios',
       delete: 'elimina una fila',
+      addItem: `añade un elemento a ${columns.join(', ')}`,
+      removeItem: `quita un elemento de ${columns.join(', ')}`,
     })[kind],
   operationDescription: (operation) => {
     const names: Record<OperationCheck, string> = {
@@ -575,6 +581,8 @@ const es: Messages = {
         return `La clave primaria (${p(params, 'columns')}) identifica cada fila.`
       case 'uniqueConstraint':
         return `${p(params, 'columns')} es único: como mucho una fila tiene cada valor.`
+      case 'nestedList':
+        return `«${p(params, 'column')}» es una lista dentro de cada documento: cambiar un elemento no deshace lo que otros cambien en el resto.`
       case 'indexOnly':
         return `Hay un índice en ${p(params, 'columns')}, pero puede existir solo por rendimiento: mantén la consulta si la aplicación busca filas por él.`
       case 'foreignKey':

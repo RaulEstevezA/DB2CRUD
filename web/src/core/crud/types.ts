@@ -9,7 +9,18 @@
 import type { Decision } from '../decisions/decision.ts'
 import type { Matching } from '../matching/matching.ts'
 
-export type QueryKind = 'getByKey' | 'findByUnique' | 'findAllBy' | 'listByParent' | 'list' | 'insert' | 'update' | 'delete'
+export type QueryKind =
+  | 'getByKey'
+  | 'findByUnique'
+  | 'findAllBy'
+  | 'listByParent'
+  | 'list'
+  | 'insert'
+  | 'update'
+  | 'delete'
+  /** One item of a list of a document, in a collection: the list is never written whole */
+  | 'addItem'
+  | 'removeItem'
 
 export type QueryReturns = 'one' | 'optional' | 'many' | 'none'
 
@@ -32,7 +43,8 @@ export interface RepositoryDesign {
   queries: QueryDesign[]
 }
 
-export type OperationKind = 'create' | 'get' | 'list' | 'update' | 'delete' | 'find' | 'listByParent' | 'link' | 'unlink'
+export type OperationKind =
+  'create' | 'get' | 'list' | 'update' | 'delete' | 'find' | 'listByParent' | 'link' | 'unlink' | 'addItem' | 'removeItem'
 
 /** What an operation checks before writing, in this order. */
 export type OperationCheck = 'validate' | 'unique' | 'parentExists' | 'version' | 'children'
@@ -44,7 +56,7 @@ export interface OperationDesign {
   id: string
   kind: OperationKind
   name: string
-  /** Columns it looks up by (find, listByParent) */
+  /** Columns it looks up by (find, listByParent), or the list it changes (addItem, removeItem) */
   columns: string[]
   /** For link and unlink: the join table */
   through?: string

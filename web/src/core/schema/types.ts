@@ -56,6 +56,8 @@ export interface DbColumn {
   attribute?: string
   comment?: string
   origin?: Origin
+  /** Of a field of a nested document: the limits its collection's CHECKs cannot hold */
+  checks?: DbCheck[]
 }
 
 export type ReferentialAction = 'cascade' | 'set null' | 'set default' | 'restrict' | 'no action'

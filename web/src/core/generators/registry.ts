@@ -69,6 +69,17 @@ export function findGenerator(settings: Pick<ProjectSettings, 'language' | 'orm'
 }
 
 /** The files of the project, sorted by path, for settings made consistent first. */
+/** The design without the operations on one item of a list, which only document databases have. */
+function withoutItems(design: CrudDesign, settings: ProjectSettings): CrudDesign {
+  if (settings.database === 'mongodb') return design
+  const whole = <T extends { kind: string }>(items: T[]) => items.filter((item) => item.kind !== 'addItem' && item.kind !== 'removeItem')
+  return {
+    ...design,
+    repositories: design.repositories.map((item) => ({ ...item, queries: whole(item.queries) })),
+    services: design.services.map((item) => ({ ...item, operations: whole(item.operations) })),
+  }
+}
+
 /**
  * The files of the project. With application models, their conversions are written only when the models are in the
  * project's language, or in none (`conversionsAvailable`); otherwise the project is the one without models.
@@ -84,6 +95,6 @@ export function generateProject(
   if (!generator) return []
   const usable = models && conversionsAvailable(models, normalized.language).ok ? models : null
   return generator
-    .generate({ schema, design, settings: normalized, models: usable })
+    .generate({ schema, design: withoutItems(design, normalized), settings: normalized, models: usable })
     .sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0))
 }

@@ -1,7 +1,7 @@
 /** A document database is offered the stacks made for it, and a relational one the others. */
 import { describe, expect, it } from 'vitest'
 import { inputLanguage, readDatabase } from '../../app/workspace.ts'
-import { DEFAULT_SETTINGS, normalizeSettings, settingsFor, stacksFor } from './settings.ts'
+import { changeSettings, DEFAULT_SETTINGS, normalizeSettings, settingsFor, stacksFor } from './settings.ts'
 
 const VALIDATOR = '{ $jsonSchema: { bsonType: "object", title: "users", properties: { name: { bsonType: "string" } } } }'
 
@@ -13,6 +13,14 @@ describe('stacks and databases', () => {
     expect(settingsFor('postgresql', settings)).toEqual(settings)
     expect(settingsFor('postgresql', settingsFor('mongodb', settings)).orm).not.toBe('mongoose')
     expect(settingsFor(null, settings)).toEqual(settings)
+  })
+
+  it('bring their own place for transactions', () => {
+    const settings = normalizeSettings({ ...DEFAULT_SETTINGS, transactions: 'operation' })
+    const documents = settingsFor('mongodb', settings)
+    expect(documents.transactions).toBe('repository')
+    expect(changeSettings(documents, { transactions: 'operation' }).transactions).toBe('operation')
+    expect(settingsFor('postgresql', documents).transactions).toBe('operation')
   })
 
   it('read one validator', () => {

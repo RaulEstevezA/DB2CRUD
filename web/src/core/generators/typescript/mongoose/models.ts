@@ -57,7 +57,7 @@ function schemaType(context: Context, type: DbType): string {
 function nestedSchema(context: Context, fields: DbColumn[]): string {
   const own = fields.filter((field) => field.name !== '_id')
   const id = own.length < fields.length ? '' : '_id: false, '
-  return `new Schema({ ${own.map((field) => `${fieldKey(field.name)}: ${definition(context, field, [])}`).join(', ')} }, { ${id}strict: false, minimize: false })`
+  return `new Schema({ ${own.map((field) => `${fieldKey(field.name)}: ${definition(context, field, field.checks ?? [])}`).join(', ')} }, { ${id}strict: false, minimize: false })`
 }
 
 /** The settings of a field, besides its type. */

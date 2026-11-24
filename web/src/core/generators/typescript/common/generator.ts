@@ -5,6 +5,7 @@
 import type { GeneratedFile } from '../../../export/files.ts'
 import type { Generator } from '../../types.ts'
 import { createContext, type Context } from './context.ts'
+import { documentsFile } from './documents.ts'
 import { dtosFile } from './dtos.ts'
 import type { TsOrm } from './orm.ts'
 import { contractFile, envExampleFile, gitignoreFile, packageFile, readmeFile, tsconfigFiles } from './project.ts'
@@ -21,6 +22,7 @@ function code(context: Context): GeneratedFile[] {
     ...context.orm.databaseFiles(context),
     errorsFile(),
     pagingFile(context),
+    documentsFile(context),
     unitOfWorkFile(context),
   ]
   for (const info of context.tables) {

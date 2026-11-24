@@ -25,6 +25,7 @@ export type ReasonCode =
   | 'primaryKey'
   | 'uniqueConstraint'
   | 'indexOnly'
+  | 'nestedList'
   | 'foreignKey'
   | 'readOnlyTable'
   // Table roles

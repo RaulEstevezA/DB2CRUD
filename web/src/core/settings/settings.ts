@@ -89,6 +89,8 @@ export interface StackInfo {
   errors: readonly ErrorStyle[]
   dtoKinds: readonly DtoKind[]
   updates: readonly Updates[]
+  /** Where transactions start and end unless the user says: every one can, but not every one is free of requirements */
+  transactions?: Transactions
 }
 
 /** Every stack a generator writes, in the order the interface shows them. */
@@ -183,6 +185,8 @@ export const STACKS: readonly StackInfo[] = [
     orm: 'mongoose',
     label: 'Mongoose 8 (MongoDB)',
     databases: ['mongodb'],
+    // MongoDB has transactions on replica sets only, and a document is always written whole
+    transactions: 'repository',
     execution: ['async'],
     errors: ['exceptions'],
     dtoKinds: ['interface', 'class'],
@@ -379,7 +383,15 @@ export function settingsFor(dialect: Dialect | null, settings: ProjectSettings):
   const stacks = stacksFor(dialect)
   if (stacks.some((stack) => stack.language === settings.language && stack.orm === settings.orm)) return settings
   const [stack] = stacks
-  return normalizeSettings({ ...settings, language: stack.language, orm: stack.orm })
+  return changeSettings(settings, { language: stack.language, orm: stack.orm })
+}
+
+/** The settings with a change; a stack of the other kind of database brings its own place for transactions. */
+export function changeSettings(settings: ProjectSettings, change: Partial<ProjectSettings>): ProjectSettings {
+  const documents = (item: Pick<ProjectSettings, 'language' | 'orm'>) => findStack(item.language, item.orm)?.databases.includes('mongodb')
+  const next = { ...settings, ...change }
+  const kept = documents(settings) === documents(next) || change.transactions !== undefined
+  return normalizeSettings(kept ? next : { ...next, transactions: undefined })
 }
 
 const pick = <T>(value: unknown, options: readonly T[], fallback: T): T => (options.includes(value as T) ? (value as T) : fallback)
@@ -418,7 +430,7 @@ export function normalizeSettings(settings: Partial<ProjectSettings>): ProjectSe
     serviceTypes: pick(settings.serviceTypes, SERVICE_TYPES, DEFAULT_SETTINGS.serviceTypes),
     dtoKind: pick(settings.dtoKind, stack.dtoKinds, stack.dtoKinds[0]),
     updates: pick(settings.updates, stack.updates, stack.updates[0]),
-    transactions: pick(settings.transactions, TRANSACTIONS, DEFAULT_SETTINGS.transactions),
+    transactions: pick(settings.transactions, TRANSACTIONS, stack.transactions ?? DEFAULT_SETTINGS.transactions),
     execution: pick(settings.execution, stack.execution, stack.execution[0]),
     errors: pick(settings.errors, stack.errors, stack.errors[0]),
     repositoryInterfaces:
