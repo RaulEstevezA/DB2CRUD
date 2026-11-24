@@ -604,6 +604,38 @@ export const SCENARIOS = [
     case: 'shop-kotlin',
     settings: { language: 'kotlin', orm: 'exposed', database: 'sqlite', memoryRepositories: false, architecture: 'table', transactions: 'caller' },
   },
+  // Kotlin without an ORM: SQL through JDBC
+  { id: 'kotlin-sql-sqlite-defaults', schema: 'shop', settings: { language: 'kotlin', orm: 'sql', database: 'sqlite' } },
+  {
+    id: 'kotlin-sql-postgresql-dtos-patch-cursor',
+    schema: 'shop',
+    settings: { language: 'kotlin', orm: 'sql', database: 'postgresql', serviceTypes: 'dtos', dtoKind: 'data', updates: 'patch', paging: 'cursor' },
+    service: 'postgresql',
+  },
+  {
+    id: 'kotlin-sql-mysql-decided-offset-optional-repository-commits',
+    schema: 'shop',
+    settings: { language: 'kotlin', orm: 'sql', database: 'mysql', paging: 'offset', updates: 'optional', transactions: 'repository', repositoryInterfaces: false, verbs: 'get' },
+    decisions: OTHER_WAY,
+    service: 'mysql',
+  },
+  {
+    id: 'kotlin-sql-mariadb-caller-class-dtos-full-by-table',
+    schema: 'shop',
+    settings: { language: 'kotlin', orm: 'sql', database: 'mariadb', transactions: 'caller', serviceTypes: 'dtos', dtoKind: 'class', updates: 'full', architecture: 'table', memoryRepositories: false },
+    service: 'mariadb',
+  },
+  {
+    id: 'kotlin-sql-sqlite-no-interfaces-services-tests',
+    schema: 'shop',
+    settings: { language: 'kotlin', orm: 'sql', database: 'sqlite', repositoryInterfaces: false, verbs: 'find', tests: 'services', entities: 'all' },
+  },
+  {
+    id: 'kotlin-sql-postgresql-conversions-dtos',
+    case: 'shop-kotlin',
+    settings: { language: 'kotlin', orm: 'sql', database: 'postgresql', serviceTypes: 'dtos' },
+    service: 'postgresql',
+  },
   { id: 'seaorm-sqlite-defaults', schema: 'shop', settings: { language: 'rust', orm: 'seaorm', database: 'sqlite' } },
   {
     id: 'seaorm-postgresql-dtos-patch',
