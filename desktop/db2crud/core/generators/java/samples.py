@@ -6,6 +6,7 @@ import math
 import re
 
 from ...js import number_text
+from ...schema.documents import is_object_id
 from .java import java_string
 
 
@@ -84,6 +85,8 @@ def sample_value(column: dict, checks: list[dict], enums: list[dict]) -> str:
     if kind == "float":
         return f"{_number(column, checks)} + 0.5f" if java == "Float" else f"{_number(column, checks)} + 0.5"
     if kind == "text":
+        if column_type.get("objectId"):
+            return 'String.format("%024x", n)'
         length = column_type.get("length")
         length = 40 if length is None else length
         if column_type.get("fixed"):
@@ -98,10 +101,16 @@ def sample_value(column: dict, checks: list[dict], enums: list[dict]) -> str:
     if kind == "boolean":
         return "true"
     if kind == "date":
+        if java == "String":
+            return 'String.format("2026-01-%02d", n % 28 + 1)'
         return "LocalDate.of(2026, 1, n % 28 + 1)"
     if kind == "time":
+        if java == "String":
+            return 'String.format("12:%02d:00", n % 60)'
         return "OffsetTime.of(12, n % 60, 0, 0, ZoneOffset.UTC)" if java == "OffsetTime" else "LocalTime.of(12, n % 60)"
     if kind == "datetime":
+        if java == "Instant":
+            return 'Instant.parse(String.format("2026-01-%02dT12:00:00Z", n % 28 + 1))'
         if java == "OffsetDateTime":
             return "OffsetDateTime.of(2026, 1, n % 28 + 1, 12, 0, 0, 0, ZoneOffset.UTC)"
         return "LocalDateTime.of(2026, 1, n % 28 + 1, 12, 0)"
@@ -116,6 +125,8 @@ def sample_value(column: dict, checks: list[dict], enums: list[dict]) -> str:
             else "new byte[] { (byte) n }"
         )
     if kind == "json":
+        if java == "Object":
+            return 'java.util.Map.of("n", n)'
         return '"{\\"n\\": " + n + "}"'
     if kind == "array":
         return '"[]"'
@@ -124,6 +135,8 @@ def sample_value(column: dict, checks: list[dict], enums: list[dict]) -> str:
 
 def missing_value(column: dict) -> str:
     """A key no row has, as a Java expression, for the tests of missing rows."""
+    if is_object_id(column["column"]["type"]):
+        return java_string("f" * 24)
     return {
         "Long": "999999L",
         "Integer": "999999",

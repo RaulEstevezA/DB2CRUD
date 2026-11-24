@@ -218,7 +218,7 @@ def _read_body(cursor: Cursor, source: str, declaration: dict, classes: list) ->
         reset()
 
 
-def _read_classes(files: list[dict]) -> list[dict]:
+def read_classes(files: list[dict]) -> list[dict]:
     classes: list[dict] = []
     for file in files:
         try:
@@ -247,11 +247,11 @@ def _read_classes(files: list[dict]) -> list[dict]:
 # Reading the annotations
 
 
-def _annotation_of(annotations: list, *names: str) -> dict | None:
+def annotation_of(annotations: list, *names: str) -> dict | None:
     return next((item for item in annotations if (name_of(item) or "") in names), None)
 
 
-def _argument_of(annotation: dict | None, name: str) -> dict | None:
+def argument_of(annotation: dict | None, name: str) -> dict | None:
     """An argument of an annotation: named, or `value` (the first one without a name)."""
     if annotation is None or annotation["kind"] != "call":
         return None
@@ -267,7 +267,7 @@ def _items(expr: dict | None) -> list:
     return expr["items"] if expr["kind"] == "list" else [expr]
 
 
-def _calls_of(expr: dict | None) -> list[dict]:
+def calls_of(expr: dict | None) -> list[dict]:
     """The annotations an argument holds: one, or a list of them."""
     return [item for item in _items(expr) if item["kind"] == "call"]
 
@@ -276,7 +276,7 @@ def _strings_of(expr: dict | None) -> list[str]:
     return [value for value in (string_of(item) for item in _items(expr)) if value is not None]
 
 
-def _simple_type(text: str) -> str:
+def simple_type(text: str) -> str:
     """The simple name of a Java type: `java.util.List<OrderLine>` → `List`."""
     return re.sub(r"<[\s\S]*$", "", text).split(".")[-1].strip()
 
@@ -346,13 +346,13 @@ _JDBC_TYPES = {
 def _java_type_of(field: dict, column: dict | None, dialect: str | None) -> dict | None:
     """The type of a field from its Java type and its `@Column`."""
     written = re.sub(r"\s+", "", field["type"])
-    name = _simple_type(written)
+    name = simple_type(written)
     sql = written
-    length = number_of(_argument_of(column, "length"))
+    length = number_of(argument_of(column, "length"))
     if written in ("byte[]", "Byte[]"):
         return {"sql": sql, "kind": "binary", **({"length": length} if length is not None else {})}
     if name == "String":
-        if _annotation_of(field["annotations"], "Lob"):
+        if annotation_of(field["annotations"], "Lob"):
             return {"sql": sql, "kind": "text"}
         return {"sql": sql, "kind": "text", "length": length if length is not None else 255}
     if name in ("char", "Character"):
@@ -364,7 +364,7 @@ def _java_type_of(field: dict, column: dict | None, dialect: str | None) -> dict
     if name in ("OffsetDateTime", "ZonedDateTime", "Instant"):
         return {"sql": sql, "kind": "datetime", "timezone": True}
     if name in ("Date", "Calendar", "Timestamp"):
-        temporal = name_of(_argument_of(_annotation_of(field["annotations"], "Temporal"), "value"))
+        temporal = name_of(argument_of(annotation_of(field["annotations"], "Temporal"), "value"))
         if temporal == "DATE" or written == "java.sql.Date":
             return {"sql": sql, "kind": "date"}
         if temporal == "TIME":
@@ -379,8 +379,8 @@ def _java_type_of(field: dict, column: dict | None, dialect: str | None) -> dict
             return {"sql": sql, "kind": kind, "bits": max(bits, 32) if dialect == "sqlite" else bits}
         return {"sql": sql, "kind": "float", "bits": bits}
     if known == "decimal":
-        precision = number_of(_argument_of(column, "precision"))
-        scale = number_of(_argument_of(column, "scale"))
+        precision = number_of(argument_of(column, "precision"))
+        scale = number_of(argument_of(column, "scale"))
         return {
             "sql": sql,
             "kind": "decimal",
@@ -446,11 +446,11 @@ _NOT_NULL = re.compile(r"\bnot\s+null\b", re.IGNORECASE)
 
 
 def _target_name(relation: dict, field: dict) -> str:
-    target_entity = string_of(_argument_of(relation, "targetEntity"))
+    target_entity = string_of(argument_of(relation, "targetEntity"))
     if target_entity is not None:
-        return _simple_type(target_entity)
+        return simple_type(target_entity)
     generic = _GENERIC.search(field["type"])
-    return _simple_type(generic.group(1) if generic else field["type"])
+    return simple_type(generic.group(1) if generic else field["type"])
 
 
 # Building the tables
@@ -458,7 +458,7 @@ def _target_name(relation: dict, field: dict) -> str:
 
 def _read_jpa(files: list[dict]) -> dict:
     notes: list[dict] = []
-    classes = _read_classes(files)
+    classes = read_classes(files)
     by_name = {cls["name"]: cls for cls in classes}
     engines: list[str] = []
     for file in files:
@@ -476,9 +476,9 @@ def _read_jpa(files: list[dict]) -> dict:
         match = _CONVERTER.search(cls["implements"])
         if match:
             converters[cls["name"]] = cls
-            auto = _argument_of(_annotation_of(cls["annotations"], "Converter"), "autoApply")
+            auto = argument_of(annotation_of(cls["annotations"], "Converter"), "autoApply")
             if boolean_of(auto) is True:
-                converters[f"auto:{_simple_type(match.group(1))}"] = cls
+                converters[f"auto:{simple_type(match.group(1))}"] = cls
 
     def fields_of(cls: dict, seen: set | None = None) -> list[dict]:
         """The fields of a class and of the `@MappedSuperclass` classes it extends."""
@@ -487,7 +487,7 @@ def _read_jpa(files: list[dict]) -> dict:
         base = by_name.get(cls["base"]) if cls["base"] else None
         inherited = (
             fields_of(base, seen)
-            if base is not None and base["name"] not in seen and _annotation_of(base["annotations"], "MappedSuperclass")
+            if base is not None and base["name"] not in seen and annotation_of(base["annotations"], "MappedSuperclass")
             else []
         )
         return [
@@ -495,16 +495,16 @@ def _read_jpa(files: list[dict]) -> dict:
             for field in [*inherited, *cls["fields"]]
             if "static" not in field["modifiers"]
             and "transient" not in field["modifiers"]
-            and not _annotation_of(field["annotations"], "Transient")
+            and not annotation_of(field["annotations"], "Transient")
         ]
 
     def enum_of(field: dict, enum_class: dict) -> tuple[list, bool]:
         """The values the database keeps for a field typed with a Java enum, and whether they are positions."""
-        enumerated = name_of(_argument_of(_annotation_of(field["annotations"], "Enumerated"), "value"))
-        convert = _annotation_of(field["annotations"], "Convert")
-        converter_expr = _argument_of(convert, "converter")
+        enumerated = name_of(argument_of(annotation_of(field["annotations"], "Enumerated"), "value"))
+        convert = annotation_of(field["annotations"], "Convert")
+        converter_expr = argument_of(convert, "converter")
         converter_text = text_of(converter_expr) if converter_expr is not None else ""
-        converter_name = _simple_type(re.sub(r"\.class$", "", converter_text))
+        converter_name = simple_type(re.sub(r"\.class$", "", converter_text))
         converter = converters.get(converter_name)
         if converter is None and not enumerated:
             converter = converters.get(f"auto:{enum_class['name']}")
@@ -523,13 +523,13 @@ def _read_jpa(files: list[dict]) -> dict:
     models: list[dict] = []
     by_class: dict[str, dict] = {}
     for cls in classes:
-        entity = _annotation_of(cls["annotations"], "Entity")
+        entity = annotation_of(cls["annotations"], "Entity")
         if entity is None:
             continue
-        table_annotation = _annotation_of(cls["annotations"], "Table")
-        table_name = string_of(_argument_of(table_annotation, "name"))
+        table_annotation = annotation_of(cls["annotations"], "Table")
+        table_name = string_of(argument_of(table_annotation, "name"))
         if table_name is None:
-            table_name = string_of(_argument_of(entity, "name"))
+            table_name = string_of(argument_of(entity, "name"))
         table = {
             "name": table_name if table_name is not None else cls["name"],
             "columns": [],
@@ -541,10 +541,10 @@ def _read_jpa(files: list[dict]) -> dict:
             "entity": cls["name"],
             "origin": {"line": cls["line"], "column": 1},
         }
-        schema = string_of(_argument_of(table_annotation, "schema"))
+        schema = string_of(argument_of(table_annotation, "schema"))
         if schema:
             table["schema"] = schema
-        comment = string_of(_argument_of(_annotation_of(cls["annotations"], "Comment"), "value"))
+        comment = string_of(argument_of(annotation_of(cls["annotations"], "Comment"), "value"))
         if comment:
             table["comment"] = comment
         model = {"cls": cls, "table": table, "columns": {}, "fields": fields_of(cls)}
@@ -561,42 +561,42 @@ def _read_jpa(files: list[dict]) -> dict:
             primary: list = primary,
             enum_checks: list = enum_checks,
         ) -> None:
-            embeddable = by_name.get(_simple_type(field["type"]))
-            embedded = _annotation_of(field["annotations"], "Embedded", "EmbeddedId") or (
-                embeddable is not None and _annotation_of(embeddable["annotations"], "Embeddable")
+            embeddable = by_name.get(simple_type(field["type"]))
+            embedded = annotation_of(field["annotations"], "Embedded", "EmbeddedId") or (
+                embeddable is not None and annotation_of(embeddable["annotations"], "Embeddable")
             )
             if embedded and embeddable is not None:
                 # The fields of an embedded part are columns of the table, renamed by @AttributeOverride
                 own = dict(overrides)
-                many = _calls_of(_argument_of(_annotation_of(field["annotations"], "AttributeOverrides"), "value"))
+                many = calls_of(argument_of(annotation_of(field["annotations"], "AttributeOverrides"), "value"))
                 single = [
                     item
                     for item in field["annotations"]
                     if item["kind"] == "call" and name_of(item) == "AttributeOverride"
                 ]
                 for override in [*many, *single]:
-                    name = string_of(_argument_of(override, "name"))
-                    column = _argument_of(override, "column")
+                    name = string_of(argument_of(override, "name"))
+                    column = argument_of(override, "column")
                     if name and column is not None:
                         own[f"{prefix}{field['name']}.{name}"] = column
-                is_key = key or bool(_annotation_of(field["annotations"], "EmbeddedId"))
+                is_key = key or bool(annotation_of(field["annotations"], "EmbeddedId"))
                 for part in fields_of(embeddable):
                     add_column(part, own, is_key, f"{prefix}{field['name']}.")
                 return
             column_annotation = overrides.get(f"{prefix}{field['name']}")
             if column_annotation is None:
-                column_annotation = _annotation_of(field["annotations"], "Column")
-            given_name = string_of(_argument_of(column_annotation, "name"))
+                column_annotation = annotation_of(field["annotations"], "Column")
+            given_name = string_of(argument_of(column_annotation, "name"))
             name = given_name if given_name is not None else field["name"]
-            definition = string_of(_argument_of(column_annotation, "columnDefinition"))
-            jdbc = name_of(_argument_of(_annotation_of(field["annotations"], "JdbcTypeCode"), "value"))
-            enum_class = by_name.get(_simple_type(field["type"]))
+            definition = string_of(argument_of(column_annotation, "columnDefinition"))
+            jdbc = name_of(argument_of(annotation_of(field["annotations"], "JdbcTypeCode"), "value"))
+            enum_class = by_name.get(simple_type(field["type"]))
             column_type = None
             if definition:
                 column_type = sql_type_of(_DEFINITION_TAIL.sub("", definition), dialect)
             elif jdbc and jdbc in _JDBC_TYPES:
                 base = sql_type_of(_JDBC_TYPES[jdbc], dialect)
-                length = number_of(_argument_of(column_annotation, "length"))
+                length = number_of(argument_of(column_annotation, "length"))
                 column_type = (
                     {**base, "length": length}
                     if base is not None
@@ -606,8 +606,8 @@ def _read_jpa(files: list[dict]) -> dict:
                     else base
                 )
                 if base is not None and base["kind"] == "decimal":
-                    precision = number_of(_argument_of(column_annotation, "precision"))
-                    scale = number_of(_argument_of(column_annotation, "scale"))
+                    precision = number_of(argument_of(column_annotation, "precision"))
+                    scale = number_of(argument_of(column_annotation, "scale"))
                     column_type = {
                         **base,
                         **({"precision": precision} if precision is not None else {}),
@@ -618,7 +618,7 @@ def _read_jpa(files: list[dict]) -> dict:
                 if ordinal:
                     column_type = {"sql": field["type"], "kind": "integer", "bits": 16}
                 else:
-                    length = number_of(_argument_of(column_annotation, "length"))
+                    length = number_of(argument_of(column_annotation, "length"))
                     column_type = {
                         "sql": field["type"],
                         "kind": "text",
@@ -645,14 +645,14 @@ def _read_jpa(files: list[dict]) -> dict:
                         "params": {"table": table["name"], "column": name, "type": definition or field["type"]},
                     }
                 )
-            is_key = key or bool(_annotation_of(field["annotations"], "Id"))
+            is_key = key or bool(annotation_of(field["annotations"], "Id"))
             required = (
                 is_key
                 or field["type"].strip() in _PRIMITIVES
                 or bool(_NOT_NULL.search(definition or ""))
-                or boolean_of(_argument_of(column_annotation, "nullable")) is False
-                or boolean_of(_argument_of(_annotation_of(field["annotations"], "Basic"), "optional")) is False
-                or bool(_annotation_of(field["annotations"], "NotNull", "NonNull"))
+                or boolean_of(argument_of(column_annotation, "nullable")) is False
+                or boolean_of(argument_of(annotation_of(field["annotations"], "Basic"), "optional")) is False
+                or bool(annotation_of(field["annotations"], "NotNull", "NonNull"))
             )
             column = {
                 "name": name,
@@ -661,7 +661,7 @@ def _read_jpa(files: list[dict]) -> dict:
                 else {"sql": definition or field["type"], "kind": "unknown"},
                 "nullable": not required,
             }
-            column_default = string_of(_argument_of(_annotation_of(field["annotations"], "ColumnDefault"), "value"))
+            column_default = string_of(argument_of(annotation_of(field["annotations"], "ColumnDefault"), "value"))
             if column_default is not None:
                 _apply_default(column_default, column)
             elif field.get("initializer") is not None:
@@ -688,22 +688,22 @@ def _read_jpa(files: list[dict]) -> dict:
                     column["default"] = {"kind": "literal", "value": value}
                 elif constant >= 0 and enum_class is not None:
                     column["default"] = {"kind": "literal", "value": enum_of(field, enum_class)[0][constant]}
-            generated_value = _annotation_of(field["annotations"], "GeneratedValue")
+            generated_value = annotation_of(field["annotations"], "GeneratedValue")
             if generated_value is not None:
-                strategy = name_of(_argument_of(generated_value, "strategy"))
+                strategy = name_of(argument_of(generated_value, "strategy"))
                 column["generated"] = "uuid" if strategy == "UUID" or column["type"]["kind"] == "uuid" else "identity"
-            if _annotation_of(field["annotations"], "UuidGenerator"):
+            if annotation_of(field["annotations"], "UuidGenerator"):
                 column["generated"] = "uuid"
-            if _annotation_of(field["annotations"], "CreationTimestamp"):
+            if annotation_of(field["annotations"], "CreationTimestamp"):
                 column["generated"] = "now"
-            if _annotation_of(field["annotations"], "UpdateTimestamp"):
+            if annotation_of(field["annotations"], "UpdateTimestamp"):
                 column["generated"] = "onUpdateNow"
-            computed = string_of(_argument_of(_annotation_of(field["annotations"], "GeneratedColumn"), "value"))
+            computed = string_of(argument_of(annotation_of(field["annotations"], "GeneratedColumn"), "value"))
             if computed:
                 column["generated"] = {"computed": computed}
             if column.get("generated") in ("now", "onUpdateNow", "uuid"):
                 column.pop("default", None)
-            column_comment = string_of(_argument_of(_annotation_of(field["annotations"], "Comment"), "value"))
+            column_comment = string_of(argument_of(annotation_of(field["annotations"], "Comment"), "value"))
             if column_comment:
                 column["comment"] = column_comment
             attribute = f"{prefix}{field['name']}"
@@ -713,22 +713,22 @@ def _read_jpa(files: list[dict]) -> dict:
             model["columns"][attribute] = name
             if is_key:
                 primary.append(name)
-            if boolean_of(_argument_of(column_annotation, "unique")) is True:
+            if boolean_of(argument_of(column_annotation, "unique")) is True:
                 table["uniques"].append({"columns": [name]})
-            check = string_of(_argument_of(_annotation_of(field["annotations"], "Check"), "constraints"))
+            check = string_of(argument_of(annotation_of(field["annotations"], "Check"), "constraints"))
             if check:
                 table["checks"].append(check_of(check))
 
         for field in model["fields"]:
-            if _annotation_of(field["annotations"], *_RELATIONS):
+            if annotation_of(field["annotations"], *_RELATIONS):
                 continue
             add_column(field, {}, False)
         if primary:
             table["primaryKey"] = primary
 
         # The constraints of @Table, and Hibernate's @Check
-        for index in _calls_of(_argument_of(table_annotation, "indexes")):
-            column_list = string_of(_argument_of(index, "columnList")) or ""
+        for index in calls_of(argument_of(table_annotation, "indexes")):
+            column_list = string_of(argument_of(index, "columnList")) or ""
             columns = [
                 item
                 for item in (
@@ -738,22 +738,22 @@ def _read_jpa(files: list[dict]) -> dict:
             ]
             if not columns:
                 continue
-            name = string_of(_argument_of(index, "name"))
-            target = table["uniques"] if boolean_of(_argument_of(index, "unique")) is True else table["indexes"]
+            name = string_of(argument_of(index, "name"))
+            target = table["uniques"] if boolean_of(argument_of(index, "unique")) is True else table["indexes"]
             target.append({**({"name": name} if name else {}), "columns": columns})
-        for unique in _calls_of(_argument_of(table_annotation, "uniqueConstraints")):
-            columns = _strings_of(_argument_of(unique, "columnNames"))
-            name = string_of(_argument_of(unique, "name"))
+        for unique in calls_of(argument_of(table_annotation, "uniqueConstraints")):
+            columns = _strings_of(argument_of(unique, "columnNames"))
+            name = string_of(argument_of(unique, "name"))
             if columns:
                 table["uniques"].append({**({"name": name} if name else {}), "columns": columns})
-        for check in _calls_of(_argument_of(table_annotation, "check")):
-            sql = string_of(_argument_of(check, "constraint"))
-            name = string_of(_argument_of(check, "name"))
+        for check in calls_of(argument_of(table_annotation, "check")):
+            sql = string_of(argument_of(check, "constraint"))
+            name = string_of(argument_of(check, "name"))
             if sql:
                 table["checks"].append(check_of(sql, name))
         for check in [item for item in cls["annotations"] if name_of(item) == "Check"]:
-            sql = string_of(_argument_of(check, "constraints"))
-            name = string_of(_argument_of(check, "name"))
+            sql = string_of(argument_of(check, "constraints"))
+            name = string_of(argument_of(check, "name"))
             if sql:
                 table["checks"].append(check_of(sql, name))
         # Hibernate checks the values of an enum: the CHECK of a column with none declared
@@ -779,36 +779,36 @@ def _read_jpa(files: list[dict]) -> dict:
     for model in models:
         table = model["table"]
         for field in model["fields"]:
-            relation = _annotation_of(field["annotations"], "ManyToOne", "OneToOne", "ManyToMany")
+            relation = annotation_of(field["annotations"], "ManyToOne", "OneToOne", "ManyToMany")
             if relation is None:
                 continue
             kind = name_of(relation)
             target = by_class.get(_target_name(relation, field))
-            if target is None or _argument_of(relation, "mappedBy") is not None:
+            if target is None or argument_of(relation, "mappedBy") is not None:
                 continue
             if kind == "ManyToMany":
                 joins.append(
-                    _join_table_of(model, target, field, _annotation_of(field["annotations"], "JoinTable"), key_column)
+                    _join_table_of(model, target, field, annotation_of(field["annotations"], "JoinTable"), key_column)
                 )
                 continue
-            join_columns = _annotation_of(field["annotations"], "JoinColumns")
+            join_columns = annotation_of(field["annotations"], "JoinColumns")
             if join_columns is not None:
-                given = _calls_of(_argument_of(join_columns, "value"))
+                given = calls_of(argument_of(join_columns, "value"))
             else:
-                given = _calls_of(_annotation_of(field["annotations"], "JoinColumn"))
+                given = calls_of(annotation_of(field["annotations"], "JoinColumn"))
             join_list = given if given else [None for _ in target["table"]["primaryKey"] or []]
             columns: list[str] = []
             references: list[str] = []
-            is_id = bool(_annotation_of(field["annotations"], "Id"))
+            is_id = bool(annotation_of(field["annotations"], "Id"))
             for position, join in enumerate(join_list):
-                parent = key_column(target, string_of(_argument_of(join, "referencedColumnName")), position)
+                parent = key_column(target, string_of(argument_of(join, "referencedColumnName")), position)
                 if parent is None:
                     continue
-                given_name = string_of(_argument_of(join, "name"))
+                given_name = string_of(argument_of(join, "name"))
                 name = given_name if given_name is not None else f"{field['name']}_{parent['name']}"
                 if not any(item["name"] == name for item in table["columns"]):
-                    optional = boolean_of(_argument_of(relation, "optional")) is not False
-                    stated = boolean_of(_argument_of(join, "nullable"))
+                    optional = boolean_of(argument_of(relation, "optional")) is not False
+                    stated = boolean_of(argument_of(join, "nullable"))
                     nullable = stated if stated is not None else optional
                     table["columns"].append({"name": name, "type": parent["type"], "nullable": nullable and not is_id})
                     if is_id:
@@ -817,9 +817,9 @@ def _read_jpa(files: list[dict]) -> dict:
                 references.append(parent["name"])
             if not columns:
                 continue
-            foreign_key = _argument_of(given[0] if given else None, "foreignKey")
-            constraint = string_of(_argument_of(foreign_key, "name"))
-            action = name_of(_argument_of(_annotation_of(field["annotations"], "OnDelete"), "action"))
+            foreign_key = argument_of(given[0] if given else None, "foreignKey")
+            constraint = string_of(argument_of(foreign_key, "name"))
+            action = name_of(argument_of(annotation_of(field["annotations"], "OnDelete"), "action"))
             on_delete = _ACTIONS.get(action or "")
             target_table = target["table"]
             table["foreignKeys"].append(
@@ -849,8 +849,8 @@ def _read_jpa(files: list[dict]) -> dict:
     # The other side of each relation: `@OneToMany(mappedBy = "order")` names the foreign key of Order.order
     for model in models:
         for field in model["fields"]:
-            relation = _annotation_of(field["annotations"], "OneToMany", "OneToOne")
-            mapped_by = string_of(_argument_of(relation, "mappedBy"))
+            relation = annotation_of(field["annotations"], "OneToMany", "OneToOne")
+            mapped_by = string_of(argument_of(relation, "mappedBy"))
             if relation is None or not mapped_by:
                 continue
             target = by_class.get(_target_name(relation, field))
@@ -864,8 +864,8 @@ def _read_jpa(files: list[dict]) -> dict:
             if not key.get("inverse"):
                 key["inverse"] = field["name"]
             # Rows the parent removes with it (cascade = ALL or REMOVE, orphanRemoval): deleted with their parent
-            cascades = [name_of(item) for item in _items(_argument_of(relation, "cascade"))]
-            orphans = boolean_of(_argument_of(relation, "orphanRemoval")) is True
+            cascades = [name_of(item) for item in _items(argument_of(relation, "cascade"))]
+            orphans = boolean_of(argument_of(relation, "orphanRemoval")) is True
             if not key.get("onDelete") and ("ALL" in cascades or "REMOVE" in cascades or orphans):
                 key["onDelete"] = "cascade"
     return {
@@ -882,7 +882,7 @@ def _read_jpa(files: list[dict]) -> dict:
 def _join_table_of(model: dict, target: dict, field: dict, join_table: dict | None, key_column) -> dict:
     """The join table of a `@ManyToMany`: as `@JoinTable` names it, or as JPA does (`<owner table>_<target table>`,
     with columns `<side>_<key>`), keyed by both columns."""
-    name = string_of(_argument_of(join_table, "name"))
+    name = string_of(argument_of(join_table, "name"))
     table = {
         "name": name if name is not None else f"{model['table']['name']}_{target['table']['name']}",
         "columns": [],
@@ -893,7 +893,7 @@ def _join_table_of(model: dict, target: dict, field: dict, join_table: dict | No
         "checks": [],
         "origin": {"line": field["line"], "column": 1},
     }
-    schema = string_of(_argument_of(join_table, "schema"))
+    schema = string_of(argument_of(join_table, "schema"))
     if schema:
         table["schema"] = schema
     # The field on the other side that maps this relation names the owner's columns
@@ -901,26 +901,26 @@ def _join_table_of(model: dict, target: dict, field: dict, join_table: dict | No
         (
             item
             for item in target["fields"]
-            if string_of(_argument_of(_annotation_of(item["annotations"], "ManyToMany"), "mappedBy")) == field["name"]
+            if string_of(argument_of(annotation_of(item["annotations"], "ManyToMany"), "mappedBy")) == field["name"]
         ),
         None,
     )
     sides = (
         (
-            _calls_of(_argument_of(join_table, "joinColumns")),
+            calls_of(argument_of(join_table, "joinColumns")),
             model,
             inverse["name"] if inverse else model["cls"]["name"],
         ),
-        (_calls_of(_argument_of(join_table, "inverseJoinColumns")), target, field["name"]),
+        (calls_of(argument_of(join_table, "inverseJoinColumns")), target, field["name"]),
     )
     for given, side, prefix in sides:
         count = len(given) if given else len(side["table"]["primaryKey"] or [])
         for position in range(count):
             join = given[position] if position < len(given) else None
-            parent = key_column(side, string_of(_argument_of(join, "referencedColumnName")), position)
+            parent = key_column(side, string_of(argument_of(join, "referencedColumnName")), position)
             if parent is None:
                 continue
-            given_name = string_of(_argument_of(join, "name"))
+            given_name = string_of(argument_of(join, "name"))
             column = given_name if given_name is not None else f"{prefix}_{parent['name']}"
             table["columns"].append({"name": column, "type": parent["type"], "nullable": False})
             table["primaryKey"].append(column)

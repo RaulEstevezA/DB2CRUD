@@ -2,6 +2,8 @@
 given. Every file of the project, composed from the modules of this folder; each module writes one kind of file. Mirrors
 web/src/core/generators/java/generator.ts."""
 
+import re
+
 from ...conversions.plan import plan_conversions
 from .context import create_context
 from .conversions import conversion_files, conversion_test_file, service_plans
@@ -30,7 +32,23 @@ def _code(context: dict) -> list[dict]:
     return [file for file in files if file is not None]
 
 
+def _named(orm: dict, files: list[dict]) -> list[dict]:
+    """The files with the database classes named as the strategy asks: `SqlUnitOfWork` is `MongoUnitOfWork` in a document
+    database."""
+    prefix = orm.get("prefix")
+    if not prefix:
+        return files
+
+    def rename(text: str) -> str:
+        return re.sub(r"\bSql(?=UnitOfWork\b|\w+Repository\b)", prefix, text)
+
+    return [{**item, "path": rename(item["path"]), "content": rename(item["content"])} for item in files]
+
+
 def _generate(orm: dict, schema: dict, design: dict, settings: dict, models: dict | None = None) -> list[dict]:
+    # The conversions read columns, not the documents inside them
+    if orm.get("documents"):
+        models = None
     context = create_context(orm, schema, design, settings)
     plans = service_plans(context, plan_conversions(schema, design, models)) if models else []
     conversions = conversion_files(context, models["schema"], plans) if models else []
@@ -40,7 +58,7 @@ def _generate(orm: dict, schema: dict, design: dict, settings: dict, models: dic
         if models and tests and settings["tests"] in ("all", "services")
         else None
     )
-    return [
+    files = [
         readme_file(context),
         pom_file(context, bool(conversions) and settings["modelsSource"] == "import"),
         env_example_file(context),
@@ -51,6 +69,7 @@ def _generate(orm: dict, schema: dict, design: dict, settings: dict, models: dic
         *tests,
         *([conversion_tests] if conversion_tests else []),
     ]
+    return _named(orm, files)
 
 
 def java_generator(orm: dict) -> dict:

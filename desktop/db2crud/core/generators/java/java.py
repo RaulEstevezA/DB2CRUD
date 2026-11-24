@@ -61,9 +61,11 @@ class JavaImports:
         self._statics: list[str] = []
 
     def add(self, *names: str) -> "JavaImports":
+        """`import a.b.C;` for a fully qualified name, or several joined by commas."""
         for name in names:
-            if name not in self._names:
-                self._names.append(name)
+            for item in name.split(","):
+                if item and item not in self._names:
+                    self._names.append(item)
         return self
 
     def add_static(self, *names: str) -> "JavaImports":

@@ -129,6 +129,17 @@ STACKS = [
         "updates": ["patch", "optional", "full"],
     },
     {
+        "language": "java",
+        "orm": "springdata",
+        "label": "Spring Data MongoDB 5",
+        "databases": ["mongodb"],
+        "transactions": "repository",
+        "execution": ["sync"],
+        "errors": ["exceptions"],
+        "dtoKinds": ["record", "class"],
+        "updates": ["patch", "optional", "full"],
+    },
+    {
         "language": "csharp",
         "orm": "efcore",
         "label": "EF Core 9",

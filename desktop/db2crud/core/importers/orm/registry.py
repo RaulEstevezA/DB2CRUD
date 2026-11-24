@@ -15,6 +15,7 @@ from .mongodb import MONGODB_READER
 from .mongoose import MONGOOSE_READER
 from .prisma import PRISMA_READER
 from .sequelize import SEQUELIZE_READER
+from .springdata import SPRING_DATA_READER
 from .sqlalchemy import SQLALCHEMY_READER
 from .sqlmodel import SQLMODEL_READER
 from .tortoise import TORTOISE_READER
@@ -36,6 +37,7 @@ ORM_READERS: list[OrmReader] = [
     ELOQUENT_READER,
     MONGOOSE_READER,
     MONGODB_READER,
+    SPRING_DATA_READER,
 ]
 
 

@@ -3,6 +3,7 @@ implementation (written by the strategy: JPA or JDBC), and its in-memory one, wi
 nothing. Mirrors web/src/core/generators/java/repositories.ts."""
 
 from ...js import number_text
+from ...schema.documents import is_object_id
 from ..types import lines
 from .context import (
     column_of,
@@ -14,6 +15,7 @@ from .context import (
     repository_interface,
     sql_repository_class,
 )
+from .documents import identified_lists, list_of
 from .java import JavaImports, java_path, java_string
 
 
@@ -22,6 +24,7 @@ def repository_methods(context: dict, info: dict, imports: JavaImports) -> list[
     entity = info["entity"]
     paging = context["settings"]["paging"]
     methods = []
+    key_params = [{"name": column["prop"], "type": column["java"]} for column in info["key"]]
     for query_design in info["queries"]:
         name = query_name(context, query_design)
         by_columns = [
@@ -84,6 +87,24 @@ def repository_methods(context: dict, info: dict, imports: JavaImports) -> list[
                 entity,
                 "Stores the changes made to a row read from this repository.",
             )
+        elif kind in ("addItem", "removeItem"):
+            items = list_of(info, query_design)
+            imports.add("java.util.Optional")
+            if items["column"]["javaImport"]:
+                imports.add(items["column"]["javaImport"])
+            adds = kind == "addItem"
+            # Told apart by its position, it is only removed from a list of the size it was seen in
+            size = [{"name": "size", "type": "int"}] if not adds and items["by"] == "position" else []
+            item = [{"name": items["item"], "type": items["java"]}] if adds else items["params"]
+            column = query_design["columns"][0]
+            seen = " that has this size" if size else ""
+            add(
+                [*key_params, *item, *size],
+                f"Optional<{entity}>",
+                f"Adds an item to {column}, and gives the row as it is then, if there is one."
+                if adds
+                else f"Removes an item from {column}{seen}, and gives the row as it is then, if there is one.",
+            )
         elif kind == "delete":
             add([{"name": "entity", "type": entity}], "void", "Removes a row read from this repository.")
     return methods
@@ -121,7 +142,7 @@ def _string_of(value) -> str:
     return number_text(value)
 
 
-def _memory_fill(column: dict, imports: JavaImports) -> str | None:
+def memory_fill(column: dict, imports: JavaImports) -> str | None:
     db = column["column"]
     generated = db.get("generated")
 
@@ -131,6 +152,9 @@ def _memory_fill(column: dict, imports: JavaImports) -> str | None:
     if generated == "identity":
         java = column["java"]
         return set_("nextId++" if java == "Long" else "(short) nextId++" if java == "Short" else "(int) nextId++")
+    if generated == "uuid" and is_object_id(db["type"]):
+        imports.add("org.bson.types.ObjectId")
+        return set_("new ObjectId().toHexString()")
     if generated == "uuid":
         return set_("UUID.randomUUID()")
     if generated in ("now", "onUpdateNow"):
@@ -153,7 +177,7 @@ def _memory_visible(info: dict) -> str:
     return f"row.{soft['getter']}() == null"
 
 
-def _memory_body(context: dict, info: dict, method: dict) -> list:
+def _memory_body(context: dict, info: dict, method: dict, imports: JavaImports) -> list:
     columns = [column_of(info, name) for name in method["query"]["columns"]]
     conditions = " && ".join(f"Objects.equals(row.{column['getter']}(), {column['prop']})" for column in columns)
     kind = method["query"]["kind"]
@@ -177,10 +201,58 @@ def _memory_body(context: dict, info: dict, method: dict) -> list:
             ]
         return ["return visible().toList();"]
     if kind in ("insert", "update"):
-        return ["rows.put(keyOf(entity), entity);", "return entity;"]
+        return [
+            *(["entity.identifyItems();"] if identified_lists(info) else []),
+            "rows.put(keyOf(entity), entity);",
+            "return entity;",
+        ]
+    if kind in ("addItem", "removeItem"):
+        return _memory_item(info, method, imports)
     if kind == "delete":
         return ["rows.remove(keyOf(entity));"]
     return ["throw new UnsupportedOperationException();"]
+
+
+def _memory_item(info: dict, method: dict, imports: JavaImports) -> list[str]:
+    items = list_of(info, method["query"])
+    column, item, param = items["column"], items["item"], items["params"][0]["name"]
+    keys = " && ".join(f"Objects.equals(row.{key['getter']}(), {key['prop']})" for key in info["key"])
+    version = info["version"]
+    touched = []
+    if version:
+        one = "1L" if version["java"] == "Long" else "1"
+        get = f"row.{version['getter']}()"
+        touched.append(f"row.{version['setter']}(({get} == null ? 0 : {get}) + {one});")
+    touched += [
+        f"row.{other['setter']}({other['java']}.now());"
+        for other in info["columns"]
+        if other["column"].get("generated") == "onUpdateNow"
+    ]
+    get = f"row.{column['getter']}()"
+    given = f"List<{items['java']}> items = {get} == null ? new ArrayList<>() : new ArrayList<>({get});"
+    if method["query"]["kind"] == "addItem":
+        change = [f"items.add({item});"]
+        if items["by"] == "id":
+            imports.add("org.bson.types.ObjectId")
+            change.insert(0, f"if ({item}.getId() == null) {item}.setId(new ObjectId().toHexString());")
+    elif items["by"] == "id":
+        change = [f"items.removeIf((item) -> Objects.equals(item.getId(), {param}));"]
+    elif items["by"] == "value":
+        change = [f"items.removeIf((item) -> Objects.equals(item, {param}));"]
+    else:
+        change = ["items.remove(position);"]
+    size = []
+    if method["query"]["kind"] == "removeItem" and items["by"] == "position":
+        found = f"found.get().{column['getter']}()"
+        size = [f"if (found.isPresent() && ({found} == null ? 0 : {found}.size()) != size) return Optional.empty();"]
+    return [
+        f"Optional<{info['entity']}> found = visible().filter((row) -> {keys}).findFirst();",
+        *size,
+        "found.ifPresent((row) -> {",
+        *(f"    {line}" for line in [given, *change, f"row.{column['setter']}(items);", *touched]),
+        "});",
+        "return found;",
+    ]
 
 
 def _block(method: dict, body: list, override: bool) -> list:
@@ -257,13 +329,13 @@ def repository_files(context: dict, info: dict) -> list[dict]:
             "java.util.stream.Stream",
         )
         methods = repository_methods(context, info, imports)
-        fills = [line for line in (_memory_fill(column, imports) for column in info["columns"]) if line is not None]
+        fills = [line for line in (memory_fill(column, imports) for column in info["columns"]) if line is not None]
         for column in info["columns"]:
             if column["javaImport"]:
                 imports.add(column["javaImport"])
         bodies = []
         for method in methods:
-            body = _memory_body(context, info, method)
+            body = _memory_body(context, info, method, imports)
             bodies.append(_block(method, [*fills, *body] if method["query"]["kind"] == "insert" else body, True))
         identity = any(column["column"].get("generated") == "identity" for column in info["columns"])
         memory = memory_repository_class(info)

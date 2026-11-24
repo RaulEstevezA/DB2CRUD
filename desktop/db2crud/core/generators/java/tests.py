@@ -3,6 +3,8 @@ rows (and their parents first), repository tests against a real database created
 on the in-memory unit of work (or on the database when the project has no memory repositories). The database is SQLite
 in a file of target/ unless TEST_DATABASE_URL names another. Mirrors web/src/core/generators/java/tests.ts."""
 
+import re
+
 from ..types import lines
 from .context import (
     column_of,
@@ -17,8 +19,9 @@ from .context import (
     service_class,
     writes_entities,
 )
+from .documents import list_of
 from .dtos import accessor, create_columns, create_dto, update_columns, update_package, update_type
-from .java import JavaImports, java_path, java_string
+from .java import JavaImports, capitalized, java_path, java_string
 from .samples import missing_value, sample_imports, sample_value
 
 
@@ -86,13 +89,19 @@ def _factories_file(context: dict, makeable: list[dict]) -> dict:
                 continue
             for name in sample_imports(column):
                 imports.add(name)
-            if column["column"]["type"]["kind"] == "array":
+            value = _document_value(context, info, column)
+            if value is not None:
+                pass
+            elif column["column"]["type"]["kind"] == "array":
                 value = context["orm"]["emptyList"](context)
             else:
                 value = sample_value(column, info["table"]["checks"], context["schema"]["enums"])
             values.append(f"        entity.{column['setter']}({value});")
         insert = query(info, "insert")
         entity = info["entity"]
+        documents = []
+        for item in info["nested"].values():
+            documents += _nested_factories(context, item, imports)
         blocks.append(
             [
                 f"    /** A valid {entity} that is not stored yet; n makes its unique values differ. */",
@@ -109,6 +118,7 @@ def _factories_file(context: dict, makeable: list[dict]) -> dict:
                 *from_parents,
                 f"        return uow.{info['attr']}().{query_name(context, insert)}(entity);",
                 "    }",
+                *documents,
             ]
         )
     content = lines(
@@ -124,6 +134,79 @@ def _factories_file(context: dict, makeable: list[dict]) -> dict:
         "",
     )
     return {"path": java_path(pkg, "Factories", True), "content": content}
+
+
+def _factory_of(item: dict) -> str:
+    return f"new{''.join(item['path'].split('.'))}"
+
+
+def _document_value(context: dict, info: dict, column: dict) -> str | None:
+    """A column that holds documents, or a list of them, as a Java expression; None for any other."""
+    nested = info["nested"].get(column["column"]["name"])
+    if not context["orm"].get("documents") or not nested:
+        return None
+    return _nested_value(column["column"]["type"], nested)
+
+
+def _nested_value(column_type: dict, nested: dict) -> str:
+    if column_type["kind"] == "array":
+        return f"new java.util.ArrayList<>(List.of({_nested_value(column_type['items'], nested)}))"
+    return f"{_factory_of(nested)}(n)"
+
+
+def _nested_factories(context: dict, item: dict, imports: JavaImports) -> list[str]:
+    """A factory per class of nested document, without the identifier it is given when it is stored."""
+    imports.add("java.util.List")
+    values = []
+    for field in item["fields"]:
+        column = field["column"]
+        if column["name"] == "_id" or column["type"]["kind"] == "unknown":
+            continue
+        for part, name in (
+            ("BigDecimal", "java.math.BigDecimal"),
+            ("Instant", "java.time.Instant"),
+            ("UUID", "java.util.UUID"),
+        ):
+            if part in field["java"]:
+                imports.add(name)
+        if field["nested"]:
+            value = _nested_value(column["type"], field["nested"])
+        elif column["type"]["kind"] == "array":
+            value = context["orm"]["emptyList"](context)
+        else:
+            value = sample_value(
+                {"column": column, "java": field["java"], "javaImport": None},
+                column.get("checks") or [],
+                context["schema"]["enums"],
+            )
+        values.append(f"        item.{field['setter']}({value});")
+    result = [
+        "",
+        f"    /** A valid {item['path']}. */",
+        f"    static {item['path']} {_factory_of(item)}(int n) {{",
+        f"        {item['path']} item = new {item['path']}();",
+        *values,
+        "        return item;",
+        "    }",
+    ]
+    for inner in item["classes"]:
+        result += _nested_factories(context, inner, imports)
+    return result
+
+
+def _item_sample(context: dict, items: dict) -> str:
+    """A value for an item of a list, as a Java expression for the number 7."""
+    if items["nested"] and items["type"]["kind"] == "json":
+        return f"Factories.{_factory_of(items['nested'])}(7)"
+    if items["type"]["kind"] in ("array", "json"):
+        return context["orm"]["emptyList"](context)
+    column = items["column"]
+    sample = sample_value(
+        {**column, "column": {**column["column"], "type": items["type"]}, "java": items["java"]},
+        [],
+        context["schema"]["enums"],
+    )
+    return re.sub(r"\bn\b", "7", sample)
 
 
 # Tests of each table
@@ -173,7 +256,10 @@ def _same(column: dict) -> str:
     return "org.junit.jupiter.api.Assertions.assertArrayEquals" if column["java"] == "byte[]" else "assertEquals"
 
 
-def _repository_tests(context: dict, info: dict) -> list[list]:
+def _repository_tests(context: dict, info: dict, imports: JavaImports) -> list[list]:
+    adding = [item for item in info["queries"] if item["kind"] == "addItem"]
+    for item in adding:
+        _add_item_imports(info, item, imports)
     repo = f"uow.{info['attr']}()"
     entity = info["entity"]
 
@@ -266,6 +352,34 @@ def _repository_tests(context: dict, info: dict) -> list[list]:
                 ],
             )
         )
+    for add in adding:
+        items = list_of(info, add)
+        removing = query(info, "removeItem", add["columns"])
+        if not removing or not get_by_key:
+            continue
+        get = items["column"]["getter"]
+        if items["by"] == "id":
+            which = f"added.{get}().get(before).getId()"
+        elif items["by"] == "value":
+            which = "item"
+        else:
+            which = f"before, added.{get}().size()"
+        taking = f"{repo}.{query_name(context, removing)}({key_of('stored')}"
+        tests.append(
+            _test(
+                f"addsAndRemovesOneItemOf{capitalized(items['column']['prop'])}",
+                [
+                    stored,
+                    f"int before = stored.{get}() == null ? 0 : stored.{get}().size();",
+                    f"{items['java']} item = {_item_sample(context, items)};",
+                    f"{entity} added = {repo}.{query_name(context, add)}({key_of('stored')}, item).orElseThrow();",
+                    f"assertEquals(before + 1, added.{get}().size());",
+                    f"{entity} removed = {taking}, {which}).orElseThrow();",
+                    f"assertEquals(before, removed.{get}().size());",
+                    items["by"] == "position" and f"assertTrue({taking}, 0, before + 5).isEmpty());",
+                ],
+            )
+        )
     remove = query(info, "delete")
     if remove and get_by_key and not info["soft"]:
         tests.append(
@@ -279,6 +393,12 @@ def _repository_tests(context: dict, info: dict) -> list[list]:
             )
         )
     return tests
+
+
+def _add_item_imports(info: dict, query_design: dict, imports: JavaImports) -> None:
+    java_import = list_of(info, query_design)["column"]["javaImport"]
+    if java_import:
+        imports.add(java_import)
 
 
 def _service_tests(context: dict, info: dict, imports: JavaImports) -> list[list]:
@@ -511,6 +631,44 @@ def _service_tests(context: dict, info: dict, imports: JavaImports) -> list[list
                 ],
             )
         )
+    for operation in info["operations"]:
+        if operation["kind"] != "addItem":
+            continue
+        items = list_of(info, operation)
+        without = op("removeItem", operation["columns"])
+        if not create or not without or items["column"]["column"]["name"] in info["hidden"]:
+            continue
+        _add_item_imports(info, operation, imports)
+        imports.add(f"{errors_package(context)}.NotFoundException")
+
+        def of(variable: str, column: dict = items["column"]) -> str:
+            return value_of(variable, column)
+
+        which, missing = {
+            "id": (f"{of('added')}.get(before).getId()", java_string("f" * 24)),
+            "value": ("item", None),
+            "position": ("before", "99"),
+        }[items["by"]]
+        taking = f"service.{operation_name(context, without)}({key_of('created')}"
+        tests.append(
+            _test(
+                f"addsAndRemovesOneItemOf{capitalized(items['column']['prop'])}",
+                [
+                    *opening,
+                    *start,
+                    *row("row", 1),
+                    f"var created = service.{operation_name(context, create)}({source('row')});",
+                    f"int before = {of('created')} == null ? 0 : {of('created')}.size();",
+                    f"{items['java']} item = {_item_sample(context, items)};",
+                    f"var added = service.{operation_name(context, operation)}({key_of('created')}, item{version('created')});",
+                    f"assertEquals(before + 1, {of('added')}.size());",
+                    f"var removed = {taking}, {which}{version('added')});",
+                    f"assertEquals(before, {of('removed')}.size());",
+                    missing
+                    and f"assertThrows(NotFoundException.class, () -> {taking}, {missing}{version('removed')}));",
+                ],
+            )
+        )
     if create and remove and get:
         imports.add(f"{errors_package(context)}.NotFoundException")
         tests.append(
@@ -570,7 +728,13 @@ def test_files(context: dict) -> list[dict]:
         nested: list = []
         database = False
         if tests in ("all", "repositories"):
-            nested += ["", "    @Nested", "    class Repository {", *_flat(_repository_tests(context, info)), "    }"]
+            nested += [
+                "",
+                "    @Nested",
+                "    class Repository {",
+                *_flat(_repository_tests(context, info, imports)),
+                "    }",
+            ]
             database = True
         if tests in ("all", "services") and info["service"] is not None:
             service_blocks = _service_tests(context, info, imports)

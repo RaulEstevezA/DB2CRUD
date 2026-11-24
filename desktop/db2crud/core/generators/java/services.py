@@ -19,6 +19,7 @@ from .context import (
     query_name,
     service_class,
 )
+from .documents import document_check_methods, document_rules, list_of
 from .dtos import (
     accessor,
     create_columns,
@@ -29,7 +30,7 @@ from .dtos import (
     update_package,
     update_type,
 )
-from .java import JavaImports, java_path, java_string
+from .java import JavaImports, capitalized, java_path, java_string
 
 
 def _repo(info: dict, uow: str = "uow") -> str:
@@ -76,7 +77,7 @@ def _value_rules(column: dict, checks: list[dict], uses_number: list[bool]) -> l
     def error(message: str) -> str:
         return f"errors.add(new FieldError({java_string(name)}, {java_string(message)}));"
 
-    if column_type["kind"] == "text" and column_type.get("length") is not None:
+    if column_type["kind"] == "text" and column_type.get("length") is not None and not column_type.get("objectId"):
         length = column_type["length"]
         rules.append(
             f"if (value instanceof String text && text.length() > {length}) {error(f'is longer than {length} characters')}"
@@ -133,7 +134,10 @@ def _validate_method(writer: dict) -> list:
             missing = f'if (!creating && values.containsKey({java_string(prop)})) errors.add(new FieldError({java_string(name)}, "cannot be empty"));'
         else:
             missing = None
-        rules = _value_rules(column, info["table"]["checks"], uses_number)
+        rules = [
+            *_value_rules(column, info["table"]["checks"], uses_number),
+            *document_rules(context, info, column),
+        ]
         if not missing and not rules:
             continue
         if missing:
@@ -255,6 +259,7 @@ def _apply_method(writer: dict) -> list:
     imports.add("java.util.Map")
     return [
         "/** Sets the given values on the entity. */",
+        *(['@SuppressWarnings("unchecked")'] if any("<" in column["java"] for column in create_columns(info)) else []),
         f"private static void apply({info['entity']} entity, Map<String, Object> values) {{",
         *(
             f"    if (values.containsKey({java_string(column['prop'])})) entity.{column['setter']}(({column['java']}) values.get({java_string(column['prop'])}));"
@@ -569,7 +574,79 @@ def _operation_lines(writer: dict, operation: dict) -> list:
         ]
     if kind in ("link", "unlink"):
         return _link_lines(writer, operation, name)
+    # One item of a list: only document databases have them
+    if kind in ("addItem", "removeItem"):
+        return _item_lines(writer, operation, name)
     return []
+
+
+def _item_lines(writer: dict, operation: dict, name: str) -> list:
+    """Adds or removes one item of a list, so two people changing the same list do not undo each other."""
+    context, info, imports = writer["context"], writer["info"], writer["imports"]
+    adds = operation["kind"] == "addItem"
+    change = query(info, "addItem" if adds else "removeItem", operation["columns"])
+    if not change or not query(info, "getByKey"):
+        return []
+    items = list_of(info, change)
+    column, item, by = items["column"], items["item"], items["by"]
+    stored = column["column"]["name"]
+    params = [{"name": item, "type": items["java"]}] if adds else items["params"]
+    param = params[0]["name"]
+    entity = info["entity"]
+    errors = errors_package(context)
+    version = f", {info['version']['java']} version" if info["version"] else ""
+    read_at = ", read at version" if info["version"] else ""
+    get = f"current.{column['getter']}()"
+    if by == "id":
+        missing = f"{get} == null || {get}.stream().noneMatch((item) -> {param}.equals(item.getId()))"
+    elif by == "value":
+        missing = f"{get} == null || !{get}.contains({param})"
+    else:
+        missing = f"{get} == null || {param} < 0 || {param} >= {get}.size()"
+    label = java_string(capitalized(item))
+    position = not adds and by == "position"
+    imports.add(f"{errors}.NotFoundException")
+    if position:
+        imports.add(f"{errors}.ConflictException", "java.util.List")
+    checks = []
+    if adds and items["nested"] and items["type"]["kind"] == "json":
+        imports.add(
+            "java.util.ArrayList", "java.util.List", f"{errors}.FieldError", f"{errors}.ValidationFailedException"
+        )
+        method = f"check{''.join(items['nested']['path'].split('.')[1:])}"
+        checks = [
+            "    List<FieldError> errors = new ArrayList<>();",
+            f"    {method}({item}, {java_string(stored)}, errors);",
+            f'    if (!errors.isEmpty()) throw new ValidationFailedException("{entity}", errors);',
+        ]
+    if position:
+        gone = f'new ConflictException("{entity}", "was changed by someone else since it was read", List.of({java_string(column["prop"])}))'
+    else:
+        gone = f'new NotFoundException("{entity}", {_key_value(info, imports)})'
+    args = ", ".join([_key_args(info), *(one["name"] for one in params), *([f"{get}.size()"] if position else [])])
+    given = ", ".join(f"{one['type']} {one['name']}" for one in params)
+    result = f"{_repo(info)}.{query_name(context, change)}({args}).orElseThrow(() -> {gone})"
+    current = "" if adds and not info["version"] else f"{entity} current = "
+    return [
+        f"/** Adds an item to {stored}{read_at}. */"
+        if adds
+        else f"/** Removes an item from {stored}, by its {'identifier' if by == 'id' else by}{read_at}. */",
+        f"public {_result_type(writer)} {name}({_key_params(info)}, {given}{version}) {{",
+        *checks,
+        *_body(
+            _in_transaction(
+                [
+                    f"{current}find(uow, {_key_args(info)});",
+                    *_version_check(writer),
+                    *([] if adds else [f"if ({missing}) throw new NotFoundException({label}, {param});"]),
+                    f"return {_out(writer, result)};",
+                ],
+                True,
+            ),
+            4,
+        ),
+        "}",
+    ]
 
 
 def _link_lines(writer: dict, operation: dict, name: str) -> list:
@@ -679,6 +756,8 @@ def service_file(context: dict, info: dict) -> dict | None:
         ]
     if writes and updates:
         helpers.append(_changes_method(writer))
+    if writes:
+        helpers += document_check_methods(context, info, imports)
     hidden = bool(info["hidden"]) and not dtos
     members = []
     for block in [*helpers, *operations]:

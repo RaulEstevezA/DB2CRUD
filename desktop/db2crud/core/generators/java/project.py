@@ -4,6 +4,7 @@ have to read the code back (docs/design.md, section 6). Mirrors web/src/core/gen
 
 import json
 
+from ...schema.documents import nested_fields
 from ..types import lines
 from .context import common_package, errors_package, operation_name, package_of, service_class, writes_entities
 from .dtos import create_columns, create_dto, read_columns, read_dto, update_columns, update_package, update_type
@@ -101,7 +102,7 @@ def pom_file(context: dict, models_folder: bool = False) -> dict:
         "",
         "  <dependencies>",
         *context["orm"]["dependencies"](context),
-        *dependency(group, artifact, version),
+        *([] if database == "mongodb" else dependency(group, artifact, version)),
         tests and dependency("org.junit.jupiter", "junit-jupiter", VERSIONS["junit"], "test"),
         "  </dependencies>",
         "",
@@ -131,17 +132,18 @@ URLS = {
 
 def env_example_file(context: dict) -> dict:
     sqlite = context["settings"]["database"] == "sqlite"
+    url = context["orm"].get("url")
     return {
         "path": ".env.example",
         "content": lines(
-            "# Where the database is (a JDBC URL)",
-            f"DATABASE_URL={URLS[context['settings']['database']]}",
-            not sqlite and ["DATABASE_USER=app", "DATABASE_PASSWORD=app"],
+            "# Where the database is" if url else "# Where the database is (a JDBC URL)",
+            f"DATABASE_URL={url or URLS[context['settings']['database']]}",
+            not sqlite and not url and ["DATABASE_USER=app", "DATABASE_PASSWORD=app"],
             "# The tests use SQLite in target/ unless this names another database (it is emptied by the tests)"
             if sqlite
             else "# The database the tests use (it is emptied by the tests): one of the same kind as DATABASE_URL",
             "# TEST_DATABASE_URL=",
-            not sqlite and ["# TEST_DATABASE_USER=", "# TEST_DATABASE_PASSWORD="],
+            not sqlite and not url and ["# TEST_DATABASE_USER=", "# TEST_DATABASE_PASSWORD="],
             "",
         ),
     }
@@ -198,7 +200,8 @@ def readme_file(context: dict) -> dict:
         ]
     else:
         layout = [f"src/main/java/{base}/<table>/             entity, repositories and service of each table"]
-    credentials = "" if sqlite else " TEST_DATABASE_USER=app TEST_DATABASE_PASSWORD=app"
+    url = context["orm"].get("url")
+    credentials = "" if sqlite or url else " TEST_DATABASE_USER=app TEST_DATABASE_PASSWORD=app"
     return {
         "path": "README.md",
         "content": lines(
@@ -229,7 +232,7 @@ def readme_file(context: dict) -> dict:
             "",
             "```bash",
             sqlite and "mvn test                                          # SQLite in target/",
-            f"TEST_DATABASE_URL={URLS[settings['database']]}{credentials} mvn test   # a real, disposable database: it is emptied",
+            f"TEST_DATABASE_URL={url or URLS[settings['database']]}{credentials} mvn test   # a real, disposable database: it is emptied",
             "```",
             "",
             context["orm"]["readme"]["note"],
@@ -241,10 +244,21 @@ def readme_file(context: dict) -> dict:
 
 
 def _type_of(column: dict) -> dict:
-    column_type = column["column"]["type"]
-    result = {"kind": column_type["kind"], "java": column["java"]}
+    plain = _plain_type(column["column"]["type"])
+    return {"kind": plain["kind"], "java": column["java"], **plain}
+
+
+def _plain_type(column_type: dict) -> dict:
+    result = {"kind": column_type["kind"]}
     if column_type["kind"] == "text" and column_type.get("length") is not None:
         result["length"] = column_type["length"]
+    # What a nested document, or each of a list of them, holds
+    fields = nested_fields(column_type)
+    if fields is not None:
+        result["fields"] = [
+            {"name": field["name"], "type": _plain_type(field["type"]), "nullable": field["nullable"]}
+            for field in fields
+        ]
     return result
 
 

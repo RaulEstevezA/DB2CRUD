@@ -7,6 +7,7 @@ from .csharp.generator import csharp_generator
 from .csharp.sql.index import SQL_ORM as CSHARP_SQL_ORM
 from .java.generator import java_generator
 from .java.jpa.index import JPA_ORM
+from .java.springdata.index import SPRING_DATA_ORM
 from .java.sql.index import SQL_ORM as JAVA_SQL_ORM
 from .kotlin.exposed.index import EXPOSED_ORM
 from .kotlin.generator import kotlin_generator
@@ -45,6 +46,7 @@ GENERATORS = [
     typescript_generator(MONGOOSE_ORM),
     java_generator(JPA_ORM),
     java_generator(JAVA_SQL_ORM),
+    java_generator(SPRING_DATA_ORM),
     csharp_generator(EFCORE_ORM),
     csharp_generator(CSHARP_SQL_ORM),
     php_generator(DOCTRINE_ORM),
