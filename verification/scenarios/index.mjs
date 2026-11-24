@@ -895,4 +895,12 @@ export const SCENARIOS = [
   { id: 'mongoose-mongodb-repositories-only', code: 'mongodb/shop.ts', settings: { language: 'typescript', orm: 'mongoose', database: 'mongodb', services: false }, service: 'mongodb' },
   { id: 'mongoose-mongodb-validators', code: 'mongodb/clinic.js', settings: { language: 'typescript', orm: 'mongoose', database: 'mongodb' }, service: 'mongodb' },
   { id: 'mongoose-mongodb-validators-dtos', code: 'mongodb/clinic.js', settings: { language: 'typescript', orm: 'mongoose', database: 'mongodb', serviceTypes: 'dtos', transactions: 'repository', paging: 'cursor' }, service: 'mongodb' },
+  { id: 'springdata-mongodb-defaults', code: 'mongodb/shop.ts', settings: { language: 'java', orm: 'springdata', database: 'mongodb' }, service: 'mongodb' },
+  { id: 'springdata-mongodb-record-dtos-patch-cursor', code: 'mongodb/shop.ts', settings: { language: 'java', orm: 'springdata', database: 'mongodb', transactions: 'operation', serviceTypes: 'dtos', paging: 'cursor', architecture: 'table' }, service: 'mongodb' },
+  { id: 'springdata-mongodb-class-dtos-full-caller', code: 'mongodb/shop.ts', settings: { language: 'java', orm: 'springdata', database: 'mongodb', transactions: 'caller', serviceTypes: 'dtos', dtoKind: 'class', updates: 'full', paging: 'none' }, service: 'mongodb' },
+  { id: 'springdata-mongodb-no-interfaces-services-tests', code: 'mongodb/shop.ts', settings: { language: 'java', orm: 'springdata', database: 'mongodb', repositoryInterfaces: false, memoryRepositories: false, verbs: 'get', updates: 'optional' }, service: 'mongodb' },
+  { id: 'springdata-mongodb-repositories-only', code: 'mongodb/shop.ts', settings: { language: 'java', orm: 'springdata', database: 'mongodb', services: false }, service: 'mongodb' },
+  { id: 'springdata-mongodb-validators', code: 'mongodb/clinic.js', settings: { language: 'java', orm: 'springdata', database: 'mongodb' }, service: 'mongodb' },
+  { id: 'springdata-mongodb-operation', code: 'mongodb/shop.ts', settings: { language: 'java', orm: 'springdata', database: 'mongodb', transactions: 'operation' }, service: 'mongodb' },
+  { id: 'springdata-mongodb-validators-dtos-optional', code: 'mongodb/clinic.js', settings: { language: 'java', orm: 'springdata', database: 'mongodb', serviceTypes: 'dtos', updates: 'optional' }, service: 'mongodb' },
 ]
