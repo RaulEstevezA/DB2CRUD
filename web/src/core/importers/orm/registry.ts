@@ -13,6 +13,7 @@ import { jpaReader } from './jpa.ts'
 import { mongodbReader } from './mongodb.ts'
 import { mongooseReader } from './mongoose.ts'
 import { prismaReader } from './prisma.ts'
+import { documentsReader } from './documents.ts'
 import { beanieReader } from './beanie.ts'
 import { springDataReader } from './springdata.ts'
 import { sequelizeReader } from './sequelize.ts'
@@ -39,6 +40,7 @@ export const ORM_READERS: OrmReader[] = [
   mongodbReader,
   springDataReader,
   beanieReader,
+  documentsReader,
 ]
 
 /** The reader for these files, or null when none recognises them. */

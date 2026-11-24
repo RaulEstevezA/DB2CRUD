@@ -7,7 +7,7 @@
  * `UPDATE_SHARED=1 npx vitest run src/core/generators/shared.test.ts` writes them again from what the web
  * version does now; the desktop version then has to match them.
  */
-import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { decidePolicy } from '../crud/edit.ts'
@@ -30,7 +30,7 @@ interface Scenario {
   case?: string
   /** The database of verification/ddl/, read from its SQL */
   ddl?: true
-  /** A file of verification/ with the code the schema is read from */
+  /** A file or folder, from verification/, with the code the schema is read from */
   code?: string
   settings: Record<string, unknown>
   decisions?: { table: string; decision: 'role' | 'delete' | 'concurrency' | 'children' | 'hidden'; value: unknown }[]
@@ -42,7 +42,14 @@ const { SCENARIOS } = (await import(resolve(process.cwd(), '../verification/scen
 const ddlOf = (scenario: Scenario) => readFileSync(resolve(process.cwd(), `../verification/ddl/${scenario.settings.database}.sql`), 'utf8')
 
 function readCode(path: string): DbSchema {
-  const read = readOrmCode([{ name: path, text: readFileSync(resolve(process.cwd(), '../verification', path), 'utf8') }])
+  const full = resolve(process.cwd(), '../verification', path)
+  const files = statSync(full).isDirectory()
+    ? readdirSync(full)
+        .filter((name) => name !== 'expected.json')
+        .sort()
+        .map((name) => join(full, name))
+    : [full]
+  const read = readOrmCode(files.map((file) => ({ name: file, text: readFileSync(file, 'utf8') })))
   if (!read.ok) throw new Error(`${path}: ${read.error}`)
   return read.schema
 }

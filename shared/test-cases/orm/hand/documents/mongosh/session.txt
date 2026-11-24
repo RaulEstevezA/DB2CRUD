@@ -1,0 +1,23 @@
+Atlas atlas-x1 [primary] shop> db.products.find({ stock: { $gt: 0 } }).sort({ sku: 1 }).limit(2)
+[
+  {
+    _id: ObjectId('65d000000000000000000001'),
+    sku: 'A-1',
+    price: Decimal128('9.90'),
+    stock: 4,
+    weight: 1.5,
+    big: Long('12'),
+    created: ISODate('2026-01-02T03:04:05.678Z'),
+    reference: UUID('00000000-0000-4000-8000-000000000002'),
+    picture: Binary.createFromBase64('AAEC', 0),
+    key: BinData(4, 'AAAAAAAAQACAAAAAAAAAAg=='),
+    pattern: /^a, it's: \/"b$/i,
+    patterns: [ /x'/, /y/ ],
+    text: `it's "x" // no`,
+    parts: [ { name: 'x', inner: { deep: [Object] } }, ... 3 more items ],
+    low: -2
+  },
+  { _id: ObjectId('65d000000000000000000002'), sku: 'B-1', price: Decimal128('1'), stock: 2.5, low: 7 }
+]
+Atlas atlas-x1 [primary] shop> db.getCollection('audit-log').findOne()
+{ _id: 'first', at: new Date('2026-01-01'), by: null }

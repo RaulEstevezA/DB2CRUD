@@ -5,6 +5,7 @@
 import { isMapperProject, mapperModels, readMapperProject, type MapperProject } from '../core/interop/mapper/read.ts'
 import { detectDdl, readDdl } from '../core/importers/ddl/ddl.ts'
 import { acceptedExtensions, detectFormat, findParser, parseInput } from '../core/importers/registry.ts'
+import { holdsDocuments } from '../core/importers/orm/documents.ts'
 import { ORM_READERS, detectOrm, readOrmCode } from '../core/importers/orm/registry.ts'
 import { readModel2DBProject, type Model2DBReadError } from '../core/interop/model2db/read.ts'
 import type { ModelSchema } from '../core/model/schema.ts'
@@ -24,13 +25,16 @@ export type DatabaseReadResult = { ok: true; schema: DbSchema } | { ok: false; e
 
 const isValidator = (text: string) => /^\{\s*["']?\$jsonSchema\b/.test(text) || /^\{[^{}]*\boptions\b[^]*\$jsonSchema/.test(text)
 
+/** A JSON text that is a Model2DB project, or tries to be: it is no validator and holds no documents of MongoDB. */
+const isProject = (text: string) =>
+  text.startsWith('{') && !isValidator(text) && (/["']format["']\s*:\s*["']model2db/.test(text) || !holdsDocuments(text))
+
 /** The physical schema of the input, or why it cannot be read; null while the input is empty. A JSON text is a
- * Model2DB project; anything else is ORM code, or else SQL DDL. */
+ * Model2DB project, unless it holds documents of MongoDB; anything else is ORM code, or else SQL DDL. */
 export function readDatabase(input: InputState): DatabaseReadResult | null {
   const text = input.text.trim()
   if (text === '') return null
-  // A validator of MongoDB is an object too
-  if (text.startsWith('{') && !isValidator(text)) return readModel2DBProject(input.text)
+  if (isProject(text)) return readModel2DBProject(input.text)
   const read = readOrmCode([{ name: input.fileName ?? 'input', text: input.text }])
   if (read.ok) return { ok: true, schema: read.schema }
   if (read.error === 'unknownOrm' && detectDdl(input.text)) {
@@ -43,7 +47,7 @@ export function readDatabase(input: InputState): DatabaseReadResult | null {
 /** The language of the input, for the editor's highlighting: JSON for a project, the ORM's for its code, SQL for DDL. */
 export function inputLanguage(input: InputState): string {
   const text = input.text.trimStart()
-  if (text === '' || (text.startsWith('{') && !isValidator(text))) return 'json'
+  if (text === '' || isProject(text)) return 'json'
   return detectOrm([{ name: input.fileName ?? 'input', text: input.text }])?.language ?? (detectDdl(input.text) ? 'sql' : 'text')
 }
 

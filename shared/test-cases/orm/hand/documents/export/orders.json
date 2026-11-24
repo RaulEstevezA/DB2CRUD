@@ -1,0 +1,4 @@
+[{"_id": {"$oid": "65b000000000000000000001"}, "number": 1, "customer": {"$oid": "65a000000000000000000002"}, "seller": {"$oid": "65ffffffffffffffffffffff"}, "lines": [
+  {"_id": {"$oid": "65c000000000000000000001"}, "product": {"sku": "A", "price": {"$numberDecimal": "3.20"}}, "quantity": 2},
+  {"_id": {"$oid": "65c000000000000000000002"}, "product": {"sku": "B", "price": {"$numberDecimal": "4"}}, "quantity": 1, "note": "gift"}]},
+ {"_id": {"$oid": "65b000000000000000000002"}, "number": 2, "customer": {"$oid": "65a000000000000000000001"}, "lines": []}]

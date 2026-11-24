@@ -49,6 +49,17 @@ describe('readDatabase', () => {
     expect(readDatabase({ text: 'import sqlalchemy\n' })).toEqual({ ok: false, error: 'noTables' })
   })
 
+  it('reads sample documents of MongoDB, which are JSON too', () => {
+    const read = readDatabase({ text: '{ "_id": { "$oid": "65a000000000000000000001" }, "name": "Ana" }', fileName: 'shop.people.json' })
+    expect(read?.ok && read.schema.tables.map((table) => [table.name, table.columns.map((column) => column.name)])).toEqual([
+      ['people', ['_id', 'name']],
+    ])
+    expect(read?.ok && sourceLabel(read.schema)).toBe('MongoDB documents')
+    // No value of a document goes into the schema
+    expect(JSON.stringify(read)).not.toContain('Ana')
+    expect(readDatabase({ text: '{ "name": "Ana" }' })?.ok).toBe(false)
+  })
+
   it('names Model2DB projects with their output', () => {
     const read = readDatabase({ text: EXAMPLES[0].text })
     if (read?.ok) expect(sourceLabel(read.schema)).toMatch(/^Model2DB \(/)

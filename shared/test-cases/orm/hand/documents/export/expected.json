@@ -1,0 +1,407 @@
+{
+ "format": "db-schema",
+ "version": 1,
+ "dialect": "mongodb",
+ "source": {
+  "kind": "orm",
+  "format": "documents"
+ },
+ "tables": [
+  {
+   "name": "orders",
+   "columns": [
+    {
+     "name": "_id",
+     "type": {
+      "sql": "ObjectId",
+      "kind": "text",
+      "length": 24,
+      "fixed": true,
+      "objectId": true
+     },
+     "nullable": false,
+     "generated": "uuid"
+    },
+    {
+     "name": "number",
+     "type": {
+      "sql": "long",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": true
+    },
+    {
+     "name": "customer",
+     "type": {
+      "sql": "ObjectId",
+      "kind": "text",
+      "length": 24,
+      "fixed": true,
+      "objectId": true
+     },
+     "nullable": true
+    },
+    {
+     "name": "seller",
+     "type": {
+      "sql": "ObjectId",
+      "kind": "text",
+      "length": 24,
+      "fixed": true,
+      "objectId": true
+     },
+     "nullable": true
+    },
+    {
+     "name": "lines",
+     "type": {
+      "sql": "array<object>",
+      "kind": "array",
+      "items": {
+       "sql": "object",
+       "kind": "json",
+       "fields": [
+        {
+         "name": "_id",
+         "type": {
+          "sql": "ObjectId",
+          "kind": "text",
+          "length": 24,
+          "fixed": true,
+          "objectId": true
+         },
+         "nullable": true
+        },
+        {
+         "name": "product",
+         "type": {
+          "sql": "object",
+          "kind": "json",
+          "fields": [
+           {
+            "name": "sku",
+            "type": {
+             "sql": "string",
+             "kind": "text"
+            },
+            "nullable": true
+           },
+           {
+            "name": "price",
+            "type": {
+             "sql": "decimal",
+             "kind": "decimal"
+            },
+            "nullable": true
+           }
+          ]
+         },
+         "nullable": true
+        },
+        {
+         "name": "quantity",
+         "type": {
+          "sql": "long",
+          "kind": "integer",
+          "bits": 64
+         },
+         "nullable": true
+        },
+        {
+         "name": "note",
+         "type": {
+          "sql": "string",
+          "kind": "text"
+         },
+         "nullable": true
+        }
+       ]
+      }
+     },
+     "nullable": true
+    }
+   ],
+   "primaryKey": [
+    "_id"
+   ],
+   "foreignKeys": [
+    {
+     "columns": [
+      "customer"
+     ],
+     "references": {
+      "table": "customers",
+      "columns": [
+       "_id"
+      ]
+     }
+    }
+   ],
+   "uniques": [],
+   "indexes": [],
+   "checks": [],
+   "origin": {
+    "line": 1,
+    "column": 1
+   }
+  },
+  {
+   "name": "customers",
+   "columns": [
+    {
+     "name": "_id",
+     "type": {
+      "sql": "ObjectId",
+      "kind": "text",
+      "length": 24,
+      "fixed": true,
+      "objectId": true
+     },
+     "nullable": false,
+     "generated": "uuid"
+    },
+    {
+     "name": "email",
+     "type": {
+      "sql": "string",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": {
+      "sql": "string",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "age",
+     "type": {
+      "sql": "long",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": true
+    },
+    {
+     "name": "balance",
+     "type": {
+      "sql": "decimal",
+      "kind": "decimal"
+     },
+     "nullable": true
+    },
+    {
+     "name": "visits",
+     "type": {
+      "sql": "long",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": true
+    },
+    {
+     "name": "rate",
+     "type": {
+      "sql": "double",
+      "kind": "float",
+      "bits": 64
+     },
+     "nullable": false
+    },
+    {
+     "name": "active",
+     "type": {
+      "sql": "bool",
+      "kind": "boolean"
+     },
+     "nullable": false
+    },
+    {
+     "name": "address",
+     "type": {
+      "sql": "object",
+      "kind": "json",
+      "fields": [
+       {
+        "name": "street",
+        "type": {
+         "sql": "string",
+         "kind": "text"
+        },
+        "nullable": false
+       },
+       {
+        "name": "city",
+        "type": {
+         "sql": "string",
+         "kind": "text"
+        },
+        "nullable": false
+       },
+       {
+        "name": "zip code",
+        "type": {
+         "sql": "string",
+         "kind": "text"
+        },
+        "nullable": true
+       }
+      ]
+     },
+     "nullable": false
+    },
+    {
+     "name": "tags",
+     "type": {
+      "sql": "array<string>",
+      "kind": "array",
+      "items": {
+       "sql": "string",
+       "kind": "text"
+      }
+     },
+     "nullable": false
+    },
+    {
+     "name": "seen",
+     "type": {
+      "sql": "date",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": true
+    },
+    {
+     "name": "ref",
+     "type": {
+      "sql": "UUID",
+      "kind": "uuid"
+     },
+     "nullable": true
+    },
+    {
+     "name": "photo",
+     "type": {
+      "sql": "binData",
+      "kind": "binary"
+     },
+     "nullable": true
+    },
+    {
+     "name": "scores",
+     "type": {
+      "sql": "object",
+      "kind": "json"
+     },
+     "nullable": true
+    },
+    {
+     "name": "mixed",
+     "type": {
+      "sql": "object",
+      "kind": "json"
+     },
+     "nullable": true
+    },
+    {
+     "name": "nothing",
+     "type": {
+      "sql": "object",
+      "kind": "json"
+     },
+     "nullable": true
+    },
+    {
+     "name": "empty",
+     "type": {
+      "sql": "array",
+      "kind": "array",
+      "items": {
+       "sql": "object",
+       "kind": "json"
+      }
+     },
+     "nullable": true
+    },
+    {
+     "name": "deletedAt",
+     "type": {
+      "sql": "date",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": true
+    }
+   ],
+   "primaryKey": [
+    "_id"
+   ],
+   "foreignKeys": [],
+   "uniques": [],
+   "indexes": [],
+   "checks": [],
+   "origin": {
+    "line": 1,
+    "column": 1
+   }
+  }
+ ],
+ "enums": [],
+ "notes": [
+  {
+   "code": "documents.few",
+   "params": {
+    "table": "orders",
+    "count": 2
+   }
+  },
+  {
+   "code": "documents.deduced",
+   "params": {
+    "table": "customers",
+    "count": 5
+   }
+  },
+  {
+   "code": "documents.dataKeys",
+   "params": {
+    "table": "customers",
+    "column": "scores"
+   }
+  },
+  {
+   "code": "documents.mixedTypes",
+   "params": {
+    "table": "customers",
+    "column": "mixed",
+    "types": "text, whole"
+   }
+  },
+  {
+   "code": "documents.onlyNull",
+   "params": {
+    "table": "customers",
+    "column": "nothing"
+   }
+  },
+  {
+   "code": "documents.emptyList",
+   "params": {
+    "table": "customers",
+    "column": "empty"
+   }
+  },
+  {
+   "code": "documents.reference",
+   "params": {
+    "table": "orders",
+    "column": "customer",
+    "target": "customers"
+   }
+  }
+ ]
+}
