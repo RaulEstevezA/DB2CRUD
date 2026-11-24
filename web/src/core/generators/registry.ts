@@ -20,6 +20,7 @@ import { seaormOrm } from './rust/seaorm/index.ts'
 import { sqlOrm as rustSqlOrm } from './rust/sql/index.ts'
 import { rustGenerator } from './rust/generator.ts'
 import { fluentOrm } from './swift/fluent/index.ts'
+import { sqlOrm as swiftSqlOrm } from './swift/sql/index.ts'
 import { swiftGenerator } from './swift/generator.ts'
 import { phpGenerator } from './php/common/generator.ts'
 import { doctrineOrm } from './php/doctrine/index.ts'
@@ -58,6 +59,7 @@ export const GENERATORS: readonly Generator[] = [
   rustGenerator(seaormOrm),
   rustGenerator(rustSqlOrm),
   swiftGenerator(fluentOrm),
+  swiftGenerator(swiftSqlOrm),
 ]
 
 export function findGenerator(settings: Pick<ProjectSettings, 'language' | 'orm'>): Generator | undefined {

@@ -308,6 +308,16 @@ export const STACKS: readonly StackInfo[] = [
     // T?? is Swift's way of telling a field not sent from a field emptied
     updates: ['patch', 'optional', 'full'],
   },
+  {
+    language: 'swift',
+    orm: 'sql',
+    label: 'SQL (SQLKit)',
+    databases: ['postgresql', 'mysql', 'mariadb', 'sqlite'],
+    execution: ['async'],
+    errors: ['exceptions'],
+    dtoKinds: ['struct'],
+    updates: ['patch', 'optional', 'full'],
+  },
 ]
 
 export const DEFAULT_SETTINGS: ProjectSettings = {
