@@ -17,6 +17,7 @@ import { exposedOrm } from './kotlin/exposed/index.ts'
 import { sqlOrm as kotlinSqlOrm } from './kotlin/sql/index.ts'
 import { kotlinGenerator } from './kotlin/generator.ts'
 import { seaormOrm } from './rust/seaorm/index.ts'
+import { sqlOrm as rustSqlOrm } from './rust/sql/index.ts'
 import { rustGenerator } from './rust/generator.ts'
 import { swiftGenerator } from './swift/generator.ts'
 import { phpGenerator } from './php/common/generator.ts'
@@ -54,6 +55,7 @@ export const GENERATORS: readonly Generator[] = [
   kotlinGenerator(exposedOrm),
   kotlinGenerator(kotlinSqlOrm),
   rustGenerator(seaormOrm),
+  rustGenerator(rustSqlOrm),
   swiftGenerator,
 ]
 

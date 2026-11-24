@@ -38,7 +38,7 @@ export function creationOrder(schema: DbSchema): DbTable[] {
 }
 
 /** The type of a column in the engine. */
-function typeSql(schema: DbSchema, dialect: Dialect, type: DbType): string {
+export function typeSql(schema: DbSchema, dialect: Dialect, type: DbType): string {
   if (schema.dialect === dialect && type.kind !== 'enum' && type.kind !== 'unknown') return type.sql
   const mysql = MYSQL.has(dialect)
   const sqlite = dialect === 'sqlite'

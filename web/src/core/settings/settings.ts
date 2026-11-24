@@ -287,6 +287,16 @@ export const STACKS: readonly StackInfo[] = [
     updates: ['patch', 'optional', 'full'],
   },
   {
+    language: 'rust',
+    orm: 'sql',
+    label: 'SQL (sqlx)',
+    databases: ['postgresql', 'mysql', 'mariadb', 'sqlite'],
+    execution: ['async'],
+    errors: ['results'],
+    dtoKinds: ['struct'],
+    updates: ['patch', 'optional', 'full'],
+  },
+  {
     language: 'swift',
     orm: 'fluent',
     label: 'Fluent 1 (FluentKit)',
