@@ -13,6 +13,7 @@ import { describe, expect, it } from 'vitest'
 import { decidePolicy } from '../crud/edit.ts'
 import { SHOP } from '../crud/fixtures.ts'
 import { proposeCrud } from '../crud/propose.ts'
+import { readDdl } from '../importers/ddl/ddl.ts'
 import type { DbSchema } from '../schema/types.ts'
 import { MATCHING_CASES, readCase } from '../matching/test/cases.ts'
 import { generateProject } from './registry.ts'
@@ -26,6 +27,8 @@ interface Scenario {
   schema?: 'shop'
   /** A shared case of the matching, with its database and application models */
   case?: string
+  /** The database of verification/ddl/, read from its SQL */
+  ddl?: true
   settings: Record<string, unknown>
   decisions?: { table: string; decision: 'role' | 'delete' | 'concurrency' | 'children' | 'hidden'; value: unknown }[]
 }
@@ -33,9 +36,15 @@ interface Scenario {
 const SCHEMAS: Record<'shop', DbSchema> = { shop: SHOP }
 const { SCENARIOS } = (await import(resolve(process.cwd(), '../verification/scenarios/index.mjs'))) as { SCENARIOS: Scenario[] }
 
+const ddlOf = (scenario: Scenario) => readFileSync(resolve(process.cwd(), `../verification/ddl/${scenario.settings.database}.sql`), 'utf8')
+
 function project(scenario: Scenario) {
   const shared = scenario.case ? readCase(join(MATCHING_CASES, scenario.case)) : null
-  const schema = shared ? shared.database : SCHEMAS[scenario.schema ?? 'shop']
+  const schema = shared
+    ? shared.database
+    : scenario.ddl
+      ? readDdl(ddlOf(scenario), scenario.settings.database as Parameters<typeof readDdl>[1])
+      : SCHEMAS[scenario.schema ?? 'shop']
   const models = shared ? { schema: shared.models, project: shared.project } : null
   let design = proposeCrud(schema, null, models?.schema ?? null, models?.project ?? null)
   for (const item of scenario.decisions ?? [])

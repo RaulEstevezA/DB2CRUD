@@ -9,7 +9,7 @@
  */
 
 /** @typedef {{ table: string, decision: string, value: unknown }} Decision */
-/** @typedef {{ id: string, schema?: 'shop', case?: string, settings: Record<string, unknown>, decisions?: Decision[], service?: 'postgresql' | 'mysql' | 'mariadb' }} Scenario */
+/** @typedef {{ id: string, schema?: 'shop', case?: string, ddl?: true, settings: Record<string, unknown>, decisions?: Decision[], service?: 'postgresql' | 'mysql' | 'mariadb' }} Scenario */
 
 /** Every pending decision of the shop taken the other way, so the code of the other options runs too. */
 const OTHER_WAY = [
@@ -54,6 +54,13 @@ export const SCENARIOS = [
   { id: 'sqlalchemy-mariadb-sync-decided', schema: 'shop', settings: { database: 'mariadb', paging: 'cursor', architecture: 'table' }, decisions: OTHER_WAY, service: 'mariadb' },
   { id: 'sqlalchemy-sqlite-repositories-only', schema: 'shop', settings: { database: 'sqlite', services: false } },
   { id: 'sqlalchemy-postgresql-services-tests-only', schema: 'shop', settings: { database: 'postgresql', tests: 'services', entities: 'all' }, service: 'postgresql' },
+  // The user's own database, created from its SQL and not from the entities (verification/ddl/)
+  { id: 'sqlalchemy-ddl-sqlite', ddl: true, settings: { database: 'sqlite' } },
+  { id: 'sqlalchemy-ddl-postgresql', ddl: true, settings: { database: 'postgresql', serviceTypes: 'dtos' }, service: 'postgresql' },
+  { id: 'sqlalchemy-ddl-mysql', ddl: true, settings: { database: 'mysql', serviceTypes: 'dtos', dtoKind: 'dataclass', paging: 'cursor' }, service: 'mysql' },
+  { id: 'sqlalchemy-ddl-mariadb', ddl: true, settings: { database: 'mariadb', execution: 'async' }, service: 'mariadb' },
+  { id: 'python-sql-ddl-postgresql', ddl: true, settings: { language: 'python', orm: 'sql', database: 'postgresql', serviceTypes: 'dtos' }, service: 'postgresql' },
+  { id: 'python-sql-ddl-sqlite', ddl: true, settings: { language: 'python', orm: 'sql', database: 'sqlite' } },
   { id: 'django-sqlite-defaults', schema: 'shop', settings: { language: 'python', orm: 'django', database: 'sqlite' } },
   {
     id: 'django-postgresql-conversions-import',
