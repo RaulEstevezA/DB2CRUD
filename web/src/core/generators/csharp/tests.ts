@@ -1,6 +1,6 @@
 /**
  * The tests of a generated C# project, which are also what the verification runs (xUnit v3): factories that build
- * valid rows (and their parents first), repository tests against a real database created from the mapping, and
+ * valid rows (and their parents first), repository tests against a real database (the strategy opens it, orm.ts), and
  * service tests on the in-memory unit of work (or on the database when the project has no memory repositories).
  * The database is SQLite in memory unless TEST_DATABASE_CONNECTION names another. Mirrors java/tests.ts.
  */
@@ -42,12 +42,12 @@ export function canMake(context: Context, info: TableInfo, seen = new Set<string
 
 const newName = (info: TableInfo) => `New${info.entity}`
 const addName = (info: TableInfo) => `Add${info.entity}Async`
-const testsNs = (context: Context) => `${context.base}.Tests`
+export const testsNs = (context: Context) => `${context.base}.Tests`
 
 /** A value to pass where the column's plain type is asked for. */
 const plain = (expression: string, column: ColumnInfo) => (column.optional && column.valueType ? `${expression}!.Value` : expression)
 
-function file(context: Context, name: string, usings: CsUsings, body: (Line | Line[])[]): GeneratedFile {
+export function testFile(context: Context, name: string, usings: CsUsings, body: (Line | Line[])[]): GeneratedFile {
   const written = usings.write()
   return {
     path: pathOf(testsNs(context), name, true),
@@ -82,7 +82,11 @@ function factoriesFile(context: Context, makeable: TableInfo[]): GeneratedFile {
         const isKey = info.table.foreignKeys.some((key) => key.columns.includes(column.column.name))
         if (column === info.soft) return column.column.type.kind === 'boolean' ? [`        entity.${column.prop} = false;`] : []
         if (column.column.nullable && isKey) return []
-        return [`        entity.${column.prop} = ${sampleValue(column, info.table.checks, context.schema.enums)};`]
+        const value =
+          column.column.type.kind === 'array'
+            ? context.orm.emptyList(context)
+            : sampleValue(column, info.table.checks, context.schema.enums)
+        return [`        entity.${column.prop} = ${value};`]
       })
     const insert = query(info, 'insert')!
     return [
@@ -104,98 +108,11 @@ function factoriesFile(context: Context, makeable: TableInfo[]): GeneratedFile {
       '    }',
     ]
   })
-  return file(context, 'Factories', usings, [
+  return testFile(context, 'Factories', usings, [
     '/// <summary>Rows for the tests: valid values for every column, and the rows they point to.</summary>',
     'internal static class Factories',
     '{',
     ...blocks.flatMap((block, index) => [index > 0 ? '' : null, ...block]),
-    '}',
-  ])
-}
-
-// The test database
-
-const NAMES: Record<string, string> = { postgresql: 'PostgreSQL', mysql: 'MySQL', mariadb: 'MariaDB' }
-
-function testDatabaseFile(context: Context): GeneratedFile {
-  const database = context.settings.database
-  const sqlite = database === 'sqlite'
-  const usings = new CsUsings(testsNs(context)).add(context.base)
-  if (sqlite) usings.add('Microsoft.Data.Sqlite', 'Microsoft.EntityFrameworkCore')
-  return file(context, 'TestDatabase', usings, [
-    sqlite
-      ? '/// <summary>The test database: TEST_DATABASE_CONNECTION, or SQLite in memory, created empty from the mapping for every test.</summary>'
-      : `/// <summary>The test database: the ${NAMES[database]} database TEST_DATABASE_CONNECTION names, created empty from the mapping for every test.</summary>`,
-    'public sealed class TestDatabase : IAsyncDisposable',
-    '{',
-    '    public static readonly string? Connection = Environment.GetEnvironmentVariable("TEST_DATABASE_CONNECTION");',
-    '',
-    sqlite && ['    private readonly SqliteConnection? memory;', ''],
-    sqlite ? '    private TestDatabase(AppDbContext db, SqliteConnection? memory)' : '    private TestDatabase(AppDbContext db)',
-    '    {',
-    '        Db = db;',
-    sqlite && '        this.memory = memory;',
-    '    }',
-    '',
-    '    public AppDbContext Db { get; }',
-    '',
-    '    /// <summary>The test database, with every table dropped and created again.</summary>',
-    '    public static async Task<TestDatabase> OpenAsync()',
-    '    {',
-    ...(sqlite
-      ? [
-          '        SqliteConnection? memory = null;',
-          '        DbContextOptions<AppDbContext> options;',
-          '        if (Connection is null)',
-          '        {',
-          '            // An in-memory database lives as long as its connection is open',
-          '            memory = new SqliteConnection("Data Source=:memory:");',
-          '            memory.Open();',
-          '            options = new DbContextOptionsBuilder<AppDbContext>().UseSqlite(memory).Options;',
-          '        }',
-          '        else options = Database.Options(Connection);',
-          '        var db = new AppDbContext(options);',
-        ]
-      : [
-          '        // The mapping is written for one kind of database: the tests cannot fall back to SQLite',
-          '        if (Connection is null)',
-          `            throw new InvalidOperationException("The database tests need a disposable ${NAMES[database]} database: set TEST_DATABASE_CONNECTION (it is emptied)");`,
-          '        var db = new AppDbContext(Database.Options(Connection));',
-        ]),
-    '        await db.Database.EnsureDeletedAsync();',
-    '        await db.Database.EnsureCreatedAsync();',
-    sqlite ? '        return new TestDatabase(db, memory);' : '        return new TestDatabase(db);',
-    '    }',
-    '',
-    '    public async ValueTask DisposeAsync()',
-    '    {',
-    '        await Db.DisposeAsync();',
-    sqlite && '        if (memory is not null) await memory.DisposeAsync();',
-    '    }',
-    '}',
-  ])
-}
-
-function databaseTestsFile(context: Context): GeneratedFile {
-  const database = context.settings.database
-  const sqlite = database === 'sqlite'
-  const sql =
-    database === 'postgresql'
-      ? 'SELECT current_database() AS "Value"'
-      : sqlite
-        ? 'SELECT sqlite_version() AS "Value"'
-        : 'SELECT DATABASE() AS Value'
-  return file(context, 'DatabaseTests', new CsUsings(testsNs(context)).add('Microsoft.EntityFrameworkCore', 'Xunit'), [
-    '/// <summary>The tests run on the database they were asked to.</summary>',
-    'public class DatabaseTests',
-    '{',
-    '    [Fact]',
-    sqlite ? '    public async Task IsSqlite()' : '    public async Task IsTheOneTestDatabaseConnectionNames()',
-    '    {',
-    '        await using var database = await TestDatabase.OpenAsync();',
-    `        var value = await database.Db.Database.SqlQueryRaw<string>(${csString(sql)}).SingleAsync();`,
-    sqlite ? '        Assert.StartsWith("3.", value);' : '        Assert.Equal(database.Db.Database.GetDbConnection().Database, value);',
-    '    }',
     '}',
   ])
 }
@@ -235,7 +152,7 @@ function repositoryTests(context: Context, info: TableInfo): Line[][] {
   tests.push(
     test('IsStoredAndReadBack', [
       stored,
-      'uow.Db.ChangeTracker.Clear();',
+      context.orm.forget,
       getByKey && [
         `var found = await ${repo}.${queryName(context, getByKey)}(${keyOf('stored')});`,
         'Assert.NotNull(found);',
@@ -295,7 +212,7 @@ function repositoryTests(context: Context, info: TableInfo): Line[][] {
         stored,
         `stored.${text.prop} = "changed";`,
         `await ${repo}.${queryName(context, update)}(stored);`,
-        'uow.Db.ChangeTracker.Clear();',
+        context.orm.forget,
         `Assert.Equal("changed", (await ${repo}.${queryName(context, getByKey)}(${keyOf('stored')}))!.${text.prop});`,
       ]),
     )
@@ -497,27 +414,6 @@ function createOfHelper(context: Context, info: TableInfo, usings: CsUsings): Li
   ]
 }
 
-/** The fields, setup and teardown of a test class over the test database. */
-export function databaseMembers(context: Context): Line[] {
-  const caller = context.settings.transactions === 'caller'
-  return [
-    '    private TestDatabase database = null!;',
-    '',
-    '    /// <summary>The repositories over the test database, opened empty for every test</summary>',
-    '    private SqlUnitOfWork uow = null!;',
-    '',
-    '    public async ValueTask InitializeAsync()',
-    '    {',
-    '        database = await TestDatabase.OpenAsync();',
-    caller && '        // The caller owns the transaction: the test opens it, and it ends with the test',
-    caller && '        await database.Db.Database.BeginTransactionAsync();',
-    '        uow = new SqlUnitOfWork(database.Db);',
-    '    }',
-    '',
-    '    public async ValueTask DisposeAsync() => await database.DisposeAsync();',
-  ]
-}
-
 export function testFiles(context: Context): GeneratedFile[] {
   const tests = context.settings.tests
   if (tests === 'none' || !writesEntities(context)) return []
@@ -533,8 +429,7 @@ export function testFiles(context: Context): GeneratedFile[] {
         '',
       ),
     },
-    testDatabaseFile(context),
-    databaseTestsFile(context),
+    ...context.orm.testDatabaseFiles(context),
     factoriesFile(context, makeable),
   ]
   const memory = context.settings.memoryRepositories
@@ -546,7 +441,7 @@ export function testFiles(context: Context): GeneratedFile[] {
         `/// <summary>The repository of the "${info.name}" table, against the test database.</summary>`,
         `public class ${info.entity}RepositoryTests : IAsyncLifetime`,
         '{',
-        ...databaseMembers(context),
+        ...context.orm.testMembers(context),
         ...repositoryTests(context, info).flat(),
         '}',
       )
@@ -558,7 +453,7 @@ export function testFiles(context: Context): GeneratedFile[] {
           `/// <summary>The service of the "${info.name}" table, on ${memory ? 'the in-memory repositories' : 'the test database'}.</summary>`,
           memory ? `public class ${serviceClass(info)}Tests` : `public class ${serviceClass(info)}Tests : IAsyncLifetime`,
           '{',
-          ...(memory ? ['    private readonly MemoryUnitOfWork uow = new();'] : databaseMembers(context)),
+          ...(memory ? ['    private readonly MemoryUnitOfWork uow = new();'] : context.orm.testMembers(context)),
           ...blocks.flat(),
           ...(context.settings.serviceTypes === 'dtos' &&
           query(info, 'insert') &&
@@ -570,7 +465,7 @@ export function testFiles(context: Context): GeneratedFile[] {
       }
     }
     if (classes.length === 0) continue
-    files.push(file(context, `${info.entity}Tests`, usings, classes))
+    files.push(testFile(context, `${info.entity}Tests`, usings, classes))
   }
   return files
 }

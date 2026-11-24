@@ -16,6 +16,7 @@ import { findPolicy, findRepository, findService } from '../../crud/types.ts'
 import type { DbColumn, DbSchema, DbTable, DbType } from '../../schema/types.ts'
 import type { ProjectSettings } from '../../settings/settings.ts'
 import { localName, pascalName } from './csharp.ts'
+import type { CsharpOrm } from './orm.ts'
 
 export interface ColumnInfo {
   column: DbColumn
@@ -66,6 +67,7 @@ export interface TableInfo {
 }
 
 export interface Context {
+  orm: CsharpOrm
   schema: DbSchema
   design: CrudDesign
   settings: ProjectSettings
@@ -150,7 +152,7 @@ function tableInfo(schema: DbSchema, design: CrudDesign, settings: ProjectSettin
   const keyNames = table.primaryKey ?? []
   const columns = table.columns.map((column) => columnInfo(column, entity, keyNames.includes(column.name), settings.database))
   const byName = (name: string) => columns.find((info) => info.column.name === name)!
-  // A table without a primary key is read only, keyless for EF Core; its rows are told apart by all their columns
+  // A table without a primary key is read only; its rows are told apart by all their columns
   const key = (table.primaryKey ?? table.columns.map((column) => column.name)).map(byName)
   const deleteMode = policy.delete.value
   const concurrency = policy.concurrency.value
@@ -178,8 +180,8 @@ function tableInfo(schema: DbSchema, design: CrudDesign, settings: ProjectSettin
   }
 }
 
-export function createContext(schema: DbSchema, design: CrudDesign, settings: ProjectSettings): Context {
-  return { schema, design, settings, tables: schema.tables.map((table) => tableInfo(schema, design, settings, table)), base: 'App' }
+export function createContext(orm: CsharpOrm, schema: DbSchema, design: CrudDesign, settings: ProjectSettings): Context {
+  return { orm, schema, design, settings, tables: schema.tables.map((table) => tableInfo(schema, design, settings, table)), base: 'App' }
 }
 
 export const writesEntities = (context: Context) => context.tables.some((info) => info.writesEntity)

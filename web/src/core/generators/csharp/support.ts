@@ -1,12 +1,11 @@
 /**
  * What every C# project shares: the domain errors services throw (no HTTP codes), the pages lists are read in,
- * Patch (a field of an update: absent, null or a value), the unit of work over the repositories, and the options
- * of the database DATABASE_CONNECTION names.
+ * Patch (a field of an update: absent, null or a value), and the unit of work over the repositories (what its database
+ * class does is the strategy's, orm.ts).
  */
 import type { GeneratedFile } from '../../export/files.ts'
-import { lines } from '../types.ts'
-import { csString, CsUsings } from './csharp.ts'
-import { enumTypeName, pgEnums } from './entities.ts'
+import { lines, type Line } from '../types.ts'
+import { CsUsings } from './csharp.ts'
 import {
   commonNamespace,
   errorsNamespace,
@@ -15,11 +14,10 @@ import {
   pathOf,
   repositoryType,
   sqlRepositoryClass,
-  writesEntities,
   type Context,
 } from './context.ts'
 
-function file(ns: string, name: string, body: string[], usings?: CsUsings): GeneratedFile {
+export function file(ns: string, name: string, body: (Line | Line[])[], usings?: CsUsings): GeneratedFile {
   const written = usings?.write() ?? ''
   return { path: pathOf(ns, name), content: lines(written !== '' && [written, ''], `namespace ${ns};`, '', ...body, '') }
 }
@@ -119,11 +117,11 @@ export function commonFiles(context: Context): GeneratedFile[] {
   return files
 }
 
-const HOW = {
+const how = (context: Context) => ({
   operation: 'Each service operation runs in TransactionAsync: committed when it ends, rolled back when it fails.',
-  caller: 'Services never commit: whoever holds the AppDbContext opens and ends its transaction; TransactionAsync only groups the code.',
+  caller: `Services never commit: whoever holds the ${context.orm.holder} opens and ends its transaction; TransactionAsync only groups the code.`,
   repository: 'Every repository write is committed at once; TransactionAsync only groups the code.',
-}
+})
 
 /** IUnitOfWork, SqlUnitOfWork and MemoryUnitOfWork, in the root namespace. */
 export function unitOfWorkFiles(context: Context): GeneratedFile[] {
@@ -149,7 +147,7 @@ export function unitOfWorkFiles(context: Context): GeneratedFile[] {
       ns,
       'IUnitOfWork',
       [
-        `/// <summary>What services depend on: a repository per table and a transaction. ${HOW[settings.transactions]}</summary>`,
+        `/// <summary>What services depend on: a repository per table and a transaction. ${how(context)[settings.transactions]}</summary>`,
         'public interface IUnitOfWork',
         '{',
         ...context.tables.map((info) => `    ${repositoryType(context, info)} ${info.attr} { get; }`),
@@ -167,32 +165,16 @@ export function unitOfWorkFiles(context: Context): GeneratedFile[] {
       ns,
       'SqlUnitOfWork',
       [
-        '/// <summary>The repositories over one AppDbContext, and its transaction.</summary>',
-        'public class SqlUnitOfWork(AppDbContext db) : IUnitOfWork',
+        `/// <summary>The repositories over one ${context.orm.holder}, and its transaction.</summary>`,
+        `public class SqlUnitOfWork(${context.orm.holder} db) : IUnitOfWork`,
         '{',
-        '    public AppDbContext Db { get; } = db;',
+        `    public ${context.orm.holder} Db { get; } = db;`,
         ...properties((info) => `new ${sqlRepositoryClass(info)}(db)`),
         '',
         '    public async Task<T> TransactionAsync<T>(Func<IUnitOfWork, Task<T>> work)',
         '    {',
         ...(settings.transactions === 'operation'
-          ? [
-              '        // Joins the transaction already open',
-              '        if (Db.Database.CurrentTransaction is not null) return await work(this);',
-              '        await using var transaction = await Db.Database.BeginTransactionAsync();',
-              '        try',
-              '        {',
-              '            var result = await work(this);',
-              '            await transaction.CommitAsync();',
-              '            return result;',
-              '        }',
-              '        catch',
-              '        {',
-              '            await transaction.RollbackAsync();',
-              '            Db.ChangeTracker.Clear();',
-              '            throw;',
-              '        }',
-            ]
+          ? context.orm.transaction.map((line) => `        ${line}`)
           : ['        return await work(this);']),
         '    }',
         ...voidTransaction,
@@ -231,44 +213,3 @@ const CONNECTIONS: Record<string, string> = {
 }
 
 export const defaultConnection = (context: Context) => CONNECTIONS[context.settings.database] ?? CONNECTIONS.postgresql
-
-/** `Database`: the options of the AppDbContext of the database DATABASE_CONNECTION names. */
-export function databaseFile(context: Context): GeneratedFile {
-  const ns = context.base
-  const database = context.settings.database
-  const enums = writesEntities(context) ? pgEnums(context) : []
-  const use =
-    database === 'postgresql'
-      ? enums.length > 0
-        ? `builder.UseNpgsql(connection, npgsql => npgsql${enums.map((item) => `.MapEnum<${enumTypeName(context, item)}>(${csString(item.name)})`).join('')})`
-        : 'builder.UseNpgsql(connection)'
-      : database === 'sqlite'
-        ? 'builder.UseSqlite(connection)'
-        : 'builder.UseMySql(connection, ServerVersion.AutoDetect(connection))'
-  return file(
-    ns,
-    'Database',
-    [
-      '/// <summary>The database DATABASE_CONNECTION names (a connection string), through EF Core.</summary>',
-      'public static class Database',
-      '{',
-      `    public const string DefaultConnection = "${defaultConnection(context)}";`,
-      '',
-      '    /// <summary>The connection string of DATABASE_CONNECTION, or the default one.</summary>',
-      '    public static string Connection => Environment.GetEnvironmentVariable("DATABASE_CONNECTION") ?? DefaultConnection;',
-      '',
-      '    /// <summary>The options of an AppDbContext over the database at connection.</summary>',
-      '    public static DbContextOptions<AppDbContext> Options(string connection)',
-      '    {',
-      '        var builder = new DbContextOptionsBuilder<AppDbContext>();',
-      `        ${use};`,
-      '        return builder.Options;',
-      '    }',
-      '',
-      '    /// <summary>An AppDbContext over DATABASE_CONNECTION; dispose it when done.</summary>',
-      '    public static AppDbContext Open() => new(Options(Connection));',
-      '}',
-    ],
-    new CsUsings(ns).add('Microsoft.EntityFrameworkCore'),
-  )
-}

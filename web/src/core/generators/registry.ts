@@ -8,6 +8,7 @@ import type { GeneratedFile } from '../export/files.ts'
 import type { DbSchema } from '../schema/types.ts'
 import { normalizeSettings, type ProjectSettings } from '../settings/settings.ts'
 import { csharpGenerator } from './csharp/generator.ts'
+import { efcoreOrm } from './csharp/efcore/index.ts'
 import { javaGenerator } from './java/generator.ts'
 import { jpaOrm } from './java/jpa/index.ts'
 import { sqlOrm as javaSqlOrm } from './java/sql/index.ts'
@@ -40,7 +41,7 @@ export const GENERATORS: readonly Generator[] = [
   typescriptGenerator(typescriptSqlOrm),
   javaGenerator(jpaOrm),
   javaGenerator(javaSqlOrm),
-  csharpGenerator,
+  csharpGenerator(efcoreOrm),
   phpGenerator(doctrineOrm),
   phpGenerator(eloquentOrm),
   kotlinGenerator,

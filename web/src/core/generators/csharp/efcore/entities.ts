@@ -4,11 +4,11 @@
  * without one), unique indexes, indexes, CHECK constraints, foreign keys with their actions, enums of PostgreSQL,
  * and the values the database fills, which EF Core reads back after an insert.
  */
-import type { GeneratedFile } from '../../export/files.ts'
-import type { DbEnum } from '../../schema/types.ts'
-import { lines, type Line } from '../types.ts'
-import { csString, CsUsings, pascalName } from './csharp.ts'
-import { columnOf, findInfo, namespaceOf, pathOf, writesEntities, type ColumnInfo, type Context, type TableInfo } from './context.ts'
+import type { GeneratedFile } from '../../../export/files.ts'
+import type { DbEnum } from '../../../schema/types.ts'
+import { lines, type Line } from '../../types.ts'
+import { csString, CsUsings, pascalName } from '../csharp.ts'
+import { columnOf, findInfo, namespaceOf, pathOf, writesEntities, type ColumnInfo, type Context, type TableInfo } from '../context.ts'
 
 export function entityFile(context: Context, info: TableInfo): GeneratedFile {
   const ns = namespaceOf(context, info, 'entity')
