@@ -23,6 +23,8 @@ export interface PythonOrm {
   id: OrmId
   /** `SQLAlchemy 2`, for texts */
   label: string
+  /** Attribute names an entity cannot have: those of the base class. A column with one gets a trailing `_` */
+  reserved?: ReadonlySet<string>
   /** Connection, settings and entities: every file of the database layer */
   databaseFiles(context: Context): GeneratedFile[]
   /** The database repository of a table: its docstring, the lines of its __init__ and each method's body */

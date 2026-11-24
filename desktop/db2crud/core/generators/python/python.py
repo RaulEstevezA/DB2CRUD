@@ -11,7 +11,18 @@ KEYWORDS = {
     *"global if import in is lambda nonlocal not or pass raise return try while with yield match case type".split(),
 }
 
-STANDARD = {"collections", "collections.abc", "contextlib", "dataclasses", "datetime", "decimal", "enum", "os"}
+BUILTINS = {"bool", "bytes", "float", "int", "list", "str"}
+STANDARD = {
+    "builtins",
+    "collections",
+    "collections.abc",
+    "contextlib",
+    "dataclasses",
+    "datetime",
+    "decimal",
+    "enum",
+    "os",
+}
 STANDARD |= {"typing", "uuid"}
 
 
@@ -62,11 +73,27 @@ class Imports:
         self._names: dict[str, set[str]] = {}
         self._modules: set[str] = set()
         self._postponed = False
+        self._hidden: set[str] = set()
 
     def annotations(self) -> "Imports":
         """from __future__ import annotations: a method named list cannot hide the built-in in later annotations."""
         self._postponed = True
         return self
+
+    def hide(self, names: list[str]) -> "Imports":
+        """The names the attributes of a class hide from the annotations after them (a column named date hides the
+        type): they are imported under another name, which local gives."""
+        self._hidden = set(names)
+        return self
+
+    def local(self, name: str) -> str:
+        """How the module writes an imported or built-in name: date_ or builtins.str when the class hides it."""
+        if name not in self._hidden:
+            return name
+        if name not in BUILTINS:
+            return f"{name}_"
+        self.module("builtins")
+        return f"builtins.{name}"
 
     def from_(self, module: str, *names: str) -> "Imports":
         self._names.setdefault(module, set()).update(names)
@@ -89,7 +116,9 @@ class Imports:
                 target.append(f"import {module}")
             names = self._names.get(module)
             if names:
-                target.append(f"from {module} import {', '.join(sorted(names))}")
+                target.append(
+                    f"from {module} import {', '.join(f'{name} as {name}_' if name in self._hidden else name for name in sorted(names))}"
+                )
         if self._postponed:
             groups.insert(0, ["from __future__ import annotations"])
         return "\n\n".join("\n".join(items) for items in groups if items)

@@ -34,7 +34,7 @@ def read_columns(info: dict) -> list[dict]:
 
 
 def dtos_file(context: dict, info: dict) -> dict:
-    imports = Imports()
+    imports = Imports().hide([column["attr"] for column in info["columns"]])
     pydantic = context["settings"]["dtoKind"] == "pydantic"
     if pydantic:
         imports.from_("pydantic", "BaseModel")

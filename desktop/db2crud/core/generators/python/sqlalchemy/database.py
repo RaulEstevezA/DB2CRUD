@@ -17,6 +17,10 @@ def default_url(context: dict) -> str:
     return SYNC_URLS.get(context["settings"]["database"], SYNC_URLS["postgresql"])
 
 
+def _is_unknown(column_type: dict) -> bool:
+    return column_type["kind"] == "unknown" or (column_type["kind"] == "array" and _is_unknown(column_type["items"]))
+
+
 def db_file(context: dict) -> dict:
     imports = Imports().module("os")
     base = writes_entities(context)
@@ -31,6 +35,12 @@ def db_file(context: dict) -> dict:
         )
     if base:
         imports.from_("sqlalchemy.orm", "DeclarativeBase")
+    native = context["settings"]["database"] == "postgresql" and any(
+        info["writesEntity"] and any(_is_unknown(column["column"]["type"]) for column in info["columns"])
+        for info in context["tables"]
+    )
+    if native:
+        imports.from_("typing", "Any").from_("sqlalchemy.types", "UserDefinedType")
     engine = "AsyncEngine" if is_async else "Engine"
     base_text = " and the declarative base of the entities" if base else ""
     content = lines(
@@ -44,6 +54,18 @@ def db_file(context: dict) -> dict:
         f'DATABASE_URL = os.environ.get("DATABASE_URL", "{default_url(context)}")',
         "",
         base and ["", "class Base(DeclarativeBase):", '    """Base of every entity."""', ""],
+        native
+        and [
+            "",
+            "class NativeType(UserDefinedType[Any]):",
+            '    """A type SQLAlchemy has no class for here: its values reach the driver as they are, and the database converts them."""',
+            "",
+            "    cache_ok = True",
+            "",
+            "    def get_col_spec(self, **_: Any) -> str:",
+            '        return "TEXT"',
+            "",
+        ],
         is_async
         and [
             "",
@@ -90,7 +112,7 @@ def db_file(context: dict) -> dict:
 # Entities
 
 
-def _sa_type(column_type: dict, imports: Imports, key: bool) -> str:
+def _sa_type(context: dict, column_type: dict, imports: Imports, key: bool) -> str:
     def sa(name: str) -> str:
         imports.from_("sqlalchemy", name)
         return name
@@ -121,12 +143,20 @@ def _sa_type(column_type: dict, imports: Imports, key: bool) -> str:
         if "length" in column_type:
             return f"{sa('LargeBinary')}({column_type['length']})"
         return f"{sa('LargeBinary')}()"
-    if kind in ("json", "array"):
-        # Arrays are portable as JSON; a native PostgreSQL array is a decision for the user
+    if kind == "array":
+        if context["settings"]["database"] == "postgresql":
+            return f"{sa('ARRAY')}({_column_type(context, column_type['items'], imports, False)})"
+        # The other databases keep arrays as JSON
+        return f"{sa('JSON')}()"
+    if kind == "json":
         return f"{sa('JSON')}()"
     if kind == "enum":
         return f"{sa('String')}({max(1, len(column_type['name']))})"
-    return f"{sa('Text')}()"
+    # PostgreSQL does not convert text to other types by itself; the other databases do
+    if context["settings"]["database"] != "postgresql":
+        return f"{sa('Text')}()"
+    imports.from_("app.db", "NativeType")
+    return "NativeType()"
 
 
 def _enum_type(context: dict, column_type: dict, imports: Imports) -> str:
@@ -134,9 +164,15 @@ def _enum_type(context: dict, column_type: dict, imports: Imports) -> str:
         (candidate for candidate in context["schema"]["enums"] if candidate["name"] == column_type["name"]), None
     )
     if not item:
-        return _sa_type({"sql": column_type["sql"], "kind": "text"}, imports, False)
+        return _sa_type(context, {"sql": column_type["sql"], "kind": "text"}, imports, False)
     imports.from_("sqlalchemy", "Enum")
     return f"Enum({', '.join(js_json(value) for value in item['values'])}, name={js_json(item['name'])})"
+
+
+def _column_type(context: dict, column_type: dict, imports: Imports, key: bool) -> str:
+    if column_type["kind"] == "enum":
+        return _enum_type(context, column_type, imports)
+    return _sa_type(context, column_type, imports, key)
 
 
 def _foreign_key(key: dict, imports: Imports) -> str:
@@ -158,11 +194,7 @@ def _column_line(context: dict, info: dict, column: dict, imports: Imports) -> l
     primary_key = info["table"]["primaryKey"]
     is_key = primary_key is not None and db["name"] in primary_key
     column_type = db["type"]
-    sa_type = (
-        _enum_type(context, column_type, imports)
-        if column_type["kind"] == "enum"
-        else _sa_type(column_type, imports, is_key)
-    )
+    sa_type = _column_type(context, column_type, imports, is_key)
     args = []
     if column["attr"] != db["name"]:
         args.append(js_json(db["name"]))
@@ -180,12 +212,12 @@ def _column_line(context: dict, info: dict, column: dict, imports: Imports) -> l
         args.append("autoincrement=True")
     if generated == "uuid":
         imports.from_("uuid", "uuid4")
-        args.append("default=uuid4")
+        args.append(f"default={imports.local('uuid4')}")
     if generated in ("now", "onUpdateNow"):
         imports.from_("sqlalchemy", "func")
-        args.append("server_default=func.now()")
+        args.append(f"server_default={imports.local('func')}.now()")
         if generated == "onUpdateNow":
-            args.append("onupdate=func.now()")
+            args.append(f"onupdate={imports.local('func')}.now()")
     if isinstance(generated, dict):
         imports.from_("sqlalchemy", "Computed")
         args.append(f"Computed({js_json(generated['computed'])})")
@@ -194,7 +226,7 @@ def _column_line(context: dict, info: dict, column: dict, imports: Imports) -> l
         args.append(f"default={py_literal(default['value'])}")
     if default and default["kind"] == "expression":
         imports.from_("sqlalchemy", "text")
-        args.append(f"server_default=text({js_json(default['sql'])})")
+        args.append(f"server_default={imports.local('text')}({js_json(default['sql'])})")
     if not is_key:
         args.append(f"nullable={'True' if db['nullable'] else 'False'}")
     todo = (
@@ -203,15 +235,15 @@ def _column_line(context: dict, info: dict, column: dict, imports: Imports) -> l
         else None
     )
     array = (
-        f'    # TODO: "{column_type["sql"]}" is mapped as JSON; use sqlalchemy.ARRAY on PostgreSQL if you need the native array'
-        if column_type["kind"] == "array"
+        f'    # "{column_type["sql"]}" is kept as JSON: this database has no arrays'
+        if column_type["kind"] == "array" and context["settings"]["database"] != "postgresql"
         else None
     )
     imports.from_("sqlalchemy.orm", "Mapped", "mapped_column")
     return [
         todo,
         array,
-        f"    {column['attr']}: Mapped[{column_py_type(column, imports)}] = mapped_column({', '.join(args)})",
+        f"    {column['attr']}: Mapped[{column_py_type(column, imports)}] = {imports.local('mapped_column')}({', '.join(args)})",
     ]
 
 
@@ -234,6 +266,8 @@ def _table_args(info: dict, imports: Imports) -> list[str]:
             options.append(f"name={js_json(key['name'])}")
         if key.get("onDelete"):
             options.append(f"ondelete={js_json(key['onDelete'].upper())}")
+        if key.get("onUpdate"):
+            options.append(f"onupdate={js_json(key['onUpdate'].upper())}")
         args.append(f"ForeignKeyConstraint({', '.join(options)})")
     for unique in table["uniques"]:
         imports.from_("sqlalchemy", "UniqueConstraint")
@@ -251,7 +285,7 @@ def _table_args(info: dict, imports: Imports) -> list[str]:
 
 
 def entity_file(context: dict, info: dict) -> dict:
-    imports = Imports().from_("app.db", "Base")
+    imports = Imports().from_("app.db", "Base").hide([column["attr"] for column in info["columns"]])
     columns = [line for column in info["columns"] for line in _column_line(context, info, column, imports)]
     args = _table_args(info, imports)
     table = info["table"]

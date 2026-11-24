@@ -72,7 +72,8 @@ export function sampleValue(column: DbColumn, checks: DbCheck[], enums: DbEnum[]
       imports.from('uuid', 'UUID')
       return 'UUID(int=n)'
     case 'binary':
-      return 'bytes([n % 256])'
+      // As long as the column, when its length may be fixed: the database fills shorter values
+      return type.length !== undefined && type.length <= 64 ? `bytes([n % 256]) * ${type.length}` : 'bytes([n % 256])'
     case 'json':
     case 'array':
       return type.kind === 'array' ? '[]' : '{"n": n}'

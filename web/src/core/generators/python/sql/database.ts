@@ -235,7 +235,10 @@ export function readerOf(context: Context, kind: string): string | null {
 
 /** The entity of a table: a dataclass with one attribute per column, None until it is set or read. */
 export function entityFile(context: Context, info: TableInfo): GeneratedFile {
-  const imports = new Imports().annotations().from('dataclasses', 'dataclass')
+  const imports = new Imports()
+    .hide(info.columns.map((column) => column.attr))
+    .annotations()
+    .from('dataclasses', 'dataclass')
   const fields = info.columns.map((column) => `    ${column.attr}: ${columnPyType(column, imports, true)} = None`)
   const content = lines(
     `"""Entity of the "${info.name}" table${info.table.comment ? `: ${info.table.comment}` : ''}."""`,

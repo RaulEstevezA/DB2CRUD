@@ -21,7 +21,7 @@ export const updateColumns = (info: TableInfo) => info.columns.filter((column) =
 export const readColumns = (info: TableInfo) => info.columns.filter((column) => !info.hidden.includes(column.column.name))
 
 export function dtosFile(context: Context, info: TableInfo): GeneratedFile {
-  const imports = new Imports()
+  const imports = new Imports().hide(info.columns.map((column) => column.attr))
   const pydantic = context.settings.dtoKind === 'pydantic'
   if (pydantic) imports.from('pydantic', 'BaseModel')
   else imports.from('dataclasses', 'dataclass')

@@ -15,6 +15,8 @@ const VERSIONS = {
   sqlalchemy: 'sqlalchemy>=2.0.36,<2.1',
   psycopg: 'psycopg[binary]>=3.2,<4',
   pymysql: 'pymysql>=1.1,<2',
+  // aiomysql cannot write binary values with PyMySQL 1.2 (PyMySQL issue 1274)
+  pymysqlAsync: 'pymysql>=1.1,<1.2',
   cryptography: 'cryptography>=43',
   aiosqlite: 'aiosqlite>=0.20,<1',
   aiomysql: 'aiomysql>=0.2,<1',
@@ -28,7 +30,8 @@ function dependencies(context: Context): string[] {
   const { database, serviceTypes, dtoKind } = context.settings
   const deps = [VERSIONS.sqlalchemy]
   if (database === 'postgresql') deps.push(VERSIONS.psycopg)
-  if (database === 'mysql' || database === 'mariadb') deps.push(VERSIONS.pymysql, VERSIONS.cryptography)
+  if (database === 'mysql' || database === 'mariadb')
+    deps.push(context.async ? VERSIONS.pymysqlAsync : VERSIONS.pymysql, VERSIONS.cryptography)
   if (context.async) {
     deps.push(VERSIONS.greenlet)
     if (database === 'sqlite') deps.push(VERSIONS.aiosqlite)
@@ -77,6 +80,7 @@ function unitOfWork(context: Context, imports: Imports): Line[] {
 }
 
 export const sqlalchemyOrm: PythonOrm = {
+  reserved: new Set(['metadata', 'registry']),
   id: 'sqlalchemy',
   label: 'SQLAlchemy 2',
   databaseFiles: (context) => [dbFile(context), ...entityFiles(context)],

@@ -75,7 +75,10 @@ export function pyLiteral(value: Literal): string {
   return JSON.stringify(value)
 }
 
+const BUILTINS = new Set(['bool', 'bytes', 'float', 'int', 'list', 'str'])
+
 const STANDARD = new Set([
+  'builtins',
   'collections',
   'collections.abc',
   'contextlib',
@@ -93,12 +96,28 @@ export class Imports {
   private readonly names = new Map<string, Set<string>>()
   private readonly modules = new Set<string>()
   private postponed = false
+  private hidden = new Set<string>()
 
   /** `from __future__ import annotations`: annotations are not evaluated, so a method named `list` cannot
    * hide the built-in in the annotations after it. */
   annotations(): this {
     this.postponed = true
     return this
+  }
+
+  /** The names the attributes of a class hide from the annotations after them (a column named `date` hides the
+   * type): they are imported under another name, which `local` gives. */
+  hide(names: string[]): this {
+    this.hidden = new Set(names)
+    return this
+  }
+
+  /** How the module writes an imported or built-in name: `date_` or `builtins.str` when the class hides it. */
+  local(name: string): string {
+    if (!this.hidden.has(name)) return name
+    if (!BUILTINS.has(name)) return `${name}_`
+    this.module('builtins')
+    return `builtins.${name}`
   }
 
   /** `from module import name` */
@@ -127,7 +146,7 @@ export class Imports {
       if (names && names.size > 0) {
         // isort orders names case-sensitively with constants and classes first
         const sorted = [...names].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))
-        target.push(`from ${module} import ${sorted.join(', ')}`)
+        target.push(`from ${module} import ${sorted.map((name) => (this.hidden.has(name) ? `${name} as ${name}_` : name)).join(', ')}`)
       }
     }
     if (this.postponed) groups.unshift(['from __future__ import annotations'])

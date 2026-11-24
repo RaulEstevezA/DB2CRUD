@@ -79,7 +79,9 @@ def sample_value(column: dict, checks: list[dict], enums: list[dict], imports: I
         imports.from_("uuid", "UUID")
         return "UUID(int=n)"
     if kind == "binary":
-        return "bytes([n % 256])"
+        # As long as the column, when its length may be fixed: the database fills shorter values
+        length = column_type.get("length")
+        return f"bytes([n % 256]) * {length}" if length is not None and length <= 64 else "bytes([n % 256])"
     if kind == "array":
         return "[]"
     if kind == "json":

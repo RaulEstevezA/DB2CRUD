@@ -18,7 +18,7 @@ def _py_type(column_type: dict, imports: Imports | None = None) -> str:
     kind = column_type["kind"]
     simple = {"integer": "int", "float": "float", "text": "str", "enum": "str", "boolean": "bool", "binary": "bytes"}
     if kind in simple:
-        return simple[kind]
+        return simple[kind] if imports is None else imports.local(simple[kind])
     imported = {
         "decimal": ("decimal", "Decimal"),
         "date": ("datetime", "date"),
@@ -30,9 +30,10 @@ def _py_type(column_type: dict, imports: Imports | None = None) -> str:
         module, name = imported[kind]
         if imports is not None:
             imports.from_(module, name)
-        return name
+        return name if imports is None else imports.local(name)
     if kind == "array":
-        return f"list[{_py_type(column_type['items'], imports)}]"
+        outer = "list" if imports is None else imports.local("list")
+        return f"{outer}[{_py_type(column_type['items'], imports)}]"
     if imports is not None:
         imports.from_("typing", "Any")
     return "Any"
@@ -59,22 +60,23 @@ def _included(items: list[dict]) -> list[dict]:
     return [item for item in items if item["include"]["value"]]
 
 
-def _column_info(column: dict) -> dict:
+def _column_info(orm, column: dict) -> dict:
+    attr = snake_name(column["name"])
     generated = column.get("generated") is not None and column.get("generated") != "onUpdateNow"
     return {
         "column": column,
-        "attr": snake_name(column["name"]),
+        "attr": f"{attr}_" if attr in orm.get("reserved", ()) else attr,
         "py": _py_type(column["type"]),
         "generated": generated,
         "required": not column["nullable"] and "default" not in column and not generated,
     }
 
 
-def _table_info(schema: dict, design: dict, settings: dict, table: dict) -> dict:
+def _table_info(orm, schema: dict, design: dict, settings: dict, table: dict) -> dict:
     policy = find_policy(design, table["name"])
     repository = find_repository(design, table["name"])
     service = find_service(design, table["name"]) if settings["services"] else None
-    columns = [_column_info(column) for column in table["columns"]]
+    columns = [_column_info(orm, column) for column in table["columns"]]
 
     def by_name(name: str) -> dict:
         return next(info for info in columns if info["column"]["name"] == name)
@@ -116,7 +118,7 @@ def create_context(orm: dict, schema: dict, design: dict, settings: dict) -> dic
         "schema": schema,
         "design": design,
         "settings": settings,
-        "tables": [_table_info(schema, design, settings, table) for table in schema["tables"]],
+        "tables": [_table_info(orm, schema, design, settings, table) for table in schema["tables"]],
         "async": settings["execution"] == "async",
     }
 

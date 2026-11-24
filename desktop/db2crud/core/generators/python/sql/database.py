@@ -259,7 +259,9 @@ def reader_of(context: dict, kind: str) -> str | None:
 
 def entity_file(context: dict, info: dict) -> dict:
     """The entity of a table: a dataclass with one attribute per column, None until it is set or read."""
-    imports = Imports().annotations().from_("dataclasses", "dataclass")
+    imports = (
+        Imports().hide([column["attr"] for column in info["columns"]]).annotations().from_("dataclasses", "dataclass")
+    )
     fields = [f"    {column['attr']}: {column_py_type(column, imports, True)} = None" for column in info["columns"]]
     comment = f": {info['table']['comment']}" if info["table"].get("comment") else ""
     content = lines(

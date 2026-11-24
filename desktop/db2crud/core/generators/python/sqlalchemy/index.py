@@ -12,6 +12,8 @@ VERSIONS = {
     "sqlalchemy": "sqlalchemy>=2.0.36,<2.1",
     "psycopg": "psycopg[binary]>=3.2,<4",
     "pymysql": "pymysql>=1.1,<2",
+    # aiomysql cannot write binary values with PyMySQL 1.2 (PyMySQL issue 1274)
+    "pymysqlAsync": "pymysql>=1.1,<1.2",
     "cryptography": "cryptography>=43",
     "aiosqlite": "aiosqlite>=0.20,<1",
     "aiomysql": "aiomysql>=0.2,<1",
@@ -29,7 +31,7 @@ def dependencies(context: dict) -> list[str]:
     if database == "postgresql":
         deps.append(VERSIONS["psycopg"])
     if database in ("mysql", "mariadb"):
-        deps += [VERSIONS["pymysql"], VERSIONS["cryptography"]]
+        deps += [VERSIONS["pymysqlAsync" if context["async"] else "pymysql"], VERSIONS["cryptography"]]
     if context["async"]:
         deps.append(VERSIONS["greenlet"])
         if database == "sqlite":
@@ -111,6 +113,7 @@ def _layout(context: dict) -> list[str]:
 
 
 SQLALCHEMY_ORM = {
+    "reserved": frozenset({"metadata", "registry"}),
     "id": "sqlalchemy",
     "label": "SQLAlchemy 2",
     "databaseFiles": lambda context: [db_file(context), *entity_files(context)],

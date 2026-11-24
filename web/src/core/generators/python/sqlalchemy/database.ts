@@ -20,6 +20,8 @@ export function defaultUrl(context: Context): string {
   return SYNC_URLS[context.settings.database] ?? SYNC_URLS.postgresql
 }
 
+const isUnknown = (type: DbType): boolean => type.kind === 'unknown' || (type.kind === 'array' && isUnknown(type.items))
+
 export function dbFile(context: Context): GeneratedFile {
   const imports = new Imports().module('os')
   const base = writesEntities(context)
@@ -31,6 +33,10 @@ export function dbFile(context: Context): GeneratedFile {
     imports.from('sqlalchemy', 'Engine', 'create_engine', 'event').from('sqlalchemy.orm', 'Session', 'sessionmaker')
   }
   if (base) imports.from('sqlalchemy.orm', 'DeclarativeBase')
+  const native =
+    context.settings.database === 'postgresql' &&
+    context.tables.some((info) => info.writesEntity && info.columns.some((column) => isUnknown(column.column.type)))
+  if (native) imports.from('typing', 'Any').from('sqlalchemy.types', 'UserDefinedType')
   const engine = context.async ? 'AsyncEngine' : 'Engine'
   const content = lines(
     `"""Database engine, sessions${base ? ' and the declarative base of the entities' : ''} (SQLAlchemy 2${context.async ? ', asynchronous' : ''}).`,
@@ -43,6 +49,17 @@ export function dbFile(context: Context): GeneratedFile {
     `DATABASE_URL = os.environ.get("DATABASE_URL", "${defaultUrl(context)}")`,
     '',
     base && ['', 'class Base(DeclarativeBase):', '    """Base of every entity."""', ''],
+    native && [
+      '',
+      'class NativeType(UserDefinedType[Any]):',
+      '    """A type SQLAlchemy has no class for here: its values reach the driver as they are, and the database converts them."""',
+      '',
+      '    cache_ok = True',
+      '',
+      '    def get_col_spec(self, **_: Any) -> str:',
+      '        return "TEXT"',
+      '',
+    ],
     context.async && [
       '',
       '# The asynchronous driver of each database the synchronous URLs name',
@@ -86,7 +103,7 @@ export function dbFile(context: Context): GeneratedFile {
 
 // Entities
 
-function saType(type: DbType, imports: Imports, key: boolean): string {
+function saType(context: Context, type: DbType, imports: Imports, key: boolean): string {
   const sa = (name: string) => {
     imports.from('sqlalchemy', name)
     return name
@@ -115,28 +132,37 @@ function saType(type: DbType, imports: Imports, key: boolean): string {
       return `${sa('Uuid')}()`
     case 'binary':
       return type.length !== undefined ? `${sa('LargeBinary')}(${type.length})` : `${sa('LargeBinary')}()`
-    case 'json':
     case 'array':
-      // Arrays are portable as JSON; a native PostgreSQL array is a decision for the user
+      if (context.settings.database === 'postgresql') return `${sa('ARRAY')}(${columnType(context, type.items, imports, false)})`
+      // The other databases keep arrays as JSON
+      return `${sa('JSON')}()`
+    case 'json':
       return `${sa('JSON')}()`
     case 'enum':
       return `${sa('String')}(${Math.max(1, type.name.length)})`
     case 'unknown':
-      return `${sa('Text')}()`
+      // PostgreSQL does not convert text to other types by itself; the other databases do
+      if (context.settings.database !== 'postgresql') return `${sa('Text')}()`
+      imports.from('app.db', 'NativeType')
+      return 'NativeType()'
   }
 }
 
 function enumType(context: Context, type: DbType & { kind: 'enum' }, imports: Imports): string {
   const item = context.schema.enums.find((candidate) => candidate.name === type.name)
-  if (!item) return saType({ sql: type.sql, kind: 'text' }, imports, false)
+  if (!item) return saType(context, { sql: type.sql, kind: 'text' }, imports, false)
   imports.from('sqlalchemy', 'Enum')
   return `Enum(${item.values.map((value) => JSON.stringify(value)).join(', ')}, name=${JSON.stringify(item.name)})`
+}
+
+function columnType(context: Context, type: DbType, imports: Imports, key: boolean): string {
+  return type.kind === 'enum' ? enumType(context, type, imports) : saType(context, type, imports, key)
 }
 
 function columnLine(context: Context, info: TableInfo, column: ColumnInfo, imports: Imports): Line[] {
   const { column: db } = column
   const isKey = info.table.primaryKey?.includes(db.name) ?? false
-  const type = db.type.kind === 'enum' ? enumType(context, db.type, imports) : saType(db.type, imports, isKey)
+  const type = columnType(context, db.type, imports, isKey)
   const args: string[] = []
   if (column.attr !== db.name) args.push(JSON.stringify(db.name))
   args.push(type)
@@ -146,12 +172,12 @@ function columnLine(context: Context, info: TableInfo, column: ColumnInfo, impor
   if (db.generated === 'identity') args.push('autoincrement=True')
   if (db.generated === 'uuid') {
     imports.from('uuid', 'uuid4')
-    args.push('default=uuid4')
+    args.push(`default=${imports.local('uuid4')}`)
   }
   if (db.generated === 'now' || db.generated === 'onUpdateNow') {
     imports.from('sqlalchemy', 'func')
-    args.push('server_default=func.now()')
-    if (db.generated === 'onUpdateNow') args.push('onupdate=func.now()')
+    args.push(`server_default=${imports.local('func')}.now()`)
+    if (db.generated === 'onUpdateNow') args.push(`onupdate=${imports.local('func')}.now()`)
   }
   if (typeof db.generated === 'object') {
     imports.from('sqlalchemy', 'Computed')
@@ -160,16 +186,20 @@ function columnLine(context: Context, info: TableInfo, column: ColumnInfo, impor
   if (db.default?.kind === 'literal') args.push(`default=${pyLiteral(db.default.value)}`)
   if (db.default?.kind === 'expression') {
     imports.from('sqlalchemy', 'text')
-    args.push(`server_default=text(${JSON.stringify(db.default.sql)})`)
+    args.push(`server_default=${imports.local('text')}(${JSON.stringify(db.default.sql)})`)
   }
   if (!isKey) args.push(`nullable=${db.nullable ? 'True' : 'False'}`)
   const todo = db.type.kind === 'unknown' ? `    # TODO: "${db.type.sql}" has no SQLAlchemy type here; it is mapped as text` : null
   const array =
-    db.type.kind === 'array'
-      ? `    # TODO: "${db.type.sql}" is mapped as JSON; use sqlalchemy.ARRAY on PostgreSQL if you need the native array`
+    db.type.kind === 'array' && context.settings.database !== 'postgresql'
+      ? `    # "${db.type.sql}" is kept as JSON: this database has no arrays`
       : null
   imports.from('sqlalchemy.orm', 'Mapped', 'mapped_column')
-  return [todo, array, `    ${column.attr}: Mapped[${columnPyType(column, imports)}] = mapped_column(${args.join(', ')})`]
+  return [
+    todo,
+    array,
+    `    ${column.attr}: Mapped[${columnPyType(column, imports)}] = ${imports.local('mapped_column')}(${args.join(', ')})`,
+  ]
 }
 
 function foreignKey(key: DbForeignKey, imports: Imports): string {
@@ -196,6 +226,7 @@ function tableArgs(info: TableInfo, imports: Imports): string[] {
     ]
     if (key.name) options.push(`name=${JSON.stringify(key.name)}`)
     if (key.onDelete) options.push(`ondelete=${JSON.stringify(key.onDelete.toUpperCase())}`)
+    if (key.onUpdate) options.push(`onupdate=${JSON.stringify(key.onUpdate.toUpperCase())}`)
     args.push(`ForeignKeyConstraint(${options.join(', ')})`)
   }
   for (const unique of table.uniques) {
@@ -215,7 +246,7 @@ function tableArgs(info: TableInfo, imports: Imports): string[] {
 }
 
 export function entityFile(context: Context, info: TableInfo): GeneratedFile {
-  const imports = new Imports().from('app.db', 'Base')
+  const imports = new Imports().from('app.db', 'Base').hide(info.columns.map((column) => column.attr))
   const columns = info.columns.flatMap((column) => columnLine(context, info, column, imports))
   const args = tableArgs(info, imports)
   const namespace = info.table.schema ? `{"schema": ${JSON.stringify(info.table.schema)}}` : null

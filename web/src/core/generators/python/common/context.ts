@@ -72,35 +72,36 @@ export interface Context {
 }
 
 function pyType(type: DbType, imports?: Imports): string {
+  const local = (name: string) => imports?.local(name) ?? name
   switch (type.kind) {
     case 'integer':
-      return 'int'
+      return local('int')
     case 'decimal':
       imports?.from('decimal', 'Decimal')
       return 'Decimal'
     case 'float':
-      return 'float'
+      return local('float')
     case 'text':
     case 'enum':
-      return 'str'
+      return local('str')
     case 'boolean':
-      return 'bool'
+      return local('bool')
     case 'date':
       imports?.from('datetime', 'date')
-      return 'date'
+      return local('date')
     case 'time':
       imports?.from('datetime', 'time')
-      return 'time'
+      return local('time')
     case 'datetime':
       imports?.from('datetime', 'datetime')
-      return 'datetime'
+      return local('datetime')
     case 'uuid':
       imports?.from('uuid', 'UUID')
       return 'UUID'
     case 'binary':
-      return 'bytes'
+      return local('bytes')
     case 'array':
-      return `list[${pyType(type.items, imports)}]`
+      return `${local('list')}[${pyType(type.items, imports)}]`
     case 'json':
     case 'unknown':
       imports?.from('typing', 'Any')
@@ -127,22 +128,22 @@ function blockingLinks(schema: DbSchema, table: DbTable): ChildLink[] {
 
 const included = <T extends { include: { value: boolean } }>(items: T[]) => items.filter((item) => item.include.value)
 
-function columnInfo(column: DbColumn): ColumnInfo {
+function columnInfo(orm: PythonOrm, column: DbColumn): ColumnInfo {
   const generated = column.generated !== undefined && column.generated !== 'onUpdateNow'
   return {
     column,
-    attr: snakeName(column.name),
+    attr: orm.reserved?.has(snakeName(column.name)) ? `${snakeName(column.name)}_` : snakeName(column.name),
     py: pyType(column.type),
     generated,
     required: !column.nullable && column.default === undefined && !generated,
   }
 }
 
-function tableInfo(schema: DbSchema, design: CrudDesign, settings: ProjectSettings, table: DbTable): TableInfo {
+function tableInfo(orm: PythonOrm, schema: DbSchema, design: CrudDesign, settings: ProjectSettings, table: DbTable): TableInfo {
   const policy = findPolicy(design, table.name)!
   const repository = findRepository(design, table.name)!
   const service = settings.services ? (findService(design, table.name) ?? null) : null
-  const columns = table.columns.map(columnInfo)
+  const columns = table.columns.map((column) => columnInfo(orm, column))
   const byName = (name: string) => columns.find((info) => info.column.name === name)!
   // A table without a primary key is mapped on all its columns: ORMs need some key to tell rows apart
   const key = (table.primaryKey ?? table.columns.map((column) => column.name)).map(byName)
@@ -178,7 +179,7 @@ export function createContext(orm: PythonOrm, schema: DbSchema, design: CrudDesi
     schema,
     design,
     settings,
-    tables: schema.tables.map((table) => tableInfo(schema, design, settings, table)),
+    tables: schema.tables.map((table) => tableInfo(orm, schema, design, settings, table)),
     async: settings.execution === 'async',
   }
 }
