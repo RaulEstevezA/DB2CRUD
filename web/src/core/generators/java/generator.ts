@@ -34,11 +34,21 @@ function code(context: Context): GeneratedFile[] {
   return files.filter((file): file is GeneratedFile => file !== null)
 }
 
+/** The files with the database classes named as the strategy asks: `SqlUnitOfWork` is `MongoUnitOfWork` in a document database. */
+function named(orm: JavaOrm, files: GeneratedFile[]): GeneratedFile[] {
+  const { prefix } = orm
+  if (!prefix) return files
+  const rename = (text: string) => text.replace(/\bSql(?=UnitOfWork\b|\w+Repository\b)/g, prefix)
+  return files.map((file) => ({ ...file, path: rename(file.path), content: rename(file.content) }))
+}
+
 export function javaGenerator(orm: JavaOrm): Generator {
   return {
     language: 'java',
     orm: orm.id,
-    generate({ schema, design, settings, models }) {
+    generate({ schema, design, settings, models: given }) {
+      // The conversions read columns, not the documents inside them
+      const models = orm.documents ? null : given
       const context = createContext(orm, schema, design, settings)
       const plans = models ? servicePlans(context, planConversions(schema, design, models)) : []
       const conversions = models ? conversionFiles(context, models.schema, plans) : []
@@ -47,7 +57,7 @@ export function javaGenerator(orm: JavaOrm): Generator {
         models && tests.length > 0 && (settings.tests === 'all' || settings.tests === 'services')
           ? conversionTestFile(context, plans, models.schema, (info) => canMake(context, info))
           : null
-      return [
+      return named(orm, [
         readmeFile(context),
         pomFile(context, conversions.length > 0 && settings.modelsSource === 'import'),
         envExampleFile(context),
@@ -57,7 +67,7 @@ export function javaGenerator(orm: JavaOrm): Generator {
         ...conversions,
         ...tests,
         ...(conversionTests ? [conversionTests] : []),
-      ]
+      ])
     },
   }
 }

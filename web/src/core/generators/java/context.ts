@@ -16,6 +16,7 @@ import { findPolicy, findRepository, findService } from '../../crud/types.ts'
 import type { DbColumn, DbSchema, DbTable, DbType } from '../../schema/types.ts'
 import type { ProjectSettings } from '../../settings/settings.ts'
 import { capitalized, memberName, packageName, typeName } from './java.ts'
+import { documentType, nestedClasses, type NestedClass } from './documents.ts'
 import type { JavaOrm } from './orm.ts'
 
 export interface ColumnInfo {
@@ -60,6 +61,8 @@ export interface TableInfo {
   repository: RepositoryDesign
   service: ServiceDesign | null
   writesEntity: boolean
+  /** The classes of its nested documents, by column: only in document databases */
+  nested: Map<string, NestedClass>
 }
 
 export interface Context {
@@ -119,13 +122,14 @@ function blockingLinks(schema: DbSchema, table: DbTable): ChildLink[] {
 
 const included = <T extends { include: { value: boolean } }>(items: T[]) => items.filter((item) => item.include.value)
 
-function columnInfo(column: DbColumn): ColumnInfo {
+function columnInfo(column: DbColumn, types: { java: string; javaImport: string | null }, own: boolean): ColumnInfo {
   const generated = column.generated !== undefined && column.generated !== 'onUpdateNow'
-  const prop = memberName(column.name)
+  // MongoDB's `_id` is the `id` of the entity, unless the documents have one of their own
+  const prop = own ? 'documentId' : memberName(column.name)
   return {
     column,
     prop,
-    ...javaType(column.type),
+    ...types,
     getter: `get${capitalized(prop)}`,
     setter: `set${capitalized(prop)}`,
     generated,
@@ -133,19 +137,28 @@ function columnInfo(column: DbColumn): ColumnInfo {
   }
 }
 
-function tableInfo(schema: DbSchema, design: CrudDesign, settings: ProjectSettings, table: DbTable): TableInfo {
+function tableInfo(orm: JavaOrm, schema: DbSchema, design: CrudDesign, settings: ProjectSettings, table: DbTable): TableInfo {
   const policy = findPolicy(design, table.name)!
   const repository = findRepository(design, table.name)!
   const service = settings.services ? (findService(design, table.name) ?? null) : null
-  const columns = table.columns.map(columnInfo)
+  const deleteMode = policy.delete.value
+  const concurrency = policy.concurrency.value
+  const ownEntities = !orm.ownModels && !repository.entityMissing && schema.source.format === settings.orm
+  const writesEntity = settings.entities === 'all' || (settings.entities === 'missing' && !ownEntities)
+  const entity = typeName(repository.entity)
+  const nested = orm.documents ? nestedClasses(table.columns, entity) : new Map<string, NestedClass>()
+  const pkg = entityPackage(settings, packageName(repository.entity), writesEntity)
+  const ownId = table.columns.some((column) => column.name === 'id')
+  const columns = table.columns.map((column) =>
+    columnInfo(
+      column,
+      orm.documents ? documentType(column, nested, `${pkg}.${entity}`) : javaType(column.type),
+      column.name === '_id' && ownId,
+    ),
+  )
   const byName = (name: string) => columns.find((info) => info.column.name === name)!
   // A table without a primary key is mapped on all its columns: JPA needs an identifier
   const key = (table.primaryKey ?? table.columns.map((column) => column.name)).map(byName)
-  const deleteMode = policy.delete.value
-  const concurrency = policy.concurrency.value
-  const ownEntities = !repository.entityMissing && schema.source.format === settings.orm
-  const writesEntity = settings.entities === 'all' || (settings.entities === 'missing' && !ownEntities)
-  const entity = typeName(repository.entity)
   return {
     table,
     name: table.name,
@@ -164,11 +177,19 @@ function tableInfo(schema: DbSchema, design: CrudDesign, settings: ProjectSettin
     repository,
     service,
     writesEntity,
+    nested,
   }
 }
 
 export function createContext(orm: JavaOrm, schema: DbSchema, design: CrudDesign, settings: ProjectSettings): Context {
-  return { orm, schema, design, settings, tables: schema.tables.map((table) => tableInfo(schema, design, settings, table)), base: 'app' }
+  return {
+    orm,
+    schema,
+    design,
+    settings,
+    tables: schema.tables.map((table) => tableInfo(orm, schema, design, settings, table)),
+    base: BASE,
+  }
 }
 
 export const writesEntities = (context: Context) => context.tables.some((info) => info.writesEntity)
@@ -182,6 +203,14 @@ export const columnOf = (info: TableInfo, name: string) => info.columns.find((co
 // Packages and names
 
 export type Kind = 'entity' | 'repository' | 'service' | 'dtos'
+
+const BASE = 'app'
+
+/** The package of an entity, before its table is known. */
+function entityPackage(settings: ProjectSettings, pkg: string, written: boolean): string {
+  if (!written) return settings.entitiesModule
+  return settings.architecture === 'table' ? `${BASE}.${pkg}` : `${BASE}.entities`
+}
 
 /** The package of one kind of class of a table: `app.repositories` or `app.orderline`. */
 export function packageOf(context: Context, info: TableInfo, kind: Kind): string {

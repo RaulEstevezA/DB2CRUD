@@ -10,7 +10,8 @@ import type { OperationDesign } from '../../crud/types.ts'
 import type { GeneratedFile } from '../../export/files.ts'
 import type { DbCheck } from '../../schema/types.ts'
 import { lines, type Line } from '../types.ts'
-import { javaPath, javaString, JavaImports } from './java.ts'
+import { capitalized, javaPath, javaString, JavaImports } from './java.ts'
+import { documentCheckMethods, documentRules, listOf } from './documents.ts'
 import {
   columnOf,
   commonPackage,
@@ -59,7 +60,7 @@ function valueRules(column: ColumnInfo, checks: DbCheck[], usesNumber: { value: 
   const name = column.column.name
   const type = column.column.type
   const error = (message: string) => `errors.add(new FieldError(${javaString(name)}, ${javaString(message)}));`
-  if (type.kind === 'text' && type.length !== undefined)
+  if (type.kind === 'text' && type.length !== undefined && !type.objectId)
     rules.push(`if (value instanceof String text && text.length() > ${type.length}) ${error(`is longer than ${type.length} characters`)}`)
   for (const check of checks) {
     const parsed = check.parsed
@@ -107,7 +108,7 @@ function validateMethod(writer: Writer): Block {
       : !column.column.nullable
         ? `if (!creating && values.containsKey(${javaString(prop)})) errors.add(new FieldError(${javaString(name)}, "cannot be empty"));`
         : null
-    const rules = valueRules(column, info.table.checks, usesNumber)
+    const rules = [...valueRules(column, info.table.checks, usesNumber), ...documentRules(context, info, column)]
     if (!missing && rules.length === 0) continue
     blocks.push([
       '{',
@@ -218,6 +219,7 @@ function applyMethod(writer: Writer): Block {
   imports.add('java.util.Map')
   return [
     '/** Sets the given values on the entity. */',
+    ...(createColumns(info).some((column) => column.java.includes('<')) ? ['@SuppressWarnings("unchecked")'] : []),
     `private static void apply(${info.entity} entity, Map<String, Object> values) {`,
     ...createColumns(info).map(
       (column) =>
@@ -498,8 +500,70 @@ function operationLines(writer: Writer, operation: OperationDesign): Block {
     // One item of a list: only document databases have them
     case 'addItem':
     case 'removeItem':
-      return []
+      return itemLines(writer, operation, name)
   }
+}
+
+/** Adds or removes one item of a list, so two people changing the same list do not undo each other. */
+function itemLines(writer: Writer, operation: OperationDesign, name: string): Block {
+  const { context, info, imports } = writer
+  const adds = operation.kind === 'addItem'
+  const change = query(info, adds ? 'addItem' : 'removeItem', operation.columns)
+  if (!change || !query(info, 'getByKey')) return []
+  const list = listOf(info, change)
+  const stored = list.column.column.name
+  const params = adds ? [{ name: list.item, type: list.java }] : list.params
+  const [param] = params
+  const version = info.version ? `, ${info.version.java} version` : ''
+  const get = `current.${list.column.getter}()`
+  const found =
+    list.by === 'id'
+      ? `${get} == null || ${get}.stream().noneMatch((item) -> ${param.name}.equals(item.getId()))`
+      : list.by === 'value'
+        ? `${get} == null || !${get}.contains(${param.name})`
+        : `${get} == null || ${param.name} < 0 || ${param.name} >= ${get}.size()`
+  const label = javaString(capitalized(list.item))
+  const position = !adds && list.by === 'position'
+  imports.add(`${errorsPackage(context)}.NotFoundException`)
+  if (position) imports.add(`${errorsPackage(context)}.ConflictException`, 'java.util.List')
+  const checked = adds && list.nested !== null && list.type.kind === 'json'
+  if (checked)
+    imports.add(
+      'java.util.ArrayList',
+      'java.util.List',
+      `${errorsPackage(context)}.FieldError`,
+      `${errorsPackage(context)}.ValidationFailedException`,
+    )
+  const gone = position
+    ? `new ConflictException("${info.entity}", "was changed by someone else since it was read", List.of(${javaString(list.column.prop)}))`
+    : `new NotFoundException("${info.entity}", ${keyValue(info, imports)})`
+  const args = [keyArgs(info), ...params.map((item) => item.name), ...(position ? [`${get}.size()`] : [])].join(', ')
+  return [
+    adds
+      ? `/** Adds an item to ${stored}${info.version ? ', read at version' : ''}. */`
+      : `/** Removes an item from ${stored}, by its ${list.by === 'id' ? 'identifier' : list.by}${info.version ? ', read at version' : ''}. */`,
+    `public ${resultType(writer)} ${name}(${keyParams(info)}, ${params.map((item) => `${item.type} ${item.name}`).join(', ')}${version}) {`,
+    ...(checked
+      ? [
+          '    List<FieldError> errors = new ArrayList<>();',
+          `    check${list.nested!.path.split('.').slice(1).join('')}(${list.item}, ${javaString(stored)}, errors);`,
+          `    if (!errors.isEmpty()) throw new ValidationFailedException("${info.entity}", errors);`,
+        ]
+      : []),
+    ...body(
+      inTransaction(
+        [
+          `${adds && !info.version ? '' : `${info.entity} current = `}find(uow, ${keyArgs(info)});`,
+          ...versionCheck(writer),
+          ...(adds ? [] : [`if (${found}) throw new NotFoundException(${label}, ${param.name});`]),
+          `return ${out(writer, `${repo(info)}.${queryName(context, change)}(${args}).orElseThrow(() -> ${gone})`)};`,
+        ],
+        true,
+      ),
+      4,
+    ),
+    '}',
+  ]
 }
 
 function linkLines(writer: Writer, operation: OperationDesign, name: string): Block {
@@ -582,6 +646,7 @@ export function serviceFile(context: Context, info: TableInfo): GeneratedFile | 
   const helpers: Block[] = [findMethod(writer), readMethod(writer)]
   if (writes) helpers.unshift(validateMethod(writer), uniqueMethod(writer), checkMethod(writer), applyMethod(writer))
   if (writes && updates) helpers.push(changesMethod(writer))
+  if (writes) helpers.push(...documentCheckMethods(context, info, imports))
   const hidden = info.hidden.length > 0 && !dtos
   const members = [...helpers, ...operations].filter((block) => block.length > 0)
   const content = lines(

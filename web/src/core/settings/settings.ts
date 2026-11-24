@@ -25,6 +25,7 @@ export type OrmId =
   | 'seaorm'
   | 'fluent'
   | 'mongoose'
+  | 'springdata'
   /** No ORM: SQL through each database's driver */
   | 'sql'
 
@@ -209,6 +210,17 @@ export const STACKS: readonly StackInfo[] = [
     label: 'SQL (JDBC)',
     databases: ['postgresql', 'mysql', 'mariadb', 'sqlite'],
     // JDBC is blocking
+    execution: ['sync'],
+    errors: ['exceptions'],
+    dtoKinds: ['record', 'class'],
+    updates: ['patch', 'optional', 'full'],
+  },
+  {
+    language: 'java',
+    orm: 'springdata',
+    label: 'Spring Data MongoDB 5',
+    databases: ['mongodb'],
+    transactions: 'repository',
     execution: ['sync'],
     errors: ['exceptions'],
     dtoKinds: ['record', 'class'],

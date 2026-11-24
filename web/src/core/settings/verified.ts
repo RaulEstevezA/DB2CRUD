@@ -731,6 +731,23 @@ export const VERIFIED: readonly VerifiedStack[] = [
     ],
     date: '2026-11-24',
   },
+  {
+    language: 'java',
+    orm: 'springdata',
+    database: 'mongodb',
+    execution: 'sync',
+    scenarios: [
+      'springdata-mongodb-defaults',
+      'springdata-mongodb-record-dtos-patch-cursor',
+      'springdata-mongodb-class-dtos-full-caller',
+      'springdata-mongodb-no-interfaces-services-tests',
+      'springdata-mongodb-repositories-only',
+      'springdata-mongodb-validators',
+      'springdata-mongodb-operation',
+      'springdata-mongodb-validators-dtos-optional',
+    ],
+    date: '2026-11-24',
+  },
 ]
 
 /** Whether this stack has passed the verification. */

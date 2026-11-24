@@ -19,6 +19,8 @@ import {
   type Context,
   type TableInfo,
 } from './context.ts'
+import { identifiedLists, listOf } from './documents.ts'
+import { isObjectId } from '../../schema/documents.ts'
 import type { QueryDesign } from '../../crud/types.ts'
 
 export interface Method {
@@ -33,6 +35,7 @@ export interface Method {
 export function repositoryMethods(context: Context, info: TableInfo, imports: JavaImports): Method[] {
   const entity = info.entity
   const methods: Method[] = []
+  const keyParams = info.key.map((column) => ({ name: column.prop, type: column.java }))
   for (const query of info.queries) {
     const name = queryName(context, query)
     const byColumns = query.columns.map((column) => ({ name: columnOf(info, column).prop, type: columnOf(info, column).java }))
@@ -87,6 +90,23 @@ export function repositoryMethods(context: Context, info: TableInfo, imports: Ja
       case 'update':
         add([{ name: 'entity', type: entity }], entity, 'Stores the changes made to a row read from this repository.')
         break
+      case 'addItem':
+      case 'removeItem': {
+        const list = listOf(info, query)
+        imports.add('java.util.Optional')
+        if (list.column.javaImport) imports.add(list.column.javaImport)
+        const adds = query.kind === 'addItem'
+        // Told apart by its position, it is only removed from a list of the size it was seen in
+        const size = !adds && list.by === 'position' ? [{ name: 'size', type: 'int' }] : []
+        add(
+          [...keyParams, ...(adds ? [{ name: list.item, type: list.java }] : list.params), ...size],
+          `Optional<${entity}>`,
+          adds
+            ? `Adds an item to ${query.columns[0]}, and gives the row as it is then, if there is one.`
+            : `Removes an item from ${query.columns[0]}${size.length > 0 ? ' that has this size' : ''}, and gives the row as it is then, if there is one.`,
+        )
+        break
+      }
       case 'delete':
         add([{ name: 'entity', type: entity }], 'void', 'Removes a row read from this repository.')
         break
@@ -111,12 +131,16 @@ function literalOf(java: string, value: string): string {
   return value
 }
 
-function memoryFill(column: ColumnInfo, imports: JavaImports): string | null {
+export function memoryFill(column: ColumnInfo, imports: JavaImports): string | null {
   const db = column.column
   const unset = `entity.${column.getter}() == null`
   const set = (value: string) => `if (${unset}) entity.${column.setter}(${value});`
   if (db.generated === 'identity')
     return set(column.java === 'Long' ? 'nextId++' : column.java === 'Short' ? '(short) nextId++' : '(int) nextId++')
+  if (db.generated === 'uuid' && isObjectId(db.type)) {
+    imports.add('org.bson.types.ObjectId')
+    return set('new ObjectId().toHexString()')
+  }
   if (db.generated === 'uuid') return set('UUID.randomUUID()')
   if (db.generated === 'now' || db.generated === 'onUpdateNow') {
     const now = column.java === 'OffsetDateTime' ? 'OffsetDateTime.now(ZoneOffset.UTC)' : `${column.java}.now()`
@@ -132,7 +156,7 @@ function memoryVisible(info: TableInfo): string {
   return info.soft.column.type.kind === 'boolean' ? `!Boolean.TRUE.equals(row.${info.soft.getter}())` : `row.${info.soft.getter}() == null`
 }
 
-function memoryBody(context: Context, info: TableInfo, method: Method): Line[] {
+function memoryBody(context: Context, info: TableInfo, method: Method, imports: JavaImports): Line[] {
   const columns = method.query.columns.map((name) => columnOf(info, name))
   const conditions = columns.map((column) => `Objects.equals(row.${column.getter}(), ${column.prop})`).join(' && ')
   switch (method.query.kind) {
@@ -157,7 +181,48 @@ function memoryBody(context: Context, info: TableInfo, method: Method): Line[] {
       return ['return visible().toList();']
     case 'insert':
     case 'update':
-      return ['rows.put(keyOf(entity), entity);', 'return entity;']
+      return [
+        ...(identifiedLists(info).length > 0 ? ['entity.identifyItems();'] : []),
+        'rows.put(keyOf(entity), entity);',
+        'return entity;',
+      ]
+    case 'addItem':
+    case 'removeItem': {
+      const list = listOf(info, method.query)
+      const [param] = list.params
+      const keys = info.key.map((column) => `Objects.equals(row.${column.getter}(), ${column.prop})`).join(' && ')
+      const version = info.version
+      const one = version?.java === 'Long' ? '1L' : '1'
+      const touched = [
+        ...(version ? [`row.${version.setter}((row.${version.getter}() == null ? 0 : row.${version.getter}()) + ${one});`] : []),
+        ...info.columns
+          .filter(({ column }) => column.generated === 'onUpdateNow')
+          .map((column) => `row.${column.setter}(${column.java}.now());`),
+      ]
+      const items = `List<${list.java}> items = row.${list.column.getter}() == null ? new ArrayList<>() : new ArrayList<>(row.${list.column.getter}());`
+      let change: string[]
+      if (method.query.kind === 'addItem') {
+        if (list.by === 'id') imports.add('org.bson.types.ObjectId')
+        change = [
+          ...(list.by === 'id' ? [`if (${list.item}.getId() == null) ${list.item}.setId(new ObjectId().toHexString());`] : []),
+          `items.add(${list.item});`,
+        ]
+      } else if (list.by === 'id') change = [`items.removeIf((item) -> Objects.equals(item.getId(), ${param.name}));`]
+      else if (list.by === 'value') change = [`items.removeIf((item) -> Objects.equals(item, ${param.name}));`]
+      else change = ['items.remove(position);']
+      return [
+        `Optional<${info.entity}> found = visible().filter((row) -> ${keys}).findFirst();`,
+        ...(method.query.kind === 'removeItem' && list.by === 'position'
+          ? [
+              `if (found.isPresent() && (found.get().${list.column.getter}() == null ? 0 : found.get().${list.column.getter}().size()) != size) return Optional.empty();`,
+            ]
+          : []),
+        'found.ifPresent((row) -> {',
+        ...[items, ...change, `row.${list.column.setter}(items);`, ...touched].map((line) => `    ${line}`),
+        '});',
+        'return found;',
+      ]
+    }
     case 'delete':
       return ['rows.remove(keyOf(entity));']
     default:
@@ -229,7 +294,7 @@ export function repositoryFiles(context: Context, info: TableInfo): GeneratedFil
     const fills = info.columns.map((column) => memoryFill(column, imports)).filter((line): line is string => line !== null)
     for (const column of info.columns) if (column.javaImport) imports.add(column.javaImport)
     const bodies = methods.map((method) => {
-      const body = memoryBody(context, info, method)
+      const body = memoryBody(context, info, method, imports)
       return block(method, method.query.kind === 'insert' ? [...fills, ...body] : body, true)
     })
     const identity = info.columns.some((column) => column.column.generated === 'identity')

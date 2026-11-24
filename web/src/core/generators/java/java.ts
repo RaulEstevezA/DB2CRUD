@@ -49,9 +49,9 @@ export class JavaImports {
     this.pkg = pkg
   }
 
-  /** `import a.b.C;` for a fully qualified name. */
+  /** `import a.b.C;` for a fully qualified name, or several joined by commas. */
   add(...names: string[]): this {
-    for (const name of names) this.names.add(name)
+    for (const name of names) for (const item of name.split(',')) if (item) this.names.add(item)
     return this
   }
 

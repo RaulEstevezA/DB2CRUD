@@ -4,6 +4,7 @@
  * rows made with different numbers do not clash on unique columns. Mirrors typescript/samples.ts.
  */
 import type { DbCheck, DbEnum } from '../../schema/types.ts'
+import { isObjectId } from '../../schema/documents.ts'
 import { javaString } from './java.ts'
 import type { ColumnInfo } from './context.ts'
 
@@ -60,6 +61,7 @@ export function sampleValue(column: ColumnInfo, checks: DbCheck[], enums: DbEnum
     case 'float':
       return java === 'Float' ? `${number(column, checks)} + 0.5f` : `${number(column, checks)} + 0.5`
     case 'text': {
+      if (type.objectId) return 'String.format("%024x", n)'
       const length = type.length ?? 40
       if (type.fixed) return `String.format("%0${length}d", n % ${10 ** Math.min(length, 9)})`
       // The column name and the number, as long as it fits; n stays below 1000 in the tests
@@ -75,10 +77,13 @@ export function sampleValue(column: ColumnInfo, checks: DbCheck[], enums: DbEnum
     case 'boolean':
       return 'true'
     case 'date':
+      if (java === 'String') return 'String.format("2026-01-%02d", n % 28 + 1)'
       return 'LocalDate.of(2026, 1, n % 28 + 1)'
     case 'time':
+      if (java === 'String') return 'String.format("12:%02d:00", n % 60)'
       return java === 'OffsetTime' ? 'OffsetTime.of(12, n % 60, 0, 0, ZoneOffset.UTC)' : 'LocalTime.of(12, n % 60)'
     case 'datetime':
+      if (java === 'Instant') return 'Instant.parse(String.format("2026-01-%02dT12:00:00Z", n % 28 + 1))'
       return java === 'OffsetDateTime'
         ? 'OffsetDateTime.of(2026, 1, n % 28 + 1, 12, 0, 0, 0, ZoneOffset.UTC)'
         : 'LocalDateTime.of(2026, 1, n % 28 + 1, 12, 0)'
@@ -90,6 +95,7 @@ export function sampleValue(column: ColumnInfo, checks: DbCheck[], enums: DbEnum
         ? `java.util.Arrays.copyOf(new byte[] { (byte) n }, ${type.length})`
         : 'new byte[] { (byte) n }'
     case 'json':
+      if (java === 'Object') return 'java.util.Map.of("n", n)'
       return '"{\\"n\\": " + n + "}"'
     case 'array':
       return '"[]"'
@@ -100,6 +106,7 @@ export function sampleValue(column: ColumnInfo, checks: DbCheck[], enums: DbEnum
 
 /** A key no row has, as a Java expression, for the tests of missing rows. */
 export function missingValue(column: ColumnInfo): string {
+  if (isObjectId(column.column.type)) return `"${'f'.repeat(24)}"`
   switch (column.java) {
     case 'Long':
       return '999999L'

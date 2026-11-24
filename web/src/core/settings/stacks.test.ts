@@ -8,7 +8,7 @@ const VALIDATOR = '{ $jsonSchema: { bsonType: "object", title: "users", properti
 describe('stacks and databases', () => {
   it('follow the database that was read', () => {
     const settings = normalizeSettings(DEFAULT_SETTINGS)
-    expect(stacksFor('mongodb').map((stack) => stack.orm)).toEqual(['mongoose'])
+    expect(stacksFor('mongodb').map((stack) => stack.orm)).toEqual(['mongoose', 'springdata'])
     expect(settingsFor('mongodb', settings).database).toBe('mongodb')
     expect(settingsFor('postgresql', settings)).toEqual(settings)
     expect(settingsFor('postgresql', settingsFor('mongodb', settings)).orm).not.toBe('mongoose')

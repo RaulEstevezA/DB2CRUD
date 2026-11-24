@@ -13,6 +13,14 @@ import type { Method } from './repositories.ts'
 
 export interface JavaOrm {
   id: OrmId
+  /** Columns may hold documents and lists of them, as classes of their own */
+  documents?: boolean
+  /** The entities of the input never stand in for the project's own */
+  ownModels?: boolean
+  /** What the names of the database classes start with, when it is not `Sql`: `MongoUnitOfWork` */
+  prefix?: string
+  /** The address of the database, when it is not a JDBC URL */
+  url?: string
   /** What holds the transaction in the caller's hands, for texts: `EntityManager`, `Connection` */
   holder: string
   /** The statement that makes the tests read again from the database what the unit of work keeps, when it keeps something */

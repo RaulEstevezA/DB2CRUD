@@ -4,6 +4,8 @@
  * CRUD2Controller does not have to read the code back (docs/design.md, section 6).
  */
 import type { GeneratedFile } from '../../export/files.ts'
+import { nestedFields } from '../../schema/documents.ts'
+import type { DbType } from '../../schema/types.ts'
 import { lines } from '../types.ts'
 import {
   commonPackage,
@@ -109,7 +111,7 @@ export function pomFile(context: Context, modelsFolder = false): GeneratedFile {
     '',
     '  <dependencies>',
     ...context.orm.dependencies(context),
-    ...dependency(driver.group, driver.artifact, driver.version),
+    ...(database === 'mongodb' ? [] : dependency(driver.group, driver.artifact, driver.version)),
     tests && dependency('org.junit.jupiter', 'junit-jupiter', VERSIONS.junit, 'test'),
     '  </dependencies>',
     '',
@@ -141,14 +143,14 @@ export function envExampleFile(context: Context): GeneratedFile {
   return {
     path: '.env.example',
     content: lines(
-      '# Where the database is (a JDBC URL)',
-      `DATABASE_URL=${URLS[context.settings.database]}`,
-      !sqlite && ['DATABASE_USER=app', 'DATABASE_PASSWORD=app'],
+      context.orm.url ? '# Where the database is' : '# Where the database is (a JDBC URL)',
+      `DATABASE_URL=${context.orm.url ?? URLS[context.settings.database]}`,
+      !sqlite && !context.orm.url && ['DATABASE_USER=app', 'DATABASE_PASSWORD=app'],
       sqlite
         ? '# The tests use SQLite in target/ unless this names another database (it is emptied by the tests)'
         : '# The database the tests use (it is emptied by the tests): one of the same kind as DATABASE_URL',
       '# TEST_DATABASE_URL=',
-      !sqlite && ['# TEST_DATABASE_USER=', '# TEST_DATABASE_PASSWORD='],
+      !sqlite && !context.orm.url && ['# TEST_DATABASE_USER=', '# TEST_DATABASE_PASSWORD='],
       '',
     ),
   }
@@ -214,7 +216,7 @@ export function readmeFile(context: Context): GeneratedFile {
       '',
       '```bash',
       sqlite ? 'mvn test                                          # SQLite in target/' : null,
-      `TEST_DATABASE_URL=${URLS[settings.database]}${sqlite ? '' : ' TEST_DATABASE_USER=app TEST_DATABASE_PASSWORD=app'} mvn test   # a real, disposable database: it is emptied`,
+      `TEST_DATABASE_URL=${context.orm.url ?? URLS[settings.database]}${sqlite || context.orm.url ? '' : ' TEST_DATABASE_USER=app TEST_DATABASE_PASSWORD=app'} mvn test   # a real, disposable database: it is emptied`,
       '```',
       '',
       context.orm.readme.note,
@@ -228,8 +230,18 @@ export function readmeFile(context: Context): GeneratedFile {
 // crud-contract.json
 
 function typeOf(column: ColumnInfo): Record<string, unknown> {
-  const type = column.column.type
-  return { kind: type.kind, java: column.java, ...(type.kind === 'text' && type.length !== undefined ? { length: type.length } : {}) }
+  const { kind, ...rest } = plainType(column.column.type)
+  return { kind, java: column.java, ...rest }
+}
+
+function plainType(type: DbType): Record<string, unknown> {
+  // What a nested document, or each of a list of them, holds
+  const fields = nestedFields(type)
+  return {
+    kind: type.kind,
+    ...(type.kind === 'text' && type.length !== undefined ? { length: type.length } : {}),
+    ...(fields ? { fields: fields.map((field) => ({ name: field.name, type: plainType(field.type), nullable: field.nullable })) } : {}),
+  }
 }
 
 export function contractFile(context: Context): GeneratedFile {

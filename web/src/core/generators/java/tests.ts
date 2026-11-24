@@ -7,7 +7,9 @@
  */
 import type { GeneratedFile } from '../../export/files.ts'
 import { lines, type Line } from '../types.ts'
-import { javaPath, javaString, JavaImports } from './java.ts'
+import { capitalized, javaPath, javaString, JavaImports } from './java.ts'
+import { listOf, type ListInfo, type NestedClass } from './documents.ts'
+import type { DbType } from '../../schema/types.ts'
 import {
   columnOf,
   commonPackage,
@@ -75,12 +77,14 @@ function factoriesFile(context: Context, makeable: TableInfo[]): GeneratedFile {
         if (column.column.nullable && (isKey || column.column.type.kind === 'unknown')) return []
         for (const name of sampleImports(column)) imports.add(name)
         const value =
-          column.column.type.kind === 'array'
+          documentValue(context, info, column) ??
+          (column.column.type.kind === 'array'
             ? context.orm.emptyList(context)
-            : sampleValue(column, info.table.checks, context.schema.enums)
+            : sampleValue(column, info.table.checks, context.schema.enums))
         return [`        entity.${column.setter}(${value});`]
       })
     const insert = query(info, 'insert')!
+    const documents = [...info.nested.values()].flatMap((item) => nestedFactories(context, info, item, imports))
     return [
       `    /** A valid ${info.entity} that is not stored yet; n makes its unique values differ. */`,
       `    static ${info.entity} ${newName(info)}(int n) {`,
@@ -96,6 +100,7 @@ function factoriesFile(context: Context, makeable: TableInfo[]): GeneratedFile {
       ...fromParents,
       `        return uow.${info.attr}().${queryName(context, insert)}(entity);`,
       '    }',
+      ...documents,
     ]
   })
   const content = lines(
@@ -111,6 +116,58 @@ function factoriesFile(context: Context, makeable: TableInfo[]): GeneratedFile {
     '',
   )
   return { path: javaPath(pkg, 'Factories', true), content }
+}
+
+const factoryOf = (item: NestedClass) => `new${item.path.split('.').join('')}`
+
+/** A column that holds documents, or a list of them, as a Java expression; null for any other. */
+function documentValue(context: Context, info: TableInfo, column: ColumnInfo): string | null {
+  const nested = info.nested.get(column.column.name)
+  if (!context.orm.documents || !nested) return null
+  return nestedValue(column.column.type, nested)
+}
+
+const nestedValue = (type: DbType, nested: NestedClass): string =>
+  type.kind === 'array' ? `new java.util.ArrayList<>(List.of(${nestedValue(type.items, nested)}))` : `${factoryOf(nested)}(n)`
+
+/** A factory per class of nested document, without the identifier it is given when it is stored. */
+function nestedFactories(context: Context, info: TableInfo, item: NestedClass, imports: JavaImports): string[] {
+  imports.add('java.util.List')
+  const values = item.fields
+    .filter((field) => field.column.name !== '_id' && field.column.type.kind !== 'unknown')
+    .map((field) => {
+      const column = { column: field.column, java: field.java, javaImport: null } as ColumnInfo
+      if (field.java.includes('BigDecimal')) imports.add('java.math.BigDecimal')
+      if (field.java.includes('Instant')) imports.add('java.time.Instant')
+      if (field.java.includes('UUID')) imports.add('java.util.UUID')
+      const value = field.nested
+        ? nestedValue(field.column.type, field.nested)
+        : field.column.type.kind === 'array'
+          ? context.orm.emptyList(context)
+          : sampleValue(column, field.column.checks ?? [], context.schema.enums)
+      return `        item.${field.setter}(${value});`
+    })
+  return [
+    '',
+    `    /** A valid ${item.path}. */`,
+    `    static ${item.path} ${factoryOf(item)}(int n) {`,
+    `        ${item.path} item = new ${item.path}();`,
+    ...values,
+    '        return item;',
+    '    }',
+    ...item.classes.flatMap((inner) => nestedFactories(context, info, inner, imports)),
+  ]
+}
+
+/** A value for an item of a list, as a Java expression for the number 7. */
+function itemSample(context: Context, list: ListInfo): string {
+  if (list.nested && list.type.kind === 'json') return `Factories.${factoryOf(list.nested)}(7)`
+  if (list.type.kind === 'array' || list.type.kind === 'json') return context.orm.emptyList(context)
+  return sampleValue(
+    { ...list.column, column: { ...list.column.column, type: list.type }, java: list.java },
+    [],
+    context.schema.enums,
+  ).replace(/\bn\b/g, '7')
 }
 
 // Tests of each table
@@ -140,7 +197,8 @@ const test = (name: string, body: (Line | Line[])[]): Line[] => [
 /** The assertion that two values of a column are the same: arrays are compared by what they hold. */
 const same = (column: ColumnInfo) => (column.java === 'byte[]' ? 'org.junit.jupiter.api.Assertions.assertArrayEquals' : 'assertEquals')
 
-function repositoryTests(context: Context, info: TableInfo): Line[][] {
+function repositoryTests(context: Context, info: TableInfo, imports: JavaImports): Line[][] {
+  for (const adding of info.queries.filter((item) => item.kind === 'addItem')) addItemImports(info, adding, imports)
   const repo = `uow.${info.attr}()`
   const keyOf = (variable: string) => info.key.map((column) => `${variable}.${column.getter}()`).join(', ')
   const getByKey = query(info, 'getByKey')
@@ -209,6 +267,27 @@ function repositoryTests(context: Context, info: TableInfo): Line[][] {
         `assertEquals("changed", ${repo}.${queryName(context, getByKey)}(${keyOf('stored')}).orElseThrow().${text.getter}());`,
       ]),
     )
+  for (const adding of info.queries.filter((item) => item.kind === 'addItem')) {
+    const list = listOf(info, adding)
+    const removing = query(info, 'removeItem', adding.columns)
+    if (!removing || !getByKey) continue
+    const get = list.column.getter
+    const which = list.by === 'id' ? `added.${get}().get(before).getId()` : list.by === 'value' ? 'item' : `before, added.${get}().size()`
+    tests.push(
+      test(`addsAndRemovesOneItemOf${capitalized(list.column.prop)}`, [
+        stored,
+        `int before = stored.${get}() == null ? 0 : stored.${get}().size();`,
+        `${list.java} item = ${itemSample(context, list)};`,
+        `${info.entity} added = ${repo}.${queryName(context, adding)}(${keyOf('stored')}, item).orElseThrow();`,
+        `assertEquals(before + 1, added.${get}().size());`,
+        `${info.entity} removed = ${repo}.${queryName(context, removing)}(${keyOf('stored')}, ${which}).orElseThrow();`,
+        `assertEquals(before, removed.${get}().size());`,
+        ...(list.by === 'position'
+          ? [`assertTrue(${repo}.${queryName(context, removing)}(${keyOf('stored')}, 0, before + 5).isEmpty());`]
+          : []),
+      ]),
+    )
+  }
   const remove = query(info, 'delete')
   if (remove && getByKey && !info.soft)
     tests.push(
@@ -219,6 +298,11 @@ function repositoryTests(context: Context, info: TableInfo): Line[][] {
       ]),
     )
   return tests
+}
+
+function addItemImports(info: TableInfo, query: Parameters<typeof listOf>[1], imports: JavaImports): void {
+  const list = listOf(info, query)
+  if (list.column.javaImport) imports.add(list.column.javaImport)
 }
 
 function serviceTests(context: Context, info: TableInfo, imports: JavaImports): Line[][] {
@@ -380,6 +464,35 @@ function serviceTests(context: Context, info: TableInfo, imports: JavaImports): 
         `assertEquals("changed", ${valueOf('updated', text)});`,
       ]),
     )
+  for (const operation of info.operations.filter((item) => item.kind === 'addItem')) {
+    const list = listOf(info, operation)
+    const without = op('removeItem', operation.columns)
+    if (!create || !without || info.hidden.includes(list.column.column.name)) continue
+    addItemImports(info, operation, imports)
+    imports.add(`${errorsPackage(context)}.NotFoundException`)
+    const items = (variable: string) => valueOf(variable, list.column)
+    const which = list.by === 'id' ? `${items('added')}.get(before).getId()` : list.by === 'value' ? 'item' : 'before'
+    const missing = list.by === 'id' ? `"${'f'.repeat(24)}"` : list.by === 'value' ? null : '99'
+    tests.push(
+      test(`addsAndRemovesOneItemOf${capitalized(list.column.prop)}`, [
+        ...open,
+        ...start,
+        ...row('row', 1),
+        `var created = service.${operationName(context, create)}(${input('row')});`,
+        `int before = ${items('created')} == null ? 0 : ${items('created')}.size();`,
+        `${list.java} item = ${itemSample(context, list)};`,
+        `var added = service.${operationName(context, operation)}(${keyOf('created')}, item${version('created')});`,
+        `assertEquals(before + 1, ${items('added')}.size());`,
+        `var removed = service.${operationName(context, without)}(${keyOf('created')}, ${which}${version('added')});`,
+        `assertEquals(before, ${items('removed')}.size());`,
+        ...(missing
+          ? [
+              `assertThrows(NotFoundException.class, () -> service.${operationName(context, without)}(${keyOf('created')}, ${missing}${version('removed')}));`,
+            ]
+          : []),
+      ]),
+    )
+  }
   if (create && remove && get) {
     imports.add(`${errorsPackage(context)}.NotFoundException`)
     tests.push(
@@ -431,7 +544,7 @@ export function testFiles(context: Context): GeneratedFile[] {
     const nested: (Line | Line[])[] = []
     let database = false
     if (tests === 'all' || tests === 'repositories') {
-      nested.push('', '    @Nested', '    class Repository {', ...repositoryTests(context, info).flat(), '    }')
+      nested.push('', '    @Nested', '    class Repository {', ...repositoryTests(context, info, imports).flat(), '    }')
       database = true
     }
     const withService = (tests === 'all' || tests === 'services') && info.service !== null

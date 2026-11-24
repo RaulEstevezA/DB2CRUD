@@ -12,6 +12,7 @@ import { efcoreOrm } from './csharp/efcore/index.ts'
 import { sqlOrm as csharpSqlOrm } from './csharp/sql/index.ts'
 import { javaGenerator } from './java/generator.ts'
 import { jpaOrm } from './java/jpa/index.ts'
+import { springDataOrm } from './java/springdata/index.ts'
 import { sqlOrm as javaSqlOrm } from './java/sql/index.ts'
 import { exposedOrm } from './kotlin/exposed/index.ts'
 import { sqlOrm as kotlinSqlOrm } from './kotlin/sql/index.ts'
@@ -51,6 +52,7 @@ export const GENERATORS: readonly Generator[] = [
   typescriptGenerator(mongooseOrm),
   javaGenerator(jpaOrm),
   javaGenerator(javaSqlOrm),
+  javaGenerator(springDataOrm),
   csharpGenerator(efcoreOrm),
   csharpGenerator(csharpSqlOrm),
   phpGenerator(doctrineOrm),
