@@ -211,6 +211,16 @@ export const STACKS: readonly StackInfo[] = [
     updates: ['patch', 'full'],
   },
   {
+    language: 'csharp',
+    orm: 'sql',
+    label: 'SQL (ADO.NET)',
+    databases: ['postgresql', 'mysql', 'mariadb', 'sqlite'],
+    execution: ['async'],
+    errors: ['exceptions'],
+    dtoKinds: ['record', 'class'],
+    updates: ['patch', 'full'],
+  },
+  {
     language: 'php',
     orm: 'doctrine',
     label: 'Doctrine ORM 3',
