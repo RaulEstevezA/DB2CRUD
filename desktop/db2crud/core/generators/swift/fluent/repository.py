@@ -55,7 +55,7 @@ def _update_columns(info: dict):
     ]
 
 
-def _key_filter(info: dict, value: dict):
+def _key_filter(info: dict, value):
     """The filters of a row, by its key as a source has it: entity.id! or model.id!."""
     return "".join(f".filter({model_path(info, column)} == {value(column)})" for column in mapped_key(info))
 

@@ -2,8 +2,6 @@
 of work over SeaORM's transactions, and tests on a database created from the descriptions. Mirrors
 web/src/core/generators/rust/seaorm/index.ts."""
 
-import re
-
 from ..context import module_of, rs_file
 from ..rust import RsUses, rs_string
 from ..support import default_url
@@ -91,7 +89,7 @@ def _test_database_file(context: dict) -> dict:
 
     # Each table's module by a name of its own: by table, every one of them is `table`
     def table_module(info: dict):
-        return f"{re.sub(r'^r#', '', info['attr'], count=1)}_table"
+        return f"{info['attr'].replace(r'^r#', '', 1)}_table"
 
     for info in tables:
         uses.add(f"{external(context, module_of(context, info, 'table'))} as {table_module(info)}")
@@ -127,7 +125,7 @@ def _test_database_file(context: dict) -> dict:
     )
 
     def sql_quote(text: str):
-        return "'" + re.sub(r"'", "''", text) + "'"
+        return "'" + text.replace(r"'", "''", 1) + "'"
 
     def run(sql: str):
         return f"    db.execute_unprepared({rs_string(sql)}).await.expect({rs_string(sql)});"

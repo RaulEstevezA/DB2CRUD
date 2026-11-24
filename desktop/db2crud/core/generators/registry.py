@@ -24,6 +24,7 @@ from .rust.seaorm.index import SEAORM_ORM
 from .rust.sql.index import SQL_ORM as RUST_SQL_ORM
 from .swift.fluent.index import FLUENT_ORM
 from .swift.generator import swift_generator
+from .swift.sql.index import SQL_ORM as SWIFT_SQL_ORM
 from .typescript.common.generator import typescript_generator
 from .typescript.drizzle.index import DRIZZLE_ORM
 from .typescript.prisma.index import PRISMA_ORM
@@ -52,6 +53,7 @@ GENERATORS = [
     rust_generator(SEAORM_ORM),
     rust_generator(RUST_SQL_ORM),
     swift_generator(FLUENT_ORM),
+    swift_generator(SWIFT_SQL_ORM),
 ]
 
 

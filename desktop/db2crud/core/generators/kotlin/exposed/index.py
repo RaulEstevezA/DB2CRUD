@@ -2,8 +2,6 @@
 Exposed's DSL, a unit of work whose transaction is Exposed's, and tests on a database created from the table objects. Mirrors
 web/src/core/generators/kotlin/exposed/index.ts."""
 
-import re
-
 from ..context import kt_file, package_of, path_of, qualified
 from ..kotlin import KtImports, kt_string
 from ..support import default_url
@@ -74,7 +72,7 @@ def _test_database_files(context: dict) -> list[dict]:
     )
 
     def quote(text: str):
-        return "'" + re.sub(r"'", "''", text) + "'"
+        return "'" + text.replace(r"'", "''", 1) + "'"
 
     def statement(sql: str):
         return f"            exec({kt_string(sql)})"

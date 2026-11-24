@@ -2,8 +2,6 @@
 of work over Fluent's transactions, and tests on a database Fluent's schema builder creates. Mirrors
 web/src/core/generators/swift/fluent/index.ts."""
 
-import re
-
 from ....js import coalesce
 from ..context import find_info, ind, shared_file, sw_file, uses_times
 from ..support import default_url
@@ -103,7 +101,7 @@ def _creation_order(tables: list) -> list:
 
 
 def _sql_quote(text: str):
-    return "'" + re.sub(r"'", "''", text) + "'"
+    return "'" + text.replace(r"'", "''", 1) + "'"
 
 
 def _data_type(context: dict, column: dict) -> str:
