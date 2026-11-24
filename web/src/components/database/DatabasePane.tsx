@@ -27,7 +27,7 @@ import './DatabasePane.css'
 // Far above any project; avoids freezing the tab with a huge file dropped by mistake
 const MAX_FILE_SIZE = 10 * 1024 * 1024
 
-const DATABASE_EXTENSIONS = '.json,.model2db.json,.py,.prisma,.ts,.js,.java,.cs,.php,.sql'
+const DATABASE_EXTENSIONS = '.json,.ndjson,.jsonl,.txt,.model2db.json,.py,.prisma,.ts,.js,.java,.cs,.php,.sql'
 
 type Source = 'database' | 'models'
 const SOURCES: Source[] = ['database', 'models']
@@ -111,15 +111,19 @@ export function DatabasePane({ input, read, onChange, models, modelsRead, onMode
     )
   else
     status = (
-      <p className="input-status input-status--ok">
+      <div className="input-status input-status--ok">
         {t.databaseSummary(sourceLabel(read.schema), read.schema.dialect, read.schema.tables.length, columnCount(read.schema))}
         {read.schema.notes.length > 0 && (
-          <span className="input-status__warnings" title={read.schema.notes.map((note) => note.code).join('\n')}>
-            {' · '}
-            {t.warningsCount(read.schema.notes.length)}
-          </span>
+          <details className="input-status__notes">
+            <summary>{t.warningsCount(read.schema.notes.length)}</summary>
+            <ul>
+              {read.schema.notes.map((note, index) => (
+                <li key={index}>{t.note(note)}</li>
+              ))}
+            </ul>
+          </details>
         )}
-      </p>
+      </div>
     )
 
   const select = (next: Source) => {

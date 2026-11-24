@@ -55,9 +55,17 @@
   color: var(--muted);
 }
 
-.input-status__warnings {
+.input-status__notes summary {
   color: var(--warning);
-  cursor: help;
+  cursor: pointer;
+}
+
+.input-status__notes ul {
+  max-height: 12rem;
+  overflow: auto;
+  margin: 0.25rem 0 0;
+  padding-left: 1.25rem;
+  color: var(--muted);
 }
 
 /* What the pane reads: the database, or the application models (optional) */
