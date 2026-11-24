@@ -579,7 +579,7 @@ ELOQUENT_ORM = {
     "databaseFiles": lambda context: [_database_file(context)],
     "repository": {
         "doc": lambda context: "through its Eloquent model and the query builder, by every column of its key.",
-        "init": lambda context, uses: [],
+        "init": lambda context, info, uses: [],
         "body": _body,
         "helpers": _helpers,
     },

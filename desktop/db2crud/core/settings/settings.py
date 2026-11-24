@@ -160,6 +160,16 @@ STACKS = [
         "updates": ["patch", "partial", "full"],
     },
     {
+        "language": "php",
+        "orm": "sql",
+        "label": "SQL (PDO)",
+        "databases": ["postgresql", "mysql", "mariadb", "sqlite"],
+        "execution": ["sync"],
+        "errors": ["exceptions"],
+        "dtoKinds": ["readonly", "class"],
+        "updates": ["patch", "partial", "full"],
+    },
+    {
         "language": "kotlin",
         "orm": "exposed",
         "label": "Exposed 1.6",

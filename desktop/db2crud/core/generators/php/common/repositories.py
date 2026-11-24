@@ -248,7 +248,7 @@ def repository_files(context: dict, info: dict) -> list[dict]:
         files.append(unit(repository_interface(info), uses, body))
     uses = PhpUses(ns).add(entity_class)
     methods = repository_methods(context, info, uses)
-    init = orm["init"](context, uses)
+    init = orm["init"](context, info, uses)
     bodies = [_block(method, orm["body"](context, info, method, uses), not interfaces) for method in methods]
     helpers = orm["helpers"](context, info, uses)
     members = [
@@ -286,7 +286,7 @@ def repository_files(context: dict, info: dict) -> list[dict]:
         identity = any(column["column"].get("generated") == "identity" for column in info["columns"])
         key_values = ", ".join(access("$row", column["prop"]) for column in info["key"])
         entity = info["entity"]
-        no_connection = not interfaces and len(orm["init"](context, PhpUses(ns))) > 0
+        no_connection = not interfaces and len(orm["init"](context, info, PhpUses(ns))) > 0
         files.append(
             unit(
                 memory_repository_class(info),

@@ -12,6 +12,7 @@ from .kotlin.generator import KOTLIN_GENERATOR
 from .php.common.generator import php_generator
 from .php.doctrine.index import DOCTRINE_ORM
 from .php.eloquent.index import ELOQUENT_ORM
+from .php.sql.index import SQL_ORM as PHP_SQL_ORM
 from .python.common.generator import python_generator
 from .python.django.index import DJANGO_ORM
 from .python.sql.index import SQL_ORM as PYTHON_SQL_ORM
@@ -40,6 +41,7 @@ GENERATORS = [
     csharp_generator(CSHARP_SQL_ORM),
     php_generator(DOCTRINE_ORM),
     php_generator(ELOQUENT_ORM),
+    php_generator(PHP_SQL_ORM),
     KOTLIN_GENERATOR,
     RUST_GENERATOR,
     SWIFT_GENERATOR,

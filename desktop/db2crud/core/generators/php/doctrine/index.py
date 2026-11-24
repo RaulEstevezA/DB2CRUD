@@ -415,7 +415,7 @@ def _test_database(context: dict) -> list[dict]:
     return files
 
 
-def _init(context: dict, uses: PhpUses) -> list[str]:
+def _init(context: dict, info: dict, uses: PhpUses) -> list[str]:
     uses.add("Doctrine\\ORM\\EntityManagerInterface")
     return ["    public function __construct(private readonly EntityManagerInterface $em)", "    {", "    }"]
 
