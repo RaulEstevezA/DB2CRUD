@@ -1,0 +1,506 @@
+{
+ "format": "db-schema",
+ "version": 1,
+ "dialect": "mongodb",
+ "source": {
+  "kind": "orm",
+  "format": "beanie"
+ },
+ "tables": [
+  {
+   "name": "Author",
+   "columns": [
+    {
+     "name": "_id",
+     "type": {
+      "sql": "int",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false
+    },
+    {
+     "name": "name",
+     "type": {
+      "sql": "str",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "email",
+     "type": {
+      "sql": "str",
+      "kind": "text"
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": [
+    "_id"
+   ],
+   "foreignKeys": [],
+   "uniques": [
+    {
+     "columns": [
+      "email"
+     ]
+    }
+   ],
+   "indexes": [],
+   "checks": [],
+   "origin": {
+    "line": 42,
+    "column": 1
+   },
+   "entity": "Author"
+  },
+  {
+   "name": "posts",
+   "columns": [
+    {
+     "name": "_id",
+     "type": {
+      "sql": "ObjectId",
+      "kind": "text",
+      "length": 24,
+      "fixed": true,
+      "objectId": true
+     },
+     "nullable": false,
+     "generated": "uuid"
+    },
+    {
+     "name": "createdAt",
+     "type": {
+      "sql": "date",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": false,
+     "generated": "now"
+    },
+    {
+     "name": "token",
+     "type": {
+      "sql": "UUID",
+      "kind": "uuid"
+     },
+     "nullable": false,
+     "generated": "uuid"
+    },
+    {
+     "name": "title",
+     "type": {
+      "sql": "str",
+      "kind": "text",
+      "length": 80
+     },
+     "nullable": false
+    },
+    {
+     "name": "section",
+     "type": {
+      "sql": "str",
+      "kind": "text"
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": "main"
+     }
+    },
+    {
+     "name": "slug",
+     "type": {
+      "sql": "str",
+      "kind": "text"
+     },
+     "nullable": false
+    },
+    {
+     "name": "status",
+     "type": {
+      "sql": "Status",
+      "kind": "enum",
+      "name": "Status"
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": "draft"
+     }
+    },
+    {
+     "name": "kind",
+     "type": {
+      "sql": "posts.kind",
+      "kind": "enum",
+      "name": "posts.kind"
+     },
+     "nullable": false
+    },
+    {
+     "name": "priority",
+     "type": {
+      "sql": "int",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": 1
+     }
+    },
+    {
+     "name": "views",
+     "type": {
+      "sql": "int",
+      "kind": "integer",
+      "bits": 64
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": 0
+     }
+    },
+    {
+     "name": "ratio",
+     "type": {
+      "sql": "double",
+      "kind": "float",
+      "bits": 64
+     },
+     "nullable": true
+    },
+    {
+     "name": "price",
+     "type": {
+      "sql": "decimal",
+      "kind": "decimal"
+     },
+     "nullable": false
+    },
+    {
+     "name": "day",
+     "type": {
+      "sql": "date",
+      "kind": "datetime",
+      "timezone": true
+     },
+     "nullable": false
+    },
+    {
+     "name": "author",
+     "type": {
+      "sql": "object",
+      "kind": "json"
+     },
+     "nullable": false
+    },
+    {
+     "name": "reviewers",
+     "type": {
+      "sql": "list[Link[Author]]",
+      "kind": "array",
+      "items": {
+       "sql": "object",
+       "kind": "json"
+      }
+     },
+     "nullable": true
+    },
+    {
+     "name": "related",
+     "type": {
+      "sql": "list[PydanticObjectId]",
+      "kind": "array",
+      "items": {
+       "sql": "ObjectId",
+       "kind": "text",
+       "length": 24,
+       "fixed": true,
+       "objectId": true
+      }
+     },
+     "nullable": true
+    },
+    {
+     "name": "comments",
+     "type": {
+      "sql": "list[Comment]",
+      "kind": "array",
+      "items": {
+       "sql": "Comment",
+       "kind": "json",
+       "fields": [
+        {
+         "name": "_id",
+         "type": {
+          "sql": "ObjectId",
+          "kind": "text",
+          "length": 24,
+          "fixed": true,
+          "objectId": true
+         },
+         "nullable": false,
+         "generated": "uuid"
+        },
+        {
+         "name": "text",
+         "type": {
+          "sql": "str",
+          "kind": "text",
+          "length": 500
+         },
+         "nullable": false,
+         "checks": [
+          {
+           "sql": "LENGTH(text) >= 1",
+           "parsed": {
+            "kind": "length",
+            "column": "text",
+            "op": ">=",
+            "value": 1
+           }
+          }
+         ]
+        },
+        {
+         "name": "stars",
+         "type": {
+          "sql": "int",
+          "kind": "integer",
+          "bits": 64
+         },
+         "nullable": true,
+         "checks": [
+          {
+           "sql": "stars >= 1",
+           "parsed": {
+            "kind": "compare",
+            "column": "stars",
+            "op": ">=",
+            "value": 1
+           }
+          },
+          {
+           "sql": "stars <= 5",
+           "parsed": {
+            "kind": "compare",
+            "column": "stars",
+            "op": "<=",
+            "value": 5
+           }
+          }
+         ]
+        },
+        {
+         "name": "answers",
+         "type": {
+          "sql": "list[Comment]",
+          "kind": "array",
+          "items": {
+           "sql": "object",
+           "kind": "json"
+          }
+         },
+         "nullable": true
+        }
+       ]
+      }
+     },
+     "nullable": true
+    },
+    {
+     "name": "seo",
+     "type": {
+      "sql": "Seo",
+      "kind": "json",
+      "fields": [
+       {
+        "name": "description",
+        "type": {
+         "sql": "str",
+         "kind": "text"
+        },
+        "nullable": true
+       },
+       {
+        "name": "key words",
+        "type": {
+         "sql": "set[str]",
+         "kind": "array",
+         "items": {
+          "sql": "str",
+          "kind": "text"
+         }
+        },
+        "nullable": true
+       }
+      ]
+     },
+     "nullable": true
+    },
+    {
+     "name": "extra",
+     "type": {
+      "sql": "object",
+      "kind": "json"
+     },
+     "nullable": true
+    },
+    {
+     "name": "cover",
+     "type": {
+      "sql": "binData",
+      "kind": "binary"
+     },
+     "nullable": true
+    },
+    {
+     "name": "either",
+     "type": {
+      "sql": "object",
+      "kind": "json"
+     },
+     "nullable": false,
+     "default": {
+      "kind": "literal",
+      "value": 1
+     }
+    }
+   ],
+   "primaryKey": [
+    "_id"
+   ],
+   "foreignKeys": [],
+   "uniques": [
+    {
+     "name": "ux_slug",
+     "columns": [
+      "slug"
+     ]
+    }
+   ],
+   "indexes": [
+    {
+     "columns": [
+      "title"
+     ]
+    },
+    {
+     "columns": [
+      "day"
+     ]
+    },
+    {
+     "columns": [
+      "section",
+      "slug"
+     ]
+    }
+   ],
+   "checks": [
+    {
+     "sql": "views >= 0",
+     "parsed": {
+      "kind": "compare",
+      "column": "views",
+      "op": ">=",
+      "value": 0
+     }
+    },
+    {
+     "sql": "ratio > 0",
+     "parsed": {
+      "kind": "compare",
+      "column": "ratio",
+      "op": ">",
+      "value": 0
+     }
+    },
+    {
+     "sql": "ratio < 1000",
+     "parsed": {
+      "kind": "compare",
+      "column": "ratio",
+      "op": "<",
+      "value": 1000
+     }
+    }
+   ],
+   "origin": {
+    "line": 49,
+    "column": 1
+   },
+   "entity": "Post"
+  },
+  {
+   "name": "Animal",
+   "columns": [
+    {
+     "name": "_id",
+     "type": {
+      "sql": "ObjectId",
+      "kind": "text",
+      "length": 24,
+      "fixed": true,
+      "objectId": true
+     },
+     "nullable": false,
+     "generated": "uuid"
+    },
+    {
+     "name": "name",
+     "type": {
+      "sql": "str",
+      "kind": "text"
+     },
+     "nullable": false
+    }
+   ],
+   "primaryKey": [
+    "_id"
+   ],
+   "foreignKeys": [],
+   "uniques": [],
+   "indexes": [],
+   "checks": [],
+   "origin": {
+    "line": 81,
+    "column": 1
+   },
+   "entity": "Animal"
+  }
+ ],
+ "enums": [
+  {
+   "name": "Status",
+   "values": [
+    "draft",
+    "published"
+   ],
+   "storage": "check"
+  },
+  {
+   "name": "posts.kind",
+   "values": [
+    "note",
+    "essay"
+   ],
+   "storage": "check"
+  }
+ ],
+ "notes": [
+  {
+   "code": "orm.unreadIndex",
+   "params": {
+    "table": "posts",
+    "index": "comments.text"
+   }
+  }
+ ]
+}

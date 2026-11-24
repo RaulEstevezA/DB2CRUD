@@ -75,7 +75,7 @@ const en = {
 
   inputLabel: 'Database to read',
   inputPlaceholder:
-    'Paste a Model2DB project (the .model2db.json file Model2DB saves) or ORM models (SQLAlchemy, SQLModel, Django, Tortoise, a Prisma schema, TypeORM entities, Sequelize models, a Drizzle schema, JPA entities, an EF Core model, Doctrine entities, Laravel migrations and Eloquent models, Mongoose schemas, Spring Data MongoDB documents) or SQL DDL (CREATE TABLE…) or the validators of MongoDB collections, or drop the file here…',
+    'Paste a Model2DB project (the .model2db.json file Model2DB saves) or ORM models (SQLAlchemy, SQLModel, Django, Tortoise, a Prisma schema, TypeORM entities, Sequelize models, a Drizzle schema, JPA entities, an EF Core model, Doctrine entities, Laravel migrations and Eloquent models, Mongoose schemas, Spring Data MongoDB or Beanie documents) or SQL DDL (CREATE TABLE…) or the validators of MongoDB collections, or drop the file here…',
   openFile: 'Open',
   clear: 'Clear',
   dropFile: 'Drop the file to open it',
@@ -93,11 +93,11 @@ const en = {
       unreadableInput: 'The models inside the project cannot be read.',
       noModels: 'The project has no models.',
       notRelational:
-        'The project is for a database without tables (MongoDB, Redis, Cassandra…): not supported yet. For MongoDB, paste the Mongoose schemas, the Spring Data documents or the validators Model2DB writes.',
+        'The project is for a database without tables (MongoDB, Redis, Cassandra…): not supported yet. For MongoDB, paste the Mongoose schemas, the Spring Data or Beanie documents or the validators Model2DB writes.',
       unknownInput:
-        'It is neither a Model2DB project, nor SQL DDL, nor ORM code it can read (SQLAlchemy, SQLModel, Django, Tortoise, Prisma, TypeORM, Sequelize, Drizzle, JPA/Hibernate, EF Core, Doctrine, Eloquent, Mongoose and Spring Data MongoDB so far), nor validators of MongoDB.',
+        'It is neither a Model2DB project, nor SQL DDL, nor ORM code it can read (SQLAlchemy, SQLModel, Django, Tortoise, Prisma, TypeORM, Sequelize, Drizzle, JPA/Hibernate, EF Core, Doctrine, Eloquent, Mongoose, Spring Data MongoDB and Beanie so far), nor validators of MongoDB.',
       noTables:
-        'The code declares no table: a SQLAlchemy class needs its __tablename__, a SQLModel one table=True, a Django or Tortoise one Model, a Prisma schema a model block, a TypeORM class @Entity(), Sequelize models Model.init() or sequelize.define(), a Drizzle schema pgTable(), mysqlTable() or sqliteTable(), a JPA class @Entity, an EF Core model a DbContext with its DbSet<…>, a Doctrine class #[ORM\\Entity], Eloquent the migrations with Schema::create, SQL DDL a CREATE TABLE, Mongoose a model(), a Spring Data MongoDB class @Document, and MongoDB a createCollection() with its validator.',
+        'The code declares no table: a SQLAlchemy class needs its __tablename__, a SQLModel one table=True, a Django or Tortoise one Model, a Prisma schema a model block, a TypeORM class @Entity(), Sequelize models Model.init() or sequelize.define(), a Drizzle schema pgTable(), mysqlTable() or sqliteTable(), a JPA class @Entity, an EF Core model a DbContext with its DbSet<…>, a Doctrine class #[ORM\\Entity], Eloquent the migrations with Schema::create, SQL DDL a CREATE TABLE, Mongoose a model(), a Spring Data MongoDB class @Document, Beanie a Document class, and MongoDB a createCollection() with its validator.',
     })[error],
   databaseSummary: (source: string, dialect: string | null, tables: number, columns: number) =>
     `${source} · ${dialect ?? 'any database'} · ${en$(tables)} ${plural(tables, 'table', 'tables')} · ${en$(columns)} ${plural(columns, 'column', 'columns')}`,
@@ -402,7 +402,7 @@ const es: Messages = {
 
   inputLabel: 'Base de datos que leer',
   inputPlaceholder:
-    'Pega un proyecto de Model2DB (el archivo .model2db.json que guarda Model2DB) o modelos de un ORM (SQLAlchemy, SQLModel, Django, Tortoise, un schema de Prisma, entidades de TypeORM, modelos de Sequelize, un schema de Drizzle, entidades JPA, un modelo de EF Core, entidades de Doctrine, migraciones de Laravel y modelos de Eloquent, esquemas de Mongoose, documentos de Spring Data MongoDB) o DDL de SQL (CREATE TABLE…) o los validadores de colecciones de MongoDB, o suelta aquí el archivo…',
+    'Pega un proyecto de Model2DB (el archivo .model2db.json que guarda Model2DB) o modelos de un ORM (SQLAlchemy, SQLModel, Django, Tortoise, un schema de Prisma, entidades de TypeORM, modelos de Sequelize, un schema de Drizzle, entidades JPA, un modelo de EF Core, entidades de Doctrine, migraciones de Laravel y modelos de Eloquent, esquemas de Mongoose, documentos de Spring Data MongoDB o Beanie) o DDL de SQL (CREATE TABLE…) o los validadores de colecciones de MongoDB, o suelta aquí el archivo…',
   openFile: 'Abrir',
   clear: 'Limpiar',
   dropFile: 'Suelta el archivo para abrirlo',
@@ -420,11 +420,11 @@ const es: Messages = {
       unreadableInput: 'No se pueden leer los modelos del proyecto.',
       noModels: 'El proyecto no tiene modelos.',
       notRelational:
-        'El proyecto es para una base de datos sin tablas (MongoDB, Redis, Cassandra…): todavía no se admite. Para MongoDB, pega los esquemas de Mongoose, los documentos de Spring Data o los validadores que escribe Model2DB.',
+        'El proyecto es para una base de datos sin tablas (MongoDB, Redis, Cassandra…): todavía no se admite. Para MongoDB, pega los esquemas de Mongoose, los documentos de Spring Data o Beanie o los validadores que escribe Model2DB.',
       unknownInput:
-        'No es un proyecto de Model2DB, ni DDL de SQL, ni código ORM que sepa leer (por ahora, SQLAlchemy, SQLModel, Django, Tortoise, Prisma, TypeORM, Sequelize, Drizzle, JPA/Hibernate, EF Core, Doctrine, Eloquent, Mongoose y Spring Data MongoDB), ni validadores de MongoDB.',
+        'No es un proyecto de Model2DB, ni DDL de SQL, ni código ORM que sepa leer (por ahora, SQLAlchemy, SQLModel, Django, Tortoise, Prisma, TypeORM, Sequelize, Drizzle, JPA/Hibernate, EF Core, Doctrine, Eloquent, Mongoose, Spring Data MongoDB y Beanie), ni validadores de MongoDB.',
       noTables:
-        'El código no declara ninguna tabla: una clase de SQLAlchemy necesita su __tablename__; una de SQLModel, table=True, una de Django o Tortoise, Model; un schema de Prisma, un bloque model, una clase de TypeORM, @Entity(), los modelos de Sequelize, Model.init() o sequelize.define(), un schema de Drizzle, pgTable(), mysqlTable() o sqliteTable(), una clase JPA, @Entity, un modelo de EF Core, un DbContext con sus DbSet<…>, una clase de Doctrine, #[ORM\\Entity]; Eloquent, las migraciones con Schema::create, el DDL de SQL, un CREATE TABLE; Mongoose, un model(), una clase de Spring Data MongoDB, @Document, y MongoDB, un createCollection() con su validador.',
+        'El código no declara ninguna tabla: una clase de SQLAlchemy necesita su __tablename__; una de SQLModel, table=True, una de Django o Tortoise, Model; un schema de Prisma, un bloque model, una clase de TypeORM, @Entity(), los modelos de Sequelize, Model.init() o sequelize.define(), un schema de Drizzle, pgTable(), mysqlTable() o sqliteTable(), una clase JPA, @Entity, un modelo de EF Core, un DbContext con sus DbSet<…>, una clase de Doctrine, #[ORM\\Entity]; Eloquent, las migraciones con Schema::create, el DDL de SQL, un CREATE TABLE; Mongoose, un model(), una clase de Spring Data MongoDB, @Document; Beanie, una clase Document, y MongoDB, un createCollection() con su validador.',
     })[error],
   databaseSummary: (source, dialect, tables, columns) =>
     `${source} · ${dialect ?? 'cualquier base de datos'} · ${es$(tables)} ${plural(tables, 'tabla', 'tablas')} · ${es$(columns)} ${plural(columns, 'columna', 'columnas')}`,
