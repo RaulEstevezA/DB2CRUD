@@ -29,6 +29,7 @@ from .context import (
 )
 from .dtos import create_dto, read_columns, read_dto
 from .kotlin import KtImports, kt_string, member_name
+from .tests import close_test, open_test
 
 MODELS_FOLDER = "application-models"
 """The folder of the copy of the models when they are imported from the user's package."""
@@ -816,6 +817,8 @@ def conversion_test_file(context: dict, plans: list[dict], schema: dict, can_mak
         "kotlin.test.BeforeTest", "kotlin.test.Test", "kotlin.test.assertEquals", "kotlin.test.assertNotNull"
     )
     memory = context["settings"]["memoryRepositories"]
+    if not memory and context["orm"]["closeTest"]:
+        imports.add("kotlin.test.AfterTest")
     tests: list[list[str]] = []
     readers: dict[str, list[str]] = {}
     for plan in plans:
@@ -880,7 +883,9 @@ def conversion_test_file(context: dict, plans: list[dict], schema: dict, can_mak
             "    @BeforeTest",
             "    fun open() {",
             "        uow = MemoryUnitOfWork()" if memory else "        uow = TestDatabase.open()",
+            *([] if memory else open_test(context)),
             "    }",
+            *([] if memory else close_test(context)),
             *[line for test in tests for line in ("", *test)],
             *[line for reader in readers.values() for line in ("", *reader)],
             "}",

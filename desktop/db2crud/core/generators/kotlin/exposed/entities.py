@@ -3,13 +3,12 @@ table object, which describes the table as the database has it: exact table and 
 and precision, the key, unique values, indexes, foreign keys with their actions, defaults and the values the database
 fills. Exposed reads and writes rows through the table object; the repositories turn rows into entities and back. CHECK
 constraints are named in the table's comment: the services check them. Mirrors
-web/src/core/generators/kotlin/entities.ts."""
+web/src/core/generators/kotlin/exposed/entities.ts."""
 
-import re
-
-from ...js import js_string
-from .context import column_of, common_package, find_info, kt_file, optional_type, package_of, path_of, qualified
-from .kotlin import KtImports, kt_string
+from ....js import js_string
+from ..context import column_of, common_package, find_info, kt_file, optional_type, package_of, path_of, qualified
+from ..kotlin import KtImports, kt_string
+from ..repositories import kt_literal
 
 EXPOSED = "org.jetbrains.exposed.v1.core"
 JAVA_TIME = "org.jetbrains.exposed.v1.javatime"
@@ -121,33 +120,6 @@ def _column_call(context: dict, column: dict, imports: KtImports) -> str:
         length = max([1, *(len(value) for value in values)])
         return f"varchar({name}, {length})"
     return f"text({name})"
-
-
-def kt_literal(column: dict, value) -> str:
-    """A literal of a default, in the column's Kotlin type."""
-    if isinstance(value, bool):
-        return "true" if value else "false"
-    text = js_string(value)
-    kt = column["kt"]
-    if kt == "Long":
-        return f"{text}L"
-    if kt == "Int":
-        return text
-    if kt == "Short":
-        return f"{text}.toShort()"
-    if kt == "BigDecimal":
-        return f"BigDecimal({kt_string(text)})"
-    if kt == "Double":
-        return text if re.search(r"[.eE]", text) else f"{text}.0"
-    if kt == "Float":
-        return f"{text}f"
-    if kt == "Boolean":
-        return text
-    if kt in ("LocalDate", "LocalTime", "LocalDateTime", "OffsetDateTime", "Instant"):
-        return f"{kt}.parse({kt_string(text)})"
-    if kt == "UUID":
-        return f"UUID.fromString({kt_string(text)})"
-    return kt_string(text)
 
 
 NOW = {

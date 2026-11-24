@@ -22,10 +22,8 @@ from .context import (
     writes_entities,
 )
 from .dtos import create_columns, create_dto, update_class, update_columns, update_type
-from .entities import native_enum
 from .kotlin import KtImports, kt_string
 from .samples import missing_value, sample_value
-from .support import EXPOSED_TRANSACTION
 
 
 def _is_nullable_key(info: dict, key: dict) -> bool:
@@ -54,7 +52,7 @@ def _add_name(info: dict) -> str:
     return f"add{info['entity']}"
 
 
-def _test_path(context: dict, name: str) -> str:
+def test_path(context: dict, name: str) -> str:
     return path_of(context["base"], name, True)
 
 
@@ -120,7 +118,7 @@ def _factories_file(context: dict, makeable: list[dict]) -> dict:
             body.append("")
         body += block
     return kt_file(
-        _test_path(context, "Factories"),
+        test_path(context, "Factories"),
         context["base"],
         imports.write(),
         [
@@ -133,130 +131,6 @@ def _factories_file(context: dict, makeable: list[dict]) -> dict:
 
 
 # The test database
-
-NAMES = {"postgresql": "PostgreSQL", "mysql": "MySQL", "mariadb": "MariaDB"}
-
-
-def _test_database_files(context: dict) -> list[dict]:
-    database = context["settings"]["database"]
-    sqlite = database == "sqlite"
-    imports = KtImports(context["base"]).add(
-        "org.jetbrains.exposed.v1.jdbc.Database",
-        "org.jetbrains.exposed.v1.jdbc.SchemaUtils",
-        EXPOSED_TRANSACTION,
-    )
-    tables = [info for info in context["tables"] if info["writesEntity"]]
-    for info in tables:
-        imports.add(qualified(package_of(context, info, "entity"), info["tableObject"]))
-    postgres = database == "postgresql"
-    schemas: list[str] = []
-    if postgres:
-        for info in context["tables"]:
-            name = info["table"].get("schema")
-            if name and name not in schemas:
-                schemas.append(name)
-    enums = (
-        [
-            item
-            for item in context["schema"]["enums"]
-            if any(
-                native_enum(context, column["column"]) is item
-                for info in context["tables"]
-                for column in info["columns"]
-            )
-        ]
-        if postgres
-        else []
-    )
-
-    def quote(text: str) -> str:
-        escaped = text.replace("'", "''")
-        return f"'{escaped}'"
-
-    def statement(sql: str) -> str:
-        return f"            exec({kt_string(sql)})"
-
-    if sqlite:
-        imports.add("java.io.File")
-    name = NAMES.get(database)
-    connect = '        val db = Database.connect(url, user = System.getenv("TEST_DATABASE_USER") ?: "", password = System.getenv("TEST_DATABASE_PASSWORD") ?: "")'
-    files = [
-        kt_file(
-            _test_path(context, "TestDatabase"),
-            context["base"],
-            imports.write(),
-            [
-                "/** The test database: TEST_DATABASE_URL, or SQLite in a temporary file, created from the table objects before every test. */"
-                if sqlite
-                else f"/** The test database: the {name} database TEST_DATABASE_URL names (with TEST_DATABASE_USER and TEST_DATABASE_PASSWORD), created from the table objects before every test. */",
-                "object TestDatabase {",
-                f"    private val TABLES = arrayOf({', '.join(info['tableObject'] for info in tables)})",
-                "",
-                "    /** The repositories over the test database, with every table dropped and created again. */",
-                "    fun open(): SqlUnitOfWork {",
-                '        val url = System.getenv("TEST_DATABASE_URL")',
-                *(
-                    [
-                        "        val db =",
-                        '            if (url == null) Database.connect("jdbc:sqlite:${File.createTempFile("test", ".db").absolutePath}?foreign_keys=true")',
-                        '            else Database.connect(url, user = System.getenv("TEST_DATABASE_USER") ?: "", password = System.getenv("TEST_DATABASE_PASSWORD") ?: "")',
-                    ]
-                    if sqlite
-                    else [
-                        "        // The table objects are written for one kind of database: the tests cannot fall back to SQLite",
-                        f"        checkNotNull(url) {{ {kt_string(f'The database tests need a disposable {name} database: set TEST_DATABASE_URL (it is emptied)')} }}",
-                        connect,
-                    ]
-                ),
-                "        exposedTransaction(db) {",
-                *(statement(f'DROP SCHEMA IF EXISTS "{schema}" CASCADE') for schema in schemas),
-                "            SchemaUtils.drop(*TABLES)",
-                *(
-                    line
-                    for item in enums
-                    for line in (
-                        statement(f'DROP TYPE IF EXISTS "{item["name"]}" CASCADE'),
-                        statement(
-                            f'CREATE TYPE "{item["name"]}" AS ENUM ({", ".join(quote(value) for value in item["values"])})'
-                        ),
-                    )
-                ),
-                *(statement(f'CREATE SCHEMA "{schema}"') for schema in schemas),
-                "            SchemaUtils.create(*TABLES)",
-                "        }",
-                "        return SqlUnitOfWork(db)",
-                "    }",
-                "}",
-            ],
-        )
-    ]
-    sql = "SELECT current_database()" if postgres else "SELECT sqlite_version()" if sqlite else "SELECT DATABASE()"
-    files.append(
-        kt_file(
-            _test_path(context, "DatabaseTest"),
-            context["base"],
-            KtImports(context["base"])
-            .add(EXPOSED_TRANSACTION, "kotlin.test.Test", "kotlin.test.assertEquals", "kotlin.test.assertTrue")
-            .write(),
-            [
-                "/** The tests run on the database they were asked to. */",
-                "class DatabaseTest {",
-                "    @Test",
-                "    fun isSqlite() {" if sqlite else "    fun isTheOneTestDatabaseUrlNames() {",
-                "        val uow = TestDatabase.open()",
-                f"        val value = exposedTransaction(uow.db) {{ exec({kt_string(sql)}) {{ it.next(); it.getString(1) }} }}",
-                '        assertTrue(value!!.startsWith("3."))'
-                if sqlite
-                else '        assertEquals(System.getenv("TEST_DATABASE_URL")!!.substringAfterLast("/").substringBefore("?"), value)',
-                "    }",
-                "}",
-            ],
-        )
-    )
-    return files
-
-
-# Tests of each table
 
 
 def _changeable_text(info: dict) -> dict | None:
@@ -655,21 +529,41 @@ ASSERTIONS = [
 ]
 
 
+def open_test(context: dict) -> list[str]:
+    """What a test class over the test database does after opening the unit of work."""
+    return [f"        {line}" for line in context["orm"]["openTest"](context)]
+
+
+def close_test(context: dict) -> list[str]:
+    """What it does when a test ends."""
+    if not context["orm"]["closeTest"]:
+        return []
+    return [
+        "",
+        "    @AfterTest",
+        "    fun close() {",
+        *(f"        {line}" for line in context["orm"]["closeTest"]),
+        "    }",
+    ]
+
+
 def test_files(context: dict) -> list[dict]:
     tests = context["settings"]["tests"]
     if tests == "none" or not writes_entities(context):
         return []
     makeable = [info for info in context["tables"] if can_make(context, info)]
-    files = [*_test_database_files(context), _factories_file(context, makeable)]
+    files = [*context["orm"]["testDatabaseFiles"](context), _factories_file(context, makeable)]
     memory = context["settings"]["memoryRepositories"]
     for info in makeable:
         entity_class = qualified(package_of(context, info, "entity"), info["entity"])
         if tests in ("all", "repositories"):
-            imports = KtImports(context["base"]).add(*ASSERTIONS)
+            imports = KtImports(context["base"]).add(
+                *ASSERTIONS, *(["kotlin.test.AfterTest"] if context["orm"]["closeTest"] else [])
+            )
             blocks = _repository_tests(context, info)
             files.append(
                 kt_file(
-                    _test_path(context, f"{info['entity']}RepositoryTest"),
+                    test_path(context, f"{info['entity']}RepositoryTest"),
                     context["base"],
                     imports.write(),
                     [
@@ -681,14 +575,18 @@ def test_files(context: dict) -> list[dict]:
                         "    @BeforeTest",
                         "    fun open() {",
                         "        uow = TestDatabase.open()",
+                        *open_test(context),
                         "    }",
+                        *close_test(context),
                         *(line for block in blocks for line in block),
                         "}",
                     ],
                 )
             )
         if tests in ("all", "services") and info["service"] is not None:
-            imports = KtImports(context["base"]).add(*ASSERTIONS)
+            imports = KtImports(context["base"]).add(
+                *ASSERTIONS, *(["kotlin.test.AfterTest"] if context["orm"]["closeTest"] else [])
+            )
             blocks = _service_tests(context, info, imports)
             if not blocks:
                 continue
@@ -702,7 +600,7 @@ def test_files(context: dict) -> list[dict]:
             helper = _create_of_helper(context, info, imports) if dtos_helper else []
             files.append(
                 kt_file(
-                    _test_path(context, f"{service_class(info)}Test"),
+                    test_path(context, f"{service_class(info)}Test"),
                     context["base"],
                     imports.write(),
                     [
@@ -715,7 +613,9 @@ def test_files(context: dict) -> list[dict]:
                         "    @BeforeTest",
                         "    fun open() {",
                         "        uow = MemoryUnitOfWork()" if memory else "        uow = TestDatabase.open()",
+                        *([] if memory else open_test(context)),
                         "    }",
+                        *([] if memory else close_test(context)),
                         *(line for block in blocks for line in block),
                         *helper,
                         "}",

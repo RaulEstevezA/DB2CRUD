@@ -6,8 +6,8 @@ import math
 import re
 
 from ...js import is_number, js_string
-from .entities import kt_literal
 from .kotlin import KtImports, kt_string
+from .repositories import kt_literal
 
 
 def _checks_of(column: dict, checks: list[dict]) -> list[dict]:

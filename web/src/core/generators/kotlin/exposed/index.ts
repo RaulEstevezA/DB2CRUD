@@ -119,6 +119,11 @@ function testDatabaseFiles(context: Context): GeneratedFile[] {
   return files
 }
 
+function transaction(imports: KtImports): string[] {
+  imports.add(EXPOSED_TRANSACTION)
+  return ['    override fun <T> transaction(work: (UnitOfWork) -> T): T = exposedTransaction(db) { work(this@SqlUnitOfWork) }']
+}
+
 export const exposedOrm: KotlinOrm = {
   id: 'exposed',
   holder: { name: 'db', type: 'Database', ktImport: 'org.jetbrains.exposed.v1.jdbc.Database', text: 'database' },
@@ -135,10 +140,7 @@ export const exposedOrm: KotlinOrm = {
     body: exposedBody,
     helpers: exposedHelpers,
   },
-  transaction: (imports) => {
-    imports.add(EXPOSED_TRANSACTION)
-    return ['    override fun <T> transaction(work: (UnitOfWork) -> T): T = exposedTransaction(db) { work(this@SqlUnitOfWork) }']
-  },
+  transaction,
   testDatabaseFiles,
   openTest: () => [],
   closeTest: [],

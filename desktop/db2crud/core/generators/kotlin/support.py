@@ -14,7 +14,7 @@ from .context import (
     repository_type,
     sql_repository_class,
 )
-from .kotlin import KtImports, kt_string
+from .kotlin import KtImports
 
 
 def errors_file(context: dict) -> dict:
@@ -106,9 +106,6 @@ def common_files(context: dict) -> list[dict]:
     return files
 
 
-# Exposed's transaction, by another name than the unit of work's own transaction()
-EXPOSED_TRANSACTION = "org.jetbrains.exposed.v1.jdbc.transactions.transaction as exposedTransaction"
-
 URLS = {
     "postgresql": "jdbc:postgresql://localhost:5432/app",
     "mysql": "jdbc:mysql://localhost:3306/app",
@@ -121,34 +118,12 @@ def default_url(context: dict) -> str:
     return URLS.get(context["settings"]["database"], URLS["postgresql"])
 
 
-def database_file(context: dict) -> dict:
-    """AppDatabase: the database DATABASE_URL names (with DATABASE_USER and DATABASE_PASSWORD)."""
-    pkg = context["base"]
-    return kt_file(
-        path_of(pkg, "AppDatabase"),
-        pkg,
-        "import org.jetbrains.exposed.v1.jdbc.Database",
-        [
-            "/** The database DATABASE_URL names (a JDBC URL), through Exposed. It never migrates: the database already exists. */",
-            "object AppDatabase {",
-            f"    const val DEFAULT_URL = {kt_string(default_url(context))}",
-            "",
-            "    /** A connection to the database at url (DATABASE_URL, with DATABASE_USER and DATABASE_PASSWORD, by default). */",
-            "    fun connect(",
-            '        url: String = System.getenv("DATABASE_URL") ?: DEFAULT_URL,',
-            '        user: String = System.getenv("DATABASE_USER") ?: "",',
-            '        password: String = System.getenv("DATABASE_PASSWORD") ?: "",',
-            "    ): Database = Database.connect(url, user = user, password = password)",
-            "}",
-        ],
-    )
-
-
-HOW = {
-    "operation": "Each service operation runs in transaction(): committed when it ends, rolled back when it throws.",
-    "caller": "Services never commit: whoever holds the database opens and ends its transaction; transaction() only groups the code.",
-    "repository": "Every repository write is committed at once; transaction() only groups the code.",
-}
+def _how(context: dict) -> dict:
+    return {
+        "operation": "Each service operation runs in transaction(): committed when it ends, rolled back when it throws.",
+        "caller": f"Services never commit: whoever holds the {context['orm']['holder']['text']} opens and ends its transaction; transaction() only groups the code.",
+        "repository": "Every repository write is committed at once; transaction() only groups the code.",
+    }
 
 
 def _properties(context: dict, imports: KtImports, value) -> list[str]:
@@ -174,7 +149,7 @@ def unit_of_work_files(context: dict) -> list[dict]:
             pkg,
             interface_imports.write(),
             [
-                f"/** What services depend on: a repository per table and a transaction. {HOW[settings['transactions']]} */",
+                f"/** What services depend on: a repository per table and a transaction. {_how(context)[settings['transactions']]} */",
                 "interface UnitOfWork {",
                 *members,
                 "",
@@ -184,15 +159,15 @@ def unit_of_work_files(context: dict) -> list[dict]:
             ],
         )
     ]
-    sql_imports = KtImports(pkg).add("org.jetbrains.exposed.v1.jdbc.Database")
+    holder = context["orm"]["holder"]
+    sql_imports = KtImports(pkg).add(holder["ktImport"])
     for info in context["tables"]:
         sql_imports.add(qualified(package_of(context, info, "repository"), sql_repository_class(info)))
-    sql_properties = _properties(context, sql_imports, lambda info: f"{sql_repository_class(info)}(db)")
+    sql_properties = _properties(context, sql_imports, lambda info: f"{sql_repository_class(info)}({holder['name']})")
     operation = settings["transactions"] == "operation"
-    if operation:
-        sql_imports.add(EXPOSED_TRANSACTION)
+    transaction = context["orm"]["transaction"](sql_imports) if operation else []
     owner = (
-        "The transaction belongs to whoever holds the database"
+        f"The transaction belongs to whoever holds the {holder['text']}"
         if settings["transactions"] == "caller"
         else "Every write is committed at once"
     )
@@ -202,16 +177,18 @@ def unit_of_work_files(context: dict) -> list[dict]:
             pkg,
             sql_imports.write(),
             [
-                "/** The repositories over one database, and its transaction. */",
-                "class SqlUnitOfWork(val db: Database) : UnitOfWork {",
+                f"/** The repositories over one {holder['text']}, and its transaction. */",
+                f"class SqlUnitOfWork(val {holder['name']}: {holder['type']}) : UnitOfWork {{",
                 *sql_properties,
                 "",
                 "    /** Joins the transaction already open, or opens one. */"
                 if operation
                 else f"    /** {owner}: this only groups the code. */",
-                "    override fun <T> transaction(work: (UnitOfWork) -> T): T = exposedTransaction(db) { work(this@SqlUnitOfWork) }"
-                if operation
-                else "    override fun <T> transaction(work: (UnitOfWork) -> T): T = work(this)",
+                *(
+                    transaction
+                    if operation
+                    else ["    override fun <T> transaction(work: (UnitOfWork) -> T): T = work(this)"]
+                ),
                 "}",
             ],
         )

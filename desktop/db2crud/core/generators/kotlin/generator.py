@@ -1,30 +1,28 @@
-"""The Kotlin generator: Kotlin on the JVM + Exposed 1.6 (its DSL over JDBC) data access layers, with no web framework.
-Every file of the project, composed from the modules of this folder; each module writes one kind of file. Mirrors
+"""The Kotlin generator: data access layers in Kotlin on the JVM with no web framework, over Exposed or JDBC, the strategy
+it is given. Every file of the project, composed from the modules of this folder; each module writes one kind of file. Mirrors
 web/src/core/generators/kotlin/generator.ts."""
 
 from ...conversions.plan import plan_conversions
 from .context import create_context
 from .conversions import conversion_files, conversion_test_file, service_plans
 from .dtos import dto_files
-from .entities import entity_file, enum_column_file, table_object_file
 from .project import contract_file, env_example_file, gitignore_file, gradle_files, readme_file
 from .repositories import repository_files
 from .services import service_file
-from .support import common_files, database_file, errors_file, unit_of_work_files
+from .support import common_files, errors_file, unit_of_work_files
 from .tests import can_make, test_files
 
 
 def _code(context: dict) -> list[dict]:
     files = [
-        database_file(context),
+        *context["orm"]["databaseFiles"](context),
         errors_file(context),
-        enum_column_file(context),
         *common_files(context),
         *unit_of_work_files(context),
     ]
     for info in context["tables"]:
         if info["writesEntity"]:
-            files += [entity_file(context, info), table_object_file(context, info)]
+            files += context["orm"]["entityFiles"](context, info)
         files += repository_files(context, info)
         if context["settings"]["services"] and info["service"]:
             files += dto_files(context, info)
@@ -32,8 +30,8 @@ def _code(context: dict) -> list[dict]:
     return [file for file in files if file is not None]
 
 
-def _generate(schema: dict, design: dict, settings: dict, models: dict | None = None) -> list[dict]:
-    context = create_context(schema, design, settings)
+def _generate(orm: dict, schema: dict, design: dict, settings: dict, models: dict | None = None) -> list[dict]:
+    context = create_context(orm, schema, design, settings)
     plans = service_plans(context, plan_conversions(schema, design, models)) if models else []
     conversions = conversion_files(context, models["schema"], plans) if models else []
     tests = test_files(context)
@@ -55,4 +53,10 @@ def _generate(schema: dict, design: dict, settings: dict, models: dict | None = 
     ]
 
 
-KOTLIN_GENERATOR = {"language": "kotlin", "orm": "exposed", "generate": _generate}
+def kotlin_generator(orm: dict) -> dict:
+    """The generator of Kotlin projects over this strategy."""
+
+    def generate(schema: dict, design: dict, settings: dict, models: dict | None = None) -> list[dict]:
+        return _generate(orm, schema, design, settings, models)
+
+    return {"language": "kotlin", "orm": orm["id"], "generate": generate}

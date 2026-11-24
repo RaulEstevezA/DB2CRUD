@@ -8,7 +8,8 @@ from .csharp.sql.index import SQL_ORM as CSHARP_SQL_ORM
 from .java.generator import java_generator
 from .java.jpa.index import JPA_ORM
 from .java.sql.index import SQL_ORM as JAVA_SQL_ORM
-from .kotlin.generator import KOTLIN_GENERATOR
+from .kotlin.exposed.index import EXPOSED_ORM
+from .kotlin.generator import kotlin_generator
 from .php.common.generator import php_generator
 from .php.doctrine.index import DOCTRINE_ORM
 from .php.eloquent.index import ELOQUENT_ORM
@@ -42,7 +43,7 @@ GENERATORS = [
     php_generator(DOCTRINE_ORM),
     php_generator(ELOQUENT_ORM),
     php_generator(PHP_SQL_ORM),
-    KOTLIN_GENERATOR,
+    kotlin_generator(EXPOSED_ORM),
     RUST_GENERATOR,
     SWIFT_GENERATOR,
 ]

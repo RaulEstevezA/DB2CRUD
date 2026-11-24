@@ -1,14 +1,13 @@
-"""The repositories of each table: the interface services depend on (when the settings want one), its Exposed
-implementation (DSL queries on the table object, each in a transaction that joins the one already open, rows turned into
-entities, writes stored at once so a database refusal becomes a ConflictException, what the database fills read back
-after an insert), and its in-memory one, with the same methods. Repositories decide nothing. Mirrors
-web/src/core/generators/kotlin/repositories.ts."""
+"""The repositories of each table: the interface services depend on (when the settings want one), its database
+implementation (its bodies are the strategy's), and its in-memory one, with the same methods. Repositories decide nothing.
+Mirrors web/src/core/generators/kotlin/repositories.ts."""
 
+import re
+
+from ...js import js_string
 from .context import (
     column_of,
     common_package,
-    errors_package,
-    is_in,
     kt_file,
     memory_repository_class,
     package_of,
@@ -18,12 +17,7 @@ from .context import (
     repository_interface,
     sql_repository_class,
 )
-from .entities import kt_literal
 from .kotlin import KtImports, kt_string
-from .support import EXPOSED_TRANSACTION
-
-CORE = "org.jetbrains.exposed.v1.core"
-JDBC = "org.jetbrains.exposed.v1.jdbc"
 
 
 def repository_methods(context: dict, info: dict, imports: KtImports) -> list[dict]:
@@ -86,222 +80,34 @@ def _signature(method: dict) -> str:
     return f"fun {method['name']}({params}): {method['returns']}"
 
 
-# Exposed
-
-
-def _t(info: dict, column: dict) -> str:
-    return f"{info['tableObject']}.{column['prop']}"
-
-
-def _soft_condition(info: dict, imports: KtImports) -> str | None:
-    """The condition that leaves out rows marked as deleted."""
-    if not info["soft"]:
-        return None
-    imports.add(f"{CORE}.isNull")
-    column = _t(info, info["soft"])
-    if info["soft"]["column"]["type"]["kind"] != "boolean":
-        return f"{column}.isNull()"
-    imports.add(f"{CORE}.eq", f"{CORE}.or")
-    return f"(({column} eq false) or {column}.isNull())"
-
-
-def _all(conditions: list[str], imports: KtImports) -> str:
-    """Conditions joined with and, each between parentheses when there are several."""
-    if len(conditions) > 1:
-        imports.add(f"{CORE}.and")
-    return conditions[0] if len(conditions) == 1 else " and ".join(f"({condition})" for condition in conditions)
-
-
-def _insert_columns(info: dict) -> list[dict]:
-    """The columns written by an insert: not those the database fills (uuids are made first)."""
-    return [column for column in info["columns"] if column["column"].get("generated") in (None, "uuid")]
-
-
-def _update_columns(info: dict) -> list[dict]:
-    """The columns written by an update: not the key, nor those the database fills."""
-    return [
-        column
-        for column in info["columns"]
-        if column["column"].get("generated") is None and not is_in(column, info["key"])
-    ]
-
-
-def _key_condition(info: dict, imports: KtImports) -> str:
-    """The row of an entity, by its key."""
-    imports.add(f"{CORE}.eq")
-    return _all(
-        [
-            f"{_t(info, column)} eq entity.{column['prop']}{'' if column['column']['nullable'] else '!!'}"
-            for column in info["key"]
-        ],
-        imports,
-    )
-
-
-def _order_by(info: dict, imports: KtImports) -> str:
-    imports.add(f"{CORE}.SortOrder")
-    return f".orderBy({', '.join(f'{_t(info, column)} to SortOrder.ASC' for column in info['key'])})"
-
-
-def _select(info: dict, condition: str | None) -> str:
-    """The query of a list, read with or without conditions."""
-    return f"{info['tableObject']}.selectAll(){f'.where {{ {condition} }}' if condition else ''}"
-
-
-def _exposed_body(context: dict, info: dict, method: dict, imports: KtImports) -> list[str]:
-    columns = [column_of(info, name) for name in method["query"]["columns"]]
-    soft = _soft_condition(info, imports)
-    paging = context["settings"]["paging"]
-
-    def by_columns() -> list[str]:
-        imports.add(f"{CORE}.eq")
-        return [f"{_t(info, column)} eq {column['prop']}" for column in columns]
-
-    def read(lines: list[str]) -> list[str]:
-        return ["return exposedTransaction(db) {", *(f"    {line}" for line in lines), "}"]
-
-    imports.add(f"{JDBC}.selectAll")
-    kind = method["query"]["kind"]
-    if kind in ("getByKey", "findByUnique"):
-        condition = _all([*by_columns(), *([soft] if soft else [])], imports)
-        return read([f"{_select(info, condition)}.map {{ toEntity(it) }}.singleOrNull()"])
-    if kind in ("listByParent", "findAllBy"):
-        condition = _all([*by_columns(), *([soft] if soft else [])], imports)
-        return read([f"{_select(info, condition)}{_order_by(info, imports)}.map {{ toEntity(it) }}"])
-    if kind == "list":
-        if paging == "offset":
-            return read(
-                [
-                    f"val query = {_select(info, soft)}",
-                    "val total = query.count()",
-                    f"val items = query{_order_by(info, imports)}.limit(limit).offset(offset.toLong()).map {{ toEntity(it) }}",
-                    "Page(items, total, offset, limit)",
-                ]
-            )
-        if paging == "cursor":
-            # After the key (a, b): a greater, or a the same and b greater
-            key = info["key"]
-            imports.add(f"{CORE}.greater")
-            if len(key) > 1:
-                imports.add(f"{CORE}.eq", f"{CORE}.or")
-            for column in key:
-                if column["ktImport"]:
-                    imports.add(column["ktImport"])
-
-            def value(column: dict, index: int) -> str:
-                return f"(after[{index}] as {column['kt']})"
-
-            items = []
-            for index, column in enumerate(key):
-                item = _all(
-                    [
-                        *(
-                            f"{_t(info, before)} eq {value(before, position)}"
-                            for position, before in enumerate(key[:index])
-                        ),
-                        f"{_t(info, column)} greater {value(column, index)}",
-                    ],
-                    imports,
-                )
-                items.append(f"({item})" if len(key) > 1 else item)
-            after = " or ".join(items)
-            with_after = _all([soft, after], imports) if soft else after
-            next_key = ", ".join(f"items.last().{column['prop']}!!" for column in key)
-            return read(
-                [
-                    f"val query = if (after == null) {_select(info, soft)} else {_select(info, with_after)}",
-                    f"val rows = query{_order_by(info, imports)}.limit(limit + 1).map {{ toEntity(it) }}",
-                    "val items = rows.take(limit)",
-                    f"CursorPage(items, if (rows.size > limit) listOf<Any>({next_key}) else null)",
-                ]
-            )
-        return read([f"{_select(info, soft)}{_order_by(info, imports)}.map {{ toEntity(it) }}"])
-    if kind == "insert":
-        imports.add(f"{JDBC}.insert")
-        uuids = []
-        for column in info["columns"]:
-            if column["column"].get("generated") == "uuid":
-                imports.add("java.util.UUID")
-                uuids.append(f"    entity.{column['prop']} = entity.{column['prop']} ?: UUID.randomUUID()")
-        primary_key = info["table"]["primaryKey"]
-        identity = (
-            next((column for column in info["key"] if column["column"].get("generated") == "identity"), None)
-            if primary_key is not None and len(primary_key) == 1
-            else None
-        )
-        return [
-            "return write {",
-            *uuids,
-            f"    {'val statement = ' if identity else ''}{info['tableObject']}.insert {{ row ->",
-            *(
-                f"        entity.{column['prop']}?.let {{ row[{_t(info, column)}] = it }}"
-                for column in _insert_columns(info)
-            ),
-            "    }",
-            *([f"    entity.{identity['prop']} = statement[{_t(info, identity)}]"] if identity else []),
-            # What the database filled is read back, by the key the row now has
-            *([f"    fill(entity, {_select(info, _key_condition(info, imports))}.single())"] if primary_key else []),
-            "    entity",
-            "}",
-        ]
-    if kind == "update":
-        imports.add(f"{JDBC}.update")
-        return [
-            "return write {",
-            f"    {info['tableObject']}.update({{ {_key_condition(info, imports)} }}) {{ row ->",
-            *(
-                f"        row[{_t(info, column)}] = entity.{column['prop']}"
-                if column["column"]["nullable"]
-                else f"        entity.{column['prop']}?.let {{ row[{_t(info, column)}] = it }}"
-                for column in _update_columns(info)
-            ),
-            "    }",
-            "    entity",
-            "}",
-        ]
-    if kind == "delete":
-        imports.add(f"{JDBC}.deleteWhere")
-        return ["write {", f"    {info['tableObject']}.deleteWhere {{ {_key_condition(info, imports)} }}", "}"]
-    return ["throw UnsupportedOperationException()"]
-
-
-def _exposed_helpers(context: dict, info: dict, imports: KtImports) -> list[str]:
-    """toEntity, fill and write: how rows become entities, and how a refusal of the database becomes a ConflictException."""
-    imports.add(f"{CORE}.ResultRow")
-    writes = any(item["kind"] in ("insert", "update", "delete") for item in info["queries"])
-    if writes:
-        imports.add(
-            "org.jetbrains.exposed.v1.exceptions.ExposedSQLException",
-            qualified(errors_package(context), "ConflictException"),
-        )
-    entity = info["entity"]
-    return [
-        "",
-        f"    private fun toEntity(row: ResultRow): {entity} = {entity}().also {{ fill(it, row) }}",
-        "",
-        f"    private fun fill(entity: {entity}, row: ResultRow) {{",
-        *(f"        entity.{column['prop']} = row[{_t(info, column)}]" for column in info["columns"]),
-        "    }",
-        *(
-            [
-                "",
-                "    /** Runs a write in a transaction; a database refusal (a unique value, a row still pointed to) becomes a ConflictException. */",
-                "    private fun <T> write(work: () -> T): T =",
-                "        try {",
-                "            exposedTransaction(db) { work() }",
-                "        } catch (error: ExposedSQLException) {",
-                "            // SQLSTATE class 23: the change breaks a constraint (SQLite says so in its message)",
-                '            if (!error.sqlState.startsWith("23") && error.cause?.message?.contains("SQLITE_CONSTRAINT") != true) throw error',
-                f'            throw ConflictException({kt_string(entity)}, "the database refused the change: ${{error.cause?.message}}")',
-                "        }",
-            ]
-            if writes
-            else []
-        ),
-    ]
-
-
 # In memory
+
+
+def kt_literal(column: dict, value) -> str:
+    """A literal of a default, in the column's Kotlin type."""
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    text = js_string(value)
+    kt = column["kt"]
+    if kt == "Long":
+        return f"{text}L"
+    if kt == "Int":
+        return text
+    if kt == "Short":
+        return f"{text}.toShort()"
+    if kt == "BigDecimal":
+        return f"BigDecimal({kt_string(text)})"
+    if kt == "Double":
+        return text if re.search(r"[.eE]", text) else f"{text}.0"
+    if kt == "Float":
+        return f"{text}f"
+    if kt == "Boolean":
+        return text
+    if kt in ("LocalDate", "LocalTime", "LocalDateTime", "OffsetDateTime", "Instant"):
+        return f"{kt}.parse({kt_string(text)})"
+    if kt == "UUID":
+        return f"UUID.fromString({kt_string(text)})"
+    return kt_string(text)
 
 
 def _memory_fill(column: dict, imports: KtImports) -> str | None:
@@ -402,32 +208,28 @@ def repository_files(context: dict, info: dict) -> list[dict]:
                 ],
             )
         )
-    imports = KtImports(pkg).add(
-        entity_class, qualified(package_of(context, info, "entity"), info["tableObject"]), EXPOSED_TRANSACTION
-    )
-    imports.add(f"{JDBC}.Database")
+    holder, repository = context["orm"]["holder"], context["orm"]["repository"]
+    imports = KtImports(pkg).add(entity_class, holder["ktImport"], *repository["imports"](context, info))
     methods = repository_methods(context, info, imports)
     modifier = "override " if interfaces else "open "
+    head = repository["head"](context, info)
     bodies: list[str] = []
     for item in methods:
-        bodies += _block(item, _exposed_body(context, info, item, imports), modifier, not interfaces)
-    helpers = _exposed_helpers(context, info, imports)
-    how = (
-        "Every call joins the transaction of whoever holds the database, when there is one."
-        if context["settings"]["transactions"] == "caller"
-        else "Every call joins the transaction already open, or is committed at once."
-    )
+        bodies += _block(item, repository["body"](context, info, item, imports), modifier, not interfaces)
+    helpers = repository["helpers"](context, info, imports)
+    kept = repository["kept"](context)
     files.append(
         kt_file(
             path_of(pkg, sql_repository_class(info)),
             pkg,
             imports.write(),
             [
-                f"/** Keeps {info['name']} rows in the database, through Exposed. {how} */",
-                f"class {sql_repository_class(info)}(private val db: Database) : {repository_interface(info)} {{"
+                f"/** Keeps {info['name']} rows in the database, {repository['doc'](context)} */",
+                f"class {sql_repository_class(info)}(private val {kept}: {holder['type']}) : {repository_interface(info)} {{"
                 if interfaces
-                else f"open class {sql_repository_class(info)}(private val db: Database?) {{",
-                *bodies[1:],
+                else f"open class {sql_repository_class(info)}(private val {kept}: {holder['type']}?) {{",
+                *head,
+                *(bodies if head else bodies[1:]),
                 *helpers,
                 "}",
             ],
