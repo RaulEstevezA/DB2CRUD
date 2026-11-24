@@ -324,3 +324,182 @@ export function withJavaRoundTrip(files, settings, code) {
     : JAVA_CLINIC.replace('VALIDATORS', JSON.stringify(JSON.stringify(clinicValidators())))
   return [...files, { path: 'src/test/java/app/RoundTripTest.java', content }]
 }
+
+// Python: the same, in pytest
+
+const PYTHON_SHOP = `import asyncio
+from datetime import UTC, datetime
+from typing import Any
+
+import pytest
+from bson import Decimal128, ObjectId
+
+from app.db import open_database
+from app.errors import ConflictError, ValidationFailedError
+from app.unit_of_work import MongoUnitOfWork
+from tests.factories import add_customer, add_order, add_product, new_customer, new_order, new_product
+
+
+def collection(uow: MongoUnitOfWork, name: str) -> Any:
+    return uow.db.client.get_default_database()[name]
+
+
+async def test_keeps_every_value_and_its_type(mongo_uow: MongoUnitOfWork) -> None:
+    product = new_product(1)
+    product.related = ["0123456789abcdef01234567"]
+    await mongo_uow.products.insert(product)
+    found = await mongo_uow.products.READ_ID(product.id)
+    assert vars(found) == vars(product)
+    document = await collection(mongo_uow, "products").find_one()
+    assert [type(document[name]).__name__ for name in ("_id", "price", "reference")] == ["ObjectId", "Decimal128", "UUID"]
+    assert document["related"] == [ObjectId("0123456789abcdef01234567")] and document["picture"] == product.picture
+    customer = new_customer(1)
+    customer.extra = {"a": None, "b": ObjectId(), "c": [1, {"d": 2.5}]}
+    customer.created_at = datetime(2026, 1, 1, 1, 1, 1, 123456, tzinfo=UTC)
+    await mongo_uow.customers.insert(customer)
+    read = await mongo_uow.customers.READ_ID(customer.id)
+    assert read is not None and read.extra == customer.extra and read.address == customer.address
+    assert (await collection(mongo_uow, "customers").find_one())["address"]["zip code"] == customer.address["zip code"]
+    order = await add_order(mongo_uow, 2)
+    assert vars(await mongo_uow.orders.READ_ID(order.id))["lines"] == order.lines
+    line = (await collection(mongo_uow, "orders").find_one())["lines"][0]
+    assert [type(line[name]) for name in ("_id", "product", "price")] == [ObjectId, ObjectId, Decimal128]
+
+
+async def test_changes_only_what_is_different(mongo_uow: MongoUnitOfWork) -> None:
+    stored = await add_customer(mongo_uow, 1)
+    customers = collection(mongo_uow, "customers")
+    await customers.update_one({}, {"$set": {"unknown": 1, "address.unknown": 2}})
+    one = await mongo_uow.customers.READ_ID(stored.id)
+    other = await mongo_uow.customers.READ_ID(stored.id)
+    one.name = "one"
+    other.level = "gold"
+    other.address["city"] = "Madrid"
+    other.password_hash = None
+    await mongo_uow.customers.update(one)
+    await mongo_uow.customers.update(other)
+    document = await customers.find_one()
+    assert [document[name] for name in ("name", "level", "unknown")] == ["one", "gold", 1]
+    assert document["address"]["city"] == "Madrid" and document["address"]["unknown"] == 2
+    assert "passwordHash" not in document and document["updatedAt"] > document["createdAt"]
+    # The entity an insert gives changes only its fields too
+    stored.name = "again"
+    await mongo_uow.customers.update(stored)
+    assert (await customers.find_one())["level"] == "gold"
+
+
+async def test_keeps_the_unknown_fields_of_items(mongo_uow: MongoUnitOfWork) -> None:
+    order = await add_order(mongo_uow, 1)
+    await collection(mongo_uow, "orders").update_one({}, {"$set": {"lines.0.unknown": 5}})
+    found = await mongo_uow.orders.READ_ID(order.id)
+    found.lines.append(new_order(2).lines[0])
+    await mongo_uow.orders.update(found)
+    lines = (await collection(mongo_uow, "orders").find_one())["lines"]
+    assert [line.get("unknown") for line in lines] == [5, None] and all("_id" in line for line in lines)
+
+
+async def test_does_not_undo_what_others_change_in_a_list(mongo_uow: MongoUnitOfWork) -> None:
+    order = await add_order(mongo_uow, 1)
+    await asyncio.gather(*(mongo_uow.orders.add_line(order.id, new_order(n).lines[0]) for n in range(1, 5)))
+    found = await mongo_uow.orders.READ_ID(order.id)
+    assert len(found.lines) == 5
+    await asyncio.gather(*(mongo_uow.orders.remove_line(order.id, line["_id"]) for line in found.lines[1:]))
+    assert len((await mongo_uow.orders.READ_ID(order.id)).lines) == 1
+    assert await mongo_uow.orders.add_line("f" * 24, new_order(1).lines[0]) is None
+    assert await mongo_uow.orders.add_line("nothing", new_order(1).lines[0]) is None
+    assert await mongo_uow.orders.READ_ID("nothing") is None
+
+
+async def test_refuses_repeated_and_wrong_values(mongo_uow: MongoUnitOfWork) -> None:
+    await add_customer(mongo_uow, 1)
+    with pytest.raises(ConflictError):
+        await mongo_uow.customers.insert(new_customer(1))
+    wrong = new_customer(2)
+    wrong.address = {"street": []}  # type: ignore[typeddict-item]
+    with pytest.raises(ValidationFailedError):
+        await mongo_uow.customers.insert(wrong)
+    product = await add_product(mongo_uow, 1)
+    product.related = ["nothing"]
+    with pytest.raises(ValidationFailedError):
+        await mongo_uow.products.update(product)
+
+TRANSACTION
+async def test_creates_nothing_in_the_database(mongo_uow: MongoUnitOfWork) -> None:
+    database = mongo_uow.db.client.get_default_database()
+    await mongo_uow.db.client.drop_database(database.name)
+    import os
+
+    client = await open_database(os.environ["TEST_DATABASE_URL"])
+    assert await MongoUnitOfWork(client).customers.READ_ID("f" * 24) is None
+    assert await database.list_collection_names() == []
+    await client.close()
+`
+
+const PYTHON_TRANSACTION = `
+async def test_undoes_a_transaction_that_fails(mongo_uow: MongoUnitOfWork) -> None:
+    await add_product(mongo_uow, 1)
+    with pytest.raises(RuntimeError):
+        async with mongo_uow.transaction():
+            customer = await add_customer(mongo_uow, 1)
+            customer.name = "changed"
+            await mongo_uow.customers.update(customer)
+            async with mongo_uow.transaction():
+                assert await mongo_uow.customers.READ_ID(customer.id) is not None
+            raise RuntimeError("stop")
+    assert await collection(mongo_uow, "customers").count_documents({}) == 0
+    async with mongo_uow.transaction():
+        await add_customer(mongo_uow, 1)
+    assert await collection(mongo_uow, "customers").count_documents({}) == 1
+
+`
+
+const PYTHON_CLINIC = `import json
+
+import pytest
+
+from app.errors import ConflictError
+from app.unit_of_work import MongoUnitOfWork
+from tests.factories import add_patient, add_room, new_patient
+
+VALIDATORS = json.loads(VALIDATORS_JSON)
+
+
+async def test_fits_the_validators_of_the_collections(mongo_uow: MongoUnitOfWork) -> None:
+    database = mongo_uow.db.client.get_default_database()
+    for name, validator in VALIDATORS.items():
+        if name not in await database.list_collection_names():
+            await database.create_collection(name)
+        await database.command({"collMod": name, "validator": validator, "validationAction": "error"})
+    patient = await mongo_uow.patients.insert(new_patient(1))
+    found = await mongo_uow.patients.find_by_id(patient.id)
+    assert vars(found) == vars(patient)
+    room = await add_room(mongo_uow, 1)
+    found.weight = 70
+    found.balance = None
+    found.visits = 3
+    found.contacts.append({"kind": "email", "value": "a@b.c"})
+    room.beds = 4
+    await mongo_uow.patients.update(found)
+    await mongo_uow.rooms.update(room)
+    changed = await mongo_uow.patients.find_by_id(patient.id)
+    assert (changed.weight, changed.balance, changed.visits, changed.contacts) == (70, None, 3, found.contacts)
+    assert (await mongo_uow.rooms.find_by_id(room.id)).beds == 4
+    with pytest.raises(ConflictError):
+        await mongo_uow.patients.insert(new_patient(1))
+    await add_patient(mongo_uow, 2)
+    # What only the validator of the collection knows is refused too
+    with pytest.raises(ConflictError):
+        await mongo_uow.patients.insert(new_patient(3, blood="Z"))
+    with pytest.raises(ConflictError):
+        await mongo_uow.patients.add_contact(patient.id, {"kind": "fax", "value": "1"})
+`
+
+export function withPythonRoundTrip(files, settings, code) {
+  const content = code.endsWith('shop.ts')
+    ? PYTHON_SHOP.replace('TRANSACTION', settings.transactions === 'operation' ? PYTHON_TRANSACTION : '').replaceAll(
+        'READ_ID',
+        settings.verbs === 'get' ? 'get_by_id' : 'find_by_id',
+      )
+    : PYTHON_CLINIC.replace('VALIDATORS_JSON', JSON.stringify(JSON.stringify(clinicValidators())))
+  return [...files, { path: 'tests/test_round_trip.py', content }]
+}

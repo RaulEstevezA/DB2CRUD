@@ -12,7 +12,7 @@ node --experimental-strip-types --no-warnings generate.mjs "${1:-}" || exit 1
 status=0
 runner_of() {
   case "$1" in
-    sqlalchemy-* | django-* | python-sql-*) echo ./runners/python.sh ;;
+    sqlalchemy-* | django-* | python-sql-* | beanie-*) echo ./runners/python.sh ;;
     typeorm-* | prisma-* | drizzle-* | sequelize-* | mongoose-* | typescript-sql-*) echo ./runners/node.sh ;;
     jpa-* | springdata-* | java-sql-*) echo ./runners/java.sh ;;
     efcore-* | csharp-sql-*) echo ./runners/dotnet.sh ;;
