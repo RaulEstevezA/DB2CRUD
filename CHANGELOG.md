@@ -54,9 +54,9 @@ DB2CRUD starts from the code of Model2API (which continues as Controller2API), k
 - Web and desktop: three built-in examples (Model2DB projects), and the page of the tool in English and Spanish, following the layout of the other tools.
 - Its own icon: the database the tool reads, in grey, and the code it writes, in blue.
 
-[Unreleased]: https://github.com/RaulEstevezA/DB2CRUD/commits/main
-
 ### Fixed
 
 - SQLAlchemy on an existing database: columns named `metadata` or `registry` no longer break the entities, PostgreSQL arrays are mapped as `ARRAY` instead of JSON, types SQLAlchemy has no class for can be written on PostgreSQL, composite foreign keys keep `ON UPDATE`, and asynchronous MySQL and MariaDB projects stay on PyMySQL 1.1, since aiomysql cannot write binary values with 1.2.
 - Python: columns named like a type (`date`, `time`, `str`, `list`…) no longer break the entities and the DTOs.
+
+[Unreleased]: https://github.com/RaulEstevezA/DB2CRUD/commits/main
