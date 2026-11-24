@@ -84,7 +84,7 @@ function factoriesFile(context: Context, makeable: TableInfo[]): GeneratedFile {
         return [`        entity.${column.setter}(${value});`]
       })
     const insert = query(info, 'insert')!
-    const documents = [...info.nested.values()].flatMap((item) => nestedFactories(context, info, item, imports))
+    const documents = [...info.nested.values()].flatMap((item) => nestedFactories(context, item, imports))
     return [
       `    /** A valid ${info.entity} that is not stored yet; n makes its unique values differ. */`,
       `    static ${info.entity} ${newName(info)}(int n) {`,
@@ -131,7 +131,7 @@ const nestedValue = (type: DbType, nested: NestedClass): string =>
   type.kind === 'array' ? `new java.util.ArrayList<>(List.of(${nestedValue(type.items, nested)}))` : `${factoryOf(nested)}(n)`
 
 /** A factory per class of nested document, without the identifier it is given when it is stored. */
-function nestedFactories(context: Context, info: TableInfo, item: NestedClass, imports: JavaImports): string[] {
+function nestedFactories(context: Context, item: NestedClass, imports: JavaImports): string[] {
   imports.add('java.util.List')
   const values = item.fields
     .filter((field) => field.column.name !== '_id' && field.column.type.kind !== 'unknown')
@@ -155,7 +155,7 @@ function nestedFactories(context: Context, info: TableInfo, item: NestedClass, i
     ...values,
     '        return item;',
     '    }',
-    ...item.classes.flatMap((inner) => nestedFactories(context, info, inner, imports)),
+    ...item.classes.flatMap((inner) => nestedFactories(context, inner, imports)),
   ]
 }
 
