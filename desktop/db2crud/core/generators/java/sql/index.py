@@ -221,6 +221,7 @@ SQL_ORM = {
     "holder": "Connection",
     # Nothing is kept between reads
     "forget": None,
+    "emptyList": lambda context: '"{}"' if context["settings"]["database"] == "postgresql" else '"[]"',
     "databaseFiles": sql_database_files,
     "entityFile": sql_entity_file,
     "repository": {"doc": _doc, "head": sql_head, "body": sql_body, "tail": sql_tail},

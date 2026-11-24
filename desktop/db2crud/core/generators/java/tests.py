@@ -81,11 +81,15 @@ def _factories_file(context: dict, makeable: list[dict]) -> dict:
                 if column["column"]["type"]["kind"] == "boolean":
                     values.append(f"        entity.{column['setter']}(false);")
                 continue
-            if column["column"]["nullable"] and is_key:
+            # No sample is sure to fit a type that is not known
+            if column["column"]["nullable"] and (is_key or column["column"]["type"]["kind"] == "unknown"):
                 continue
             for name in sample_imports(column):
                 imports.add(name)
-            value = sample_value(column, info["table"]["checks"], context["schema"]["enums"])
+            if column["column"]["type"]["kind"] == "array":
+                value = context["orm"]["emptyList"](context)
+            else:
+                value = sample_value(column, info["table"]["checks"], context["schema"]["enums"])
             values.append(f"        entity.{column['setter']}({value});")
         insert = query(info, "insert")
         entity = info["entity"]

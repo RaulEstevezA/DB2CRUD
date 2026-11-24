@@ -245,6 +245,7 @@ export const jpaOrm: JavaOrm = {
   id: 'jpa',
   holder: 'EntityManager',
   forget: 'uow.entityManager().clear();',
+  emptyList: () => '"[]"',
   databaseFiles: (context) => [databaseFile(context)],
   entityFile,
   repository: {

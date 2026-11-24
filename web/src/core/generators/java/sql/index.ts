@@ -184,6 +184,7 @@ export const sqlOrm: JavaOrm = {
   holder: 'Connection',
   // Nothing is kept between reads
   forget: null,
+  emptyList: (context) => (context.settings.database === 'postgresql' ? '"{}"' : '"[]"'),
   databaseFiles: sqlDatabaseFiles,
   entityFile: sqlEntityFile,
   repository: {

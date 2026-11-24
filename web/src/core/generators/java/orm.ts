@@ -17,6 +17,8 @@ export interface JavaOrm {
   holder: string
   /** The statement that makes the tests read again from the database what the unit of work keeps, when it keeps something */
   forget: string | null
+  /** A list without items as the entities keep it, as a Java expression */
+  emptyList(context: Context): string
   /** `Database` and what else the data source needs */
   databaseFiles(context: Context): GeneratedFile[]
   /** The entity of a table */

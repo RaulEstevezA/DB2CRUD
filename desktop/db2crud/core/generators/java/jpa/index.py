@@ -280,6 +280,7 @@ JPA_ORM = {
     "id": "jpa",
     "holder": "EntityManager",
     "forget": "uow.entityManager().clear();",
+    "emptyList": lambda context: '"[]"',
     "databaseFiles": lambda context: [database_file(context)],
     "entityFile": entity_file,
     "repository": {"doc": _doc, "head": jpa_head, "body": jpa_body, "tail": jpa_tail},
