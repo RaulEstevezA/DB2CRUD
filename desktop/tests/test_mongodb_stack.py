@@ -1,6 +1,12 @@
 """A document database is offered the stacks made for it, and a relational one the others."""
 
-from db2crud.core.settings.settings import DEFAULT_SETTINGS, change_settings, normalize_settings, settings_for, stacks_for
+from db2crud.core.settings.settings import (
+    DEFAULT_SETTINGS,
+    change_settings,
+    normalize_settings,
+    settings_for,
+    stacks_for,
+)
 from db2crud.workspace import input_language, read_database
 
 VALIDATOR = '{ $jsonSchema: { bsonType: "object", title: "users", properties: { name: { bsonType: "string" } } } }'
