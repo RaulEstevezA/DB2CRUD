@@ -18,11 +18,11 @@ Application models ──► Importer ──► Model ───────┘  
 |---|---|---|---|
 | Model importing | Text in a supported format | `Model` | Works: `core/importers/`, `core/model/` |
 | Constraints and model facts | `Model` | Validations each field declares, entities, keys and references | Works: `core/analysis/` |
-| Database importing | Model2DB project, ORM code or SQL DDL | Physical schema (`db-schema`) | Model2DB projects (`core/interop/model2db/`) and the Python ORMs SQLAlchemy, SQLModel, Django and Tortoise, Prisma, TypeORM, Sequelize, Drizzle, JPA/Hibernate, EF Core, Doctrine, Eloquent, Mongoose and Spring Data MongoDB, and MongoDB validators (`core/importers/orm/`), and SQL DDL (`core/importers/ddl/`) work |
+| Database importing | Model2DB project, ORM code or SQL DDL | Physical schema (`db-schema`) | Model2DB projects (`core/interop/model2db/`) and the Python ORMs SQLAlchemy, SQLModel, Django and Tortoise, Prisma, TypeORM, Sequelize, Drizzle, JPA/Hibernate, EF Core, Doctrine, Eloquent, Mongoose, Spring Data MongoDB and Beanie, and MongoDB validators (`core/importers/orm/`), and SQL DDL (`core/importers/ddl/`) work |
 | Analysis | Physical schema | Repository queries and pending decisions | Works: `core/schema/`, `core/crud/` |
 | Correspondences | Physical schema + `Model` (+ Mapper project) | Model ↔ entity and field ↔ column, with their confidence | To write |
 | CRUD design | Physical schema + user edits | Repositories, services and decisions | Works: `core/crud/` |
-| Generation | CRUD design + settings | Project files | Python (SQLAlchemy 2, Django 5.2), TypeScript (TypeORM 0.3, Prisma 7, Drizzle 0.45, Sequelize 6, Mongoose 8), Java (JPA, Hibernate 7; Spring Data MongoDB 5), C# (EF Core 9), PHP (Doctrine ORM 3, Eloquent 12), Kotlin (Exposed 1.6), Rust (SeaORM 2) and Swift (Fluent) work: `core/generators/`; other stacks to write |
+| Generation | CRUD design + settings | Project files | Python (SQLAlchemy 2, Django 5.2, Beanie 2), TypeScript (TypeORM 0.3, Prisma 7, Drizzle 0.45, Sequelize 6, Mongoose 8), Java (JPA, Hibernate 7; Spring Data MongoDB 5), C# (EF Core 9), PHP (Doctrine ORM 3, Eloquent 12), Kotlin (Exposed 1.6), Rust (SeaORM 2) and Swift (Fluent) work: `core/generators/`; other stacks to write |
 | Export | Project files | ZIP, single file | Works: `core/export/` |
 
 Decisions and their confidence (`core/decisions/`) are shared by every stage that proposes something.
