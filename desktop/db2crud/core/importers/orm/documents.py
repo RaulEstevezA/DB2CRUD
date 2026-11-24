@@ -1,8 +1,8 @@
 """Deduces the collections of a MongoDB database from sample documents: what `mongoexport` and Compass write (JSON,
 Extended JSON, one document per line), what mongosh prints (`ObjectId('…')`, `ISODate('…')`), a script that inserts
 them, or an object with a list per collection. Documents say what there is, not what there must be, so it is careful: a
-field is only required when enough documents have it, and unique values, limits and lists of values are never deduced. No
-value of a document goes into the schema. Mirrors web/src/core/importers/orm/documents.ts.
+field is only required when enough documents have it, and unique values, limits and lists of values are never deduced.
+No value of a document goes into the schema. Mirrors web/src/core/importers/orm/documents.ts.
 
 A value is {"kind": "object", "entries"}, {"kind": "array", "items"} or a scalar {"kind", "text"?}; what is found of a
 collection {"name", "named", "line", "documents"}."""
