@@ -750,6 +750,22 @@ VERIFIED = [
         "scenarios": ["swift-sql-sqlite-defaults", "swift-sql-sqlite-no-interfaces-services-tests"],
         "date": "2026-11-24",
     },
+    {
+        "language": "typescript",
+        "orm": "mongoose",
+        "database": "mongodb",
+        "execution": "async",
+        "scenarios": [
+            "mongoose-mongodb-defaults",
+            "mongoose-mongodb-dtos-cursor-by-table",
+            "mongoose-mongodb-caller-class-dtos",
+            "mongoose-mongodb-no-interfaces-services-tests",
+            "mongoose-mongodb-repositories-only",
+            "mongoose-mongodb-validators",
+            "mongoose-mongodb-validators-dtos",
+        ],
+        "date": "2026-11-24",
+    },
 ]
 
 

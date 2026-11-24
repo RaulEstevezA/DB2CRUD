@@ -15,6 +15,8 @@ def _enum_names(column_type: dict) -> list[str]:
         return [column_type["name"]]
     if column_type["kind"] == "array":
         return _enum_names(column_type["items"])
+    if column_type["kind"] == "json":
+        return [name for field in column_type.get("fields") or [] for name in _enum_names(field["type"])]
     return []
 
 

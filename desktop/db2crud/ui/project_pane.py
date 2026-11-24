@@ -21,7 +21,7 @@ from PySide6.QtWidgets import (
 )
 
 from ..core.export.zip import create_zip
-from ..core.settings.settings import STACKS, find_stack
+from ..core.settings.settings import STACKS, find_stack, stacks_for
 from ..core.settings.verified import is_verified
 from .code_view import CodeView
 from .pane import Pane, section
@@ -217,7 +217,12 @@ class ProjectPane(Pane):
         settings = self._session.settings
         # The form also depends on whether the application models get conversions
         conversions = str(self._session.conversions)
-        key = (self._i18n.language, conversions, tuple(sorted((name, str(value)) for name, value in settings.items())))
+        key = (
+            self._i18n.language,
+            conversions,
+            self._session.dialect,
+            tuple(sorted((name, str(value)) for name, value in settings.items())),
+        )
         if key == self._form_key:
             return
         self._form_key = key
@@ -235,7 +240,7 @@ class ProjectPane(Pane):
         stacks = combo(
             [
                 (f"{t.languages[item['language']]} · {item['label']}", f"{item['language']}:{item['orm']}")
-                for item in STACKS
+                for item in stacks_for(self._session.dialect)
             ],
             f"{settings['language']}:{settings['orm']}",
             lambda value: self._set(**dict(zip(("language", "orm"), value.split(":"), strict=True))),

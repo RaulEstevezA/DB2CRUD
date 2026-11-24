@@ -95,6 +95,16 @@ STACKS = [
         "updates": ["partial"],
     },
     {
+        "language": "typescript",
+        "orm": "mongoose",
+        "label": "Mongoose 8 (MongoDB)",
+        "databases": ["mongodb"],
+        "execution": ["async"],
+        "errors": ["exceptions"],
+        "dtoKinds": ["interface", "class"],
+        "updates": ["partial"],
+    },
+    {
         "language": "java",
         "orm": "jpa",
         "label": "JPA · Hibernate 7",
@@ -272,6 +282,21 @@ TESTS = ["all", "services", "repositories", "none"]
 
 def find_stack(language, orm) -> dict | None:
     return next((stack for stack in STACKS if stack["language"] == language and stack["orm"] == orm), None)
+
+
+def stacks_for(dialect: str | None) -> list[dict]:
+    """The stacks that can reach a database: documents need one made for them, and tables one made for tables."""
+    if dialect is None:
+        return STACKS
+    return [stack for stack in STACKS if ("mongodb" in stack["databases"]) == (dialect == "mongodb")]
+
+
+def settings_for(dialect: str | None, settings: dict) -> dict:
+    """The same settings, on the first stack for the database when theirs cannot reach it."""
+    stacks = stacks_for(dialect)
+    if any(stack["language"] == settings["language"] and stack["orm"] == settings["orm"] for stack in stacks):
+        return settings
+    return normalize_settings({**settings, "language": stacks[0]["language"], "orm": stacks[0]["orm"]})
 
 
 def _pick(value, options: list, fallback):

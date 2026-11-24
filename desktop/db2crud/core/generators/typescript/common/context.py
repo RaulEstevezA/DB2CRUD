@@ -9,7 +9,7 @@ context is {"orm", "schema", "design", "settings", "tables"}.
 import re
 
 from ....crud.types import find_policy, find_repository, find_service
-from ..typescript import file_name, member_name, type_name
+from ..typescript import file_name, member_name, quote, type_name
 
 BLOCKING = (None, "no action", "restrict")
 
@@ -33,7 +33,19 @@ def ts_type(column_type: dict) -> str:
     # A type the rules do not know is kept as its text
     if kind == "unknown":
         return "string"
+    if column_type.get("fields") is not None:
+        return _document_type(column_type["fields"])
     return "unknown"
+
+
+def _document_type(fields: list[dict]) -> str:
+    """The type of a nested document, by the stored names of its fields."""
+    written = []
+    for field in fields:
+        name = field["name"] if re.fullmatch(r"[A-Za-z_$][A-Za-z0-9_$]*", field["name"]) else quote(field["name"])
+        optional, null = ("?", " | null") if field["nullable"] else ("", "")
+        written.append(f"{name}{optional}: {ts_type(field['type'])}{null}")
+    return f"{{ {'; '.join(written)} }}"
 
 
 def pg_schemas(context: dict) -> list[str]:
@@ -68,22 +80,24 @@ def _included(items: list[dict]) -> list[dict]:
     return [item for item in items if item["include"]["value"]]
 
 
-def _column_info(column: dict) -> dict:
+def _column_info(table: dict, column: dict) -> dict:
     generated = column.get("generated") is not None and column.get("generated") != "onUpdateNow"
+    # MongoDB's _id is the id of the entity, unless the documents have one of their own
+    own_id = column["name"] == "_id" and any(item["name"] == "id" for item in table["columns"])
     return {
         "column": column,
-        "prop": member_name(column["name"]),
+        "prop": "_id" if own_id else member_name(column["name"]),
         "ts": ts_type(column["type"]),
         "generated": generated,
         "required": not column["nullable"] and "default" not in column and not generated,
     }
 
 
-def _table_info(schema: dict, design: dict, settings: dict, table: dict) -> dict:
+def _table_info(orm: dict, schema: dict, design: dict, settings: dict, table: dict) -> dict:
     policy = find_policy(design, table["name"])
     repository = find_repository(design, table["name"])
     service = find_service(design, table["name"]) if settings["services"] else None
-    columns = [_column_info(column) for column in table["columns"]]
+    columns = [_column_info(table, column) for column in table["columns"]]
 
     def by_name(name: str) -> dict:
         return next(info for info in columns if info["column"]["name"] == name)
@@ -95,7 +109,9 @@ def _table_info(schema: dict, design: dict, settings: dict, table: dict) -> dict
     delete_mode = policy["delete"]["value"]
     concurrency = policy["concurrency"]["value"]
     # The input's classes only count when they are of this stack's ORM
-    own_entities = not repository["entityMissing"] and schema["source"]["format"] == settings["orm"]
+    own_entities = (
+        not orm.get("ownModels") and not repository["entityMissing"] and schema["source"]["format"] == settings["orm"]
+    )
     writes_entity = settings["entities"] == "all" or (settings["entities"] == "missing" and not own_entities)
     children = policy["children"]
     return {
@@ -125,7 +141,7 @@ def create_context(orm: dict, schema: dict, design: dict, settings: dict) -> dic
         "schema": schema,
         "design": design,
         "settings": settings,
-        "tables": [_table_info(schema, design, settings, table) for table in schema["tables"]],
+        "tables": [_table_info(orm, schema, design, settings, table) for table in schema["tables"]],
     }
 
 

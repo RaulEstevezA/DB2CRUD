@@ -8,6 +8,7 @@ An input is {"text", "fileName"?} or, with several files, {"text", "files": [{"n
 """
 
 import os
+import re
 from pathlib import Path
 
 from .core.importers.ddl.ddl import detect_ddl, read_ddl
@@ -20,11 +21,18 @@ from .core.js import coalesce, trim, trim_start
 EMPTY_INPUT = {"text": ""}
 
 
+def _is_validator(text: str) -> bool:
+    return bool(
+        re.match(r"""\{\s*["']?\$jsonSchema\b""", text) or re.match(r"\{[^{}]*\boptions\b[\s\S]*\$jsonSchema", text)
+    )
+
+
 def _read_text(text: str, name: str) -> dict | None:
     """One text: a Model2DB project when it is JSON; else ORM code, or else SQL DDL."""
     if trim(text) == "":
         return None
-    if trim(text).startswith("{"):
+    # A validator of MongoDB is an object too
+    if trim(text).startswith("{") and not _is_validator(trim(text)):
         return read_model2db_project(text)
     return _read_files([{"name": name, "text": text}])
 
@@ -83,7 +91,7 @@ def input_language(state: dict) -> str:
         if language:
             return language
     text = trim_start(state["text"])
-    if text == "" or text.startswith("{"):
+    if text == "" or (text.startswith("{") and not _is_validator(text)):
         return "json"
     reader = detect_orm([{"name": coalesce(state.get("fileName"), "input"), "text": state["text"]}])
     if reader:

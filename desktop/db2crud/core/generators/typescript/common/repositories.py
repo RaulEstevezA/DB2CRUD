@@ -3,6 +3,7 @@ implementation (written by each ORM, common/orm.py) and its in-memory one, with 
 and write rows and never decide anything. Mirrors web/src/core/generators/typescript/common/repositories.ts."""
 
 from ....js import number_text
+from ....schema.documents import is_object_id
 from ...types import indent, lines
 from ..typescript import TsImports, ts_literal
 from .context import (
@@ -110,6 +111,9 @@ def _memory_fill(context: dict, column: dict, imports: TsImports) -> str | None:
     generated = db.get("generated")
     if generated == "identity":
         return f"if ({unset}) {target} = this.nextId++"
+    if is_object_id(db["type"]) and generated == "uuid":
+        imports.from_("node:crypto", "randomBytes")
+        return f"if ({unset}) {target} = randomBytes(12).toString('hex')"
     if generated == "uuid":
         imports.from_("node:crypto", "randomUUID")
         return f"if ({unset}) {target} = randomUUID()"

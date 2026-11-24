@@ -6,6 +6,7 @@ import math
 import re
 
 from ...js import number_text
+from ...schema.documents import is_object_id, nested_fields
 from ..python.python import js_json
 
 
@@ -64,6 +65,8 @@ def sample_value(column: dict, checks: list[dict], enums: list[dict]) -> str:
     if kind == "float":
         return _text(choices["values"][0]) if choices else f"{_number(column, checks)} + 0.5"
     if kind == "text":
+        if column_type.get("objectId"):
+            return "n.toString(16).padStart(24, '0')"
         length = column_type.get("length", 40)
         if column_type.get("fixed"):
             return f"String(n).padStart({length}, '0').slice(-{length})"
@@ -89,14 +92,30 @@ def sample_value(column: dict, checks: list[dict], enums: list[dict]) -> str:
         length = column_type.get("length")
         return f"Buffer.alloc({length}, n % 256)" if length is not None and length <= 64 else "Buffer.from([n % 256])"
     if kind == "json":
-        return "{ n }"
+        fields = column_type.get("fields")
+        return "{ n }" if fields is None else _document_sample(fields, enums)
     if kind == "array":
-        return "[]"
+        if nested_fields(column_type) is None:
+            return "[]"
+        return f"[{sample_value({**column, 'type': column_type['items']}, [], enums)}]"
     return "`value-${n}`"
+
+
+def _document_sample(fields: list[dict], enums: list[dict]) -> str:
+    """A nested document: a value for each of its fields but the identifier the database gives it."""
+    values = []
+    for field in fields:
+        if field["name"] == "_id" or (field["nullable"] and field["type"]["kind"] == "unknown"):
+            continue
+        name = field["name"] if re.fullmatch(r"[A-Za-z_$][A-Za-z0-9_$]*", field["name"]) else _literal(field["name"])
+        values.append(f"{name}: {sample_value(field, [], enums)}")
+    return f"{{ {', '.join(values)} }}"
 
 
 def missing_value(column_type: dict) -> str:
     """A key no row has, as a TypeScript expression, for the tests of missing rows."""
+    if is_object_id(column_type):
+        return f"'{'f' * 24}'"
     kind = column_type["kind"]
     if kind in ("integer", "float"):
         return "999999"

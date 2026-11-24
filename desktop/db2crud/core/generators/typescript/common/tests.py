@@ -308,7 +308,11 @@ def _service_tests(context: dict, info: dict, imports: TsImports, memory: bool) 
     def fresh(n: int, extra: list[str] | None = None) -> str:
         return f"pick<{create_dto(info)}>({factory(n, extra)}, CREATE_FIELDS)" if dtos else factory(n, extra)
 
-    version = f", created.{info['version']['prop']}" if info["version"] else ""
+    version = (
+        f", created.{info['version']['prop']}{'!' if info['version']['column']['nullable'] else ''}"
+        if info["version"]
+        else ""
+    )
     tests = []
     if create:
         imports.from_("test/factories", _new_name(info))

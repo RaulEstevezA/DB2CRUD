@@ -1,6 +1,8 @@
 """A TypeScript generator for an ORM (Strategy of common/orm.py): every file of the project, composed from the
 modules of common/ and the ORM's own database layer. Mirrors web/src/core/generators/typescript/common/generator.ts."""
 
+import re
+
 from ....conversions.plan import plan_conversions
 from .context import create_context
 from .conversions import conversion_files, conversion_test_file, service_plans
@@ -25,6 +27,19 @@ def _code(context: dict) -> list[dict]:
     return [file for file in files if file is not None]
 
 
+def _named(orm: dict, files: list[dict]) -> list[dict]:
+    """The files with the database classes named as the ORM asks: SqlUnitOfWork is MongoUnitOfWork in a document database."""
+    prefix = orm.get("prefix")
+    if not prefix:
+        return files
+
+    def rename(text: str) -> str:
+        text = re.sub(r"\bSql(?=UnitOfWork\b|\w+Repository\b)", prefix, text)
+        return re.sub(r"\bsqlUow\b", f"{prefix[0].lower()}{prefix[1:]}Uow", text)
+
+    return [{**file, "content": rename(file["content"])} for file in files]
+
+
 def typescript_generator(orm: dict) -> dict:
     def generate(schema: dict, design: dict, settings: dict, models: dict | None = None) -> list[dict]:
         context = create_context(orm, schema, design, settings)
@@ -35,7 +50,7 @@ def typescript_generator(orm: dict) -> dict:
             if tests and settings["tests"] in ("all", "services")
             else None
         )
-        return [
+        files = [
             readme_file(context),
             package_file(context),
             *tsconfig_files(context),
@@ -47,5 +62,6 @@ def typescript_generator(orm: dict) -> dict:
             *tests,
             *([conversion_tests] if conversion_tests else []),
         ]
+        return _named(orm, files)
 
     return {"language": "typescript", "orm": orm["id"], "generate": generate}

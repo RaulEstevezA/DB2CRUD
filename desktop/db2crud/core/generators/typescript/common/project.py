@@ -5,6 +5,7 @@ web/src/core/generators/typescript/common/project.ts."""
 
 import json
 
+from ....schema.documents import nested_fields
 from ...types import lines
 from .context import is_in, module_of, operation_name, service_class, writes_entities
 from .dtos import create_dto, read_dto, update_dto
@@ -210,17 +211,26 @@ def readme_file(context: dict) -> dict:
 # crud-contract.json
 
 
-def _type_of(column: dict) -> dict:
-    column_type = column["column"]["type"]
+def _type_of(column_type: dict) -> dict:
     result = {"kind": column_type["kind"]}
     if column_type["kind"] == "text" and "length" in column_type:
         result["length"] = column_type["length"]
+    # What a nested document, or each of a list of them, holds
+    fields = nested_fields(column_type)
+    if fields is not None:
+        result["fields"] = [
+            {"name": field["name"], "type": _type_of(field["type"]), "nullable": field["nullable"]} for field in fields
+        ]
     return result
 
 
 def _fields(columns: list[dict], optional: bool) -> list[dict]:
     return [
-        {"name": column["prop"], "type": _type_of(column), "nullable": optional or column["column"]["nullable"]}
+        {
+            "name": column["prop"],
+            "type": _type_of(column["column"]["type"]),
+            "nullable": optional or column["column"]["nullable"],
+        }
         for column in columns
     ]
 

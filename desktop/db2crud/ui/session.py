@@ -15,7 +15,7 @@ from ..core.crud.edit import pending_decisions
 from ..core.crud.propose import propose_crud
 from ..core.generators.registry import generate_project
 from ..core.js import trim
-from ..core.settings.settings import DEFAULT_SETTINGS, normalize_settings
+from ..core.settings.settings import DEFAULT_SETTINGS, normalize_settings, settings_for
 from ..examples import find_example
 from ..workspace import EMPTY_INPUT, read_database, read_models
 
@@ -53,7 +53,9 @@ class Session(QObject):
         self.design: dict | None = None
         self.pending: list[dict] = []
         self.files: list[dict] = []
-        self.settings = _stored_settings(settings.value("settings"))
+        # What the user chose, and what is used: the same, on a stack for the database that was read
+        self._chosen = _stored_settings(settings.value("settings"))
+        self.settings = self._chosen
 
     # Input
 
@@ -169,8 +171,16 @@ class Session(QObject):
         self.design_changed.emit()
         self._generate()
 
+    @property
+    def dialect(self) -> str | None:
+        """The kind of database that was read, when the input says."""
+        schema = self.schema
+        return schema.get("dialect") if schema else None
+
     def _generate(self) -> None:
         schema = self.schema
+        # A stack for the kind of database that was read: documents or tables
+        self.settings = settings_for(self.dialect, self._chosen)
         models = self.application_models
         self.files = generate_project(schema, self.design, self.settings, models) if schema and self.design else []
         self.output_changed.emit()
@@ -181,7 +191,7 @@ class Session(QObject):
         settings = normalize_settings({**self.settings, **change})
         if settings == self.settings:
             return
-        self.settings = settings
+        self._chosen = settings
         self._settings.setValue("settings", json.dumps(settings))
         self._generate()
 

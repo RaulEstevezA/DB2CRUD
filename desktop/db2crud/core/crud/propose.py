@@ -168,11 +168,13 @@ def _propose_queries(table: dict, role: str, previous: dict | None) -> list[dict
 
     key = table["primaryKey"]
     if key and role != "readOnly":
+        # A collection may have an id of its own besides MongoDB's _id: findById would be both
+        own_id = key == ["_id"] and any(column["name"] == "id" for column in table["columns"])
         add(
             entry(
                 "getByKey",
                 "getByKey",
-                f"getBy{_by_columns(key)}",
+                f"getBy{'DocumentId' if own_id else _by_columns(key)}",
                 key,
                 "optional",
                 _include("exact", [reason("primaryKey", {"columns": ", ".join(key)})]),

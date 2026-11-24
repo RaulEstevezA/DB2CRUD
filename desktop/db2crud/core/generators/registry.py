@@ -27,6 +27,7 @@ from .swift.generator import swift_generator
 from .swift.sql.index import SQL_ORM as SWIFT_SQL_ORM
 from .typescript.common.generator import typescript_generator
 from .typescript.drizzle.index import DRIZZLE_ORM
+from .typescript.mongoose.index import MONGOOSE_ORM
 from .typescript.prisma.index import PRISMA_ORM
 from .typescript.sequelize.index import SEQUELIZE_ORM
 from .typescript.sql.index import SQL_ORM as TYPESCRIPT_SQL_ORM
@@ -41,6 +42,7 @@ GENERATORS = [
     typescript_generator(DRIZZLE_ORM),
     typescript_generator(SEQUELIZE_ORM),
     typescript_generator(TYPESCRIPT_SQL_ORM),
+    typescript_generator(MONGOOSE_ORM),
     java_generator(JPA_ORM),
     java_generator(JAVA_SQL_ORM),
     csharp_generator(EFCORE_ORM),
