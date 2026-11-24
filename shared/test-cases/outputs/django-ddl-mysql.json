@@ -1,0 +1,679 @@
+{
+ "schema": {
+  "format": "db-schema",
+  "version": 1,
+  "dialect": "mysql",
+  "source": {
+   "kind": "ddl",
+   "format": "mysql-ddl"
+  },
+  "tables": [
+   {
+    "name": "things",
+    "columns": [
+     {
+      "name": "id",
+      "type": {
+       "sql": "binary(16)",
+       "kind": "binary",
+       "length": 16
+      },
+      "nullable": false
+     },
+     {
+      "name": "tiny",
+      "type": {
+       "sql": "tinyint",
+       "kind": "integer",
+       "bits": 16
+      },
+      "nullable": false
+     },
+     {
+      "name": "small",
+      "type": {
+       "sql": "smallint",
+       "kind": "integer",
+       "bits": 16
+      },
+      "nullable": false
+     },
+     {
+      "name": "medium",
+      "type": {
+       "sql": "mediumint",
+       "kind": "integer",
+       "bits": 32
+      },
+      "nullable": true
+     },
+     {
+      "name": "num",
+      "type": {
+       "sql": "int unsigned",
+       "kind": "integer",
+       "bits": 32
+      },
+      "nullable": true
+     },
+     {
+      "name": "big",
+      "type": {
+       "sql": "bigint",
+       "kind": "integer",
+       "bits": 64
+      },
+      "nullable": false
+     },
+     {
+      "name": "price",
+      "type": {
+       "sql": "decimal(10,2)",
+       "kind": "decimal",
+       "precision": 10,
+       "scale": 2
+      },
+      "nullable": false
+     },
+     {
+      "name": "r",
+      "type": {
+       "sql": "float",
+       "kind": "float",
+       "bits": 32
+      },
+      "nullable": false
+     },
+     {
+      "name": "d",
+      "type": {
+       "sql": "double",
+       "kind": "float",
+       "bits": 64
+      },
+      "nullable": true
+     },
+     {
+      "name": "flag",
+      "type": {
+       "sql": "tinyint(1)",
+       "kind": "boolean"
+      },
+      "nullable": false,
+      "default": {
+       "kind": "literal",
+       "value": true
+      }
+     },
+     {
+      "name": "born",
+      "type": {
+       "sql": "date",
+       "kind": "date"
+      },
+      "nullable": false
+     },
+     {
+      "name": "opens",
+      "type": {
+       "sql": "time",
+       "kind": "time",
+       "timezone": false
+      },
+      "nullable": false
+     },
+     {
+      "name": "at",
+      "type": {
+       "sql": "datetime(6)",
+       "kind": "datetime",
+       "timezone": false
+      },
+      "nullable": false
+     },
+     {
+      "name": "at_ts",
+      "type": {
+       "sql": "timestamp",
+       "kind": "datetime",
+       "timezone": false
+      },
+      "nullable": false,
+      "generated": "now"
+     },
+     {
+      "name": "changed",
+      "type": {
+       "sql": "datetime",
+       "kind": "datetime",
+       "timezone": false
+      },
+      "nullable": true,
+      "generated": "onUpdateNow"
+     },
+     {
+      "name": "bin",
+      "type": {
+       "sql": "varbinary(50)",
+       "kind": "binary",
+       "length": 50
+      },
+      "nullable": false
+     },
+     {
+      "name": "blobby",
+      "type": {
+       "sql": "blob",
+       "kind": "binary"
+      },
+      "nullable": true
+     },
+     {
+      "name": "data",
+      "type": {
+       "sql": "json",
+       "kind": "json"
+      },
+      "nullable": false
+     },
+     {
+      "name": "feeling",
+      "type": {
+       "sql": "enum('sad', 'ok', 'very happy')",
+       "kind": "enum",
+       "name": "things_feeling"
+      },
+      "nullable": false
+     },
+     {
+      "name": "code",
+      "type": {
+       "sql": "char(5)",
+       "kind": "text",
+       "length": 5,
+       "fixed": true
+      },
+      "nullable": false
+     },
+     {
+      "name": "note",
+      "type": {
+       "sql": "text",
+       "kind": "text"
+      },
+      "nullable": true
+     },
+     {
+      "name": "long_note",
+      "type": {
+       "sql": "longtext",
+       "kind": "text"
+      },
+      "nullable": true
+     },
+     {
+      "name": "total",
+      "type": {
+       "sql": "decimal(12,2)",
+       "kind": "decimal",
+       "precision": 12,
+       "scale": 2
+      },
+      "nullable": true,
+      "generated": {
+       "computed": "price * 2"
+      }
+     }
+    ],
+    "primaryKey": [
+     "id"
+    ],
+    "foreignKeys": [],
+    "uniques": [],
+    "indexes": [],
+    "checks": [],
+    "origin": {
+     "line": 1,
+     "column": 1
+    }
+   },
+   {
+    "name": "kinds",
+    "columns": [
+     {
+      "name": "code",
+      "type": {
+       "sql": "varchar(10)",
+       "kind": "text",
+       "length": 10
+      },
+      "nullable": false
+     },
+     {
+      "name": "day",
+      "type": {
+       "sql": "date",
+       "kind": "date"
+      },
+      "nullable": false
+     },
+     {
+      "name": "label",
+      "type": {
+       "sql": "varchar(30)",
+       "kind": "text",
+       "length": 30
+      },
+      "nullable": true
+     }
+    ],
+    "primaryKey": [
+     "code",
+     "day"
+    ],
+    "foreignKeys": [],
+    "uniques": [],
+    "indexes": [],
+    "checks": [],
+    "origin": {
+     "line": 26,
+     "column": 1
+    }
+   },
+   {
+    "name": "Order",
+    "columns": [
+     {
+      "name": "Id",
+      "type": {
+       "sql": "bigint unsigned",
+       "kind": "integer",
+       "bits": 64
+      },
+      "nullable": false,
+      "generated": "identity"
+     },
+     {
+      "name": "user",
+      "type": {
+       "sql": "varchar(40)",
+       "kind": "text",
+       "length": 40
+      },
+      "nullable": false
+     },
+     {
+      "name": "group",
+      "type": {
+       "sql": "int",
+       "kind": "integer",
+       "bits": 32
+      },
+      "nullable": false,
+      "default": {
+       "kind": "literal",
+       "value": 0
+      }
+     },
+     {
+      "name": "customerName",
+      "type": {
+       "sql": "varchar(60)",
+       "kind": "text",
+       "length": 60
+      },
+      "nullable": false
+     },
+     {
+      "name": "class",
+      "type": {
+       "sql": "text",
+       "kind": "text"
+      },
+      "nullable": true
+     },
+     {
+      "name": "metadata",
+      "type": {
+       "sql": "text",
+       "kind": "text"
+      },
+      "nullable": true
+     },
+     {
+      "name": "date",
+      "type": {
+       "sql": "date",
+       "kind": "date"
+      },
+      "nullable": true
+     },
+     {
+      "name": "time",
+      "type": {
+       "sql": "time",
+       "kind": "time",
+       "timezone": false
+      },
+      "nullable": true
+     },
+     {
+      "name": "text",
+      "type": {
+       "sql": "varchar(20)",
+       "kind": "text",
+       "length": 20
+      },
+      "nullable": true
+     },
+     {
+      "name": "list",
+      "type": {
+       "sql": "text",
+       "kind": "text"
+      },
+      "nullable": true
+     },
+     {
+      "name": "str",
+      "type": {
+       "sql": "varchar(10)",
+       "kind": "text",
+       "length": 10
+      },
+      "nullable": true
+     },
+     {
+      "name": "int",
+      "type": {
+       "sql": "integer",
+       "kind": "integer",
+       "bits": 32
+      },
+      "nullable": true
+     },
+     {
+      "name": "dueDate",
+      "type": {
+       "sql": "date",
+       "kind": "date"
+      },
+      "nullable": false
+     },
+     {
+      "name": "closesAt",
+      "type": {
+       "sql": "time",
+       "kind": "time",
+       "timezone": false
+      },
+      "nullable": true
+     },
+     {
+      "name": "createdAt",
+      "type": {
+       "sql": "datetime",
+       "kind": "datetime",
+       "timezone": false
+      },
+      "nullable": true,
+      "generated": "now"
+     },
+     {
+      "name": "kind_code",
+      "type": {
+       "sql": "varchar(10)",
+       "kind": "text",
+       "length": 10
+      },
+      "nullable": true
+     },
+     {
+      "name": "kind_day",
+      "type": {
+       "sql": "date",
+       "kind": "date"
+      },
+      "nullable": true
+     },
+     {
+      "name": "thing_id",
+      "type": {
+       "sql": "binary(16)",
+       "kind": "binary",
+       "length": 16
+      },
+      "nullable": true
+     },
+     {
+      "name": "parentId",
+      "type": {
+       "sql": "bigint unsigned",
+       "kind": "integer",
+       "bits": 64
+      },
+      "nullable": true
+     }
+    ],
+    "primaryKey": [
+     "Id"
+    ],
+    "foreignKeys": [
+     {
+      "columns": [
+       "thing_id"
+      ],
+      "references": {
+       "table": "things",
+       "columns": [
+        "id"
+       ]
+      },
+      "onDelete": "set null"
+     },
+     {
+      "columns": [
+       "parentId"
+      ],
+      "references": {
+       "table": "Order",
+       "columns": [
+        "Id"
+       ]
+      }
+     },
+     {
+      "columns": [
+       "kind_code",
+       "kind_day"
+      ],
+      "references": {
+       "table": "kinds",
+       "columns": [
+        "code",
+        "day"
+       ]
+      }
+     }
+    ],
+    "uniques": [
+     {
+      "columns": [
+       "customerName"
+      ]
+     }
+    ],
+    "indexes": [],
+    "checks": [
+     {
+      "sql": "`group` >= 0",
+      "parsed": {
+       "kind": "compare",
+       "column": "group",
+       "op": ">=",
+       "value": 0
+      }
+     }
+    ],
+    "origin": {
+     "line": 32,
+     "column": 1
+    }
+   },
+   {
+    "name": "audit_entries",
+    "columns": [
+     {
+      "name": "entry_no",
+      "type": {
+       "sql": "int",
+       "kind": "integer",
+       "bits": 32
+      },
+      "nullable": false,
+      "generated": "identity"
+     },
+     {
+      "name": "orderId",
+      "type": {
+       "sql": "bigint unsigned",
+       "kind": "integer",
+       "bits": 64
+      },
+      "nullable": false
+     },
+     {
+      "name": "message",
+      "type": {
+       "sql": "varchar(200)",
+       "kind": "text",
+       "length": 200
+      },
+      "nullable": false
+     }
+    ],
+    "primaryKey": [
+     "entry_no"
+    ],
+    "foreignKeys": [
+     {
+      "columns": [
+       "orderId"
+      ],
+      "references": {
+       "table": "Order",
+       "columns": [
+        "Id"
+       ]
+      },
+      "onDelete": "cascade"
+     }
+    ],
+    "uniques": [],
+    "indexes": [],
+    "checks": [],
+    "origin": {
+     "line": 56,
+     "column": 1
+    }
+   },
+   {
+    "name": "empties",
+    "columns": [
+     {
+      "name": "id",
+      "type": {
+       "sql": "bigint",
+       "kind": "integer",
+       "bits": 64
+      },
+      "nullable": false,
+      "generated": "identity"
+     },
+     {
+      "name": "note",
+      "type": {
+       "sql": "text",
+       "kind": "text"
+      },
+      "nullable": true
+     }
+    ],
+    "primaryKey": [
+     "id"
+    ],
+    "foreignKeys": [],
+    "uniques": [],
+    "indexes": [],
+    "checks": [],
+    "origin": {
+     "line": 62,
+     "column": 1
+    }
+   }
+  ],
+  "enums": [
+   {
+    "name": "things_feeling",
+    "values": [
+     "sad",
+     "ok",
+     "very happy"
+    ],
+    "storage": "native"
+   }
+  ],
+  "notes": []
+ },
+ "decisions": [],
+ "settings": {
+  "name": "django-ddl-mysql",
+  "language": "python",
+  "orm": "django",
+  "database": "mysql"
+ },
+ "files": {
+  ".env.example": "# Where the database is. The synchronous driver is named here; the asynchronous one is chosen from it.\nDATABASE_URL=mysql://app:app@localhost:3306/app\n# The tests use SQLite in a temporary file unless this names another database (it is emptied by the tests)\n# TEST_DATABASE_URL=\n",
+  ".gitignore": "__pycache__/\n*.py[cod]\n.venv/\n.pytest_cache/\n.env\n*.db\n",
+  "README.md": "# django-ddl-mysql\n\nData access layer generated by [DB2CRUD](https://github.com/RaulEstevezA/DB2CRUD) for a database that already exists: entities, repositories and services with the Django 5.2 ORM. It does not create or migrate the database.\n\n## Settings\n\n- Database: mysql; code: synchronous (Session).\n- Entities: written for the tables the input had no class for.\n- Services: take and return the entities.\n- Transactions: one transaction per service operation, committed when it ends.\n- Lists: lists return pages by offset and limit.\n\n## Layout\n\n```text\napp/settings.py        Django settings: the database comes from DATABASE_URL\napp/models.py          imports every entity, for Django's app registry\napp/errors.py          NotFoundError, ConflictError, ValidationFailedError: no HTTP codes\napp/unit_of_work.py    the repositories of every table, and the transaction of each operation\napp/entities/          one entity per table\napp/repositories/      one repository per table\napp/services/          one service per table\ntests/                 repositories against a database, services on the in-memory repositories\ncrud-contract.json     what was written, for CRUD2Controller\n```\n\n## Running the tests\n\n```bash\npython -m venv .venv && source .venv/bin/activate\npip install -r requirements-dev.txt\npython -m pytest                       # SQLite in a temporary file\nTEST_DATABASE_URL=mysql://app:app@localhost:3306/app python -m pytest   # a real, disposable database: it is emptied\n```\n\nLook for `TODO` in the code: each one marks a decision the input did not settle.\n",
+  "app/__init__.py": "",
+  "app/entities/__init__.py": "",
+  "app/entities/audit_entry.py": "\"\"\"Entity of the \"audit_entries\" table.\"\"\"\n\nfrom django.db import models\n\n\nclass AuditEntry(models.Model):\n    \"\"\"A row of the \"audit_entries\" table.\"\"\"\n\n    entry_no = models.AutoField(primary_key=True)\n    order = models.ForeignKey(\"Order\", on_delete=models.CASCADE, related_name=\"+\", db_column=\"orderId\", db_index=False)\n    message = models.CharField(max_length=200)\n\n    class Meta:\n        db_table = \"audit_entries\"\n",
+  "app/entities/empty.py": "\"\"\"Entity of the \"empties\" table.\"\"\"\n\nfrom django.db import models\n\n\nclass Empty(models.Model):\n    \"\"\"A row of the \"empties\" table.\"\"\"\n\n    id = models.BigAutoField(primary_key=True)\n    note = models.TextField(null=True, blank=True)\n\n    class Meta:\n        db_table = \"empties\"\n",
+  "app/entities/kind.py": "\"\"\"Entity of the \"kinds\" table.\"\"\"\n\nfrom django.db import models\n\n\nclass Kind(models.Model):\n    \"\"\"A row of the \"kinds\" table.\"\"\"\n\n    pk = models.CompositePrimaryKey(\"code\", \"day\")\n    code = models.CharField(max_length=10)\n    day = models.DateField()\n    label = models.CharField(max_length=30, null=True, blank=True)\n\n    class Meta:\n        db_table = \"kinds\"\n",
+  "app/entities/order.py": "\"\"\"Entity of the \"Order\" table.\"\"\"\n\nfrom django.db import models\nfrom django.db.models import Q\nfrom django.db.models.functions import Now\n\n\nclass Order(models.Model):\n    \"\"\"A row of the \"Order\" table.\"\"\"\n\n    id = models.BigAutoField(db_column=\"Id\", primary_key=True)\n    user = models.CharField(max_length=40)\n    group = models.IntegerField(default=0)\n    customer_name = models.CharField(max_length=60, db_column=\"customerName\")\n    class_field = models.TextField(db_column=\"class\", null=True, blank=True)\n    metadata = models.TextField(null=True, blank=True)\n    date = models.DateField(null=True, blank=True)\n    time = models.TimeField(null=True, blank=True)\n    text = models.CharField(max_length=20, null=True, blank=True)\n    list = models.TextField(null=True, blank=True)\n    str = models.CharField(max_length=10, null=True, blank=True)\n    int = models.IntegerField(null=True, blank=True)\n    due_date = models.DateField(db_column=\"dueDate\")\n    closes_at = models.TimeField(db_column=\"closesAt\", null=True, blank=True)\n    created_at = models.DateTimeField(db_column=\"createdAt\", db_default=Now(), null=True, blank=True)\n    # TODO: kind_code, kind_day points to kinds; Django can only express single-column keys named <x>_id to a single-column primary key\n    kind_code = models.CharField(max_length=10, null=True, blank=True)\n    # TODO: kind_code, kind_day points to kinds; Django can only express single-column keys named <x>_id to a single-column primary key\n    kind_day = models.DateField(null=True, blank=True)\n    thing = models.ForeignKey(\"Thing\", on_delete=models.SET_NULL, related_name=\"+\", db_column=\"thing_id\", db_index=False, null=True, blank=True)\n    parent = models.ForeignKey(\"Order\", on_delete=models.DO_NOTHING, related_name=\"+\", db_column=\"parentId\", db_index=False, null=True, blank=True)\n\n    class Meta:\n        db_table = \"Order\"\n        constraints = [\n            models.UniqueConstraint(fields=[\"customer_name\"], name=\"uq_Order_customerName\"),\n            models.CheckConstraint(condition=Q(group__gte=0), name=\"ck_Order_group_0\"),\n        ]\n",
+  "app/entities/thing.py": "\"\"\"Entity of the \"things\" table.\"\"\"\n\nfrom django.db import models\nfrom django.db.models.expressions import RawSQL\nfrom django.db.models.functions import Now\n\nfrom app.fields import SizedBinaryField\n\n\nclass Thing(models.Model):\n    \"\"\"A row of the \"things\" table.\"\"\"\n\n    id = SizedBinaryField(max_length=16, primary_key=True)\n    tiny = models.SmallIntegerField()\n    small = models.SmallIntegerField()\n    medium = models.IntegerField(null=True, blank=True)\n    num = models.IntegerField(null=True, blank=True)\n    big = models.BigIntegerField()\n    price = models.DecimalField(max_digits=10, decimal_places=2)\n    r = models.FloatField()\n    d = models.FloatField(null=True, blank=True)\n    flag = models.BooleanField(default=True)\n    born = models.DateField()\n    opens = models.TimeField()\n    at = models.DateTimeField()\n    at_ts = models.DateTimeField(db_default=Now())\n    changed = models.DateTimeField(db_default=Now(), auto_now=True, null=True, blank=True)\n    bin = SizedBinaryField(max_length=50)\n    blobby = models.BinaryField(null=True, blank=True)\n    data = models.JSONField()\n    feeling = models.CharField(max_length=10, choices=[(\"sad\", \"sad\"), (\"ok\", \"ok\"), (\"very happy\", \"very happy\")])\n    # TODO: \"char(5)\" has a fixed length; Django writes it as VARCHAR\n    code = models.CharField(max_length=5)\n    note = models.TextField(null=True, blank=True)\n    long_note = models.TextField(null=True, blank=True)\n    total = models.GeneratedField(expression=RawSQL(\"price * 2\", []), output_field=models.DecimalField(max_digits=12, decimal_places=2), db_persist=True, null=True)\n\n    class Meta:\n        db_table = \"things\"\n",
+  "app/errors.py": "\"\"\"Errors of the data access layer. They carry no HTTP codes: whoever calls the services translates them.\"\"\"\n\nfrom dataclasses import dataclass, field\n\n\nclass DomainError(Exception):\n    \"\"\"Base of every error a service raises on purpose.\"\"\"\n\n\nclass NotFoundError(DomainError):\n    \"\"\"No row has this key.\"\"\"\n\n    def __init__(self, entity: str, key: object) -> None:\n        super().__init__(f\"No {entity} has the key {key!r}\")\n        self.entity = entity\n        self.key = key\n\n\nclass ConflictError(DomainError):\n    \"\"\"The change clashes with what is stored: a unique value, a newer version, rows that depend on it.\"\"\"\n\n    def __init__(self, entity: str, reason: str, fields: tuple[str, ...] = ()) -> None:\n        super().__init__(f\"{entity}: {reason}\")\n        self.entity = entity\n        self.reason = reason\n        self.fields = fields\n\n\n@dataclass(frozen=True)\nclass FieldError:\n    \"\"\"What is wrong with one field.\"\"\"\n\n    field: str\n    message: str\n\n\n@dataclass\nclass ValidationFailedError(DomainError):\n    \"\"\"The values break the rules of the table: missing, too long, out of range, pointing nowhere.\"\"\"\n\n    entity: str\n    errors: list[FieldError] = field(default_factory=list)\n\n    def __post_init__(self) -> None:\n        super().__init__(f\"{self.entity}: \" + \"; \".join(f\"{error.field}: {error.message}\" for error in self.errors))\n",
+  "app/fields.py": "\"\"\"Fields Django does not have.\"\"\"\n\nfrom django.db import models\n\n\nclass SizedBinaryField(models.BinaryField):  # type: ignore[type-arg]\n    \"\"\"Bytes of a column with a length, which MySQL can use in a key.\"\"\"\n\n    def db_type(self, connection) -> str:  # type: ignore[no-untyped-def]\n        return f\"varbinary({self.max_length})\"\n",
+  "app/models.py": "\"\"\"The models of the app, imported here so Django's app registry and the test database know every table.\"\"\"\n\nfrom app.entities.audit_entry import AuditEntry\nfrom app.entities.empty import Empty\nfrom app.entities.kind import Kind\nfrom app.entities.order import Order\nfrom app.entities.thing import Thing\n\n__all__ = [\"Thing\", \"Kind\", \"Order\", \"AuditEntry\", \"Empty\"]\n",
+  "app/paging.py": "\"\"\"A page of a list: the rows from an offset, and how many there are in all.\"\"\"\n\nfrom dataclasses import dataclass\n\n\n@dataclass(frozen=True)\nclass Page[T]:\n    items: list[T]\n    total: int\n    offset: int\n    limit: int\n",
+  "app/repositories/__init__.py": "",
+  "app/repositories/audit_entry.py": "\"\"\"Repository of the \"audit_entries\" table: reads and writes rows, and decides nothing.\"\"\"\n\nfrom __future__ import annotations\n\nfrom typing import Any, Protocol\n\nfrom django.db import IntegrityError, transaction\nfrom django.db.models.expressions import DatabaseDefault\n\nfrom app.entities.audit_entry import AuditEntry\nfrom app.errors import ConflictError\nfrom app.paging import Page\n\n\nclass AuditEntryRepository(Protocol):\n    \"\"\"Where audit_entries rows are kept. Services depend only on this interface.\"\"\"\n\n    def find_by_entry_no(self, entry_no: int) -> AuditEntry | None:\n        \"\"\"The row with this primary key, or None.\"\"\"\n        ...\n\n    def list(self, offset: int = 0, limit: int = 50) -> Page[AuditEntry]:\n        \"\"\"At most `limit` rows from `offset`, by primary key, and how many there are.\"\"\"\n        ...\n\n    def list_by_order_id(self, order_id: int) -> list[AuditEntry]:\n        \"\"\"Rows with this orderId, by primary key.\"\"\"\n        ...\n\n    def insert(self, entity: AuditEntry) -> AuditEntry:\n        \"\"\"Stores a new row; the values the database fills are read back.\"\"\"\n        ...\n\n    def update(self, entity: AuditEntry) -> AuditEntry:\n        \"\"\"Stores the changes made to a row read from this repository.\"\"\"\n        ...\n\n    def delete(self, entity: AuditEntry) -> None:\n        \"\"\"Removes a row read from this repository.\"\"\"\n        ...\n\n\nclass SqlAuditEntryRepository:\n    \"\"\"Keeps audit_entries rows in the database, through the AuditEntry model. Its writes join the transaction of the operation.\"\"\"\n\n\n    def find_by_entry_no(self, entry_no: int) -> AuditEntry | None:\n        \"\"\"The row with this primary key, or None.\"\"\"\n        return AuditEntry.objects.filter(entry_no=entry_no).first()\n\n    def list(self, offset: int = 0, limit: int = 50) -> Page[AuditEntry]:\n        \"\"\"At most `limit` rows from `offset`, by primary key, and how many there are.\"\"\"\n        query = AuditEntry.objects.all().order_by(\"entry_no\")\n        total = query.count()\n        return Page(items=list(query[offset : offset + limit]), total=total, offset=offset, limit=limit)\n\n    def list_by_order_id(self, order_id: int) -> list[AuditEntry]:\n        \"\"\"Rows with this orderId, by primary key.\"\"\"\n        return list(AuditEntry.objects.filter(order_id=order_id).order_by(\"entry_no\"))\n\n    def insert(self, entity: AuditEntry) -> AuditEntry:\n        \"\"\"Stores a new row; the values the database fills are read back.\"\"\"\n        try:\n            with transaction.atomic():\n                entity.save(force_insert=True)\n        except IntegrityError as error:\n            raise ConflictError(\"AuditEntry\", \"the database refused the change: \" + str(error)) from error\n        entity.refresh_from_db()\n        return entity\n\n    def update(self, entity: AuditEntry) -> AuditEntry:\n        \"\"\"Stores the changes made to a row read from this repository.\"\"\"\n        try:\n            with transaction.atomic():\n                entity.save()\n        except IntegrityError as error:\n            raise ConflictError(\"AuditEntry\", \"the database refused the change: \" + str(error)) from error\n        entity.refresh_from_db()\n        return entity\n\n    def delete(self, entity: AuditEntry) -> None:\n        \"\"\"Removes a row read from this repository.\"\"\"\n        try:\n            with transaction.atomic():\n                entity.delete()\n        except IntegrityError as error:\n            raise ConflictError(\"AuditEntry\", \"the database refused the change: \" + str(error)) from error\n\n\nclass MemoryAuditEntryRepository:\n    \"\"\"Keeps audit_entries rows in memory, for tests and for trying the services without a database.\"\"\"\n\n    def __init__(self) -> None:\n        self._rows: dict[tuple[Any, ...], AuditEntry] = {}\n        self._next_id = 1\n\n    @staticmethod\n    def _key(row: AuditEntry) -> tuple[Any, ...]:\n        return (row.entry_no,)\n\n    def find_by_entry_no(self, entry_no: int) -> AuditEntry | None:\n        \"\"\"The row with this primary key, or None.\"\"\"\n        return next((row for row in [row for row in sorted(self._rows.values(), key=self._key) if True] if row.entry_no == entry_no), None)\n\n    def list(self, offset: int = 0, limit: int = 50) -> Page[AuditEntry]:\n        \"\"\"At most `limit` rows from `offset`, by primary key, and how many there are.\"\"\"\n        rows = [row for row in sorted(self._rows.values(), key=self._key) if True]\n        return Page(items=rows[offset : offset + limit], total=len(rows), offset=offset, limit=limit)\n\n    def list_by_order_id(self, order_id: int) -> list[AuditEntry]:\n        \"\"\"Rows with this orderId, by primary key.\"\"\"\n        return [row for row in [row for row in sorted(self._rows.values(), key=self._key) if True] if row.order_id == order_id]\n\n    def insert(self, entity: AuditEntry) -> AuditEntry:\n        \"\"\"Stores a new row; the values the database fills are read back.\"\"\"\n        if entity.entry_no is None or isinstance(entity.entry_no, DatabaseDefault):\n            entity.entry_no = self._next_id\n            self._next_id += 1\n        self._rows[(entity.entry_no,)] = entity\n        return entity\n\n    def update(self, entity: AuditEntry) -> AuditEntry:\n        \"\"\"Stores the changes made to a row read from this repository.\"\"\"\n        self._rows[(entity.entry_no,)] = entity\n        return entity\n\n    def delete(self, entity: AuditEntry) -> None:\n        \"\"\"Removes a row read from this repository.\"\"\"\n        self._rows.pop((entity.entry_no,), None)\n",
+  "app/repositories/empty.py": "\"\"\"Repository of the \"empties\" table: reads and writes rows, and decides nothing.\"\"\"\n\nfrom __future__ import annotations\n\nfrom typing import Any, Protocol\n\nfrom django.db import IntegrityError, transaction\nfrom django.db.models.expressions import DatabaseDefault\n\nfrom app.entities.empty import Empty\nfrom app.errors import ConflictError\nfrom app.paging import Page\n\n\nclass EmptyRepository(Protocol):\n    \"\"\"Where empties rows are kept. Services depend only on this interface.\"\"\"\n\n    def find_by_id(self, id: int) -> Empty | None:\n        \"\"\"The row with this primary key, or None.\"\"\"\n        ...\n\n    def list(self, offset: int = 0, limit: int = 50) -> Page[Empty]:\n        \"\"\"At most `limit` rows from `offset`, by primary key, and how many there are.\"\"\"\n        ...\n\n    def insert(self, entity: Empty) -> Empty:\n        \"\"\"Stores a new row; the values the database fills are read back.\"\"\"\n        ...\n\n    def update(self, entity: Empty) -> Empty:\n        \"\"\"Stores the changes made to a row read from this repository.\"\"\"\n        ...\n\n    def delete(self, entity: Empty) -> None:\n        \"\"\"Removes a row read from this repository.\"\"\"\n        ...\n\n\nclass SqlEmptyRepository:\n    \"\"\"Keeps empties rows in the database, through the Empty model. Its writes join the transaction of the operation.\"\"\"\n\n\n    def find_by_id(self, id: int) -> Empty | None:\n        \"\"\"The row with this primary key, or None.\"\"\"\n        return Empty.objects.filter(id=id).first()\n\n    def list(self, offset: int = 0, limit: int = 50) -> Page[Empty]:\n        \"\"\"At most `limit` rows from `offset`, by primary key, and how many there are.\"\"\"\n        query = Empty.objects.all().order_by(\"id\")\n        total = query.count()\n        return Page(items=list(query[offset : offset + limit]), total=total, offset=offset, limit=limit)\n\n    def insert(self, entity: Empty) -> Empty:\n        \"\"\"Stores a new row; the values the database fills are read back.\"\"\"\n        try:\n            with transaction.atomic():\n                entity.save(force_insert=True)\n        except IntegrityError as error:\n            raise ConflictError(\"Empty\", \"the database refused the change: \" + str(error)) from error\n        entity.refresh_from_db()\n        return entity\n\n    def update(self, entity: Empty) -> Empty:\n        \"\"\"Stores the changes made to a row read from this repository.\"\"\"\n        try:\n            with transaction.atomic():\n                entity.save()\n        except IntegrityError as error:\n            raise ConflictError(\"Empty\", \"the database refused the change: \" + str(error)) from error\n        entity.refresh_from_db()\n        return entity\n\n    def delete(self, entity: Empty) -> None:\n        \"\"\"Removes a row read from this repository.\"\"\"\n        try:\n            with transaction.atomic():\n                entity.delete()\n        except IntegrityError as error:\n            raise ConflictError(\"Empty\", \"the database refused the change: \" + str(error)) from error\n\n\nclass MemoryEmptyRepository:\n    \"\"\"Keeps empties rows in memory, for tests and for trying the services without a database.\"\"\"\n\n    def __init__(self) -> None:\n        self._rows: dict[tuple[Any, ...], Empty] = {}\n        self._next_id = 1\n\n    @staticmethod\n    def _key(row: Empty) -> tuple[Any, ...]:\n        return (row.id,)\n\n    def find_by_id(self, id: int) -> Empty | None:\n        \"\"\"The row with this primary key, or None.\"\"\"\n        return next((row for row in [row for row in sorted(self._rows.values(), key=self._key) if True] if row.id == id), None)\n\n    def list(self, offset: int = 0, limit: int = 50) -> Page[Empty]:\n        \"\"\"At most `limit` rows from `offset`, by primary key, and how many there are.\"\"\"\n        rows = [row for row in sorted(self._rows.values(), key=self._key) if True]\n        return Page(items=rows[offset : offset + limit], total=len(rows), offset=offset, limit=limit)\n\n    def insert(self, entity: Empty) -> Empty:\n        \"\"\"Stores a new row; the values the database fills are read back.\"\"\"\n        if entity.id is None or isinstance(entity.id, DatabaseDefault):\n            entity.id = self._next_id\n            self._next_id += 1\n        self._rows[(entity.id,)] = entity\n        return entity\n\n    def update(self, entity: Empty) -> Empty:\n        \"\"\"Stores the changes made to a row read from this repository.\"\"\"\n        self._rows[(entity.id,)] = entity\n        return entity\n\n    def delete(self, entity: Empty) -> None:\n        \"\"\"Removes a row read from this repository.\"\"\"\n        self._rows.pop((entity.id,), None)\n",
+  "app/repositories/kind.py": "\"\"\"Repository of the \"kinds\" table: reads and writes rows, and decides nothing.\"\"\"\n\nfrom __future__ import annotations\n\nfrom datetime import date\nfrom typing import Any, Protocol\n\nfrom django.db import IntegrityError, transaction\nfrom django.db.models.expressions import DatabaseDefault\n\nfrom app.entities.kind import Kind\nfrom app.errors import ConflictError\nfrom app.paging import Page\n\n\nclass KindRepository(Protocol):\n    \"\"\"Where kinds rows are kept. Services depend only on this interface.\"\"\"\n\n    def find_by_code_and_day(self, code: str, day: date) -> Kind | None:\n        \"\"\"The row with this primary key, or None.\"\"\"\n        ...\n\n    def list(self, offset: int = 0, limit: int = 50) -> Page[Kind]:\n        \"\"\"At most `limit` rows from `offset`, by primary key, and how many there are.\"\"\"\n        ...\n\n    def insert(self, entity: Kind) -> Kind:\n        \"\"\"Stores a new row; the values the database fills are read back.\"\"\"\n        ...\n\n    def update(self, entity: Kind) -> Kind:\n        \"\"\"Stores the changes made to a row read from this repository.\"\"\"\n        ...\n\n    def delete(self, entity: Kind) -> None:\n        \"\"\"Removes a row read from this repository.\"\"\"\n        ...\n\n\nclass SqlKindRepository:\n    \"\"\"Keeps kinds rows in the database, through the Kind model. Its writes join the transaction of the operation.\"\"\"\n\n\n    def find_by_code_and_day(self, code: str, day: date) -> Kind | None:\n        \"\"\"The row with this primary key, or None.\"\"\"\n        return Kind.objects.filter(code=code, day=day).first()\n\n    def list(self, offset: int = 0, limit: int = 50) -> Page[Kind]:\n        \"\"\"At most `limit` rows from `offset`, by primary key, and how many there are.\"\"\"\n        query = Kind.objects.all().order_by(\"code\", \"day\")\n        total = query.count()\n        return Page(items=list(query[offset : offset + limit]), total=total, offset=offset, limit=limit)\n\n    def insert(self, entity: Kind) -> Kind:\n        \"\"\"Stores a new row; the values the database fills are read back.\"\"\"\n        try:\n            with transaction.atomic():\n                entity.save(force_insert=True)\n        except IntegrityError as error:\n            raise ConflictError(\"Kind\", \"the database refused the change: \" + str(error)) from error\n        entity.refresh_from_db()\n        return entity\n\n    def update(self, entity: Kind) -> Kind:\n        \"\"\"Stores the changes made to a row read from this repository.\"\"\"\n        try:\n            with transaction.atomic():\n                entity.save()\n        except IntegrityError as error:\n            raise ConflictError(\"Kind\", \"the database refused the change: \" + str(error)) from error\n        entity.refresh_from_db()\n        return entity\n\n    def delete(self, entity: Kind) -> None:\n        \"\"\"Removes a row read from this repository.\"\"\"\n        try:\n            with transaction.atomic():\n                entity.delete()\n        except IntegrityError as error:\n            raise ConflictError(\"Kind\", \"the database refused the change: \" + str(error)) from error\n\n\nclass MemoryKindRepository:\n    \"\"\"Keeps kinds rows in memory, for tests and for trying the services without a database.\"\"\"\n\n    def __init__(self) -> None:\n        self._rows: dict[tuple[Any, ...], Kind] = {}\n\n    @staticmethod\n    def _key(row: Kind) -> tuple[Any, ...]:\n        return (row.code, row.day,)\n\n    def find_by_code_and_day(self, code: str, day: date) -> Kind | None:\n        \"\"\"The row with this primary key, or None.\"\"\"\n        return next((row for row in [row for row in sorted(self._rows.values(), key=self._key) if True] if row.code == code and row.day == day), None)\n\n    def list(self, offset: int = 0, limit: int = 50) -> Page[Kind]:\n        \"\"\"At most `limit` rows from `offset`, by primary key, and how many there are.\"\"\"\n        rows = [row for row in sorted(self._rows.values(), key=self._key) if True]\n        return Page(items=rows[offset : offset + limit], total=len(rows), offset=offset, limit=limit)\n\n    def insert(self, entity: Kind) -> Kind:\n        \"\"\"Stores a new row; the values the database fills are read back.\"\"\"\n        self._rows[(entity.code, entity.day,)] = entity\n        return entity\n\n    def update(self, entity: Kind) -> Kind:\n        \"\"\"Stores the changes made to a row read from this repository.\"\"\"\n        self._rows[(entity.code, entity.day,)] = entity\n        return entity\n\n    def delete(self, entity: Kind) -> None:\n        \"\"\"Removes a row read from this repository.\"\"\"\n        self._rows.pop((entity.code, entity.day,), None)\n",
+  "app/repositories/order.py": "\"\"\"Repository of the \"Order\" table: reads and writes rows, and decides nothing.\"\"\"\n\nfrom __future__ import annotations\n\nfrom datetime import UTC, date, datetime\nfrom typing import Any, Protocol\n\nfrom django.db import IntegrityError, transaction\nfrom django.db.models.expressions import DatabaseDefault\n\nfrom app.entities.order import Order\nfrom app.errors import ConflictError\nfrom app.paging import Page\n\n\nclass OrderRepository(Protocol):\n    \"\"\"Where Order rows are kept. Services depend only on this interface.\"\"\"\n\n    def find_by_id(self, id: int) -> Order | None:\n        \"\"\"The row with this primary key, or None.\"\"\"\n        ...\n\n    def list(self, offset: int = 0, limit: int = 50) -> Page[Order]:\n        \"\"\"At most `limit` rows from `offset`, by primary key, and how many there are.\"\"\"\n        ...\n\n    def find_by_customer_name(self, customer_name: str) -> Order | None:\n        \"\"\"The row with this customerName, or None.\"\"\"\n        ...\n\n    def list_by_thing_id(self, thing_id: bytes) -> list[Order]:\n        \"\"\"Rows with this thing_id, by primary key.\"\"\"\n        ...\n\n    def list_by_parent_id(self, parent_id: int) -> list[Order]:\n        \"\"\"Rows with this parentId, by primary key.\"\"\"\n        ...\n\n    def list_by_kind_code_and_kind_day(self, kind_code: str, kind_day: date) -> list[Order]:\n        \"\"\"Rows with this kind_code and kind_day, by primary key.\"\"\"\n        ...\n\n    def insert(self, entity: Order) -> Order:\n        \"\"\"Stores a new row; the values the database fills are read back.\"\"\"\n        ...\n\n    def update(self, entity: Order) -> Order:\n        \"\"\"Stores the changes made to a row read from this repository.\"\"\"\n        ...\n\n    def delete(self, entity: Order) -> None:\n        \"\"\"Removes a row read from this repository.\"\"\"\n        ...\n\n\nclass SqlOrderRepository:\n    \"\"\"Keeps Order rows in the database, through the Order model. Its writes join the transaction of the operation.\"\"\"\n\n\n    def find_by_id(self, id: int) -> Order | None:\n        \"\"\"The row with this primary key, or None.\"\"\"\n        return Order.objects.filter(id=id).first()\n\n    def list(self, offset: int = 0, limit: int = 50) -> Page[Order]:\n        \"\"\"At most `limit` rows from `offset`, by primary key, and how many there are.\"\"\"\n        query = Order.objects.all().order_by(\"id\")\n        total = query.count()\n        return Page(items=list(query[offset : offset + limit]), total=total, offset=offset, limit=limit)\n\n    def find_by_customer_name(self, customer_name: str) -> Order | None:\n        \"\"\"The row with this customerName, or None.\"\"\"\n        return Order.objects.filter(customer_name=customer_name).first()\n\n    def list_by_thing_id(self, thing_id: bytes) -> list[Order]:\n        \"\"\"Rows with this thing_id, by primary key.\"\"\"\n        return list(Order.objects.filter(thing_id=thing_id).order_by(\"id\"))\n\n    def list_by_parent_id(self, parent_id: int) -> list[Order]:\n        \"\"\"Rows with this parentId, by primary key.\"\"\"\n        return list(Order.objects.filter(parent_id=parent_id).order_by(\"id\"))\n\n    def list_by_kind_code_and_kind_day(self, kind_code: str, kind_day: date) -> list[Order]:\n        \"\"\"Rows with this kind_code and kind_day, by primary key.\"\"\"\n        return list(Order.objects.filter(kind_code=kind_code, kind_day=kind_day).order_by(\"id\"))\n\n    def insert(self, entity: Order) -> Order:\n        \"\"\"Stores a new row; the values the database fills are read back.\"\"\"\n        try:\n            with transaction.atomic():\n                entity.save(force_insert=True)\n        except IntegrityError as error:\n            raise ConflictError(\"Order\", \"the database refused the change: \" + str(error)) from error\n        entity.refresh_from_db()\n        return entity\n\n    def update(self, entity: Order) -> Order:\n        \"\"\"Stores the changes made to a row read from this repository.\"\"\"\n        try:\n            with transaction.atomic():\n                entity.save()\n        except IntegrityError as error:\n            raise ConflictError(\"Order\", \"the database refused the change: \" + str(error)) from error\n        entity.refresh_from_db()\n        return entity\n\n    def delete(self, entity: Order) -> None:\n        \"\"\"Removes a row read from this repository.\"\"\"\n        try:\n            with transaction.atomic():\n                entity.delete()\n        except IntegrityError as error:\n            raise ConflictError(\"Order\", \"the database refused the change: \" + str(error)) from error\n\n\nclass MemoryOrderRepository:\n    \"\"\"Keeps Order rows in memory, for tests and for trying the services without a database.\"\"\"\n\n    def __init__(self) -> None:\n        self._rows: dict[tuple[Any, ...], Order] = {}\n        self._next_id = 1\n\n    @staticmethod\n    def _key(row: Order) -> tuple[Any, ...]:\n        return (row.id,)\n\n    def find_by_id(self, id: int) -> Order | None:\n        \"\"\"The row with this primary key, or None.\"\"\"\n        return next((row for row in [row for row in sorted(self._rows.values(), key=self._key) if True] if row.id == id), None)\n\n    def list(self, offset: int = 0, limit: int = 50) -> Page[Order]:\n        \"\"\"At most `limit` rows from `offset`, by primary key, and how many there are.\"\"\"\n        rows = [row for row in sorted(self._rows.values(), key=self._key) if True]\n        return Page(items=rows[offset : offset + limit], total=len(rows), offset=offset, limit=limit)\n\n    def find_by_customer_name(self, customer_name: str) -> Order | None:\n        \"\"\"The row with this customerName, or None.\"\"\"\n        return next((row for row in [row for row in sorted(self._rows.values(), key=self._key) if True] if row.customer_name == customer_name), None)\n\n    def list_by_thing_id(self, thing_id: bytes) -> list[Order]:\n        \"\"\"Rows with this thing_id, by primary key.\"\"\"\n        return [row for row in [row for row in sorted(self._rows.values(), key=self._key) if True] if row.thing_id == thing_id]\n\n    def list_by_parent_id(self, parent_id: int) -> list[Order]:\n        \"\"\"Rows with this parentId, by primary key.\"\"\"\n        return [row for row in [row for row in sorted(self._rows.values(), key=self._key) if True] if row.parent_id == parent_id]\n\n    def list_by_kind_code_and_kind_day(self, kind_code: str, kind_day: date) -> list[Order]:\n        \"\"\"Rows with this kind_code and kind_day, by primary key.\"\"\"\n        return [row for row in [row for row in sorted(self._rows.values(), key=self._key) if True] if row.kind_code == kind_code and row.kind_day == kind_day]\n\n    def insert(self, entity: Order) -> Order:\n        \"\"\"Stores a new row; the values the database fills are read back.\"\"\"\n        if entity.id is None or isinstance(entity.id, DatabaseDefault):\n            entity.id = self._next_id\n            self._next_id += 1\n        if entity.group is None or isinstance(entity.group, DatabaseDefault):\n            entity.group = 0\n        if entity.created_at is None or isinstance(entity.created_at, DatabaseDefault):\n            entity.created_at = datetime.now(UTC)\n        self._rows[(entity.id,)] = entity\n        return entity\n\n    def update(self, entity: Order) -> Order:\n        \"\"\"Stores the changes made to a row read from this repository.\"\"\"\n        self._rows[(entity.id,)] = entity\n        return entity\n\n    def delete(self, entity: Order) -> None:\n        \"\"\"Removes a row read from this repository.\"\"\"\n        self._rows.pop((entity.id,), None)\n",
+  "app/repositories/thing.py": "\"\"\"Repository of the \"things\" table: reads and writes rows, and decides nothing.\"\"\"\n\nfrom __future__ import annotations\n\nfrom datetime import UTC, datetime\nfrom typing import Any, Protocol\n\nfrom django.db import IntegrityError, transaction\nfrom django.db.models.expressions import DatabaseDefault\n\nfrom app.entities.thing import Thing\nfrom app.errors import ConflictError\nfrom app.paging import Page\n\n\nclass ThingRepository(Protocol):\n    \"\"\"Where things rows are kept. Services depend only on this interface.\"\"\"\n\n    def find_by_id(self, id: bytes) -> Thing | None:\n        \"\"\"The row with this primary key, or None.\"\"\"\n        ...\n\n    def list(self, offset: int = 0, limit: int = 50) -> Page[Thing]:\n        \"\"\"At most `limit` rows from `offset`, by primary key, and how many there are.\"\"\"\n        ...\n\n    def insert(self, entity: Thing) -> Thing:\n        \"\"\"Stores a new row; the values the database fills are read back.\"\"\"\n        ...\n\n    def update(self, entity: Thing) -> Thing:\n        \"\"\"Stores the changes made to a row read from this repository.\"\"\"\n        ...\n\n    def delete(self, entity: Thing) -> None:\n        \"\"\"Removes a row read from this repository.\"\"\"\n        ...\n\n\nclass SqlThingRepository:\n    \"\"\"Keeps things rows in the database, through the Thing model. Its writes join the transaction of the operation.\"\"\"\n\n\n    def find_by_id(self, id: bytes) -> Thing | None:\n        \"\"\"The row with this primary key, or None.\"\"\"\n        return Thing.objects.filter(id=id).first()\n\n    def list(self, offset: int = 0, limit: int = 50) -> Page[Thing]:\n        \"\"\"At most `limit` rows from `offset`, by primary key, and how many there are.\"\"\"\n        query = Thing.objects.all().order_by(\"id\")\n        total = query.count()\n        return Page(items=list(query[offset : offset + limit]), total=total, offset=offset, limit=limit)\n\n    def insert(self, entity: Thing) -> Thing:\n        \"\"\"Stores a new row; the values the database fills are read back.\"\"\"\n        try:\n            with transaction.atomic():\n                entity.save(force_insert=True)\n        except IntegrityError as error:\n            raise ConflictError(\"Thing\", \"the database refused the change: \" + str(error)) from error\n        entity.refresh_from_db()\n        return entity\n\n    def update(self, entity: Thing) -> Thing:\n        \"\"\"Stores the changes made to a row read from this repository.\"\"\"\n        try:\n            with transaction.atomic():\n                entity.save()\n        except IntegrityError as error:\n            raise ConflictError(\"Thing\", \"the database refused the change: \" + str(error)) from error\n        entity.refresh_from_db()\n        return entity\n\n    def delete(self, entity: Thing) -> None:\n        \"\"\"Removes a row read from this repository.\"\"\"\n        try:\n            with transaction.atomic():\n                entity.delete()\n        except IntegrityError as error:\n            raise ConflictError(\"Thing\", \"the database refused the change: \" + str(error)) from error\n\n\nclass MemoryThingRepository:\n    \"\"\"Keeps things rows in memory, for tests and for trying the services without a database.\"\"\"\n\n    def __init__(self) -> None:\n        self._rows: dict[tuple[Any, ...], Thing] = {}\n\n    @staticmethod\n    def _key(row: Thing) -> tuple[Any, ...]:\n        return (row.id,)\n\n    def find_by_id(self, id: bytes) -> Thing | None:\n        \"\"\"The row with this primary key, or None.\"\"\"\n        return next((row for row in [row for row in sorted(self._rows.values(), key=self._key) if True] if row.id == id), None)\n\n    def list(self, offset: int = 0, limit: int = 50) -> Page[Thing]:\n        \"\"\"At most `limit` rows from `offset`, by primary key, and how many there are.\"\"\"\n        rows = [row for row in sorted(self._rows.values(), key=self._key) if True]\n        return Page(items=rows[offset : offset + limit], total=len(rows), offset=offset, limit=limit)\n\n    def insert(self, entity: Thing) -> Thing:\n        \"\"\"Stores a new row; the values the database fills are read back.\"\"\"\n        if entity.flag is None or isinstance(entity.flag, DatabaseDefault):\n            entity.flag = True\n        if entity.at_ts is None or isinstance(entity.at_ts, DatabaseDefault):\n            entity.at_ts = datetime.now(UTC)\n        if entity.changed is None or isinstance(entity.changed, DatabaseDefault):\n            entity.changed = datetime.now(UTC)\n        entity.total = None\n        self._rows[(entity.id,)] = entity\n        return entity\n\n    def update(self, entity: Thing) -> Thing:\n        \"\"\"Stores the changes made to a row read from this repository.\"\"\"\n        self._rows[(entity.id,)] = entity\n        return entity\n\n    def delete(self, entity: Thing) -> None:\n        \"\"\"Removes a row read from this repository.\"\"\"\n        self._rows.pop((entity.id,), None)\n",
+  "app/services/__init__.py": "",
+  "app/services/audit_entry.py": "\"\"\"Operations on audit_entries: what each one checks before it writes.\"\"\"\n\nfrom collections.abc import Mapping\nfrom typing import Any\n\nfrom app.entities.audit_entry import AuditEntry\nfrom app.errors import FieldError, NotFoundError, ValidationFailedError\nfrom app.paging import Page\nfrom app.unit_of_work import UnitOfWork\n\n# Columns a client may send: the database fills the others\n_FIELDS = frozenset({\"order_id\", \"message\"})\n\n\nclass AuditEntryService:\n    \"\"\"Operations on audit_entries. Each write runs in its own transaction.\"\"\"\n\n    def __init__(self, uow: UnitOfWork) -> None:\n        self._uow = uow\n\n    def _validate_all(self, values: dict[str, Any], current: AuditEntry | None) -> None:\n        \"\"\"Checks the values against the rules of the \"audit_entries\" table; raises ValidationFailedError with every problem.\"\"\"\n        creating = current is None\n        errors: list[FieldError] = []\n        for name in values.keys() - _FIELDS:\n            errors.append(FieldError(name, \"is not a field of AuditEntry\"))\n        if not creating:\n            for name in values.keys() & {\"entry_no\"}:\n                errors.append(FieldError(name, \"cannot be changed\"))\n        value = values.get(\"order_id\")\n        if value is None:\n            if creating or \"order_id\" in values:\n                errors.append(FieldError(\"orderId\", \"is required\"))\n        value = values.get(\"message\")\n        if value is None:\n            if creating or \"message\" in values:\n                errors.append(FieldError(\"message\", \"is required\"))\n        else:\n            if isinstance(value, str) and len(value) > 200:\n                errors.append(FieldError(\"message\", \"is longer than 200 characters\"))\n        order_id = values[\"order_id\"] if \"order_id\" in values else (getattr(current, \"order_id\") if current is not None else None)\n        if order_id is not None and self._uow.order.find_by_id(order_id) is None:\n            errors.append(FieldError(\"orderId\", \"no Order has this key\"))\n        if errors:\n            raise ValidationFailedError(\"AuditEntry\", errors)\n\n    def _check(self, values: dict[str, Any], current: AuditEntry | None) -> None:\n        \"\"\"Every check before a write: the values, the rows they point to, the unique values.\"\"\"\n        self._validate_all(values, current)\n\n    def _find(self, entry_no: int) -> AuditEntry:\n        \"\"\"The AuditEntry with this key; NotFoundError when there is none.\"\"\"\n        entity = self._uow.audit_entries.find_by_entry_no(entry_no)\n        if entity is None:\n            raise NotFoundError(\"AuditEntry\", entry_no)\n        return entity\n\n    def create_audit_entry(self, audit_entry: AuditEntry) -> AuditEntry:\n        \"\"\"Stores a new AuditEntry after checking it.\"\"\"\n        values = {name: getattr(audit_entry, name) for name in _FIELDS}\n        with self._uow.transaction():\n            self._check(values, None)\n            created = self._uow.audit_entries.insert(audit_entry)\n            return created\n\n    def get_audit_entry(self, entry_no: int) -> AuditEntry:\n        \"\"\"The AuditEntry with this key; NotFoundError when there is none.\"\"\"\n        return self._find(entry_no)\n\n    def list_audit_entries(self, offset: int = 0, limit: int = 50) -> Page[AuditEntry]:\n        \"\"\"A page of audit_entries, by primary key.\"\"\"\n        return self._uow.audit_entries.list(offset, limit)\n\n    def update_audit_entry(self, entry_no: int, changes: Mapping[str, Any]) -> AuditEntry:\n        \"\"\"Changes the given values of a AuditEntry.\"\"\"\n        values = dict(changes)\n        with self._uow.transaction():\n            current = self._find(entry_no)\n            self._check(values, current)\n            for name, value in values.items():\n                setattr(current, name, value)\n            updated = self._uow.audit_entries.update(current)\n            return updated\n\n    def delete_audit_entry(self, entry_no: int) -> None:\n        \"\"\"Deletes a AuditEntry.\"\"\"\n        with self._uow.transaction():\n            current = self._find(entry_no)\n            self._uow.audit_entries.delete(current)\n\n    def list_audit_entries_by_order_id(self, order_id: int) -> list[AuditEntry]:\n        \"\"\"The audit_entries with this orderId.\"\"\"\n        return self._uow.audit_entries.list_by_order_id(order_id)\n",
+  "app/services/empty.py": "\"\"\"Operations on empties: what each one checks before it writes.\"\"\"\n\nfrom collections.abc import Mapping\nfrom typing import Any\n\nfrom app.entities.empty import Empty\nfrom app.errors import FieldError, NotFoundError, ValidationFailedError\nfrom app.paging import Page\nfrom app.unit_of_work import UnitOfWork\n\n# Columns a client may send: the database fills the others\n_FIELDS = frozenset({\"note\"})\n\n\nclass EmptyService:\n    \"\"\"Operations on empties. Each write runs in its own transaction.\"\"\"\n\n    def __init__(self, uow: UnitOfWork) -> None:\n        self._uow = uow\n\n    def _validate_all(self, values: dict[str, Any], current: Empty | None) -> None:\n        \"\"\"Checks the values against the rules of the \"empties\" table; raises ValidationFailedError with every problem.\"\"\"\n        creating = current is None\n        errors: list[FieldError] = []\n        for name in values.keys() - _FIELDS:\n            errors.append(FieldError(name, \"is not a field of Empty\"))\n        if not creating:\n            for name in values.keys() & {\"id\"}:\n                errors.append(FieldError(name, \"cannot be changed\"))\n        if errors:\n            raise ValidationFailedError(\"Empty\", errors)\n\n    def _check(self, values: dict[str, Any], current: Empty | None) -> None:\n        \"\"\"Every check before a write: the values, the rows they point to, the unique values.\"\"\"\n        self._validate_all(values, current)\n\n    def _find(self, id: int) -> Empty:\n        \"\"\"The Empty with this key; NotFoundError when there is none.\"\"\"\n        entity = self._uow.empties.find_by_id(id)\n        if entity is None:\n            raise NotFoundError(\"Empty\", id)\n        return entity\n\n    def create_empty(self, empty: Empty) -> Empty:\n        \"\"\"Stores a new Empty after checking it.\"\"\"\n        values = {name: getattr(empty, name) for name in _FIELDS}\n        with self._uow.transaction():\n            self._check(values, None)\n            created = self._uow.empties.insert(empty)\n            return created\n\n    def get_empty(self, id: int) -> Empty:\n        \"\"\"The Empty with this key; NotFoundError when there is none.\"\"\"\n        return self._find(id)\n\n    def list_empties(self, offset: int = 0, limit: int = 50) -> Page[Empty]:\n        \"\"\"A page of empties, by primary key.\"\"\"\n        return self._uow.empties.list(offset, limit)\n\n    def update_empty(self, id: int, changes: Mapping[str, Any]) -> Empty:\n        \"\"\"Changes the given values of a Empty.\"\"\"\n        values = dict(changes)\n        with self._uow.transaction():\n            current = self._find(id)\n            self._check(values, current)\n            for name, value in values.items():\n                setattr(current, name, value)\n            updated = self._uow.empties.update(current)\n            return updated\n\n    def delete_empty(self, id: int) -> None:\n        \"\"\"Deletes a Empty.\"\"\"\n        with self._uow.transaction():\n            current = self._find(id)\n            self._uow.empties.delete(current)\n",
+  "app/services/kind.py": "\"\"\"Operations on kinds: what each one checks before it writes.\"\"\"\n\nfrom collections.abc import Mapping\nfrom datetime import date\nfrom typing import Any\n\nfrom app.entities.kind import Kind\nfrom app.errors import ConflictError, FieldError, NotFoundError, ValidationFailedError\nfrom app.paging import Page\nfrom app.unit_of_work import UnitOfWork\n\n# Columns a client may send: the database fills the others\n_FIELDS = frozenset({\"code\", \"day\", \"label\"})\n\n\nclass KindService:\n    \"\"\"Operations on kinds. Each write runs in its own transaction.\"\"\"\n\n    def __init__(self, uow: UnitOfWork) -> None:\n        self._uow = uow\n\n    def _validate_all(self, values: dict[str, Any], current: Kind | None) -> None:\n        \"\"\"Checks the values against the rules of the \"kinds\" table; raises ValidationFailedError with every problem.\"\"\"\n        creating = current is None\n        errors: list[FieldError] = []\n        for name in values.keys() - _FIELDS:\n            errors.append(FieldError(name, \"is not a field of Kind\"))\n        if not creating:\n            for name in values.keys() & {\"code\", \"day\"}:\n                errors.append(FieldError(name, \"cannot be changed\"))\n        value = values.get(\"code\")\n        if value is None:\n            if creating or \"code\" in values:\n                errors.append(FieldError(\"code\", \"is required\"))\n        else:\n            if isinstance(value, str) and len(value) > 10:\n                errors.append(FieldError(\"code\", \"is longer than 10 characters\"))\n        value = values.get(\"day\")\n        if value is None:\n            if creating or \"day\" in values:\n                errors.append(FieldError(\"day\", \"is required\"))\n        value = values.get(\"label\")\n        if value is not None:\n            if isinstance(value, str) and len(value) > 30:\n                errors.append(FieldError(\"label\", \"is longer than 30 characters\"))\n        if errors:\n            raise ValidationFailedError(\"Kind\", errors)\n\n    def _check(self, values: dict[str, Any], current: Kind | None) -> None:\n        \"\"\"Every check before a write: the values, the rows they point to, the unique values.\"\"\"\n        self._validate_all(values, current)\n\n    def _find(self, code: str, day: date) -> Kind:\n        \"\"\"The Kind with this key; NotFoundError when there is none.\"\"\"\n        entity = self._uow.kinds.find_by_code_and_day(code, day)\n        if entity is None:\n            raise NotFoundError(\"Kind\", (code, day))\n        return entity\n\n    def create_kind(self, kind: Kind) -> Kind:\n        \"\"\"Stores a new Kind after checking it.\"\"\"\n        values = {name: getattr(kind, name) for name in _FIELDS}\n        with self._uow.transaction():\n            self._check(values, None)\n            created = self._uow.kinds.insert(kind)\n            return created\n\n    def get_kind(self, code: str, day: date) -> Kind:\n        \"\"\"The Kind with this key; NotFoundError when there is none.\"\"\"\n        return self._find(code, day)\n\n    def list_kinds(self, offset: int = 0, limit: int = 50) -> Page[Kind]:\n        \"\"\"A page of kinds, by primary key.\"\"\"\n        return self._uow.kinds.list(offset, limit)\n\n    def update_kind(self, code: str, day: date, changes: Mapping[str, Any]) -> Kind:\n        \"\"\"Changes the given values of a Kind.\"\"\"\n        values = dict(changes)\n        with self._uow.transaction():\n            current = self._find(code, day)\n            self._check(values, current)\n            for name, value in values.items():\n                setattr(current, name, value)\n            updated = self._uow.kinds.update(current)\n            return updated\n\n    def delete_kind(self, code: str, day: date) -> None:\n        \"\"\"Deletes a Kind.\"\"\"\n        with self._uow.transaction():\n            current = self._find(code, day)\n            if self._uow.order.list_by_kind_code_and_kind_day(current.code, current.day):\n                raise ConflictError(\"Kind\", \"rows of Order still point to it\", (\"Order\",))\n            self._uow.kinds.delete(current)\n",
+  "app/services/order.py": "\"\"\"Operations on Order: what each one checks before it writes.\"\"\"\n\nfrom collections.abc import Mapping\nfrom datetime import date\nfrom typing import Any\n\nfrom app.entities.order import Order\nfrom app.errors import ConflictError, FieldError, NotFoundError, ValidationFailedError\nfrom app.paging import Page\nfrom app.unit_of_work import UnitOfWork\n\n# Columns a client may send: the database fills the others\n_FIELDS = frozenset({\"user\", \"group\", \"customer_name\", \"class_field\", \"metadata\", \"date\", \"time\", \"text\", \"list\", \"str\", \"int\", \"due_date\", \"closes_at\", \"kind_code\", \"kind_day\", \"thing_id\", \"parent_id\"})\n\n\nclass OrderService:\n    \"\"\"Operations on Order. Each write runs in its own transaction.\"\"\"\n\n    def __init__(self, uow: UnitOfWork) -> None:\n        self._uow = uow\n\n    def _validate_all(self, values: dict[str, Any], current: Order | None) -> None:\n        \"\"\"Checks the values against the rules of the \"Order\" table; raises ValidationFailedError with every problem.\"\"\"\n        creating = current is None\n        errors: list[FieldError] = []\n        for name in values.keys() - _FIELDS:\n            errors.append(FieldError(name, \"is not a field of Order\"))\n        if not creating:\n            for name in values.keys() & {\"id\", \"created_at\"}:\n                errors.append(FieldError(name, \"cannot be changed\"))\n        value = values.get(\"user\")\n        if value is None:\n            if creating or \"user\" in values:\n                errors.append(FieldError(\"user\", \"is required\"))\n        else:\n            if isinstance(value, str) and len(value) > 40:\n                errors.append(FieldError(\"user\", \"is longer than 40 characters\"))\n        value = values.get(\"group\")\n        if value is None:\n            if \"group\" in values and not creating:\n                errors.append(FieldError(\"group\", \"cannot be empty\"))\n        else:\n            if not value >= 0:\n                errors.append(FieldError(\"group\", \"must be >= 0\"))\n        value = values.get(\"customer_name\")\n        if value is None:\n            if creating or \"customer_name\" in values:\n                errors.append(FieldError(\"customerName\", \"is required\"))\n        else:\n            if isinstance(value, str) and len(value) > 60:\n                errors.append(FieldError(\"customerName\", \"is longer than 60 characters\"))\n        value = values.get(\"text\")\n        if value is not None:\n            if isinstance(value, str) and len(value) > 20:\n                errors.append(FieldError(\"text\", \"is longer than 20 characters\"))\n        value = values.get(\"str\")\n        if value is not None:\n            if isinstance(value, str) and len(value) > 10:\n                errors.append(FieldError(\"str\", \"is longer than 10 characters\"))\n        value = values.get(\"due_date\")\n        if value is None:\n            if creating or \"due_date\" in values:\n                errors.append(FieldError(\"dueDate\", \"is required\"))\n        value = values.get(\"kind_code\")\n        if value is not None:\n            if isinstance(value, str) and len(value) > 10:\n                errors.append(FieldError(\"kind_code\", \"is longer than 10 characters\"))\n        thing_id = values[\"thing_id\"] if \"thing_id\" in values else (getattr(current, \"thing_id\") if current is not None else None)\n        if thing_id is not None and self._uow.things.find_by_id(thing_id) is None:\n            errors.append(FieldError(\"thing_id\", \"no Thing has this key\"))\n        parent_id = values[\"parent_id\"] if \"parent_id\" in values else (getattr(current, \"parent_id\") if current is not None else None)\n        if parent_id is not None and self._uow.order.find_by_id(parent_id) is None:\n            errors.append(FieldError(\"parentId\", \"no Order has this key\"))\n        kind_code = values[\"kind_code\"] if \"kind_code\" in values else (getattr(current, \"kind_code\") if current is not None else None)\n        kind_day = values[\"kind_day\"] if \"kind_day\" in values else (getattr(current, \"kind_day\") if current is not None else None)\n        if kind_code is not None and kind_day is not None and self._uow.kinds.find_by_code_and_day(kind_code, kind_day) is None:\n            errors.append(FieldError(\"kind_code, kind_day\", \"no Kind has this key\"))\n        if errors:\n            raise ValidationFailedError(\"Order\", errors)\n\n    def _check_unique(self, values: dict[str, Any], current: Order | None) -> None:\n        \"\"\"Values that must be unique are not taken by another row.\"\"\"\n        customer_name = values[\"customer_name\"] if \"customer_name\" in values else (current.customer_name if current is not None else None)\n        if customer_name is not None:\n            other = self._uow.order.find_by_customer_name(customer_name)\n            if other is not None and (current is None or other.id != current.id):\n                raise ConflictError(\"Order\", \"customerName is already taken\", (\"customer_name\",))\n\n    def _check(self, values: dict[str, Any], current: Order | None) -> None:\n        \"\"\"Every check before a write: the values, the rows they point to, the unique values.\"\"\"\n        self._validate_all(values, current)\n        self._check_unique(values, current)\n\n    def _find(self, id: int) -> Order:\n        \"\"\"The Order with this key; NotFoundError when there is none.\"\"\"\n        entity = self._uow.order.find_by_id(id)\n        if entity is None:\n            raise NotFoundError(\"Order\", id)\n        return entity\n\n    def create_order(self, order: Order) -> Order:\n        \"\"\"Stores a new Order after checking it.\"\"\"\n        values = {name: getattr(order, name) for name in _FIELDS}\n        with self._uow.transaction():\n            self._check(values, None)\n            created = self._uow.order.insert(order)\n            return created\n\n    def get_order(self, id: int) -> Order:\n        \"\"\"The Order with this key; NotFoundError when there is none.\"\"\"\n        return self._find(id)\n\n    def list_orders(self, offset: int = 0, limit: int = 50) -> Page[Order]:\n        \"\"\"A page of Order, by primary key.\"\"\"\n        return self._uow.order.list(offset, limit)\n\n    def update_order(self, id: int, changes: Mapping[str, Any]) -> Order:\n        \"\"\"Changes the given values of a Order.\"\"\"\n        values = dict(changes)\n        with self._uow.transaction():\n            current = self._find(id)\n            self._check(values, current)\n            for name, value in values.items():\n                setattr(current, name, value)\n            updated = self._uow.order.update(current)\n            return updated\n\n    def delete_order(self, id: int) -> None:\n        \"\"\"Deletes a Order.\"\"\"\n        with self._uow.transaction():\n            current = self._find(id)\n            if self._uow.order.list_by_parent_id(current.id):\n                raise ConflictError(\"Order\", \"rows of Order still point to it\", (\"Order\",))\n            self._uow.order.delete(current)\n\n    def find_order_by_customer_name(self, customer_name: str) -> Order | None:\n        \"\"\"The Order with this customerName, or None.\"\"\"\n        return self._uow.order.find_by_customer_name(customer_name)\n\n    def list_orders_by_thing_id(self, thing_id: bytes) -> list[Order]:\n        \"\"\"The Order with this thing_id.\"\"\"\n        return self._uow.order.list_by_thing_id(thing_id)\n\n    def list_orders_by_parent_id(self, parent_id: int) -> list[Order]:\n        \"\"\"The Order with this parentId.\"\"\"\n        return self._uow.order.list_by_parent_id(parent_id)\n\n    def list_orders_by_kind_code_and_kind_day(self, kind_code: str, kind_day: date) -> list[Order]:\n        \"\"\"The Order with this kind_code and kind_day.\"\"\"\n        return self._uow.order.list_by_kind_code_and_kind_day(kind_code, kind_day)\n",
+  "app/services/thing.py": "\"\"\"Operations on things: what each one checks before it writes.\"\"\"\n\nfrom collections.abc import Mapping\nfrom typing import Any\n\nfrom app.entities.thing import Thing\nfrom app.errors import FieldError, NotFoundError, ValidationFailedError\nfrom app.paging import Page\nfrom app.unit_of_work import UnitOfWork\n\n# Columns a client may send: the database fills the others\n_FIELDS = frozenset({\"id\", \"tiny\", \"small\", \"medium\", \"num\", \"big\", \"price\", \"r\", \"d\", \"flag\", \"born\", \"opens\", \"at\", \"changed\", \"bin\", \"blobby\", \"data\", \"feeling\", \"code\", \"note\", \"long_note\"})\n\n\nclass ThingService:\n    \"\"\"Operations on things. Each write runs in its own transaction.\"\"\"\n\n    def __init__(self, uow: UnitOfWork) -> None:\n        self._uow = uow\n\n    def _validate_all(self, values: dict[str, Any], current: Thing | None) -> None:\n        \"\"\"Checks the values against the rules of the \"things\" table; raises ValidationFailedError with every problem.\"\"\"\n        creating = current is None\n        errors: list[FieldError] = []\n        for name in values.keys() - _FIELDS:\n            errors.append(FieldError(name, \"is not a field of Thing\"))\n        if not creating:\n            for name in values.keys() & {\"id\", \"at_ts\", \"total\"}:\n                errors.append(FieldError(name, \"cannot be changed\"))\n        value = values.get(\"id\")\n        if value is None:\n            if creating or \"id\" in values:\n                errors.append(FieldError(\"id\", \"is required\"))\n        value = values.get(\"tiny\")\n        if value is None:\n            if creating or \"tiny\" in values:\n                errors.append(FieldError(\"tiny\", \"is required\"))\n        value = values.get(\"small\")\n        if value is None:\n            if creating or \"small\" in values:\n                errors.append(FieldError(\"small\", \"is required\"))\n        value = values.get(\"big\")\n        if value is None:\n            if creating or \"big\" in values:\n                errors.append(FieldError(\"big\", \"is required\"))\n        value = values.get(\"price\")\n        if value is None:\n            if creating or \"price\" in values:\n                errors.append(FieldError(\"price\", \"is required\"))\n        value = values.get(\"r\")\n        if value is None:\n            if creating or \"r\" in values:\n                errors.append(FieldError(\"r\", \"is required\"))\n        value = values.get(\"flag\")\n        if value is None:\n            if \"flag\" in values and not creating:\n                errors.append(FieldError(\"flag\", \"cannot be empty\"))\n        value = values.get(\"born\")\n        if value is None:\n            if creating or \"born\" in values:\n                errors.append(FieldError(\"born\", \"is required\"))\n        value = values.get(\"opens\")\n        if value is None:\n            if creating or \"opens\" in values:\n                errors.append(FieldError(\"opens\", \"is required\"))\n        value = values.get(\"at\")\n        if value is None:\n            if creating or \"at\" in values:\n                errors.append(FieldError(\"at\", \"is required\"))\n        value = values.get(\"bin\")\n        if value is None:\n            if creating or \"bin\" in values:\n                errors.append(FieldError(\"bin\", \"is required\"))\n        value = values.get(\"data\")\n        if value is None:\n            if creating or \"data\" in values:\n                errors.append(FieldError(\"data\", \"is required\"))\n        value = values.get(\"feeling\")\n        if value is None:\n            if creating or \"feeling\" in values:\n                errors.append(FieldError(\"feeling\", \"is required\"))\n        value = values.get(\"code\")\n        if value is None:\n            if creating or \"code\" in values:\n                errors.append(FieldError(\"code\", \"is required\"))\n        else:\n            if isinstance(value, str) and len(value) > 5:\n                errors.append(FieldError(\"code\", \"is longer than 5 characters\"))\n        if errors:\n            raise ValidationFailedError(\"Thing\", errors)\n\n    def _check(self, values: dict[str, Any], current: Thing | None) -> None:\n        \"\"\"Every check before a write: the values, the rows they point to, the unique values.\"\"\"\n        self._validate_all(values, current)\n\n    def _find(self, id: bytes) -> Thing:\n        \"\"\"The Thing with this key; NotFoundError when there is none.\"\"\"\n        entity = self._uow.things.find_by_id(id)\n        if entity is None:\n            raise NotFoundError(\"Thing\", id)\n        return entity\n\n    def create_thing(self, thing: Thing) -> Thing:\n        \"\"\"Stores a new Thing after checking it.\"\"\"\n        values = {name: getattr(thing, name) for name in _FIELDS}\n        with self._uow.transaction():\n            self._check(values, None)\n            created = self._uow.things.insert(thing)\n            return created\n\n    def get_thing(self, id: bytes) -> Thing:\n        \"\"\"The Thing with this key; NotFoundError when there is none.\"\"\"\n        return self._find(id)\n\n    def list_things(self, offset: int = 0, limit: int = 50) -> Page[Thing]:\n        \"\"\"A page of things, by primary key.\"\"\"\n        return self._uow.things.list(offset, limit)\n\n    def update_thing(self, id: bytes, changes: Mapping[str, Any]) -> Thing:\n        \"\"\"Changes the given values of a Thing.\"\"\"\n        values = dict(changes)\n        with self._uow.transaction():\n            current = self._find(id)\n            self._check(values, current)\n            for name, value in values.items():\n                setattr(current, name, value)\n            updated = self._uow.things.update(current)\n            return updated\n\n    def delete_thing(self, id: bytes) -> None:\n        \"\"\"Deletes a Thing.\"\"\"\n        with self._uow.transaction():\n            current = self._find(id)\n            self._uow.things.delete(current)\n",
+  "app/settings.py": "\"\"\"Django settings of the data access layer: only what the ORM needs. The database comes from DATABASE_URL;\nsee .env.example. Import this module from your project's settings, or point DJANGO_SETTINGS_MODULE to it.\"\"\"\n\nimport os\nfrom urllib.parse import unquote, urlsplit\n\n\ndef database_from_url(url: str) -> dict[str, str]:\n    \"\"\"A Django database from a URL: postgresql://user:password@host:port/name, mysql://…, sqlite:///path or\n    sqlite://:memory:. A driver after the scheme (postgresql+psycopg) is ignored.\"\"\"\n    parts = urlsplit(url)\n    scheme = parts.scheme.split(\"+\", 1)[0]\n    if scheme == \"sqlite\":\n        return {\"ENGINE\": \"django.db.backends.sqlite3\", \"NAME\": parts.netloc or parts.path[1:] or \":memory:\"}\n    engine = {\"postgresql\": \"postgresql\", \"postgres\": \"postgresql\", \"mysql\": \"mysql\", \"mariadb\": \"mysql\"}[scheme]\n    if engine == \"mysql\":\n        # PyMySQL stands in for mysqlclient, which needs a C compiler and the MySQL client library\n        import pymysql\n\n        pymysql.install_as_MySQLdb()\n    return {\n        \"ENGINE\": f\"django.db.backends.{engine}\",\n        \"NAME\": parts.path.lstrip(\"/\"),\n        \"USER\": unquote(parts.username or \"\"),\n        \"PASSWORD\": unquote(parts.password or \"\"),\n        \"HOST\": parts.hostname or \"\",\n        \"PORT\": str(parts.port or \"\"),\n    }\n\n\nSECRET_KEY = os.environ.get(\"DJANGO_SECRET_KEY\", \"only-the-orm-is-used-change-it-in-your-project\")\nINSTALLED_APPS = [\"app\"]\nDATABASES = {\"default\": database_from_url(os.environ.get(\"DATABASE_URL\", \"mysql://app:app@localhost:3306/app\"))}\nUSE_TZ = True\nTIME_ZONE = \"UTC\"\nDEFAULT_AUTO_FIELD = \"django.db.models.BigAutoField\"\n",
+  "app/unit_of_work.py": "\"\"\"The repositories of every table, and the transaction of each service operation. Each service operation runs in `transaction()`: committed when it ends, rolled back when it fails.\"\"\"\n\nfrom collections.abc import Iterator\nfrom contextlib import AbstractContextManager, contextmanager\nfrom typing import Protocol\n\nfrom django.db import transaction\n\nfrom app.repositories.audit_entry import AuditEntryRepository, MemoryAuditEntryRepository, SqlAuditEntryRepository\nfrom app.repositories.empty import EmptyRepository, MemoryEmptyRepository, SqlEmptyRepository\nfrom app.repositories.kind import KindRepository, MemoryKindRepository, SqlKindRepository\nfrom app.repositories.order import MemoryOrderRepository, OrderRepository, SqlOrderRepository\nfrom app.repositories.thing import MemoryThingRepository, SqlThingRepository, ThingRepository\n\n\nclass UnitOfWork(Protocol):\n    \"\"\"What services depend on: a repository per table and a transaction.\"\"\"\n\n    things: ThingRepository\n    kinds: KindRepository\n    order: OrderRepository\n    audit_entries: AuditEntryRepository\n    empties: EmptyRepository\n\n    def transaction(self) -> AbstractContextManager[None]:\n        \"\"\"Commits what runs inside it, or rolls it back if it fails.\"\"\"\n        ...\n\n\nclass SqlUnitOfWork:\n    \"\"\"The repositories over the Django database connection.\"\"\"\n\n    def __init__(self) -> None:\n        self.things = SqlThingRepository()\n        self.kinds = SqlKindRepository()\n        self.order = SqlOrderRepository()\n        self.audit_entries = SqlAuditEntryRepository()\n        self.empties = SqlEmptyRepository()\n\n    @contextmanager\n    def transaction(self) -> Iterator[None]:\n        \"\"\"Commits what runs inside it, or rolls it back if it fails (transaction.atomic).\"\"\"\n        with transaction.atomic():\n            yield\n\n\nclass MemoryUnitOfWork:\n    \"\"\"The in-memory repositories, for tests and for trying the services without a database.\"\"\"\n\n    def __init__(self) -> None:\n        self.things = MemoryThingRepository()\n        self.kinds = MemoryKindRepository()\n        self.order = MemoryOrderRepository()\n        self.audit_entries = MemoryAuditEntryRepository()\n        self.empties = MemoryEmptyRepository()\n\n    @contextmanager\n    def transaction(self) -> Iterator[None]:\n        \"\"\"Memory has no transactions: changes are kept as they are made.\"\"\"\n        yield\n",
+  "crud-contract.json": "{\n  \"format\": \"crud-contract\",\n  \"version\": 1,\n  \"stack\": {\n    \"language\": \"python\",\n    \"orm\": \"django\",\n    \"database\": \"mysql\",\n    \"execution\": \"sync\"\n  },\n  \"transactions\": \"operation\",\n  \"paging\": \"offset\",\n  \"types\": [\n    {\n      \"name\": \"Thing\",\n      \"module\": \"app.entities.thing\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"binary\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"tiny\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"small\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"medium\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"num\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"big\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"price\",\n          \"type\": {\n            \"kind\": \"decimal\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"r\",\n          \"type\": {\n            \"kind\": \"float\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"d\",\n          \"type\": {\n            \"kind\": \"float\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"flag\",\n          \"type\": {\n            \"kind\": \"boolean\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"born\",\n          \"type\": {\n            \"kind\": \"date\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"opens\",\n          \"type\": {\n            \"kind\": \"time\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"at\",\n          \"type\": {\n            \"kind\": \"datetime\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"at_ts\",\n          \"type\": {\n            \"kind\": \"datetime\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"changed\",\n          \"type\": {\n            \"kind\": \"datetime\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"bin\",\n          \"type\": {\n            \"kind\": \"binary\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"blobby\",\n          \"type\": {\n            \"kind\": \"binary\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"data\",\n          \"type\": {\n            \"kind\": \"json\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"feeling\",\n          \"type\": {\n            \"kind\": \"enum\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"code\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"length\": 5\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"note\",\n          \"type\": {\n            \"kind\": \"text\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"long_note\",\n          \"type\": {\n            \"kind\": \"text\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"total\",\n          \"type\": {\n            \"kind\": \"decimal\"\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"Kind\",\n      \"module\": \"app.entities.kind\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"code\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"length\": 10\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"day\",\n          \"type\": {\n            \"kind\": \"date\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"label\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"length\": 30\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"Order\",\n      \"module\": \"app.entities.order\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"user\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"length\": 40\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"group\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"customer_name\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"length\": 60\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"class_field\",\n          \"type\": {\n            \"kind\": \"text\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"metadata\",\n          \"type\": {\n            \"kind\": \"text\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"date\",\n          \"type\": {\n            \"kind\": \"date\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"time\",\n          \"type\": {\n            \"kind\": \"time\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"text\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"length\": 20\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"list\",\n          \"type\": {\n            \"kind\": \"text\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"str\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"length\": 10\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"int\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"due_date\",\n          \"type\": {\n            \"kind\": \"date\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"closes_at\",\n          \"type\": {\n            \"kind\": \"time\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"created_at\",\n          \"type\": {\n            \"kind\": \"datetime\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"kind_code\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"length\": 10\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"kind_day\",\n          \"type\": {\n            \"kind\": \"date\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"thing_id\",\n          \"type\": {\n            \"kind\": \"binary\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"parent_id\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"AuditEntry\",\n      \"module\": \"app.entities.audit_entry\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"entry_no\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"order_id\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"message\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"length\": 200\n          },\n          \"nullable\": false\n        }\n      ]\n    },\n    {\n      \"name\": \"Empty\",\n      \"module\": \"app.entities.empty\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"integer\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"note\",\n          \"type\": {\n            \"kind\": \"text\"\n          },\n          \"nullable\": true\n        }\n      ]\n    }\n  ],\n  \"errors\": [\n    {\n      \"kind\": \"notFound\",\n      \"name\": \"NotFoundError\",\n      \"module\": \"app.errors\"\n    },\n    {\n      \"kind\": \"conflict\",\n      \"name\": \"ConflictError\",\n      \"module\": \"app.errors\"\n    },\n    {\n      \"kind\": \"validation\",\n      \"name\": \"ValidationFailedError\",\n      \"module\": \"app.errors\"\n    }\n  ],\n  \"services\": [\n    {\n      \"name\": \"ThingService\",\n      \"module\": \"app.services.thing\",\n      \"operations\": [\n        {\n          \"name\": \"create_thing\",\n          \"kind\": \"create\",\n          \"errors\": [\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"get_thing\",\n          \"kind\": \"get\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"list_things\",\n          \"kind\": \"list\",\n          \"errors\": []\n        },\n        {\n          \"name\": \"update_thing\",\n          \"kind\": \"update\",\n          \"errors\": [\n            \"notFound\",\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"delete_thing\",\n          \"kind\": \"delete\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        }\n      ]\n    },\n    {\n      \"name\": \"KindService\",\n      \"module\": \"app.services.kind\",\n      \"operations\": [\n        {\n          \"name\": \"create_kind\",\n          \"kind\": \"create\",\n          \"errors\": [\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"get_kind\",\n          \"kind\": \"get\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"list_kinds\",\n          \"kind\": \"list\",\n          \"errors\": []\n        },\n        {\n          \"name\": \"update_kind\",\n          \"kind\": \"update\",\n          \"errors\": [\n            \"notFound\",\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"delete_kind\",\n          \"kind\": \"delete\",\n          \"errors\": [\n            \"notFound\",\n            \"conflict\"\n          ]\n        }\n      ]\n    },\n    {\n      \"name\": \"OrderService\",\n      \"module\": \"app.services.order\",\n      \"operations\": [\n        {\n          \"name\": \"create_order\",\n          \"kind\": \"create\",\n          \"errors\": [\n            \"validation\",\n            \"conflict\"\n          ]\n        },\n        {\n          \"name\": \"get_order\",\n          \"kind\": \"get\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"list_orders\",\n          \"kind\": \"list\",\n          \"errors\": []\n        },\n        {\n          \"name\": \"update_order\",\n          \"kind\": \"update\",\n          \"errors\": [\n            \"notFound\",\n            \"validation\",\n            \"conflict\"\n          ]\n        },\n        {\n          \"name\": \"delete_order\",\n          \"kind\": \"delete\",\n          \"errors\": [\n            \"notFound\",\n            \"conflict\"\n          ]\n        },\n        {\n          \"name\": \"find_order_by_customer_name\",\n          \"kind\": \"find\",\n          \"by\": [\n            \"customerName\"\n          ],\n          \"errors\": []\n        },\n        {\n          \"name\": \"list_orders_by_thing_id\",\n          \"kind\": \"listByParent\",\n          \"by\": [\n            \"thing_id\"\n          ],\n          \"errors\": []\n        },\n        {\n          \"name\": \"list_orders_by_parent_id\",\n          \"kind\": \"listByParent\",\n          \"by\": [\n            \"parentId\"\n          ],\n          \"errors\": []\n        },\n        {\n          \"name\": \"list_orders_by_kind_code_and_kind_day\",\n          \"kind\": \"listByParent\",\n          \"by\": [\n            \"kind_code\",\n            \"kind_day\"\n          ],\n          \"errors\": []\n        }\n      ]\n    },\n    {\n      \"name\": \"AuditEntryService\",\n      \"module\": \"app.services.audit_entry\",\n      \"operations\": [\n        {\n          \"name\": \"create_audit_entry\",\n          \"kind\": \"create\",\n          \"errors\": [\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"get_audit_entry\",\n          \"kind\": \"get\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"list_audit_entries\",\n          \"kind\": \"list\",\n          \"errors\": []\n        },\n        {\n          \"name\": \"update_audit_entry\",\n          \"kind\": \"update\",\n          \"errors\": [\n            \"notFound\",\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"delete_audit_entry\",\n          \"kind\": \"delete\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"list_audit_entries_by_order_id\",\n          \"kind\": \"listByParent\",\n          \"by\": [\n            \"orderId\"\n          ],\n          \"errors\": []\n        }\n      ]\n    },\n    {\n      \"name\": \"EmptyService\",\n      \"module\": \"app.services.empty\",\n      \"operations\": [\n        {\n          \"name\": \"create_empty\",\n          \"kind\": \"create\",\n          \"errors\": [\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"get_empty\",\n          \"kind\": \"get\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"list_empties\",\n          \"kind\": \"list\",\n          \"errors\": []\n        },\n        {\n          \"name\": \"update_empty\",\n          \"kind\": \"update\",\n          \"errors\": [\n            \"notFound\",\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"delete_empty\",\n          \"kind\": \"delete\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        }\n      ]\n    }\n  ]\n}\n",
+  "pyproject.toml": "[project]\nname = \"django-ddl-mysql\"\nversion = \"0.1.0\"\ndescription = \"Data access layer (entities, repositories and services) generated by DB2CRUD.\"\nrequires-python = \">=3.12\"\ndependencies = [\n    \"django>=5.2,<5.3\",\n    \"pymysql>=1.1,<2\",\n    \"cryptography>=43\",\n]\n\n[project.optional-dependencies]\ndev = [\n    \"pytest>=8.3,<9\",\n    \"pytest-django>=4.9,<5\",\n]\n\n[tool.pytest.ini_options]\ntestpaths = [\"tests\"]\npythonpath = [\".\"]\nDJANGO_SETTINGS_MODULE = \"tests.settings\"\n",
+  "requirements-dev.txt": "-r requirements.txt\npytest>=8.3,<9\npytest-django>=4.9,<5\n",
+  "requirements.txt": "django>=5.2,<5.3\npymysql>=1.1,<2\ncryptography>=43\n",
+  "tests/__init__.py": "",
+  "tests/conftest.py": "\"\"\"Fixtures of the tests: the test database pytest-django creates from the models, and the units of work.\"\"\"\n\nimport pytest\n\nfrom app.unit_of_work import MemoryUnitOfWork, SqlUnitOfWork\n\n\n@pytest.fixture\ndef sql_uow(db) -> SqlUnitOfWork:  # type: ignore[no-untyped-def]\n    \"\"\"The repositories over the test database; every test runs in a transaction rolled back after it.\"\"\"\n    return SqlUnitOfWork()\n\n\n@pytest.fixture\ndef memory_uow() -> MemoryUnitOfWork:\n    \"\"\"The in-memory repositories.\"\"\"\n    return MemoryUnitOfWork()\n",
+  "tests/factories.py": "\"\"\"Rows for the tests: valid values for every column, and the rows they point to.\"\"\"\n\nfrom datetime import date, datetime, time\nfrom decimal import Decimal\nfrom typing import Any\n\nfrom app.entities.audit_entry import AuditEntry\nfrom app.entities.empty import Empty\nfrom app.entities.kind import Kind\nfrom app.entities.order import Order\nfrom app.entities.thing import Thing\nfrom app.unit_of_work import UnitOfWork\n\n\ndef new_thing(n: int = 1, **values: Any) -> Thing:\n    \"\"\"A valid Thing that is not stored yet; `n` makes its unique values differ, `values` replace any of them.\"\"\"\n    defaults: dict[str, Any] = {\"id\": bytes([n % 256]) * 16, \"tiny\": n, \"small\": n, \"medium\": n, \"num\": n, \"big\": n, \"price\": Decimal(f\"{n % 10000}.50\"), \"r\": n + 0.5, \"d\": n + 0.5, \"flag\": True, \"born\": date(2026, 1, n % 28 + 1), \"opens\": time(12, n % 60), \"at\": datetime(2026, 1, n % 28 + 1, 12, 0, 0), \"changed\": datetime(2026, 1, n % 28 + 1, 12, 0, 0), \"bin\": bytes([n % 256]) * 50, \"blobby\": bytes([n % 256]), \"data\": {\"n\": n}, \"feeling\": \"sad\", \"code\": f\"{n:05d}\"[-5:], \"note\": f\"note-{n}\", \"long_note\": f\"longnote-{n}\"}\n    return Thing(**(defaults | values))\n\n\ndef add_thing(uow: UnitOfWork, n: int = 1) -> Thing:\n    \"\"\"A stored Thing.\"\"\"\n    return uow.things.insert(new_thing(n))\n\n\ndef new_kind(n: int = 1, **values: Any) -> Kind:\n    \"\"\"A valid Kind that is not stored yet; `n` makes its unique values differ, `values` replace any of them.\"\"\"\n    defaults: dict[str, Any] = {\"code\": f\"code-{n}\", \"day\": date(2026, 1, n % 28 + 1), \"label\": f\"label-{n}\"}\n    return Kind(**(defaults | values))\n\n\ndef add_kind(uow: UnitOfWork, n: int = 1) -> Kind:\n    \"\"\"A stored Kind.\"\"\"\n    return uow.kinds.insert(new_kind(n))\n\n\ndef new_order(n: int = 1, **values: Any) -> Order:\n    \"\"\"A valid Order that is not stored yet; `n` makes its unique values differ, `values` replace any of them.\"\"\"\n    defaults: dict[str, Any] = {\"user\": f\"user-{n}\", \"group\": n, \"customer_name\": f\"customername-{n}\", \"class_field\": f\"class-{n}\", \"metadata\": f\"metadata-{n}\", \"date\": date(2026, 1, n % 28 + 1), \"time\": time(12, n % 60), \"text\": f\"text-{n}\", \"list\": f\"list-{n}\", \"str\": f\"str-{n}\", \"int\": n, \"due_date\": date(2026, 1, n % 28 + 1), \"closes_at\": time(12, n % 60), \"kind_code\": None, \"kind_day\": None, \"thing_id\": None, \"parent_id\": None}\n    return Order(**(defaults | values))\n\n\ndef add_order(uow: UnitOfWork, n: int = 1) -> Order:\n    \"\"\"A stored Order.\"\"\"\n    return uow.order.insert(new_order(n))\n\n\ndef new_audit_entry(n: int = 1, **values: Any) -> AuditEntry:\n    \"\"\"A valid AuditEntry that is not stored yet; `n` makes its unique values differ, `values` replace any of them.\"\"\"\n    defaults: dict[str, Any] = {\"message\": f\"message-{n}\"}\n    return AuditEntry(**(defaults | values))\n\n\ndef add_audit_entry(uow: UnitOfWork, n: int = 1) -> AuditEntry:\n    \"\"\"A stored AuditEntry, with the rows it points to.\"\"\"\n    parent_0 = add_order(uow, n)\n    return uow.audit_entries.insert(new_audit_entry(n, order_id=parent_0.id))\n\n\ndef new_empty(n: int = 1, **values: Any) -> Empty:\n    \"\"\"A valid Empty that is not stored yet; `n` makes its unique values differ, `values` replace any of them.\"\"\"\n    defaults: dict[str, Any] = {\"note\": f\"note-{n}\"}\n    return Empty(**(defaults | values))\n\n\ndef add_empty(uow: UnitOfWork, n: int = 1) -> Empty:\n    \"\"\"A stored Empty.\"\"\"\n    return uow.empties.insert(new_empty(n))\n",
+  "tests/settings.py": "\"\"\"Settings of the tests: the project's, on TEST_DATABASE_URL, or SQLite in memory (pytest-django creates the\ntest database from the models and empties it).\"\"\"\n\nimport os\n\nfrom app.settings import *  # noqa: F403\nfrom app.settings import database_from_url\n\nDATABASES = {\"default\": database_from_url(os.environ.get(\"TEST_DATABASE_URL\") or \"sqlite://:memory:\")}\n",
+  "tests/test_audit_entry.py": "\"\"\"Tests of the \"audit_entries\" table.\"\"\"\n\nimport pytest\nfrom tests.factories import add_audit_entry, add_order, new_audit_entry\n\nfrom app.errors import NotFoundError, ValidationFailedError\nfrom app.services.audit_entry import AuditEntryService\nfrom app.unit_of_work import MemoryUnitOfWork, SqlUnitOfWork\n\n\ndef test_audit_entry_is_stored_and_read_back(sql_uow: SqlUnitOfWork) -> None:\n    stored = add_audit_entry(sql_uow, 1)\n    found = sql_uow.audit_entries.find_by_entry_no(stored.entry_no)\n    assert found is not None\n    assert found.entry_no == stored.entry_no\n    assert stored.order_id is None or len(sql_uow.audit_entries.list_by_order_id(stored.order_id)) == 1\n\n\ndef test_audit_entry_lists_rows_by_key(sql_uow: SqlUnitOfWork) -> None:\n    add_audit_entry(sql_uow, 1)\n    add_audit_entry(sql_uow, 2)\n    page = sql_uow.audit_entries.list(0, 1)\n    assert page.total == 2\n    assert len(page.items) == 1\n\n\ndef test_audit_entry_changes_are_stored(sql_uow: SqlUnitOfWork) -> None:\n    stored = add_audit_entry(sql_uow, 1)\n    stored.message = \"changed\"\n    sql_uow.audit_entries.update(stored)\n    found = sql_uow.audit_entries.find_by_entry_no(stored.entry_no)\n    assert found is not None and found.message == \"changed\"\n\n\ndef test_audit_entry_is_deleted(sql_uow: SqlUnitOfWork) -> None:\n    stored = add_audit_entry(sql_uow, 1)\n    sql_uow.audit_entries.delete(stored)\n    assert sql_uow.audit_entries.find_by_entry_no(stored.entry_no) is None\n\n\ndef test_audit_entry_service_creates_a_valid_row(memory_uow: MemoryUnitOfWork) -> None:\n    service = AuditEntryService(memory_uow)\n    n = 100\n    parent_0 = add_order(memory_uow, n)\n    created = service.create_audit_entry(new_audit_entry(1, order_id=parent_0.id))\n    found = service.get_audit_entry(created.entry_no)\n    assert found.entry_no == created.entry_no\n\n\ndef test_audit_entry_service_refuses_a_missing_value(memory_uow: MemoryUnitOfWork) -> None:\n    service = AuditEntryService(memory_uow)\n    n = 100\n    parent_0 = add_order(memory_uow, n)\n    with pytest.raises(ValidationFailedError) as raised:\n        service.create_audit_entry(new_audit_entry(1, order_id=parent_0.id, message=None))\n    assert [error.field for error in raised.value.errors] == [\"message\"]\n\n\ndef test_audit_entry_service_refuses_a_missing_parent(memory_uow: MemoryUnitOfWork) -> None:\n    service = AuditEntryService(memory_uow)\n    n = 100\n    parent_0 = add_order(memory_uow, n)\n    with pytest.raises(ValidationFailedError) as raised:\n        service.create_audit_entry(new_audit_entry(1, order_id=999999))\n    assert \"orderId\" in [error.field for error in raised.value.errors]\n\n\ndef test_audit_entry_service_says_when_a_row_is_missing(memory_uow: MemoryUnitOfWork) -> None:\n    service = AuditEntryService(memory_uow)\n    with pytest.raises(NotFoundError):\n        service.get_audit_entry(999999)\n\n\ndef test_audit_entry_service_changes_a_row(memory_uow: MemoryUnitOfWork) -> None:\n    service = AuditEntryService(memory_uow)\n    n = 100\n    parent_0 = add_order(memory_uow, n)\n    created = service.create_audit_entry(new_audit_entry(1, order_id=parent_0.id))\n    updated = service.update_audit_entry(created.entry_no, {\"message\": \"changed\"})\n    assert updated.message == \"changed\"\n\n\ndef test_audit_entry_service_deletes_a_row(memory_uow: MemoryUnitOfWork) -> None:\n    service = AuditEntryService(memory_uow)\n    n = 100\n    parent_0 = add_order(memory_uow, n)\n    created = service.create_audit_entry(new_audit_entry(1, order_id=parent_0.id))\n    service.delete_audit_entry(created.entry_no)\n    with pytest.raises(NotFoundError):\n        service.get_audit_entry(created.entry_no)\n",
+  "tests/test_database.py": "\"\"\"The tests run on the database they were asked to.\"\"\"\n\nimport os\n\nfrom django.db import connection\n\n\ndef test_runs_on_the_database_asked(db) -> None:  # type: ignore[no-untyped-def]\n    url = os.environ.get(\"TEST_DATABASE_URL\")\n    expected = url.split(\":\", 1)[0].split(\"+\", 1)[0] if url else \"sqlite\"\n    # Django runs MariaDB with its MySQL backend\n    assert connection.vendor == (\"mysql\" if expected == \"mariadb\" else expected)\n",
+  "tests/test_empty.py": "\"\"\"Tests of the \"empties\" table.\"\"\"\n\nimport pytest\nfrom tests.factories import add_empty, new_empty\n\nfrom app.errors import NotFoundError\nfrom app.services.empty import EmptyService\nfrom app.unit_of_work import MemoryUnitOfWork, SqlUnitOfWork\n\n\ndef test_empty_is_stored_and_read_back(sql_uow: SqlUnitOfWork) -> None:\n    stored = add_empty(sql_uow, 1)\n    found = sql_uow.empties.find_by_id(stored.id)\n    assert found is not None\n    assert found.id == stored.id\n\n\ndef test_empty_lists_rows_by_key(sql_uow: SqlUnitOfWork) -> None:\n    add_empty(sql_uow, 1)\n    add_empty(sql_uow, 2)\n    page = sql_uow.empties.list(0, 1)\n    assert page.total == 2\n    assert len(page.items) == 1\n\n\ndef test_empty_changes_are_stored(sql_uow: SqlUnitOfWork) -> None:\n    stored = add_empty(sql_uow, 1)\n    stored.note = \"changed\"\n    sql_uow.empties.update(stored)\n    found = sql_uow.empties.find_by_id(stored.id)\n    assert found is not None and found.note == \"changed\"\n\n\ndef test_empty_is_deleted(sql_uow: SqlUnitOfWork) -> None:\n    stored = add_empty(sql_uow, 1)\n    sql_uow.empties.delete(stored)\n    assert sql_uow.empties.find_by_id(stored.id) is None\n\n\ndef test_empty_service_creates_a_valid_row(memory_uow: MemoryUnitOfWork) -> None:\n    service = EmptyService(memory_uow)\n    n = 100\n    created = service.create_empty(new_empty(1))\n    found = service.get_empty(created.id)\n    assert found.id == created.id\n\n\ndef test_empty_service_says_when_a_row_is_missing(memory_uow: MemoryUnitOfWork) -> None:\n    service = EmptyService(memory_uow)\n    with pytest.raises(NotFoundError):\n        service.get_empty(999999)\n\n\ndef test_empty_service_changes_a_row(memory_uow: MemoryUnitOfWork) -> None:\n    service = EmptyService(memory_uow)\n    n = 100\n    created = service.create_empty(new_empty(1))\n    updated = service.update_empty(created.id, {\"note\": \"changed\"})\n    assert updated.note == \"changed\"\n\n\ndef test_empty_service_deletes_a_row(memory_uow: MemoryUnitOfWork) -> None:\n    service = EmptyService(memory_uow)\n    n = 100\n    created = service.create_empty(new_empty(1))\n    service.delete_empty(created.id)\n    with pytest.raises(NotFoundError):\n        service.get_empty(created.id)\n",
+  "tests/test_kind.py": "\"\"\"Tests of the \"kinds\" table.\"\"\"\n\nimport pytest\nfrom tests.factories import add_kind, new_kind\n\nfrom app.errors import NotFoundError, ValidationFailedError\nfrom app.services.kind import KindService\nfrom app.unit_of_work import MemoryUnitOfWork, SqlUnitOfWork\n\n\ndef test_kind_is_stored_and_read_back(sql_uow: SqlUnitOfWork) -> None:\n    stored = add_kind(sql_uow, 1)\n    found = sql_uow.kinds.find_by_code_and_day(stored.code, stored.day)\n    assert found is not None\n    assert found.code == stored.code\n    assert found.day == stored.day\n\n\ndef test_kind_lists_rows_by_key(sql_uow: SqlUnitOfWork) -> None:\n    add_kind(sql_uow, 1)\n    add_kind(sql_uow, 2)\n    page = sql_uow.kinds.list(0, 1)\n    assert page.total == 2\n    assert len(page.items) == 1\n\n\ndef test_kind_changes_are_stored(sql_uow: SqlUnitOfWork) -> None:\n    stored = add_kind(sql_uow, 1)\n    stored.label = \"changed\"\n    sql_uow.kinds.update(stored)\n    found = sql_uow.kinds.find_by_code_and_day(stored.code, stored.day)\n    assert found is not None and found.label == \"changed\"\n\n\ndef test_kind_is_deleted(sql_uow: SqlUnitOfWork) -> None:\n    stored = add_kind(sql_uow, 1)\n    sql_uow.kinds.delete(stored)\n    assert sql_uow.kinds.find_by_code_and_day(stored.code, stored.day) is None\n\n\ndef test_kind_service_creates_a_valid_row(memory_uow: MemoryUnitOfWork) -> None:\n    service = KindService(memory_uow)\n    n = 100\n    created = service.create_kind(new_kind(1))\n    found = service.get_kind(created.code, created.day)\n    assert found.code == created.code\n    assert found.day == created.day\n\n\ndef test_kind_service_refuses_a_missing_value(memory_uow: MemoryUnitOfWork) -> None:\n    service = KindService(memory_uow)\n    n = 100\n    with pytest.raises(ValidationFailedError) as raised:\n        service.create_kind(new_kind(1, code=None))\n    assert [error.field for error in raised.value.errors] == [\"code\"]\n\n\ndef test_kind_service_says_when_a_row_is_missing(memory_uow: MemoryUnitOfWork) -> None:\n    service = KindService(memory_uow)\n    with pytest.raises(NotFoundError):\n        service.get_kind(\"missing\", \"missing\")\n\n\ndef test_kind_service_changes_a_row(memory_uow: MemoryUnitOfWork) -> None:\n    service = KindService(memory_uow)\n    n = 100\n    created = service.create_kind(new_kind(1))\n    updated = service.update_kind(created.code, created.day, {\"label\": \"changed\"})\n    assert updated.label == \"changed\"\n\n\ndef test_kind_service_deletes_a_row(memory_uow: MemoryUnitOfWork) -> None:\n    service = KindService(memory_uow)\n    n = 100\n    created = service.create_kind(new_kind(1))\n    service.delete_kind(created.code, created.day)\n    with pytest.raises(NotFoundError):\n        service.get_kind(created.code, created.day)\n",
+  "tests/test_order.py": "\"\"\"Tests of the \"Order\" table.\"\"\"\n\nimport pytest\nfrom tests.factories import add_kind, add_order, add_thing, new_order\n\nfrom app.errors import ConflictError, NotFoundError, ValidationFailedError\nfrom app.services.order import OrderService\nfrom app.unit_of_work import MemoryUnitOfWork, SqlUnitOfWork\n\n\ndef test_order_is_stored_and_read_back(sql_uow: SqlUnitOfWork) -> None:\n    stored = add_order(sql_uow, 1)\n    found = sql_uow.order.find_by_id(stored.id)\n    assert found is not None\n    assert found.id == stored.id\n    assert sql_uow.order.find_by_customer_name(stored.customer_name) is not None\n    assert stored.thing_id is None or len(sql_uow.order.list_by_thing_id(stored.thing_id)) == 1\n    assert stored.parent_id is None or len(sql_uow.order.list_by_parent_id(stored.parent_id)) == 1\n    assert stored.kind_code is None or stored.kind_day is None or len(sql_uow.order.list_by_kind_code_and_kind_day(stored.kind_code, stored.kind_day)) == 1\n\n\ndef test_order_lists_rows_by_key(sql_uow: SqlUnitOfWork) -> None:\n    add_order(sql_uow, 1)\n    add_order(sql_uow, 2)\n    page = sql_uow.order.list(0, 1)\n    assert page.total == 2\n    assert len(page.items) == 1\n\n\ndef test_order_changes_are_stored(sql_uow: SqlUnitOfWork) -> None:\n    stored = add_order(sql_uow, 1)\n    stored.user = \"changed\"\n    sql_uow.order.update(stored)\n    found = sql_uow.order.find_by_id(stored.id)\n    assert found is not None and found.user == \"changed\"\n\n\ndef test_order_is_deleted(sql_uow: SqlUnitOfWork) -> None:\n    stored = add_order(sql_uow, 1)\n    sql_uow.order.delete(stored)\n    assert sql_uow.order.find_by_id(stored.id) is None\n\n\ndef test_order_service_creates_a_valid_row(memory_uow: MemoryUnitOfWork) -> None:\n    service = OrderService(memory_uow)\n    n = 100\n    parent_0 = add_thing(memory_uow, n)\n    parent_1 = add_order(memory_uow, n)\n    parent_2 = add_kind(memory_uow, n)\n    created = service.create_order(new_order(1, thing_id=parent_0.id, parent_id=parent_1.id, kind_code=parent_2.code, kind_day=parent_2.day))\n    found = service.get_order(created.id)\n    assert found.id == created.id\n\n\ndef test_order_service_refuses_a_missing_value(memory_uow: MemoryUnitOfWork) -> None:\n    service = OrderService(memory_uow)\n    n = 100\n    parent_0 = add_thing(memory_uow, n)\n    parent_1 = add_order(memory_uow, n)\n    parent_2 = add_kind(memory_uow, n)\n    with pytest.raises(ValidationFailedError) as raised:\n        service.create_order(new_order(1, thing_id=parent_0.id, parent_id=parent_1.id, kind_code=parent_2.code, kind_day=parent_2.day, user=None))\n    assert [error.field for error in raised.value.errors] == [\"user\"]\n\n\ndef test_order_service_refuses_a_repeated_unique_value(memory_uow: MemoryUnitOfWork) -> None:\n    service = OrderService(memory_uow)\n    n = 100\n    parent_0 = add_thing(memory_uow, n)\n    parent_1 = add_order(memory_uow, n)\n    parent_2 = add_kind(memory_uow, n)\n    first = service.create_order(new_order(1, thing_id=parent_0.id, parent_id=parent_1.id, kind_code=parent_2.code, kind_day=parent_2.day))\n    with pytest.raises(ConflictError):\n        service.create_order(new_order(2, thing_id=parent_0.id, parent_id=parent_1.id, kind_code=parent_2.code, kind_day=parent_2.day, customer_name=first.customer_name))\n\n\ndef test_order_service_keeps_its_own_unique_value(memory_uow: MemoryUnitOfWork) -> None:\n    service = OrderService(memory_uow)\n    n = 100\n    parent_0 = add_thing(memory_uow, n)\n    parent_1 = add_order(memory_uow, n)\n    parent_2 = add_kind(memory_uow, n)\n    created = service.create_order(new_order(1, thing_id=parent_0.id, parent_id=parent_1.id, kind_code=parent_2.code, kind_day=parent_2.day))\n    service.update_order(created.id, {\"customer_name\": created.customer_name})\n\n\ndef test_order_service_refuses_a_missing_parent(memory_uow: MemoryUnitOfWork) -> None:\n    service = OrderService(memory_uow)\n    n = 100\n    parent_0 = add_thing(memory_uow, n)\n    parent_1 = add_order(memory_uow, n)\n    parent_2 = add_kind(memory_uow, n)\n    with pytest.raises(ValidationFailedError) as raised:\n        service.create_order(new_order(1, parent_id=parent_1.id, kind_code=parent_2.code, kind_day=parent_2.day, thing_id=\"missing\"))\n    assert \"thing_id\" in [error.field for error in raised.value.errors]\n\n\ndef test_order_service_says_when_a_row_is_missing(memory_uow: MemoryUnitOfWork) -> None:\n    service = OrderService(memory_uow)\n    with pytest.raises(NotFoundError):\n        service.get_order(999999)\n\n\ndef test_order_service_changes_a_row(memory_uow: MemoryUnitOfWork) -> None:\n    service = OrderService(memory_uow)\n    n = 100\n    parent_0 = add_thing(memory_uow, n)\n    parent_1 = add_order(memory_uow, n)\n    parent_2 = add_kind(memory_uow, n)\n    created = service.create_order(new_order(1, thing_id=parent_0.id, parent_id=parent_1.id, kind_code=parent_2.code, kind_day=parent_2.day))\n    updated = service.update_order(created.id, {\"user\": \"changed\"})\n    assert updated.user == \"changed\"\n\n\ndef test_order_service_deletes_a_row(memory_uow: MemoryUnitOfWork) -> None:\n    service = OrderService(memory_uow)\n    n = 100\n    parent_0 = add_thing(memory_uow, n)\n    parent_1 = add_order(memory_uow, n)\n    parent_2 = add_kind(memory_uow, n)\n    created = service.create_order(new_order(1, thing_id=parent_0.id, parent_id=parent_1.id, kind_code=parent_2.code, kind_day=parent_2.day))\n    service.delete_order(created.id)\n    with pytest.raises(NotFoundError):\n        service.get_order(created.id)\n",
+  "tests/test_thing.py": "\"\"\"Tests of the \"things\" table.\"\"\"\n\nimport pytest\nfrom tests.factories import add_thing, new_thing\n\nfrom app.errors import NotFoundError, ValidationFailedError\nfrom app.services.thing import ThingService\nfrom app.unit_of_work import MemoryUnitOfWork, SqlUnitOfWork\n\n\ndef test_thing_is_stored_and_read_back(sql_uow: SqlUnitOfWork) -> None:\n    stored = add_thing(sql_uow, 1)\n    found = sql_uow.things.find_by_id(stored.id)\n    assert found is not None\n    assert found.id == stored.id\n\n\ndef test_thing_lists_rows_by_key(sql_uow: SqlUnitOfWork) -> None:\n    add_thing(sql_uow, 1)\n    add_thing(sql_uow, 2)\n    page = sql_uow.things.list(0, 1)\n    assert page.total == 2\n    assert len(page.items) == 1\n\n\ndef test_thing_changes_are_stored(sql_uow: SqlUnitOfWork) -> None:\n    stored = add_thing(sql_uow, 1)\n    stored.note = \"changed\"\n    sql_uow.things.update(stored)\n    found = sql_uow.things.find_by_id(stored.id)\n    assert found is not None and found.note == \"changed\"\n\n\ndef test_thing_is_deleted(sql_uow: SqlUnitOfWork) -> None:\n    stored = add_thing(sql_uow, 1)\n    sql_uow.things.delete(stored)\n    assert sql_uow.things.find_by_id(stored.id) is None\n\n\ndef test_thing_service_creates_a_valid_row(memory_uow: MemoryUnitOfWork) -> None:\n    service = ThingService(memory_uow)\n    n = 100\n    created = service.create_thing(new_thing(1))\n    found = service.get_thing(created.id)\n    assert found.id == created.id\n\n\ndef test_thing_service_refuses_a_missing_value(memory_uow: MemoryUnitOfWork) -> None:\n    service = ThingService(memory_uow)\n    n = 100\n    with pytest.raises(ValidationFailedError) as raised:\n        service.create_thing(new_thing(1, id=None))\n    assert [error.field for error in raised.value.errors] == [\"id\"]\n\n\ndef test_thing_service_says_when_a_row_is_missing(memory_uow: MemoryUnitOfWork) -> None:\n    service = ThingService(memory_uow)\n    with pytest.raises(NotFoundError):\n        service.get_thing(\"missing\")\n\n\ndef test_thing_service_changes_a_row(memory_uow: MemoryUnitOfWork) -> None:\n    service = ThingService(memory_uow)\n    n = 100\n    created = service.create_thing(new_thing(1))\n    updated = service.update_thing(created.id, {\"note\": \"changed\"})\n    assert updated.note == \"changed\"\n\n\ndef test_thing_service_deletes_a_row(memory_uow: MemoryUnitOfWork) -> None:\n    service = ThingService(memory_uow)\n    n = 100\n    created = service.create_thing(new_thing(1))\n    service.delete_thing(created.id)\n    with pytest.raises(NotFoundError):\n        service.get_thing(created.id)\n"
+ }
+}

@@ -35,7 +35,8 @@ for (const scenario of SCENARIOS.filter((item) => item.id.startsWith(prefix))) {
   for (const item of scenario.decisions ?? [])
     design = proposeCrud(schema, decidePolicy(design, item.table, item.decision, item.value), models, project)
   let files = generateProject(schema, design, { name: scenario.id, ...scenario.settings }, shared ? { schema: models, project } : null)
-  if (scenario.ddl) files = onOriginalDatabase(files, scenario.settings, dropStatements(schema, scenario.settings.database))
+  // ENTITIES=1 leaves the tests as they are, creating their tables from the entities
+  if (scenario.ddl && !process.env.ENTITIES) files = onOriginalDatabase(files, scenario.settings, dropStatements(schema, scenario.settings.database))
   const folder = join(work, scenario.id)
   rmSync(folder, { recursive: true, force: true })
   for (const file of files) {

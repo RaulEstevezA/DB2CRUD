@@ -159,6 +159,29 @@ describe('ORM code written by DB2CRUD', () => {
           for (const column of table.columns)
             if (typeof column.generated === 'object' && column.generated !== null && 'computed' in column.generated)
               column.generated = undefined
+      // What some ORMs cannot say of the databases of verification/ddl/
+      if (name.includes('-ddl-')) {
+        const orm = name.split('-')[0]
+        for (const schema of [expected, read.schema])
+          for (const table of schema.tables) {
+            // The values of an enum are kept by its native type only
+            if (['django', 'doctrine', 'jpa', 'efcore'].includes(orm)) schema.enums = []
+            // Foreign keys of several columns
+            if (['django', 'sequelize'].includes(orm)) table.foreignKeys = table.foreignKeys.filter((key) => key.columns.length === 1)
+            // Prisma names the schema of every table when one of them is in another
+            if (table.schema === 'public') delete table.schema
+            for (const key of table.foreignKeys) if (key.references.schema === 'public') delete key.references.schema
+            for (const column of table.columns) {
+              if (column.type.kind === 'enum' && ['django', 'doctrine', 'jpa', 'efcore'].includes(orm))
+                column.type = { sql: '', kind: 'text' }
+              if (column.generated === 'onUpdateNow') column.generated = 'now'
+              if (column.generated === 'uuid') column.generated = undefined
+              if (['prisma', 'sequelize'].includes(orm) && typeof column.generated === 'object') column.generated = undefined
+              // Prisma has no null lists
+              if (orm === 'prisma' && column.type.kind === 'array') column.nullable = false
+            }
+          }
+      }
       // Code for another engine than the project's has the types of that engine: only the structure has to agree
       // (the engine of the code is the second word of the name of the output: typeorm-mysql-…)
       const sameEngine = name.split('-')[1] === expected.dialect
