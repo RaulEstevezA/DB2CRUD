@@ -221,7 +221,7 @@ export function repositoryFiles(context: Context, info: TableInfo): GeneratedFil
   {
     const uses = new PhpUses(ns).add(entityClass)
     const methods = repositoryMethods(context, info, uses)
-    const init = context.orm.repository.init(context, uses)
+    const init = context.orm.repository.init(context, info, uses)
     const bodies = methods.map((method) => block(method, context.orm.repository.body(context, info, method, uses), !interfaces))
     const helpers = context.orm.repository.helpers(context, info, uses)
     const members = [...(init.length > 0 ? ['', ...init] : []), ...bodies.flat(), ...(helpers.length > 0 ? ['', ...helpers] : [])]
@@ -266,7 +266,12 @@ export function repositoryFiles(context: Context, info: TableInfo): GeneratedFil
           identity && '    private int $nextId = 1;',
           // The database class needs a connection; memory does not
           !interfaces &&
-            context.orm.repository.init(context, new PhpUses(ns)).length > 0 && ['', '    public function __construct()', '    {', '    }'],
+            context.orm.repository.init(context, info, new PhpUses(ns)).length > 0 && [
+              '',
+              '    public function __construct()',
+              '    {',
+              '    }',
+            ],
           '',
           '    /**',
           '     * The key of a row, as a list of its key values.',

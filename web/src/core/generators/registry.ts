@@ -18,6 +18,7 @@ import { rustGenerator } from './rust/generator.ts'
 import { swiftGenerator } from './swift/generator.ts'
 import { phpGenerator } from './php/common/generator.ts'
 import { doctrineOrm } from './php/doctrine/index.ts'
+import { sqlOrm as phpSqlOrm } from './php/sql/index.ts'
 import { eloquentOrm } from './php/eloquent/index.ts'
 import { pythonGenerator } from './python/common/generator.ts'
 import { djangoOrm } from './python/django/index.ts'
@@ -46,6 +47,7 @@ export const GENERATORS: readonly Generator[] = [
   csharpGenerator(csharpSqlOrm),
   phpGenerator(doctrineOrm),
   phpGenerator(eloquentOrm),
+  phpGenerator(phpSqlOrm),
   kotlinGenerator,
   rustGenerator,
   swiftGenerator,

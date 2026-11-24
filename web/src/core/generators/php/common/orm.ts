@@ -16,6 +16,8 @@ export interface PhpOrm {
   id: OrmId
   /** `Doctrine ORM 3`, for texts */
   label: string
+  /** What the project is made of, when it is not `entities mapped with <label>, repositories and services` */
+  intro?: string
   /** The property of the entity that holds a column: `passwordHash`, or the column itself for Eloquent's attributes */
   property(column: DbColumn): string
   /** The PHP type of a value of the column, without null: `int`, `string`, `\DateTimeImmutable` */
@@ -27,8 +29,8 @@ export interface PhpOrm {
   repository: {
     /** What the database repository says it does, after `Keeps <table> rows in the database` */
     doc(context: Context): string
-    /** Its constructor, or nothing when it needs none */
-    init(context: Context, uses: PhpUses): Line[]
+    /** Its constructor and what goes before it, or nothing when it needs none */
+    init(context: Context, info: TableInfo, uses: PhpUses): Line[]
     body(context: Context, info: TableInfo, method: RepositoryMethod, uses: PhpUses): Line[]
     /** Its private methods, after the public ones */
     helpers(context: Context, info: TableInfo, uses: PhpUses): Line[]

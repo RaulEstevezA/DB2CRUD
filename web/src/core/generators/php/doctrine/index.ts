@@ -356,7 +356,7 @@ export const doctrineOrm: PhpOrm = {
   databaseFiles: (context) => [databaseFile(context), ...typeFiles(context)],
   repository: {
     doc: () => "through Doctrine's EntityManager; every write is flushed at once.",
-    init: (_context, uses) => {
+    init: (_context, _info, uses) => {
       uses.add('Doctrine\\ORM\\EntityManagerInterface')
       return ['    public function __construct(private readonly EntityManagerInterface $em)', '    {', '    }']
     },
