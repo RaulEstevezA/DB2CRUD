@@ -459,7 +459,18 @@
           "kind": "float",
           "bits": 64
          },
-         "nullable": false
+         "nullable": false,
+         "checks": [
+          {
+           "sql": "quantity >= 1",
+           "parsed": {
+            "kind": "compare",
+            "column": "quantity",
+            "op": ">=",
+            "value": 1
+           }
+          }
+         ]
         },
         {
          "name": "price",

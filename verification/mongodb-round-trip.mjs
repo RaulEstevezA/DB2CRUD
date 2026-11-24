@@ -49,6 +49,19 @@ it('refuses repeated and wrong values', async () => {
   expect(await uow().customers.READ_ID('not an identifier')).toBeNull()
 })
 TRANSACTION
+it('does not undo what others change in a list', async () => {
+  const { id } = await addOrder(uow(), 1)
+  const item = newOrder(3).lines[0]
+  await Promise.all([uow().orders.addLine(id, item), uow().orders.addLine(id, item), uow().orders.addLine(id, { ...item, status: 'sent' })])
+  const found = (await uow().orders.READ_ID(id))!
+  expect(found.lines).toHaveLength(4)
+  await Promise.all(found.lines.slice(1, 3).map((line) => uow().orders.removeLine(id, line._id!)))
+  expect((await uow().orders.READ_ID(id))!.lines.map((line) => line.status)).toEqual(['pending', 'sent'])
+  // A document that does not follow the schema is refused by the database layer too
+  await expect(uow().orders.addLine(id, { quantity: 1 } as never)).rejects.toMatchObject({ name: 'ValidationFailedError' })
+  expect(await uow().orders.addLine('f'.repeat(24), item)).toBeNull()
+})
+
 it('creates nothing in the database', async () => {
   const { createDatabase } = await import('../src/database.js')
   await uow().db.connection.dropDatabase()
@@ -125,7 +138,7 @@ export function withRoundTrip(files, settings, code) {
   const test = roundTrip(code.endsWith('shop.ts'))
   const content = test.content
     .replaceAll('READ_ID', settings.verbs === 'get' ? 'getById' : 'findById')
-    .replace('TRANSACTION', (settings.transactions ?? 'operation') === 'operation' ? TRANSACTION : '')
+    .replace('TRANSACTION', settings.transactions === 'operation' ? TRANSACTION : '')
     .replaceAll("import('../src/database.js')", "import('../src/database.js')")
   return [...files, { ...test, content }]
 }

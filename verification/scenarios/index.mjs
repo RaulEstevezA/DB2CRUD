@@ -889,7 +889,7 @@ export const SCENARIOS = [
   { id: 'python-sql-ddl-mariadb', ddl: true, settings: { language: 'python', orm: 'sql', database: 'mariadb' }, service: 'mariadb' },
   // MongoDB: from Mongoose schemas and from the validators of its collections (verification/mongodb/)
   { id: 'mongoose-mongodb-defaults', code: 'mongodb/shop.ts', settings: { language: 'typescript', orm: 'mongoose', database: 'mongodb' }, service: 'mongodb' },
-  { id: 'mongoose-mongodb-dtos-cursor-by-table', code: 'mongodb/shop.ts', settings: { language: 'typescript', orm: 'mongoose', database: 'mongodb', serviceTypes: 'dtos', paging: 'cursor', architecture: 'table' }, service: 'mongodb' },
+  { id: 'mongoose-mongodb-dtos-cursor-by-table', code: 'mongodb/shop.ts', settings: { language: 'typescript', orm: 'mongoose', database: 'mongodb', transactions: 'operation', serviceTypes: 'dtos', paging: 'cursor', architecture: 'table' }, service: 'mongodb' },
   { id: 'mongoose-mongodb-caller-class-dtos', code: 'mongodb/shop.ts', settings: { language: 'typescript', orm: 'mongoose', database: 'mongodb', transactions: 'caller', serviceTypes: 'dtos', dtoKind: 'class', paging: 'none' }, service: 'mongodb' },
   { id: 'mongoose-mongodb-no-interfaces-services-tests', code: 'mongodb/shop.ts', settings: { language: 'typescript', orm: 'mongoose', database: 'mongodb', repositoryInterfaces: false, memoryRepositories: false, verbs: 'get', transactions: 'repository' }, service: 'mongodb' },
   { id: 'mongoose-mongodb-repositories-only', code: 'mongodb/shop.ts', settings: { language: 'typescript', orm: 'mongoose', database: 'mongodb', services: false }, service: 'mongodb' },
