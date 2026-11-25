@@ -1,0 +1,113 @@
+# Builds the web version and publishes it inside the personal site:
+# https://raulesteveza.github.io/tools/DB2CRUD/
+#
+# It is published in the repository RaulEstevezA/RaulEstevezA.github.io, which GitHub Pages serves on push:
+#   tools/DB2CRUD/   <- web/dist (the built app)
+#
+# It needs a token that can write (Contents: Read and write) to RaulEstevezA.github.io, kept in this
+# repository as the Actions secret PORTFOLIO_DEPLOY_TOKEN.
+
+name: Deploy web
+
+# On every push to main that changes the app or this workflow; it can also be run by hand.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'web/**'
+      - 'shared/**'
+      - '.github/workflows/deploy-web.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-web
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: '22'
+  SITE_REPOSITORY: RaulEstevezA/RaulEstevezA.github.io
+  TOOL_PATH: tools/DB2CRUD
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check deploy token
+        env:
+          PORTFOLIO_DEPLOY_TOKEN: ${{ secrets.PORTFOLIO_DEPLOY_TOKEN }}
+        run: |
+          if [ -z "$PORTFOLIO_DEPLOY_TOKEN" ]; then
+            echo "::error::The secret PORTFOLIO_DEPLOY_TOKEN is missing (Settings → Secrets and variables → Actions)."
+            exit 1
+          fi
+
+      - name: Checkout app
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Lint
+        working-directory: web
+        run: npm run lint
+
+      - name: Test
+        working-directory: web
+        run: npm test
+
+      - name: Build
+        working-directory: web
+        # vite.config.ts already sets the base path /tools/DB2CRUD/ for production builds
+        run: npm run build
+
+      - name: Checkout site
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ env.SITE_REPOSITORY }}
+          ref: main
+          token: ${{ secrets.PORTFOLIO_DEPLOY_TOKEN }}
+          path: site
+
+      - name: Copy build into site
+        run: |
+          mkdir -p "site/${TOOL_PATH}"
+          rsync -a --delete web/dist/ "site/${TOOL_PATH}/"
+
+      - name: Commit and push
+        working-directory: site
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "${TOOL_PATH}"
+          if git diff --cached --quiet; then
+            echo "No changes in ${TOOL_PATH}"
+            exit 0
+          fi
+          git commit -m "deploy: update ${TOOL_PATH} from ${GITHUB_REPOSITORY}@${GITHUB_SHA::7}"
+
+          # Other projects publish in this repository too:
+          # when the push fails because it is out of date, it is updated and tried again.
+          for attempt in 1 2 3; do
+            git pull --rebase origin main
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              echo "Attempt $attempt failed; trying again after updating main."
+              sleep 5
+            fi
+          done
+
+          echo "Could not publish after 3 attempts."
+          exit 1
