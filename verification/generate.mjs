@@ -20,6 +20,8 @@ const { generateProject } = await import(join(core, 'generators', 'registry.ts')
 const { readDdl } = await import(join(core, 'importers', 'ddl', 'ddl.ts'))
 const { dropStatements } = await import(join(core, 'schema', 'ddl.ts'))
 const { readOrmCode } = await import(join(core, 'importers', 'orm', 'registry.ts'))
+const { readModel2DBProject } = await import(join(core, 'interop', 'model2db', 'read.ts'))
+const { scenarioProject } = await import(join(core, 'interop', 'model2db', 'test', 'fixtures.ts'))
 const { MATCHING_CASES, readCase } = await import(join(core, 'matching', 'test', 'cases.ts'))
 
 const SCHEMAS = { shop: SHOP }
@@ -35,10 +37,25 @@ function readCode(path) {
   return read.schema
 }
 
+/** The schema of a Model2DB project: its models and its output. */
+function readModel2DB(project) {
+  const read = readModel2DBProject(scenarioProject(project))
+  if (!read.ok) throw new Error(`${project.models} with ${project.output}: ${read.error}`)
+  return read.schema
+}
+
+/** The schema of a scenario that does not come from a shared case. */
+function schemaOf(scenario) {
+  if (scenario.model2db) return readModel2DB(scenario.model2db)
+  if (scenario.code) return readCode(scenario.code)
+  if (scenario.ddl) return readDdl(originalDdl(scenario.settings.database), scenario.settings.database)
+  return SCHEMAS[scenario.schema]
+}
+
 for (const scenario of SCENARIOS.filter((item) => item.id.startsWith(prefix))) {
   // A shared case of the matching brings its database and its application models (shared/test-cases/matching/)
   const shared = scenario.case ? readCase(join(MATCHING_CASES, scenario.case)) : null
-  const schema = shared ? shared.database : scenario.code ? readCode(scenario.code) : scenario.ddl ? readDdl(originalDdl(scenario.settings.database), scenario.settings.database) : SCHEMAS[scenario.schema]
+  const schema = shared ? shared.database : schemaOf(scenario)
   const models = shared ? shared.models : null
   const project = shared ? shared.project : null
   let design = proposeCrud(schema, null, models, project)

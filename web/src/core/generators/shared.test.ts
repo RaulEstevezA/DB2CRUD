@@ -15,6 +15,8 @@ import { SHOP } from '../crud/fixtures.ts'
 import { proposeCrud } from '../crud/propose.ts'
 import { readOrmCode } from '../importers/orm/registry.ts'
 import { readDdl } from '../importers/ddl/ddl.ts'
+import { readModel2DBProject } from '../interop/model2db/read.ts'
+import { scenarioProject, type ScenarioProject } from '../interop/model2db/test/fixtures.ts'
 import type { DbSchema } from '../schema/types.ts'
 import { MATCHING_CASES, readCase } from '../matching/test/cases.ts'
 import { generateProject } from './registry.ts'
@@ -32,6 +34,8 @@ interface Scenario {
   ddl?: true
   /** A file or folder, from verification/, with the code the schema is read from */
   code?: string
+  /** A Model2DB project (interop/model2db/test/fixtures.ts) */
+  model2db?: ScenarioProject
   settings: Record<string, unknown>
   decisions?: { table: string; decision: 'role' | 'delete' | 'concurrency' | 'children' | 'hidden'; value: unknown }[]
 }
@@ -54,15 +58,23 @@ function readCode(path: string): DbSchema {
   return read.schema
 }
 
+function readModel2DB(scenario: ScenarioProject): DbSchema {
+  const read = readModel2DBProject(scenarioProject(scenario))
+  if (!read.ok) throw new Error(`${scenario.models} with ${scenario.output}: ${read.error}`)
+  return read.schema
+}
+
+/** The schema of a scenario that does not come from a shared case. */
+function schemaOf(scenario: Scenario): DbSchema {
+  if (scenario.model2db) return readModel2DB(scenario.model2db)
+  if (scenario.code) return readCode(scenario.code)
+  if (scenario.ddl) return readDdl(ddlOf(scenario), scenario.settings.database as Parameters<typeof readDdl>[1])
+  return SCHEMAS[scenario.schema ?? 'shop']
+}
+
 function project(scenario: Scenario) {
   const shared = scenario.case ? readCase(join(MATCHING_CASES, scenario.case)) : null
-  const schema = shared
-    ? shared.database
-    : scenario.code
-      ? readCode(scenario.code)
-      : scenario.ddl
-        ? readDdl(ddlOf(scenario), scenario.settings.database as Parameters<typeof readDdl>[1])
-        : SCHEMAS[scenario.schema ?? 'shop']
+  const schema = shared ? shared.database : schemaOf(scenario)
   const models = shared ? { schema: shared.models, project: shared.project } : null
   let design = proposeCrud(schema, null, models?.schema ?? null, models?.project ?? null)
   for (const item of scenario.decisions ?? [])

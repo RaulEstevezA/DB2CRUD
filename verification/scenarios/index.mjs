@@ -9,7 +9,7 @@
  */
 
 /** @typedef {{ table: string, decision: string, value: unknown }} Decision */
-/** @typedef {{ id: string, schema?: 'shop', case?: string, ddl?: true, code?: string, settings: Record<string, unknown>, decisions?: Decision[], service?: 'postgresql' | 'mysql' | 'mariadb' | 'mongodb' }} Scenario */
+/** @typedef {{ id: string, schema?: 'shop', case?: string, ddl?: true, code?: string, model2db?: { models: 'shop' | 'blog' | 'blogTexts' | 'notes', output: string }, settings: Record<string, unknown>, decisions?: Decision[], service?: 'postgresql' | 'mysql' | 'mariadb' | 'mongodb' }} Scenario */
 
 /** Every pending decision of the shop taken the other way, so the code of the other options runs too. */
 const OTHER_WAY = [
@@ -903,6 +903,17 @@ export const SCENARIOS = [
   { id: 'beanie-mongodb-validators', code: 'mongodb/clinic.js', settings: { language: 'python', orm: 'beanie', database: 'mongodb', execution: 'async' }, service: 'mongodb' },
   { id: 'beanie-mongodb-validators-dtos', code: 'mongodb/clinic.js', settings: { language: 'python', orm: 'beanie', database: 'mongodb', execution: 'async', serviceTypes: 'dtos' }, service: 'mongodb' },
   { id: 'beanie-mongodb-own-documents', code: '../shared/test-cases/orm/hand/beanie/blog/documents.py', settings: { language: 'python', orm: 'beanie', database: 'mongodb', execution: 'async', serviceTypes: 'dtos' }, service: 'mongodb' },
+  // Model2DB projects for MongoDB: UUIDs, references and lists as each library stores them, and references of validators
+  { id: 'beanie-mongodb-from-model2db', model2db: { models: 'blog', output: 'beanie' }, settings: { language: 'python', orm: 'beanie', database: 'mongodb', execution: 'async' }, service: 'mongodb' },
+  { id: 'beanie-mongodb-from-model2db-validators', model2db: { models: 'notes', output: 'mongodb' }, settings: { language: 'python', orm: 'beanie', database: 'mongodb', execution: 'async', serviceTypes: 'dtos' }, service: 'mongodb' },
+  { id: 'beanie-mongodb-from-model2db-shop', model2db: { models: 'shop', output: 'mongodb' }, settings: { language: 'python', orm: 'beanie', database: 'mongodb', execution: 'async', transactions: 'operation' }, service: 'mongodb' },
+  { id: 'springdata-mongodb-from-model2db', model2db: { models: 'blog', output: 'spring-data-mongodb' }, settings: { language: 'java', orm: 'springdata', database: 'mongodb' }, service: 'mongodb' },
+  { id: 'springdata-mongodb-from-model2db-texts', model2db: { models: 'blogTexts', output: 'spring-data-mongodb' }, settings: { language: 'java', orm: 'springdata', database: 'mongodb', serviceTypes: 'dtos' }, service: 'mongodb' },
+  { id: 'springdata-mongodb-from-model2db-validators', model2db: { models: 'notes', output: 'mongodb' }, settings: { language: 'java', orm: 'springdata', database: 'mongodb', serviceTypes: 'dtos' }, service: 'mongodb' },
+  { id: 'springdata-mongodb-from-model2db-shop', model2db: { models: 'shop', output: 'mongodb' }, settings: { language: 'java', orm: 'springdata', database: 'mongodb', transactions: 'operation' }, service: 'mongodb' },
+  { id: 'mongoose-mongodb-from-model2db', model2db: { models: 'blog', output: 'mongoose' }, settings: { language: 'typescript', orm: 'mongoose', database: 'mongodb' }, service: 'mongodb' },
+  { id: 'mongoose-mongodb-from-model2db-validators', model2db: { models: 'notes', output: 'mongodb' }, settings: { language: 'typescript', orm: 'mongoose', database: 'mongodb', serviceTypes: 'dtos' }, service: 'mongodb' },
+  { id: 'mongoose-mongodb-from-model2db-shop', model2db: { models: 'shop', output: 'mongodb' }, settings: { language: 'typescript', orm: 'mongoose', database: 'mongodb', transactions: 'operation' }, service: 'mongodb' },
   { id: 'beanie-mongodb-from-mongosh', code: '../shared/test-cases/orm/hand/documents/mongosh', settings: { language: 'python', orm: 'beanie', database: 'mongodb', execution: 'async', serviceTypes: 'dtos' }, service: 'mongodb' },
   { id: 'beanie-mongodb-from-documents', code: '../shared/test-cases/orm/hand/documents/export', settings: { language: 'python', orm: 'beanie', database: 'mongodb', execution: 'async' }, service: 'mongodb' },
   { id: 'springdata-mongodb-from-mongosh', code: '../shared/test-cases/orm/hand/documents/mongosh', settings: { language: 'java', orm: 'springdata', database: 'mongodb', serviceTypes: 'dtos' }, service: 'mongodb' },
