@@ -358,9 +358,9 @@ def _document_functions(name: str, fields: list[dict], entity: bool, identified:
         built = [
             f"        let mut entity = {name} {{",
             *read,
-            "            loaded: Loaded::default(),",
+            "            loaded_document: Loaded::default(),",
             "        };",
-            "        entity.loaded = Loaded(Some(entity.to_document()?));",
+            "        entity.loaded_document = Loaded(Some(entity.to_document()?));",
             "        Ok(entity)",
         ]
     else:
@@ -443,7 +443,7 @@ def _entity_file(context: dict, info: dict) -> dict:
         f"pub struct {info['entity']} {{",
         *fields,
         "    /// As it was read: a change writes only what differs",
-        "    pub loaded: Loaded,",
+        "    pub loaded_document: Loaded,",
         "}",
         "",
         *_document_functions(info["entity"], written, True, identified),

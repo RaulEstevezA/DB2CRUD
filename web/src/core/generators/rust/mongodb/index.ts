@@ -349,9 +349,9 @@ function documentFunctions(name: string, fields: Field[], entity: boolean, ident
       ? [
           `        let mut entity = ${name} {`,
           ...ind(read, 12),
-          '            loaded: Loaded::default(),',
+          '            loaded_document: Loaded::default(),',
           '        };',
-          '        entity.loaded = Loaded(Some(entity.to_document()?));',
+          '        entity.loaded_document = Loaded(Some(entity.to_document()?));',
           '        Ok(entity)',
         ]
       : [`        Ok(${name} {`, ...ind(read, 12), '        })']),
@@ -417,7 +417,7 @@ function entityFile(context: Context, info: TableInfo): GeneratedFile {
     `pub struct ${info.entity} {`,
     ...info.columns.flatMap((column) => [...commentLines(column.column.comment), `    pub ${column.field}: Option<${column.rs}>,`]),
     '    /// As it was read: a change writes only what differs',
-    '    pub loaded: Loaded,',
+    '    pub loaded_document: Loaded,',
     '}',
     '',
     ...documentFunctions(

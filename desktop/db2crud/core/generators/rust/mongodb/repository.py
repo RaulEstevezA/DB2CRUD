@@ -128,7 +128,7 @@ def body(context: dict, info: dict, method: dict, uses: RsUses) -> list[str]:
             *(["entity.identify_items();"] if identified_lists(info) else []),
             "let document = entity.to_document()?;",
             f"self.db.insert({entity}, {collection}, &document).await?;",
-            "entity.loaded = Loaded(Some(document));",
+            "entity.loaded_document = Loaded(Some(document));",
             "Ok(entity)",
         ]
     if kind == "update":
@@ -146,12 +146,12 @@ def body(context: dict, info: dict, method: dict, uses: RsUses) -> list[str]:
             *(f"entity.{column['field']} = Some(chrono::Utc::now());" for column in touched),
             *(["entity.identify_items();"] if identified_lists(info) else []),
             "let now = entity.to_document()?;",
-            f"let {mutable}changes = bson_values::changes(entity.loaded.0.as_ref(), &now, &[{fields}]);",
+            f"let {mutable}changes = bson_values::changes(entity.loaded_document.0.as_ref(), &now, &[{fields}]);",
             "if !changes.is_empty() {",
             *(f"    bson_values::also_set(&mut changes, &now, {name});" for name in stamps),
             f'    self.db.update({entity}, {collection}, doc! {{ "_id": now.get("_id").cloned() }}, changes).await?;',
             "}",
-            "entity.loaded = Loaded(Some(now));",
+            "entity.loaded_document = Loaded(Some(now));",
             "Ok(entity)",
         ]
     if kind == "delete":

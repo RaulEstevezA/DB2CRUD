@@ -97,7 +97,7 @@ export function body(context: Context, info: TableInfo, method: Method, uses: Rs
         ...(identifiedLists(info).length > 0 ? ['entity.identify_items();'] : []),
         'let document = entity.to_document()?;',
         `self.db.insert(${entity}, ${collection}, &document).await?;`,
-        'entity.loaded = Loaded(Some(document));',
+        'entity.loaded_document = Loaded(Some(document));',
         'Ok(entity)',
       ]
     case 'update': {
@@ -111,12 +111,12 @@ export function body(context: Context, info: TableInfo, method: Method, uses: Rs
         ...touched.map((column) => `entity.${column.field} = Some(chrono::Utc::now());`),
         ...(identifiedLists(info).length > 0 ? ['entity.identify_items();'] : []),
         'let now = entity.to_document()?;',
-        `let ${touched.length > 0 ? 'mut ' : ''}changes = bson_values::changes(entity.loaded.0.as_ref(), &now, &[${fields.join(', ')}]);`,
+        `let ${touched.length > 0 ? 'mut ' : ''}changes = bson_values::changes(entity.loaded_document.0.as_ref(), &now, &[${fields.join(', ')}]);`,
         'if !changes.is_empty() {',
         ...touched.map(({ column }) => `    bson_values::also_set(&mut changes, &now, ${rsString(column.name)});`),
         `    self.db.update(${entity}, ${collection}, doc! { "_id": now.get("_id").cloned() }, changes).await?;`,
         '}',
-        'entity.loaded = Loaded(Some(now));',
+        'entity.loaded_document = Loaded(Some(now));',
         'Ok(entity)',
       ]
     }
