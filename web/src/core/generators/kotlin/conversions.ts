@@ -475,6 +475,9 @@ function writeExpression(
     return converted === null ? unsupported(`${result.type} to ${column.kt}`) : { expression: converted }
   }
   switch (value.kind) {
+    // Only strategies of document databases have them
+    case 'document':
+      return unsupported(value.model)
     case 'field':
       return finish(source(value.path))
     case 'lookup': {
@@ -524,6 +527,9 @@ function readExpression(
     return converted === null ? unsupported(`${result.type} to ${target}`) : { expression: converted }
   }
   switch (value.kind) {
+    // Only strategies of document databases have them
+    case 'document':
+      return unsupported(value.model)
     case 'column':
       return finish(own(value.column))
     case 'lookup': {

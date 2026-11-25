@@ -50,11 +50,11 @@ export function typescriptGenerator(orm: TsOrm): Generator {
     orm: orm.id,
     generate({ schema, design, settings, models }) {
       const context = createContext(orm, schema, design, settings)
-      const plans = models ? servicePlans(context, planConversions(schema, design, models)) : []
+      const plans = models ? servicePlans(context, planConversions(schema, design, models, settings.database === 'mongodb')) : []
       const tests = testFiles(context)
       const conversionTests =
         tests.length > 0 && (settings.tests === 'all' || settings.tests === 'services')
-          ? conversionTestFile(context, plans, (info) => canMake(context, info))
+          ? conversionTestFile(context, plans, models?.schema ?? null, (info) => canMake(context, info))
           : null
       return named(orm, [
         readmeFile(context),

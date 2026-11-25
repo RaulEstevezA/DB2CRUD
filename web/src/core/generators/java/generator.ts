@@ -46,11 +46,9 @@ export function javaGenerator(orm: JavaOrm): Generator {
   return {
     language: 'java',
     orm: orm.id,
-    generate({ schema, design, settings, models: given }) {
-      // The conversions read columns, not the documents inside them
-      const models = orm.documents ? null : given
+    generate({ schema, design, settings, models }) {
       const context = createContext(orm, schema, design, settings)
-      const plans = models ? servicePlans(context, planConversions(schema, design, models)) : []
+      const plans = models ? servicePlans(context, planConversions(schema, design, models, orm.documents === true)) : []
       const conversions = models ? conversionFiles(context, models.schema, plans) : []
       const tests = testFiles(context)
       const conversionTests =

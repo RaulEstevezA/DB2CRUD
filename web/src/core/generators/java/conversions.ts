@@ -11,13 +11,25 @@
  * as their package) or, with `modelsSource: 'import'`, used from the user's package: the copy then goes to
  * `application-models/`, a source folder the build adds only while it exists (delete it inside the application).
  */
-import { withoutHidden, type ConversionPlan, type ModelPath, type ReadValue, type Todo, type WriteValue } from '../../conversions/plan.ts'
+import {
+  hasTodo,
+  lossy,
+  withoutHidden,
+  type ConversionPlan,
+  type ModelPath,
+  type ReadValue,
+  type Todo,
+  type WriteValue,
+} from '../../conversions/plan.ts'
 import type { GeneratedFile } from '../../export/files.ts'
+import { fieldsOf } from '../../matching/names.ts'
+import type { DbType } from '../../schema/types.ts'
 import type { MapperTransform } from '../../interop/mapper/read.ts'
 import type { EnumDef, FieldDef, ModelDef, ModelSchema, TypeRef } from '../../model/schema.ts'
 import { lines } from '../types.ts'
 import { capitalized, javaPath, javaString, JavaImports, memberName } from './java.ts'
 import { columnOf, errorsPackage, findInfo, qualified, query, queryName, type ColumnInfo, type Context, type TableInfo } from './context.ts'
+import type { NestedClass } from './documents.ts'
 import { accessor, createColumns, createDto, readColumns, readDto } from './dtos.ts'
 
 const IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/
@@ -427,6 +439,18 @@ function convert(models: Models, value: Typed, to: string, body: Body): string |
     }
     return null
   }
+  // The items of a list, in a document database
+  const items = /^(?:List|Set|Collection)<(.+)>$/
+  const fromItem = items.exec(from)?.[1]
+  const toItem = items.exec(to)?.[1]
+  if (fromItem && toItem) {
+    const converted = convert(models, { expression: 'item', type: fromItem }, toItem, body)
+    if (converted === null) return null
+    const stream = `${expression}.stream()${converted === 'item' ? '' : `.map(item -> ${converted})`}`
+    if (!to.startsWith('Set<')) return guard(`${stream}.toList()`)
+    body.imports.add('java.util.stream.Collectors')
+    return guard(`${stream}.collect(Collectors.toSet())`)
+  }
   if (TEMPORAL.has(source) && TEMPORAL.has(target)) {
     const converted = temporal(expression, source, target, body)
     return converted === null ? null : guard(converted)
@@ -578,6 +602,132 @@ function walk(models: Models, model: ModelDef | undefined, path: ModelPath, root
   return { expression, type }
 }
 
+// Nested documents
+
+interface Nested {
+  context: Context
+  models: Models
+  info: TableInfo
+  plan: ConversionPlan
+  body: Body
+  /** The methods written so far */
+  methods: string[][]
+}
+
+/** How a nested model is written: by its package when the entity or a DTO of the file has its name. */
+function nestedModel(nested: Nested, name: string): string {
+  const { target, source } = conversionNames(nested.context, nested.plan)
+  if ([nested.info.entity, target, source].includes(name)) return `${nested.models.pkg}.${name}`
+  nested.body.imports.add(`${nested.models.pkg}.${name}`)
+  return name
+}
+
+const modelNamed = (nested: Nested, name: string): ModelDef => {
+  const model = nested.models.schema.models.find((item) => item.name === name)!
+  return { ...model, fields: fieldsOf(model, nested.models.schema) }
+}
+
+const methodName = (nested: Nested, path: string, end: string) => `${lowerFirst(nested.plan.model)}${path}${end}`
+
+/** A nested document, or each of a list, converted by a method; one that is missing stays null. */
+function callFor(nested: Nested, method: string, many: boolean, expression: string, to: string): string {
+  if (!many) return `${expression} == null ? null : ${method}(${expression})`
+  const stream = `${expression}.stream().map(${conversionsClass(nested.info)}::${method})`
+  if (to.startsWith('Set<')) {
+    nested.body.imports.add('java.util.stream.Collectors')
+    return `${expression} == null ? null : ${stream}.collect(Collectors.toSet())`
+  }
+  return `${expression} == null ? null : ${stream}.toList()`
+}
+
+/** Writes the method that gives a nested document from its model, and those inside it; gives its name. */
+function writeDocument(nested: Nested, value: WriteValue & { kind: 'document' }, kept: NestedClass, path: string): string {
+  const { models, body } = nested
+  const name = methodName(nested, path, 'ToDocument')
+  const model = modelNamed(nested, value.model)
+  const sets = value.values.flatMap((item): string[] => {
+    const field = kept.fields.find((candidate) => candidate.column.name === item.column)!
+    if (item.value.kind === 'todo') return [`// TODO: ${field.prop}: ${todoText(item.value)}`]
+    if (item.value.kind !== 'field' && item.value.kind !== 'document') return []
+    const read = walk(models, model, item.value.path, 'value')!
+    if (item.value.kind === 'document') {
+      const inner = writeDocument(nested, item.value, field.nested!, path + capitalized(field.prop))
+      return [`document.${field.setter}(${callFor(nested, inner, item.value.many, read.expression, field.java)});`]
+    }
+    const converted = fit(models, read, field.java, body)
+    return converted === null
+      ? [`// TODO: ${field.prop}: ${WHY.unsupported} (${read.type} to ${field.java})`]
+      : [`document.${field.setter}(${converted});`]
+  })
+  nested.body.imports.add(qualified(nested.context, nested.info, 'entity', nested.info.entity))
+  nested.methods.push([
+    `    /** ${article(value.model)} as the documents of the ${nested.info.name} collection keep it. */`,
+    `    private static ${kept.path} ${name}(${nestedModel(nested, value.model)} value) {`,
+    ...(value.unused.length > 0 ? [`        // Not stored: ${value.unused.join(', ')}`] : []),
+    `        ${kept.path} document = new ${kept.path}();`,
+    ...sets.map((line) => `        ${line}`),
+    '        return document;',
+    '    }',
+  ])
+  return name
+}
+
+/** Writes the method that gives a model from its nested document, and those inside it; gives its name. */
+function readDocument(nested: Nested, value: ReadValue & { kind: 'document' }, kept: NestedClass, path: string): string {
+  const { models, body } = nested
+  const name = methodName(nested, path, 'FromDocument')
+  const model = modelNamed(nested, value.model)
+  const values = model.fields.map((field): Value => {
+    const item = value.values.find((candidate) => candidate.field === field.name)
+    const target = fieldJava(models, field)
+    const empty = { name: fieldName(field.name), expression: missing(target) }
+    if (!item || (item.value.kind !== 'todo' && item.value.kind !== 'column' && item.value.kind !== 'document')) return empty
+    if (item.value.kind === 'todo') return { ...empty, todo: todoText(item.value) }
+    const column = item.value.column
+    const from = kept.fields.find((candidate) => candidate.column.name === column)!
+    const read = `value.${from.getter}()`
+    if (item.value.kind === 'document') {
+      const inner = readDocument(nested, item.value, from.nested!, path + capitalized(from.prop))
+      return { ...empty, expression: callFor(nested, inner, item.value.many, read, target) }
+    }
+    const converted = fit(models, { expression: read, type: from.java }, target, body)
+    return converted === null ? { ...empty, todo: `${WHY.unsupported} (${from.java} to ${target})` } : { ...empty, expression: converted }
+  })
+  const written = nestedModel(nested, value.model)
+  nested.body.imports.add(qualified(nested.context, nested.info, 'entity', nested.info.entity))
+  nested.methods.push([
+    `    /** A document of the ${nested.info.name} collection as ${article(value.model).split(' ')[0].toLowerCase()} ${value.model}. */`,
+    `    private static ${written} ${name}(${kept.path} value) {`,
+    ...modelLines(models, model, written, values, new Set(value.values.map((item) => fieldName(item.field)))),
+    '    }',
+  ])
+  return name
+}
+
+/** The statements that build a model from its values; `given` names those it sets when it is built by its properties. */
+function modelLines(models: Models, model: ModelDef, written: string, values: Value[], given: Set<string>): string[] {
+  const { accessors, construction } = styleOf(models, model)
+  if (construction === 'positional') return [`        return new ${written}(`, ...argumentLines(values, '                '), '        );']
+  // Built by its properties: the fields the plan does not give keep the model's defaults
+  const set = values.filter((value) => given.has(value.name))
+  const comment = (value: Value) => (value.todo ? ` // TODO: ${value.name}: ${value.todo}` : '')
+  if (construction === 'builder')
+    return [
+      `        return ${written}.builder()`,
+      ...set.map((value) => `                .${value.name}(${value.expression})${comment(value)}`),
+      '                .build();',
+    ]
+  return [
+    `        ${written} model = new ${written}();`,
+    ...set.map((value) =>
+      accessors === 'fields'
+        ? `        model.${value.name} = ${value.expression};${comment(value)}`
+        : `        model.set${capitalized(value.name)}(${value.expression});${comment(value)}`,
+    ),
+    '        return model;',
+  ]
+}
+
 function writeExpression(
   context: Context,
   models: Models,
@@ -585,6 +735,7 @@ function writeExpression(
   value: Exclude<WriteValue, Todo>,
   model: ModelDef | undefined,
   body: Body,
+  nested: Nested,
 ): { expression: string; todo?: string } {
   const unsupported = (detail: string) => ({ expression: 'null', todo: `${WHY.unsupported} (${detail})` })
   const typed = (path: ModelPath) => walk(models, model, path, 'model')
@@ -594,6 +745,13 @@ function writeExpression(
     return converted === null ? unsupported(`${result.type} to ${column.java}`) : { expression: converted }
   }
   switch (value.kind) {
+    case 'document': {
+      const given = typed(value.path)
+      const kept = nested.info.nested.get(column.column.name)
+      if (!given || !kept) return unsupported(column.prop)
+      const method = writeDocument(nested, value, kept, capitalized(column.prop))
+      return { expression: callFor(nested, method, value.many, given.expression, column.java) }
+    }
     case 'field':
       return finish(typed(value.path))
     case 'lookup': {
@@ -632,6 +790,7 @@ function readExpression(
   field: FieldDef,
   value: Exclude<ReadValue, Todo>,
   body: Body,
+  nested: Nested,
 ): { expression: string; todo?: string } {
   const target = fieldJava(models, field)
   const read = (other: TableInfo, name: string, root: string, entity = !dtos || other !== info): Typed => {
@@ -645,6 +804,12 @@ function readExpression(
     return converted === null ? unsupported(`${result.type} to ${target}`) : { expression: converted }
   }
   switch (value.kind) {
+    case 'document': {
+      const kept = info.nested.get(value.column)
+      if (!kept) return unsupported(field.name)
+      const method = readDocument(nested, value, kept, capitalized(columnOf(info, value.column).prop))
+      return { expression: callFor(nested, method, value.many, read(info, value.column, 'row').expression, target) }
+    }
     case 'column':
       return finish(read(info, value.column, 'row'))
     case 'lookup': {
@@ -745,7 +910,11 @@ export function conversionFile(context: Context, plans: ConversionPlan[], schema
       for (const item of plan.write) {
         const column = columnOf(info, item.column)
         if (item.value.kind === 'todo') values.push({ name: column.prop, expression: 'null', todo: todoText(item.value) })
-        else values.push({ name: column.prop, ...writeExpression(context, models, column, item.value, model, body) })
+        else
+          values.push({
+            name: column.prop,
+            ...writeExpression(context, models, column, item.value, model, body, { context, models, info, plan, body, methods }),
+          })
       }
       const params = `${names.model} model${body.uow ? ', UnitOfWork uow' : ''}`
       if (body.uow) imports.add(`${context.base}.UnitOfWork`)
@@ -788,37 +957,17 @@ export function conversionFile(context: Context, plans: ConversionPlan[], schema
           continue
         }
         if (item.value.kind === 'todo') values.push({ name, expression: missing(fieldJava(models, field)), todo: todoText(item.value) })
-        else values.push({ name, ...readExpression(context, models, info, dtos, field, item.value, body) })
+        else
+          values.push({
+            name,
+            ...readExpression(context, models, info, dtos, field, item.value, body, { context, models, info, plan, body, methods }),
+          })
       }
       const given = new Set(plan.read.map((item) => fieldName(item.field)))
       imports.add(dtos ? qualified(context, info, 'dtos', names.source) : qualified(context, info, 'entity', info.entity))
       if (body.uow) imports.add(`${context.base}.UnitOfWork`)
       const params = `${names.source} row${body.uow ? ', UnitOfWork uow' : ''}`
-      const { accessors, construction } = styleOf(models, model)
-      let result: string[]
-      if (construction === 'positional')
-        result = [`        return new ${names.model}(`, ...argumentLines(values, '                '), '        );']
-      else {
-        // Built by its properties: the fields the plan does not give keep the model's defaults
-        const set = values.filter((value) => given.has(value.name))
-        const comment = (value: Value) => (value.todo ? ` // TODO: ${value.name}: ${value.todo}` : '')
-        if (construction === 'builder')
-          result = [
-            `        return ${names.model}.builder()`,
-            ...set.map((value) => `                .${value.name}(${value.expression})${comment(value)}`),
-            '                .build();',
-          ]
-        else
-          result = [
-            `        ${names.model} model = new ${names.model}();`,
-            ...set.map((value) =>
-              accessors === 'fields'
-                ? `        model.${value.name} = ${value.expression};${comment(value)}`
-                : `        model.set${capitalized(value.name)}(${value.expression});${comment(value)}`,
-            ),
-            '        return model;',
-          ]
-      }
+      const result = modelLines(models, model, names.model, values, given)
       methods.push([
         `    /** A row of the ${info.name} table as ${article(plan.model).split(' ')[0].toLowerCase()} ${plan.model}. */`,
         `    public static ${names.model} ${names.read}(${params}) {`,
@@ -848,7 +997,19 @@ export function conversionFile(context: Context, plans: ConversionPlan[], schema
   return { path: javaPath(pkg, name), content }
 }
 
-const hasTodo = (items: { value: { kind: string } }[] | null) => (items ?? []).some((item) => item.value.kind === 'todo')
+/** The lines that check a value written back is the same: nested documents field by field, as their classes have no
+ * equality of their own. A list of the factories has one document, or none. */
+function sameLines(nested: NestedClass | undefined, type: DbType, value: WriteValue, expected: string, actual: string): string[] {
+  if (!nested || value.kind !== 'document') return [`assertEquals(${expected}, ${actual});`]
+  const many = type.kind === 'array'
+  const [one, other] = many ? [`${expected}.get(0)`, `${actual}.get(0)`] : [expected, actual]
+  const inside = value.values.flatMap((item) => {
+    const field = nested.fields.find((candidate) => candidate.column.name === item.column)!
+    return sameLines(field.nested ?? undefined, field.column.type, item.value, `${one}.${field.getter}()`, `${other}.${field.getter}()`)
+  })
+  const present = many ? `${expected} != null && !${expected}.isEmpty()` : `${expected} != null`
+  return [`if (${present}) {`, ...inside.map((line) => `    ${line}`), `} else assertEquals(${expected}, ${actual});`]
+}
 
 /**
  * The tests of the conversions: a row stored by the factories is read as the model, and a model that goes both ways
@@ -872,6 +1033,7 @@ export function conversionTestFile(
     const info = findInfo(context, plan.table)
     if (!info || !plan.read || hasTodo(plan.read) || !canMake(info) || !schema.models.some((item) => item.name === plan.model)) continue
     const names = conversionNames(context, plan)
+    const model = schema.models.find((item) => item.name === plan.model)
     const dtos = usesDtos(context, info)
     const reads = plan.read.some((item) => ['lookup', 'children'].includes(item.value.kind))
     const writes = plan.write !== null && !hasTodo(plan.write)
@@ -896,10 +1058,18 @@ export function conversionTestFile(
       ...(writes
         ? [
             `var values = ${conversionsClass(info)}.${names.write}(model${writeUow ? ', uow' : ''});`,
-            ...plan.write!.map((item) => {
+            ...plan.write!.flatMap((item) => {
               const column = columnOf(info, item.column)
+              // A value the model keeps with less detail is not written back as it was
+              if (context.orm.documents && model && lossy(item.value, column.column.type, fieldsOf(model, schema), schema)) return []
               const given = dtos ? accessor(context, column.prop) : `${column.getter}()`
-              return `assertEquals(row.${column.getter}(), values.${given});`
+              return sameLines(
+                info.nested.get(column.column.name),
+                column.column.type,
+                item.value,
+                `row.${column.getter}()`,
+                `values.${given}`,
+              )
             }),
           ]
         : ['assertNotNull(model);']),

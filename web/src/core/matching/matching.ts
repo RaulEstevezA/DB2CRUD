@@ -105,8 +105,10 @@ function typeName(type: TypeRef): string {
 const ONE_NUMBER = new Set(['typescript', 'javascript'])
 
 /** Whether a column can keep the values of a field's type. */
-function compatible(type: TypeRef, column: DbColumn, schema: ModelSchema): boolean {
+export function compatible(type: TypeRef, column: DbColumn, schema: ModelSchema, database: DbSchema): boolean {
   const kind = column.type.kind
+  // MongoDB numbers are often declared without a size (Mongoose's `Number`): a whole number is one of their values
+  if (type.kind === 'primitive' && type.name === 'integer' && kind === 'float' && database.dialect === 'mongodb') return true
   if (type.kind === 'primitive' && type.name === 'float' && kind === 'integer' && ONE_NUMBER.has(schema.origin?.language ?? '')) return true
   if (type.kind === 'primitive') return COMPATIBLE[type.name]?.includes(kind) ?? true
   if (type.kind === 'array') return kind === 'array' || kind === 'json' || kind === 'unknown'
@@ -154,7 +156,8 @@ function conflictsOf(
   if (direction === 'output') {
     // Reading: a null or a value the model cannot take fails, a longer text does not
     if (column.nullable && !field.optional && !field.nullable) conflicts.push({ kind: 'nullable' })
-    if (!compatible(field.type, column, schema)) conflicts.push({ kind: 'type', model: typeName(field.type), column: column.type.kind })
+    if (!compatible(field.type, column, schema, database))
+      conflicts.push({ kind: 'type', model: typeName(field.type), column: column.type.kind })
     else if (sent && accepted) {
       const lower = sent.map((value) => value.toLowerCase())
       const values = accepted.filter((value) => !lower.includes(value.toLowerCase()))
@@ -173,7 +176,8 @@ function conflictsOf(
   // A field left out that has a value of its own still sends one
   const missing = field.nullable || (field.optional && (field.defaultValue === undefined || field.defaultValue === null))
   if (required && missing) conflicts.push({ kind: 'nullable' })
-  if (!compatible(field.type, column, schema)) conflicts.push({ kind: 'type', model: typeName(field.type), column: column.type.kind })
+  if (!compatible(field.type, column, schema, database))
+    conflicts.push({ kind: 'type', model: typeName(field.type), column: column.type.kind })
   // Another type already says it all: its values are not compared
   else if (sent && accepted) {
     // A value that differs only in case is converted on the way: only one the column does not have is a conflict

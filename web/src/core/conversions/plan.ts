@@ -11,9 +11,11 @@
 import type { CrudDesign } from '../crud/types.ts'
 import type { MapperField, MapperProject, MapperTransform } from '../interop/mapper/read.ts'
 import type { ChildrenMatch, ColumnMatch, ModelMatch } from '../matching/matching.ts'
+import { compatible } from '../matching/matching.ts'
 import { fieldFor, fieldsOf } from '../matching/names.ts'
-import type { FieldDef, ModelSchema } from '../model/schema.ts'
-import type { DbSchema, DbTable } from '../schema/types.ts'
+import { modelOf, type FieldDef, type ModelSchema, type TypeRef } from '../model/schema.ts'
+import { nestedFields } from '../schema/documents.ts'
+import type { DbColumn, DbSchema, DbTable, DbType } from '../schema/types.ts'
 import type { LanguageId } from '../settings/settings.ts'
 
 /** The application models a project is generated with. */
@@ -56,6 +58,18 @@ export type WriteValue =
   | { kind: 'mapper'; transform: MapperTransform; sources: ModelPath[] }
   /** The inverse of a Mapper transformation that reads the column into the field */
   | { kind: 'inverse'; transform: MapperTransform; path: ModelPath }
+  /**
+   * A nested document (or a list of them) from the nested model of a field: a value per field of the document.
+   * `unused`: the fields of the model the document does not keep
+   */
+  | {
+      kind: 'document'
+      path: ModelPath
+      model: string
+      many: boolean
+      values: { column: string; value: WriteValue }[]
+      unused: string[]
+    }
   | Todo
 
 /** Where a field of the model comes from in a row read. */
@@ -69,6 +83,8 @@ export type ReadValue =
   | { kind: 'inverse'; transform: MapperTransform; column: string }
   /** A list of the `value` column of the rows of `table` whose `by` column is this row's `key` (a join table) */
   | { kind: 'children'; table: string; by: string; key: string; value: string }
+  /** The nested model of a field (or a list of them) from a nested document: a value per field of the model */
+  | { kind: 'document'; column: string; model: string; many: boolean; values: { field: string; value: ReadValue }[] }
   | Todo
 
 export interface ConversionPlan {
@@ -81,12 +97,42 @@ export interface ConversionPlan {
   read: { field: string; value: ReadValue }[] | null
 }
 
+/** Whether something is left to the user, inside documents too. */
+export const hasTodo = (items: { value: WriteValue | ReadValue }[] | null): boolean =>
+  (items ?? []).some(({ value }) => value.kind === 'todo' || (value.kind === 'document' && hasTodo(value.values)))
+
+/** Whether reading a column into a field loses part of it, so writing it back may give another value: a date without its
+ * time, an exact number as a binary one, a number without its decimals. */
+function narrows(type: TypeRef, column: DbType): boolean {
+  if (type.kind === 'array') return column.kind === 'array' && narrows(type.items, column.items)
+  if (type.kind !== 'primitive') return false
+  if (type.name === 'date') return column.kind === 'datetime'
+  if (type.name === 'integer') return column.kind === 'float' || column.kind === 'decimal'
+  return type.name === 'float' && column.kind === 'decimal'
+}
+
+/** Whether a value written into a column of a document database may differ from the one it was read from. */
+export function lossy(value: WriteValue, column: DbType, fields: FieldDef[], models: ModelSchema): boolean {
+  if (value.kind === 'field') {
+    const field = fields.find((item) => item.name === value.path[0])
+    return field !== undefined && narrows(field.type, column)
+  }
+  if (value.kind !== 'document') return false
+  const model = models.models.find((item) => item.name === value.model)
+  const columns = nestedFields(column) ?? []
+  return value.values.some((item) => {
+    const inner = columns.find((candidate) => candidate.name === item.column)
+    return inner !== undefined && model !== undefined && lossy(item.value, inner.type, fieldsOf(model, models), models)
+  })
+}
+
 /** The columns a value read from a row uses. */
 function readColumns(value: ReadValue): string[] {
   switch (value.kind) {
     case 'column':
     case 'lookup':
     case 'inverse':
+    case 'document':
       return [value.column]
     case 'mapper':
       return value.columns
@@ -156,7 +202,80 @@ function tableFieldsOf(project: MapperProject, mapping: string, side: 'source' |
   return model ? fieldsOf(model, schema) : []
 }
 
-function writeValue(column: ColumnMatch, table: DbTable, models: ApplicationModels): WriteValue | null {
+// Nested documents
+
+interface Scope {
+  /** Whether nested documents are converted */
+  documents: boolean
+  models: ModelSchema
+  database: DbSchema
+}
+
+/** A field and a column that hold documents: their shapes, or null when they cannot be converted; undefined when neither
+ * holds any. A list is converted to a list, a document to a document. */
+function documentsOf(
+  type: TypeRef,
+  column: DbType,
+  scope: Scope,
+): { model: string; many: boolean; columns: DbColumn[]; fields: FieldDef[] } | null | undefined {
+  if (!scope.documents) return undefined
+  const columns = nestedFields(column)
+  const inside = modelOf(type)
+  // A JSON column of a relational database says nothing of its documents: its value goes as it is
+  if (!columns && !(inside && scope.database.dialect === 'mongodb')) return undefined
+  const many = type.kind === 'array'
+  const item = type.kind === 'array' ? type.items : type
+  const kept = column.kind === 'array' ? column.items : column
+  const model = item.kind === 'model' ? scope.models.models.find((candidate) => candidate.name === item.name) : undefined
+  if (!model || !columns || many !== (column.kind === 'array') || kept.kind !== 'json') return null
+  return { model: model.name, many, columns, fields: fieldsOf(model, scope.models) }
+}
+
+/** The fields of a document with the field of the model each one is. */
+function paired(columns: DbColumn[], fields: FieldDef[]): { column: DbColumn; field: FieldDef | null }[] {
+  const taken = new Set<string>()
+  return columns.map((column) => {
+    const found = fieldFor(column, fields, taken)
+    if (found) taken.add(found.field.name)
+    return { column, field: found?.field ?? null }
+  })
+}
+
+const differs = (field: FieldDef, column: DbColumn) => todo('unsupported', `${field.name}: ${column.type.sql}`)
+
+function writeNested(path: ModelPath, type: TypeRef, column: DbType, scope: Scope): WriteValue {
+  const documents = documentsOf(type, column, scope)
+  if (documents === undefined) return { kind: 'field', path }
+  if (documents === null) return todo('unsupported', path.join('.'))
+  const pairs = paired(documents.columns, documents.fields)
+  const values = pairs.flatMap(({ column: inner, field }) => {
+    const needed = !inner.nullable && inner.default === undefined && !inner.generated
+    if (!field) return needed ? [{ column: inner.name, value: todo('noField', inner.name) }] : []
+    if (!compatible(field.type, inner, scope.models, scope.database)) return [{ column: inner.name, value: differs(field, inner) }]
+    return [{ column: inner.name, value: writeNested([field.name], field.type, inner.type, scope) }]
+  })
+  const unused = documents.fields
+    .filter((field) => !field.generated && !pairs.some((item) => item.field === field))
+    .map((field) => field.name)
+  return { kind: 'document', path, model: documents.model, many: documents.many, values, unused }
+}
+
+function readNested(column: DbColumn, field: FieldDef, scope: Scope): ReadValue {
+  const documents = documentsOf(field.type, column.type, scope)
+  if (documents === undefined) return { kind: 'column', column: column.name }
+  if (documents === null) return todo('unsupported', field.name)
+  const pairs = paired(documents.columns, documents.fields)
+  const values = documents.fields.flatMap((inner): { field: string; value: ReadValue }[] => {
+    const found = pairs.find((item) => item.field === inner)
+    if (!found) return inner.optional || inner.nullable ? [] : [{ field: inner.name, value: todo('noField', inner.name) }]
+    if (!compatible(inner.type, found.column, scope.models, scope.database))
+      return [{ field: inner.name, value: differs(inner, found.column) }]
+    return [{ field: inner.name, value: readNested(found.column, inner, scope) }]
+  })
+  return { kind: 'document', column: column.name, model: documents.model, many: documents.many, values }
+}
+
+function writeValue(column: ColumnMatch, table: DbTable, models: ApplicationModels, fields: FieldDef[], scope: Scope): WriteValue | null {
   const { source } = column
   const value = source.value
   if (value === null) return source.confidence === 'conflict' ? todo('noField') : null
@@ -165,7 +284,11 @@ function writeValue(column: ColumnMatch, table: DbTable, models: ApplicationMode
   if (waits(column) && !(value.kind === 'mapper' && value.side === 'target' && oneWay(column)))
     return todo('pending', value.kind !== 'database' ? describe(value) : undefined)
   if (value.kind === 'database') return null
-  if (value.kind === 'field') return { kind: 'field', path: path(value.field) }
+  if (value.kind === 'field') {
+    const field = fields.find((item) => item.name === value.field)
+    const kept = table.columns.find((item) => item.name === column.column)
+    return field && kept ? writeNested([field.name], field.type, kept.type, scope) : { kind: 'field', path: path(value.field) }
+  }
   if (value.kind === 'lookup') {
     const key = table.foreignKeys.find((item) => item.columns.length === 1 && item.columns[0] === column.column)
     return { kind: 'lookup', path: path(value.field), table: value.table, by: value.by, key: key?.references.columns[0] ?? 'id' }
@@ -194,14 +317,17 @@ function transformDetail(transform: MapperTransform): string {
   return transform.kind === 'expression' ? transform.expression : transform.kind
 }
 
-function readValue(field: FieldDef, columns: ColumnMatch[], table: DbTable, models: ApplicationModels): ReadValue | null {
+function readValue(field: FieldDef, columns: ColumnMatch[], table: DbTable, models: ApplicationModels, scope: Scope): ReadValue | null {
   for (const column of columns) {
     const value = column.source.value
     if (!value || value.kind === 'database') continue
     // A one-way Mapper relation waits only for the direction it does not serve
     const pending = waits(column) && !(value.kind === 'mapper' && value.side === 'source' && oneWay(column))
-    if (value.kind === 'field' && value.field === field.name)
-      return pending ? todo('pending', field.name) : { kind: 'column', column: column.column }
+    if (value.kind === 'field' && value.field === field.name) {
+      if (pending) return todo('pending', field.name)
+      const kept = table.columns.find((item) => item.name === column.column)
+      return kept ? readNested(kept, field, scope) : { kind: 'column', column: column.column }
+    }
     if (value.kind === 'lookup' && value.field === field.name) {
       if (pending) return todo('pending', field.name)
       const key = table.foreignKeys.find((item) => item.columns.length === 1 && item.columns[0] === column.column)
@@ -244,8 +370,11 @@ function childrenValue(child: ChildrenMatch, table: DbTable, schema: DbSchema): 
   return { kind: 'children', table: other.name, by: here.columns[0], key: here.references.columns[0], value: there.columns[0] }
 }
 
-/** The conversions of every table whose model the matching settled. */
-export function planConversions(schema: DbSchema, design: CrudDesign, models: ApplicationModels): ConversionPlan[] {
+/**
+ * The conversions of every table whose model the matching settled; with `documents`, also what is inside nested
+ * documents, which only strategies of document databases write.
+ */
+export function planConversions(schema: DbSchema, design: CrudDesign, models: ApplicationModels, documents = false): ConversionPlan[] {
   const plans: ConversionPlan[] = []
   for (const tableMatch of design.matching?.tables ?? []) {
     const table = schema.tables.find((item) => item.name === tableMatch.table)
@@ -254,20 +383,22 @@ export function planConversions(schema: DbSchema, design: CrudDesign, models: Ap
       const name = match.model.value
       const model = name === null ? undefined : models.schema.models.find((item) => item.name === name)
       if (!model || match.model.status === 'pending') continue
+      const fields = fieldsOf(model, models.schema)
+      const scope: Scope = { models: models.schema, database: schema, documents }
       const writes = match.direction !== 'output'
       const reads = match.direction !== 'input'
       const write = writes
         ? match.columns.flatMap((column) => {
             // What the database fills is never written (a key it numbers, a computed column, a creation time)
             if (fills(table, column.column)) return []
-            const value = writeValue(column, table, models)
+            const value = writeValue(column, table, models, fields, scope)
             return value ? [{ column: column.column, value }] : []
           })
         : null
       const read = reads
-        ? fieldsOf(model, models.schema).flatMap((field) => {
+        ? fields.flatMap((field) => {
             const child = match.children.find((item) => item.field === field.name)
-            const value = child ? childrenValue(child, table, schema) : readValue(field, match.columns, table, models)
+            const value = child ? childrenValue(child, table, schema) : readValue(field, match.columns, table, models, scope)
             return value ? [{ field: field.name, value }] : []
           })
         : null

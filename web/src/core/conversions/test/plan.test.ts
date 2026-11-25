@@ -18,7 +18,7 @@ describe('conversion plans', () => {
       const folder = join(MATCHING_CASES, name)
       const { database, models, project } = readCase(folder)
       const design = proposeCrud(database, null, models, project)
-      const plans = planConversions(database, design, { schema: models, project })
+      const plans = planConversions(database, design, { schema: models, project }, database.dialect === 'mongodb')
       const path = join(folder, 'plan.json')
       if (UPDATE) writeFileSync(path, `${JSON.stringify(plans, null, 1)}\n`)
       else expect(plans).toEqual(JSON.parse(readFileSync(path, 'utf8')))

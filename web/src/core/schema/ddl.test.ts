@@ -28,7 +28,9 @@ const schemas: [string, DbSchema][] = [
   ['shop', SHOP],
   ...readdirSync(MATCHING_CASES)
     .sort()
-    .map((name): [string, DbSchema] => [name, readCase(join(MATCHING_CASES, name)).database]),
+    .map((name): [string, DbSchema] => [name, readCase(join(MATCHING_CASES, name)).database])
+    // Documents have no tables to create
+    .filter(([, schema]) => schema.dialect !== 'mongodb'),
 ]
 
 describe('DDL of a schema', () => {

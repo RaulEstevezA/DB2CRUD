@@ -8,6 +8,8 @@
  * into the project (`modelsFile`) as dataclasses, so the project runs on its own.
  */
 import {
+  hasTodo,
+  lossy,
   withoutHidden,
   type ConversionPlan,
   type ModelPath,
@@ -15,6 +17,9 @@ import {
   type Todo,
   type WriteValue,
 } from '../../../conversions/plan.ts'
+import { fieldsOf } from '../../../matching/names.ts'
+import { nestedFields } from '../../../schema/documents.ts'
+import type { DbColumn, DbType } from '../../../schema/types.ts'
 import type { MapperTransform } from '../../../interop/mapper/read.ts'
 import type { EnumDef, FieldDef, ModelDef, ModelSchema, TypeRef } from '../../../model/schema.ts'
 import type { GeneratedFile } from '../../../export/files.ts'
@@ -278,6 +283,194 @@ interface Body {
   uow: boolean
 }
 
+// Nested documents
+
+/** What the values of a document database are converted with: the functions written so far and what the file imports. */
+interface Nested {
+  context: Context
+  info: TableInfo
+  schema: ModelSchema
+  plan: ConversionPlan
+  imports: Imports
+  functions: string[]
+}
+
+/** A value of a model as a document database keeps it: `expression` itself when nothing changes. */
+function toDocument(expression: string, type: TypeRef, kept: DbType, imports: Imports): string {
+  if (type.kind === 'array') {
+    if (kept.kind !== 'array') return expression
+    const item = toDocument('item', type.items, kept.items, imports)
+    return item === 'item' ? expression : `[${item} for item in ${expression}]`
+  }
+  if (type.kind === 'enum') return plain(expression)
+  if (type.kind !== 'primitive') return expression
+  const name = type.name
+  switch (kept.kind) {
+    case 'text':
+    case 'enum':
+    case 'date':
+    case 'time':
+      if (['date', 'time', 'datetime'].includes(name)) return `${expression}.isoformat()`
+      return name === 'string' || name === 'any' ? expression : `str(${expression})`
+    case 'uuid':
+      if (name !== 'string') return expression
+      imports.from('uuid', 'UUID')
+      return `UUID(${expression})`
+    case 'decimal':
+      if (name === 'decimal' || name === 'any') return expression
+      imports.from('decimal', 'Decimal')
+      return name === 'float' ? `Decimal(str(${expression}))` : `Decimal(${expression})`
+    case 'float':
+      return name === 'float' || name === 'any' ? expression : `float(${expression})`
+    case 'datetime':
+      if (name === 'date') {
+        imports.from('datetime', 'datetime', 'timezone')
+        return `datetime(${expression}.year, ${expression}.month, ${expression}.day, tzinfo=timezone.utc)`
+      }
+      if (name !== 'string') return expression
+      imports.from('datetime', 'datetime')
+      return `datetime.fromisoformat(${expression})`
+    default:
+      return expression
+  }
+}
+
+/** A value of a document as a model has it: `expression` itself when nothing changes. */
+function fromDocument(expression: string, kept: DbType, type: TypeRef, context: Context, imports: Imports): string {
+  if (type.kind === 'array') {
+    if (kept.kind !== 'array') return expression
+    const item = fromDocument('item', kept.items, type.items, context, imports)
+    return item === 'item' ? expression : `[${item} for item in ${expression}]`
+  }
+  if (type.kind === 'enum') {
+    imports.from(context.settings.modelsModule, type.name)
+    return `${type.name}(${expression})`
+  }
+  if (type.kind !== 'primitive') return expression
+  const textual = ['text', 'enum', 'date', 'time'].includes(kept.kind)
+  switch (type.name) {
+    case 'string':
+      if (kept.kind === 'datetime') return `${expression}.isoformat()`
+      return kept.kind === 'uuid' || kept.kind === 'decimal' ? `str(${expression})` : expression
+    case 'integer':
+      return kept.kind === 'float' || kept.kind === 'decimal' ? `int(${expression})` : expression
+    case 'float':
+      return kept.kind === 'decimal' ? `float(${expression})` : expression
+    case 'decimal':
+      if (kept.kind === 'decimal') return expression
+      imports.from('decimal', 'Decimal')
+      return `Decimal(str(${expression}))`
+    case 'uuid':
+      if (!textual) return expression
+      imports.from('uuid', 'UUID')
+      return `UUID(${expression})`
+    case 'date':
+    case 'time':
+    case 'datetime':
+      if (type.name === 'date' && kept.kind === 'datetime') return `${expression}.date()`
+      if (!textual) return expression
+      imports.from('datetime', type.name)
+      return `${type.name}.fromisoformat(${expression})`
+    default:
+      return expression
+  }
+}
+
+/** A value that may be missing, converted when it is there; `otherwise` is what a missing one is. */
+function whenPresent(expression: string, converted: string, missing: boolean, otherwise = 'None'): string {
+  if (!missing || (converted === expression && otherwise === 'None')) return converted
+  return `${converted} if ${expression} is not None else ${otherwise}`
+}
+
+const mayMiss = (field: FieldDef | undefined) => !field || field.optional || field.nullable
+/** A missing value of a document, as a field of a model has it. */
+const absent = (field: FieldDef) => (!mayMiss(field) && field.type.kind === 'array' ? '[]' : 'None')
+
+const modelFields = (nested: Nested, name: string): FieldDef[] => {
+  const model = nested.schema.models.find((item) => item.name === name)
+  return model ? fieldsOf(model, nested.schema) : []
+}
+
+/** The name a nested model is imported as: another one when the entity or a DTO has it. */
+function nestedModel(nested: Nested, name: string): string {
+  const { target, source, model } = conversionNames(nested.context, nested.plan)
+  // The model of the collection itself, when a document inside it is one too
+  if (name === nested.plan.model) return model
+  const local = [nested.info.entity, target, source].includes(name) ? `${name}Model` : name
+  nested.imports.from(nested.context.settings.modelsModule, local === name ? name : `${name} as ${local}`)
+  return local
+}
+
+const functionName = (nested: Nested, path: string[], end: string) => `_${snakeName([nested.plan.model, ...path, end].join(' '))}`
+const callFor = (name: string, many: boolean, expression: string) =>
+  many ? `[${name}(item) for item in ${expression}]` : `${name}(${expression})`
+const innerColumn = (kept: DbType, name: string): DbColumn => nestedFields(kept)!.find((item) => item.name === name)!
+
+/** Writes the function that gives a nested document from its model, and those inside it; gives its name. */
+function writeDocument(nested: Nested, value: WriteValue & { kind: 'document' }, kept: DbType, path: string[]): string {
+  const name = functionName(nested, path, 'to document')
+  const fields = modelFields(nested, value.model)
+  const entries = value.values.flatMap((item): string[] => {
+    const column = innerColumn(kept, item.column)
+    if (item.value.kind === 'todo') return [todoComment(item.value, column.name)]
+    if (item.value.kind !== 'field' && item.value.kind !== 'document') return []
+    const read = access('value', item.value.path)
+    const found = item.value.path[0]
+    const field = fields.find((candidate) => candidate.name === found)!
+    const converted =
+      item.value.kind === 'document'
+        ? callFor(writeDocument(nested, item.value, column.type, [...path, column.name]), item.value.many, read)
+        : toDocument(read, field.type, column.type, nested.imports)
+    return [`${pyLiteral(column.name)}: ${whenPresent(read, converted, mayMiss(field))},`]
+  })
+  nested.imports.from('typing', 'Any')
+  nested.functions.push(
+    lines(
+      `def ${name}(value: ${nestedModel(nested, value.model)}) -> Any:`,
+      `    """${article(value.model)} as the ${nested.info.name} collection keeps it; what is missing is left out."""`,
+      value.unused.length > 0 && `    # Not stored: ${value.unused.join(', ')}`,
+      '    document = {',
+      ...entries.map((entry) => `        ${entry}`),
+      '    }',
+      '    return {key: item for key, item in document.items() if item is not None}',
+    ),
+  )
+  return name
+}
+
+/** Writes the function that gives a model from its nested document, and those inside it; gives its name. */
+function readDocument(nested: Nested, value: ReadValue & { kind: 'document' }, kept: DbType, path: string[]): string {
+  const name = functionName(nested, path, 'from document')
+  const fields = modelFields(nested, value.model)
+  const args = value.values.flatMap((item): string[] => {
+    const field = fields.find((candidate) => candidate.name === item.field)!
+    const attr = fieldAttr(field.name)
+    if (item.value.kind === 'todo') return [todoComment(item.value, attr), `${attr}=None,`]
+    if (item.value.kind !== 'column' && item.value.kind !== 'document') return []
+    const column = innerColumn(kept, item.value.column)
+    // A field the document may not have
+    const missing = column.nullable || column.default !== undefined
+    const read = missing ? `value.get(${pyLiteral(column.name)})` : `value[${pyLiteral(column.name)}]`
+    const converted =
+      item.value.kind === 'document'
+        ? callFor(readDocument(nested, item.value, column.type, [...path, column.name]), item.value.many, read)
+        : fromDocument(read, column.type, field.type, nested.context, nested.imports)
+    return [`${attr}=${whenPresent(read, converted, missing, absent(field))},`]
+  })
+  nested.imports.from('typing', 'Any')
+  const model = nestedModel(nested, value.model)
+  nested.functions.push(
+    lines(
+      `def ${name}(value: Any) -> ${model}:`,
+      `    """A document of the ${nested.info.name} collection as ${article(value.model).split(' ')[0].toLowerCase()} ${value.model}."""`,
+      `    return ${model}(`,
+      ...args.map((arg) => `        ${arg}`),
+      '    )',
+    ),
+  )
+  return name
+}
+
 /** The statements before the result, and the value of a column written from the model. */
 function writeExpression(
   context: Context,
@@ -286,12 +479,22 @@ function writeExpression(
   value: Exclude<WriteValue, Todo>,
   body: Body,
   imports: Imports,
+  nested: Nested,
 ): string | null {
   const columnInfo = info.columns.find((item) => item.column.name === column)
   const toInteger = columnInfo?.column.type.kind === 'integer'
   switch (value.kind) {
-    case 'field':
-      return access('model', value.path)
+    case 'document':
+    case 'field': {
+      const read = access('model', value.path)
+      if (!context.orm.documents || !columnInfo) return read
+      const field = modelFields(nested, nested.plan.model).find((item) => item.name === value.path[0])
+      if (value.kind === 'document') {
+        const name = writeDocument(nested, value, columnInfo.column.type, [columnInfo.attr])
+        return whenPresent(read, callFor(name, value.many, read), mayMiss(field))
+      }
+      return field ? whenPresent(read, toDocument(read, field.type, columnInfo.column.type, imports), mayMiss(field)) : read
+    }
     case 'lookup': {
       const other = findInfo(context, value.table)
       const finder = other && query(other, 'findByUnique', [value.by])
@@ -327,6 +530,7 @@ function readExpression(
   value: Exclude<ReadValue, Todo>,
   body: Body,
   imports: Imports,
+  nested: Nested,
 ): string | null {
   const attr = (column: string) => info.columns.find((item) => item.column.name === column)?.attr ?? column
   const toInteger = field?.type.kind === 'primitive' && field.type.name === 'integer'
@@ -336,8 +540,17 @@ function readExpression(
     return `${field.type.name}(${expression})`
   }
   switch (value.kind) {
-    case 'column':
-      return `row.${attr(value.column)}`
+    case 'document':
+    case 'column': {
+      const read = `row.${attr(value.column)}`
+      const column = info.columns.find((item) => item.column.name === value.column)?.column
+      if (!context.orm.documents || !column || !field) return read
+      const converted =
+        value.kind === 'document'
+          ? callFor(readDocument(nested, value, column.type, [attr(value.column)]), value.many, read)
+          : fromDocument(read, column.type, field.type, context, imports)
+      return whenPresent(read, converted, column.nullable, absent(field))
+    }
     case 'lookup': {
       const other = findInfo(context, value.table)
       const finder = other && (query(other, 'getByKey') ?? query(other, 'findByUnique', [value.key]))
@@ -379,6 +592,7 @@ export function conversionFile(context: Context, plans: ConversionPlan[], schema
   let usesUow = false
   let usesPlain = false
   for (const plan of plans) {
+    const nested: Nested = { context, info, schema, plan, imports, functions }
     const model = schema.models.find((item) => item.name === plan.model)
     const names = conversionNames(context, plan)
     const dtos = usesDtos(context, info)
@@ -393,7 +607,7 @@ export function conversionFile(context: Context, plans: ConversionPlan[], schema
           args.push(`${todoComment(item.value, attr)}`)
           continue
         }
-        const expression = writeExpression(context, info, item.column, item.value, body, imports)
+        const expression = writeExpression(context, info, item.column, item.value, body, imports, nested)
         args.push(expression === null ? `# TODO: ${attr}: no repository query finds the row it names` : `${attr}=${expression},`)
       }
       if (args.some((arg) => arg.includes('_plain('))) usesPlain = true
@@ -419,7 +633,7 @@ export function conversionFile(context: Context, plans: ConversionPlan[], schema
           args.push(todoComment(item.value, fieldAttr(item.field)), `${fieldAttr(item.field)}=None,`)
           continue
         }
-        const expression = readExpression(context, info, field, item.value, body, imports)
+        const expression = readExpression(context, info, field, item.value, body, imports, nested)
         args.push(
           expression === null
             ? `${fieldAttr(item.field)}=None,  # TODO: no repository query reads it`
@@ -444,6 +658,7 @@ export function conversionFile(context: Context, plans: ConversionPlan[], schema
       )
     }
   }
+  if (functions.some((item) => item.includes('_plain('))) usesPlain = true
   if (usesUow) imports.from('app.unit_of_work', 'UnitOfWork')
   if (usesPlain) imports.from('typing', 'Any')
   const helper = usesPlain
@@ -471,14 +686,13 @@ export function conversionFile(context: Context, plans: ConversionPlan[], schema
  * column holds its value; a model that goes both ways and leaves nothing to the user is written back, and every value
  * it gives is the row's (lookups and Mapper's lossless transformations included).
  */
-export function conversionTestFile(context: Context, plans: ConversionPlan[]): GeneratedFile | null {
+export function conversionTestFile(context: Context, plans: ConversionPlan[], schema: ModelSchema | null): GeneratedFile | null {
   const imports = new Imports()
   const fixture = context.settings.memoryRepositories ? 'memory_uow: MemoryUnitOfWork' : context.orm.databaseFixture
   const uow = fixture.split(':')[0]
   const blocks: string[] = []
   for (const plan of plans) {
     const info = findInfo(context, plan.table)
-    const hasTodo = (items: { value: { kind: string } }[] | null) => (items ?? []).some((item) => item.value.kind === 'todo')
     if (!info || !plan.read || hasTodo(plan.read) || !canMake(context, info)) continue
     const names = conversionNames(context, plan)
     const reads = plan.read.some((item) => ['lookup', 'children'].includes(item.value.kind))
@@ -488,16 +702,29 @@ export function conversionTestFile(context: Context, plans: ConversionPlan[]): G
     imports.from('tests.factories', `add_${info.module}`)
     const a = (async: boolean) => (async && context.async ? 'await ' : '')
     const attr = (column: string) => info.columns.find((item) => item.column.name === column)?.attr ?? column
+    const model = schema?.models.find((item) => item.name === plan.model)
+    const fields = model && schema ? fieldsOf(model, schema) : []
+    const columnOf = (name: string) => info.columns.find((item) => item.column.name === name)!.column
+    // A value the model keeps with less detail is not written back as it was
+    const changes = (item: { column: string; value: WriteValue }) =>
+      context.orm.documents && schema && lossy(item.value, columnOf(item.column).type, fields, schema)
+    // Nor is one converted to another type equal to that of the row
+    const same = (name: string, column: string) => {
+      const field = fields.find((item) => item.name === name)
+      return !context.orm.documents || !field || fromDocument('x', columnOf(column).type, field.type, context, new Imports()) === 'x'
+    }
     const body = [
       `row = ${aw(context)}add_${info.module}(${uow})`,
       `model = ${a(reads)}${names.read}(row${reads ? `, ${uow}` : ''})`,
       ...plan.read.flatMap((item) =>
-        item.value.kind === 'column' ? [`assert model.${fieldAttr(item.field)} == row.${attr(item.value.column)}`] : [],
+        item.value.kind === 'column' && same(item.field, item.value.column)
+          ? [`assert model.${fieldAttr(item.field)} == row.${attr(item.value.column)}`]
+          : [],
       ),
       ...(writes
         ? [
             `values = ${a(writeUow)}${names.write}(model${writeUow ? `, ${uow}` : ''})`,
-            ...plan.write!.map((item) => `assert values.${attr(item.column)} == row.${attr(item.column)}`),
+            ...plan.write!.filter((item) => !changes(item)).map((item) => `assert values.${attr(item.column)} == row.${attr(item.column)}`),
           ]
         : []),
     ]

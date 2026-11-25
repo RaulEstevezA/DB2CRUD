@@ -59,18 +59,18 @@ export function pythonGenerator(orm: PythonOrm): Generator {
   return {
     language: 'python',
     orm: orm.id,
-    generate({ schema, design, settings, models: given }) {
-      // The conversions read columns, not the documents inside them
-      const models = orm.documents ? null : given
+    generate({ schema, design, settings, models }) {
       const context = createContext(orm, schema, design, settings)
       const app = code(context)
-      const plans = models ? servicePlans(context, planConversions(schema, design, models)) : []
+      const plans = models ? servicePlans(context, planConversions(schema, design, models, orm.documents === true)) : []
       if (models) app.push(...conversionFiles(context, models.schema, plans))
       // With imported models, the tests package takes the copy in place of the user's module when it is missing
       const importsModels = plans.length > 0 && settings.modelsSource === 'import'
       const tests = testFiles(context).map((file) => (importsModels && file.path === 'tests/__init__.py' ? testsPackage(context) : file))
       const conversionTests =
-        tests.length > 0 && (settings.tests === 'all' || settings.tests === 'services') ? conversionTestFile(context, plans) : null
+        tests.length > 0 && (settings.tests === 'all' || settings.tests === 'services')
+          ? conversionTestFile(context, plans, models?.schema ?? null)
+          : null
       const roots = [...new Set(['app', settings.modelsModule.split('.')[0]])]
       return named(orm, [
         readmeFile(context),
