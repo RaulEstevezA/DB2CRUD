@@ -140,6 +140,9 @@ def _fields_of(schema: dict, where: str, reading: dict) -> list[dict]:
             "type": column_type,
             "nullable": (name not in required or takes_null) and name != "_id",
         }
+        # The ObjectId of a document inside another is made when it is added, when it brings none
+        if nested and name == "_id":
+            column["nullable"] = is_object_id(column["type"]) or name not in required or takes_null
         checks = []
         values = _enum_values(field.get("enum"))
         if nested:

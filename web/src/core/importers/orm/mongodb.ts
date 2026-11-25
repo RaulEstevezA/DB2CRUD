@@ -107,6 +107,8 @@ function fieldsOf(schema: Map<string, Expr>, where: string, reading: Reading): {
         params: { table: where.split('.')[0], column: path.slice(path.indexOf('.') + 1), type: textOf(value) },
       })
     const column: DbColumn = { name, type: read.type, nullable: (!required.includes(name) || read.nullable) && name !== '_id' }
+    // The ObjectId of a document inside another is made when it is added, when it brings none
+    if (nested && name === '_id') column.nullable = isObjectId(column.type) || !required.includes(name) || read.nullable
     const checks: DbCheck[] = []
     const values = enumValues(field.get('enum'))
     if (nested) column.type = withEnum(column.type, field, path, reading)
