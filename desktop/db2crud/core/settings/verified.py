@@ -825,6 +825,30 @@ VERIFIED = [
         ],
         "date": "2026-11-25",
     },
+    {
+        "language": "csharp",
+        "orm": "mongodriver",
+        "database": "mongodb",
+        "execution": "async",
+        "scenarios": [
+            "mongodriver-mongodb-defaults",
+            "mongodriver-mongodb-operation",
+            "mongodriver-mongodb-record-dtos-patch-cursor-by-table",
+            "mongodriver-mongodb-class-dtos-full-caller",
+            "mongodriver-mongodb-no-interfaces-services-tests",
+            "mongodriver-mongodb-repositories-only",
+            "mongodriver-mongodb-validators",
+            "mongodriver-mongodb-validators-dtos",
+            "mongodriver-mongodb-from-mongosh",
+            "mongodriver-mongodb-from-documents",
+            "mongodriver-mongodb-from-model2db",
+            "mongodriver-mongodb-from-model2db-validators",
+            "mongodriver-mongodb-conversions",
+            "mongodriver-mongodb-conversions-dtos",
+            "mongodriver-mongodb-conversions-import",
+        ],
+        "date": "2026-11-25",
+    },
 ]
 
 

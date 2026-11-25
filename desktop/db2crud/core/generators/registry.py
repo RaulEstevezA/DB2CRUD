@@ -4,6 +4,7 @@ from ..conversions.plan import conversions_available
 from ..settings.settings import normalize_settings
 from .csharp.efcore.index import EFCORE_ORM
 from .csharp.generator import csharp_generator
+from .csharp.mongodriver.index import MONGO_DRIVER_ORM
 from .csharp.sql.index import SQL_ORM as CSHARP_SQL_ORM
 from .java.generator import java_generator
 from .java.jpa.index import JPA_ORM
@@ -50,6 +51,7 @@ GENERATORS = [
     java_generator(JAVA_SQL_ORM),
     java_generator(SPRING_DATA_ORM),
     csharp_generator(EFCORE_ORM),
+    csharp_generator(MONGO_DRIVER_ORM),
     csharp_generator(CSHARP_SQL_ORM),
     php_generator(DOCTRINE_ORM),
     php_generator(ELOQUENT_ORM),

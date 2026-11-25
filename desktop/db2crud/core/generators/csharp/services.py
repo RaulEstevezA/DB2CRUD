@@ -19,7 +19,8 @@ from .context import (
     query_name,
     service_class,
 )
-from .csharp import CsUsings, cs_string
+from .csharp import CsUsings, cs_string, pascal_name
+from .documents import check_call, document_check_methods, document_rules, list_of
 from .dtos import create_columns, create_dto, read_columns, read_dto, update_columns, update_namespace, update_type
 
 NUMERIC = ("integer", "decimal", "float")
@@ -67,7 +68,7 @@ def _value_rules(column: dict, checks: list[dict]) -> list[str]:
     def error(message: str) -> str:
         return f"errors.Add(new FieldError({cs_string(name)}, {cs_string(message)}));"
 
-    if column_type["kind"] == "text" and column_type.get("length") is not None:
+    if column_type["kind"] == "text" and column_type.get("length") is not None and not column_type.get("objectId"):
         length = column_type["length"]
         rules.append(
             f"if (value is string text && text.Length > {length}) {error(f'is longer than {length} characters')}"
@@ -111,7 +112,7 @@ def _validate_method(writer: dict) -> list:
             missing = f'if (!creating && values.ContainsKey({prop})) errors.Add(new FieldError({cs_string(name)}, "cannot be empty"));'
         else:
             missing = None
-        rules = _value_rules(column, info["table"]["checks"])
+        rules = [*_value_rules(column, info["table"]["checks"]), *document_rules(context, info, column)]
         if not missing and not rules:
             continue
         if missing:
@@ -480,7 +481,8 @@ def _operation_lines(writer: dict, operation: dict) -> list:
         elif soft["column"]["type"]["kind"] == "boolean":
             mark = "true"
         else:
-            mark = "DateTimeOffset.UtcNow" if soft["cs"] == "DateTimeOffset" else "DateTime.Now"
+            now = "DateTime.UtcNow" if context["orm"].get("documents") else "DateTime.Now"
+            mark = "DateTimeOffset.UtcNow" if soft["cs"] == "DateTimeOffset" else now
         if soft:
             action = [
                 f"current.{soft['prop']} = {mark};",
@@ -528,7 +530,74 @@ def _operation_lines(writer: dict, operation: dict) -> list:
         ]
     if kind in ("link", "unlink"):
         return _link_lines(writer, operation, name)
+    # One item of a list: only document databases have them
+    if kind in ("addItem", "removeItem"):
+        return _item_lines(writer, operation, name)
     return []
+
+
+def _item_lines(writer: dict, operation: dict, name: str) -> list:
+    """Adds or removes one item of a list, so two people changing the same list do not undo each other."""
+    context, info, usings = writer["context"], writer["info"], writer["usings"]
+    adds = operation["kind"] == "addItem"
+    change = query(info, "addItem" if adds else "removeItem", operation["columns"])
+    if not change or not query(info, "getByKey"):
+        return []
+    listed = list_of(info, change)
+    stored = listed["column"]["column"]["name"]
+    params = [{"name": listed["item"], "type": listed["cs"]}] if adds else listed["params"]
+    param = params[0]["name"]
+    version = f", {info['version']['cs']} version" if info["version"] else ""
+    items = f"current.{listed['column']['prop']}"
+    if listed["by"] == "id":
+        missing = f"{items} is null || {items}.All(candidate => candidate.Id != {param})"
+    elif listed["by"] == "value":
+        missing = f"{items} is null || !{items}.Contains({param})"
+    else:
+        missing = f"{items} is null || {param} < 0 || {param} >= {items}.Count"
+    position = not adds and listed["by"] == "position"
+    usings.add(errors_namespace(context))
+    checked = adds and listed["nested"] is not None and listed["type"]["kind"] == "json"
+    entity = cs_string(info["entity"])
+    if position:
+        prop = cs_string(listed["column"]["prop"])
+        gone = f'new ConflictException({entity}, "was changed by someone else since it was read", [{prop}])'
+    else:
+        gone = f"new NotFoundException({entity}, {_key_value(info)})"
+    args = ", ".join([_key_args(info), *(item["name"] for item in params), *([f"{items}.Count"] if position else [])])
+    read_at = ", read at version" if info["version"] else ""
+    by = "identifier" if listed["by"] == "id" else listed["by"]
+    signature = ", ".join(f"{item['type']} {item['name']}" for item in params)
+    label = cs_string(pascal_name(listed["item"].replace("@", "")))
+    call = f"await {_repo(info)}.{query_name(context, change)}({args}) ?? throw {gone}"
+    return [
+        f"/// <summary>Adds an item to {stored}{read_at}.</summary>"
+        if adds
+        else f"/// <summary>Removes an item from {stored}, by its {by}{read_at}.</summary>",
+        f"public async Task<{_result_type(writer)}> {name}({_key_params(info)}, {signature}{version})",
+        "{",
+        *(
+            [
+                "    var errors = new List<FieldError>();",
+                f"    {check_call(listed['nested'], listed['item'], stored)}",
+                f"    if (errors.Count > 0) throw new ValidationFailedException({entity}, errors);",
+            ]
+            if checked
+            else []
+        ),
+        *_indent(
+            _in_transaction(
+                [
+                    f"{'' if adds and not info['version'] else 'var current = '}await FindAsync(uow, {_key_args(info)});",
+                    *_version_check(writer),
+                    *([] if adds else [f"if ({missing}) throw new NotFoundException({label}, {param});"]),
+                    f"return {_out(writer, call)};",
+                ],
+                True,
+            )
+        ),
+        "}",
+    ]
 
 
 def _link_lines(writer: dict, operation: dict, name: str) -> list:
@@ -629,6 +698,8 @@ def service_file(context: dict, info: dict) -> dict | None:
         ]
     if writes and updates:
         helpers.append(_given_method(writer))
+    if writes:
+        helpers += document_check_methods(context, info)
     hidden = bool(info["hidden"]) and not dtos
     members = []
     for block in [*helpers, *operations]:

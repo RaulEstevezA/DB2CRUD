@@ -235,6 +235,7 @@ CONNECTIONS = {
     "mysql": "Server=localhost;Port=3306;Database=app;User ID=app;Password=app",
     "mariadb": "Server=localhost;Port=3306;Database=app;User ID=app;Password=app",
     "sqlite": "Data Source=app.db",
+    "mongodb": "mongodb://localhost:27017/app",
 }
 
 

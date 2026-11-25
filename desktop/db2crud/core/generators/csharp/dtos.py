@@ -68,6 +68,12 @@ def _unit(ns: str, name: str, usings: CsUsings, body: list[str]) -> dict:
     }
 
 
+def _document_usings(context: dict, info: dict, ns: str) -> CsUsings:
+    """The usings of a file of DTOs: nested documents are classes of the entity."""
+    usings = CsUsings(ns)
+    return usings.add(namespace_of(context, info, "entity")) if info["nested"] else usings
+
+
 UPDATE_DOC = {
     "patch": "fields left Patch.Absent keep their value; Patch.Of(null) empties one.",
     "full": "every field is replaced.",
@@ -109,7 +115,7 @@ def dto_files(context: dict, info: dict) -> list[dict]:
                 _unit(
                     ns,
                     create_dto(info),
-                    CsUsings(ns),
+                    _document_usings(context, info, ns),
                     _type(
                         create_dto(info),
                         f"The values of a new {entity}. Fields left null take the database's default.",
@@ -122,13 +128,13 @@ def dto_files(context: dict, info: dict) -> list[dict]:
             _unit(
                 ns,
                 read_dto(info),
-                CsUsings(ns),
+                _document_usings(context, info, ns),
                 _type(read_dto(info), f"A {entity} as services return it.", fields_of(read_columns(info)), record),
             )
         )
     if update and info["service"]:
         ns = update_namespace(context, info)
-        usings = CsUsings(ns)
+        usings = _document_usings(context, info, ns)
         if patch:
             usings.add(common_namespace(context))
         files.append(

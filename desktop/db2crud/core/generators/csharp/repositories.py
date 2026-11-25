@@ -3,6 +3,7 @@ implementation (its bodies are the strategy's), and its in-memory one, with the 
 nothing. Mirrors web/src/core/generators/csharp/repositories.ts."""
 
 from ...js import number_text
+from ...schema.documents import is_object_id
 from ..types import lines
 from .context import (
     column_of,
@@ -17,6 +18,7 @@ from .context import (
     sql_repository_class,
 )
 from .csharp import CsUsings, cs_string
+from .documents import identified_lists, list_of
 
 
 def repository_methods(context: dict, info: dict, usings: CsUsings) -> list[dict]:
@@ -71,6 +73,21 @@ def repository_methods(context: dict, info: dict, usings: CsUsings) -> list[dict
                 f"Task<{entity}>",
                 "Stores the changes made to a row read from this repository.",
             )
+        elif kind in ("addItem", "removeItem"):
+            items = list_of(info, query_design)
+            adds = kind == "addItem"
+            # Told apart by its position, it is only removed from a list of the size it was seen in
+            size = [{"name": "size", "type": "int"}] if not adds and items["by"] == "position" else []
+            own = [{"name": column["local"], "type": column["cs"]} for column in info["key"]]
+            given = [{"name": items["item"], "type": items["cs"]}] if adds else items["params"]
+            name_of = query_design["columns"][0]
+            add(
+                [*own, *given, *size],
+                f"Task<{entity}?>",
+                f"Adds an item to {name_of}, and gives the row as it is then, if there is one."
+                if adds
+                else f"Removes an item from {name_of}{' that has this size' if size else ''}, and gives the row as it is then, if there is one.",
+            )
         elif kind == "delete":
             add([{"name": "entity", "type": entity}], "Task", "Removes a row read from this repository.")
     return methods
@@ -100,7 +117,7 @@ def _literal_of(cs: str, value: str) -> str:
     return value
 
 
-def _memory_fill(info: dict, column: dict) -> str | None:
+def memory_fill(context: dict, info: dict, column: dict) -> str | None:
     db = column["column"]
     target = f"entity.{column['prop']}"
     primary = is_in(column, info["key"])
@@ -108,10 +125,14 @@ def _memory_fill(info: dict, column: dict) -> str | None:
     if generated == "identity":
         value = "nextId++" if column["cs"] == "long" else f"({column['cs']})nextId++"
         return f"if ({target} == 0) {target} = {value};" if primary else f"{target} ??= {value};"
+    if generated == "uuid" and column["cs"] == "string":
+        made = "MongoDB.Bson.ObjectId.GenerateNewId()" if is_object_id(db["type"]) else "Guid.NewGuid()"
+        return f"{target} ??= {made}.ToString();"
     if generated == "uuid":
         return f"if ({target} == Guid.Empty) {target} = Guid.NewGuid();" if primary else f"{target} ??= Guid.NewGuid();"
     if generated in ("now", "onUpdateNow"):
-        return f"{target} ??= {'DateTimeOffset.UtcNow' if column['cs'] == 'DateTimeOffset' else 'DateTime.Now'};"
+        now = "DateTime.UtcNow" if context["orm"].get("documents") else "DateTime.Now"
+        return f"{target} ??= {'DateTimeOffset.UtcNow' if column['cs'] == 'DateTimeOffset' else now};"
     default = db.get("default")
     if default and default["kind"] == "literal" and default["value"] is not None and column["optional"]:
         value = default["value"]
@@ -156,10 +177,50 @@ def _memory_body(context: dict, info: dict, method: dict) -> list[str]:
             ]
         return ["return Task.FromResult(Visible().ToList());"]
     if kind in ("insert", "update"):
-        return ["rows[KeyText(entity)] = entity;", "return Task.FromResult(entity);"]
+        identify = ["entity.IdentifyItems();"] if identified_lists(info) else []
+        return [*identify, "rows[KeyText(entity)] = entity;", "return Task.FromResult(entity);"]
+    if kind in ("addItem", "removeItem"):
+        return _memory_item(info, method)
     if kind == "delete":
         return ["rows.Remove(KeyText(entity));", "return Task.CompletedTask;"]
     return ["throw new NotSupportedException();"]
+
+
+def _memory_item(info: dict, method: dict) -> list[str]:
+    """One item of a list added or removed in memory."""
+    listed = list_of(info, method["query"])
+    param = listed["params"][0]["name"]
+    items = f"found.{listed['column']['prop']}"
+    keys = " && ".join(f"Equals(row.{column['prop']}, {column['local']})" for column in info["key"])
+    version = info["version"]
+    adds = method["query"]["kind"] == "addItem"
+    position = not adds and listed["by"] == "position"
+    if adds:
+        item = listed["item"]
+        made = f"{item}.Id ??= MongoDB.Bson.ObjectId.GenerateNewId().ToString();"
+        change = [*([made] if listed["by"] == "id" else []), f"{items} = [..{items} ?? [], {item}];"]
+    elif listed["by"] == "position":
+        change = [f"{items} = ({items} ?? []).Where((_, index) => index != position).ToList();"]
+    else:
+        member = ".Id" if listed["by"] == "id" else ""
+        change = [f"{items} = ({items} ?? []).Where(candidate => !Equals(candidate{member}, {param})).ToList();"]
+    nothing = f"return Task.FromResult<{info['entity']}?>(null);"
+    touched = []
+    if version:
+        current = f"(found.{version['prop']} ?? 0)" if version["optional"] else f"found.{version['prop']}"
+        touched.append(f"found.{version['prop']} = {current} + 1;")
+    touched += [
+        f"found.{column['prop']} = DateTime.UtcNow;"
+        for column in info["columns"]
+        if column["column"].get("generated") == "onUpdateNow"
+    ]
+    return [
+        f"var found = Visible().FirstOrDefault(row => {keys});",
+        f"if (found is null{f' || ({items}?.Count ?? 0) != size' if position else ''}) {nothing}",
+        *change,
+        *touched,
+        f"return Task.FromResult<{info['entity']}?>(found);",
+    ]
 
 
 def _block(method: dict, body: list[str], modifier: str, is_async: bool, doc: bool) -> list:
@@ -240,7 +301,9 @@ def repository_files(context: dict, info: dict) -> list[dict]:
     if context["settings"]["memoryRepositories"]:
         usings = CsUsings(ns).add(entity_ns)
         methods = repository_methods(context, info, usings)
-        fills = [line for line in (_memory_fill(info, column) for column in info["columns"]) if line is not None]
+        fills = [
+            line for line in (memory_fill(context, info, column) for column in info["columns"]) if line is not None
+        ]
         modifier = "" if interfaces else "override "
         bodies = []
         for method in methods:

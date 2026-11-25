@@ -173,6 +173,17 @@ STACKS = [
         "updates": ["patch", "full"],
     },
     {
+        "language": "csharp",
+        "orm": "mongodriver",
+        "label": "MongoDB.Driver 3",
+        "databases": ["mongodb"],
+        "transactions": "repository",
+        "execution": ["async"],
+        "errors": ["exceptions"],
+        "dtoKinds": ["record", "class"],
+        "updates": ["patch", "full"],
+    },
+    {
         "language": "php",
         "orm": "doctrine",
         "label": "Doctrine ORM 3",

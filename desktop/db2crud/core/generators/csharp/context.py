@@ -10,6 +10,7 @@ import re
 
 from ...crud.types import find_policy, find_repository, find_service
 from .csharp import local_name, pascal_name
+from .documents import document_type, nested_classes
 
 BLOCKING = (None, "no action", "restrict")
 
@@ -62,17 +63,19 @@ def _column_local(name: str) -> str:
     return f"{local}Value" if local in TAKEN else local
 
 
-def _column_info(column: dict, entity: str, primary: bool, database: str) -> dict:
+def _column_info(column: dict, entity: str, primary: bool, types: tuple[str, bool], own_id: bool) -> dict:
     generated = column.get("generated") is not None and column.get("generated") != "onUpdateNow"
-    base = pascal_name(column["name"])
+    # MongoDB's `_id` is the `Id` of the entity, unless the documents have one of their own
+    name = "document id" if own_id and column["name"] == "_id" else column["name"]
+    base = pascal_name(name)
     # A member cannot have the name of its class
     prop = f"{base}Value" if base == entity else base
-    cs, value_type = cs_type(column["type"], database)
+    cs, value_type = types
     optional = not primary and (column["nullable"] or "default" in column or column.get("generated") is not None)
     return {
         "column": column,
         "prop": prop,
-        "local": _column_local(column["name"]),
+        "local": _column_local(name),
         "cs": cs,
         "valueType": value_type,
         "optional": optional,
@@ -82,14 +85,24 @@ def _column_info(column: dict, entity: str, primary: bool, database: str) -> dic
     }
 
 
-def _table_info(schema: dict, design: dict, settings: dict, table: dict) -> dict:
+def _table_info(orm: dict, schema: dict, design: dict, settings: dict, table: dict) -> dict:
     policy = find_policy(design, table["name"])
     repository = find_repository(design, table["name"])
     service = find_service(design, table["name"]) if settings["services"] else None
     entity = pascal_name(repository["entity"])
     key_names = table["primaryKey"] or []
+    documents = bool(orm.get("documents"))
+    nested = nested_classes(table["columns"], entity) if documents else {}
+    own_id = documents and any(column["name"] == "id" for column in table["columns"])
     columns = [
-        _column_info(column, entity, column["name"] in key_names, settings["database"]) for column in table["columns"]
+        _column_info(
+            column,
+            entity,
+            column["name"] in key_names,
+            document_type(column, nested) if documents else cs_type(column["type"], settings["database"]),
+            own_id,
+        )
+        for column in table["columns"]
     ]
 
     def by_name(name: str) -> dict:
@@ -99,7 +112,7 @@ def _table_info(schema: dict, design: dict, settings: dict, table: dict) -> dict
     all_names = table["primaryKey"] if table["primaryKey"] is not None else [c["name"] for c in table["columns"]]
     delete_mode = policy["delete"]["value"]
     concurrency = policy["concurrency"]["value"]
-    own_entities = not repository["entityMissing"] and schema["source"]["format"] == settings["orm"]
+    own_entities = not documents and not repository["entityMissing"] and schema["source"]["format"] == settings["orm"]
     writes_entity = settings["entities"] == "all" or (settings["entities"] == "missing" and not own_entities)
     folder = pascal_name(table["name"])
     children = policy["children"]
@@ -121,6 +134,8 @@ def _table_info(schema: dict, design: dict, settings: dict, table: dict) -> dict
         "repository": repository,
         "service": service,
         "writesEntity": writes_entity,
+        # The classes of its nested documents, by column: only in document databases
+        "nested": nested,
     }
 
 
@@ -130,7 +145,7 @@ def create_context(orm: dict, schema: dict, design: dict, settings: dict) -> dic
         "schema": schema,
         "design": design,
         "settings": settings,
-        "tables": [_table_info(schema, design, settings, table) for table in schema["tables"]],
+        "tables": [_table_info(orm, schema, design, settings, table) for table in schema["tables"]],
         "base": "App",
     }
 

@@ -5,8 +5,10 @@ different numbers do not clash on unique columns. Mirrors web/src/core/generator
 import re
 
 from ...js import number_text
+from ...schema.documents import is_object_id
 from ..samples import bounded_number
 from .csharp import cs_string
+from .documents import FREE
 
 
 def _checks_of(column: dict, checks: list[dict]) -> list[dict]:
@@ -65,6 +67,8 @@ def sample_value(column: dict, checks: list[dict], enums: list[dict]) -> str:
     if kind == "float":
         return f"{_number(column, checks)} + 0.5f" if cs == "float" else f"{_number(column, checks)} + 0.5"
     if kind == "text":
+        if column_type.get("objectId"):
+            return 'n.ToString("x24")'
         length = column_type.get("length")
         length = 40 if length is None else length
         if column_type.get("fixed"):
@@ -79,12 +83,18 @@ def sample_value(column: dict, checks: list[dict], enums: list[dict]) -> str:
     if kind == "boolean":
         return "true"
     if kind == "date":
+        if cs == "string":
+            return '$"2026-01-{n % 28 + 1:D2}"'
         return "new DateOnly(2026, 1, n % 28 + 1)"
     if kind == "time":
+        if cs == "string":
+            return '$"12:{n % 60:D2}:00"'
         if cs == "DateTimeOffset":
             return "new DateTimeOffset(1970, 1, 1, 12, n % 60, 0, TimeSpan.Zero)"
         return "new TimeOnly(12, n % 60)"
     if kind == "datetime":
+        if column_type.get("timezone") and cs == "DateTime":
+            return "new DateTime(2026, 1, n % 28 + 1, 12, 0, 0, DateTimeKind.Utc)"
         if cs == "DateTimeOffset":
             return "new DateTimeOffset(2026, 1, n % 28 + 1, 12, 0, 0, TimeSpan.Zero)"
         return "new DateTime(2026, 1, n % 28 + 1, 12, 0, 0)"
@@ -99,14 +109,18 @@ def sample_value(column: dict, checks: list[dict], enums: list[dict]) -> str:
             else "new byte[] { (byte)n }"
         )
     if kind == "json":
+        if cs == FREE:
+            return 'new MongoDB.Bson.BsonDocument("n", n)'
         return '$"{{\\"n\\": {n}}}"'
     if kind == "array":
         return '"[]"'
-    return '$"value-{n}"'
+    return 'new MongoDB.Bson.BsonString($"value-{n}")' if cs == FREE else '$"value-{n}"'
 
 
 def missing_value(column: dict) -> str:
     """A key no row has, as a C# expression, for the tests of missing rows."""
+    if is_object_id(column["column"]["type"]):
+        return f'"{"f" * 24}"'
     return {
         "long": "999999L",
         "int": "999999",

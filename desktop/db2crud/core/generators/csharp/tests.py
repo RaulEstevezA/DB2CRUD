@@ -3,6 +3,8 @@ rows (and their parents first), repository tests against a real database created
 on the in-memory unit of work (or on the database when the project has no memory repositories). The database is SQLite
 in memory unless TEST_DATABASE_CONNECTION names another. Mirrors web/src/core/generators/csharp/tests.ts."""
 
+import re
+
 from ..types import lines
 from .context import (
     column_of,
@@ -18,7 +20,8 @@ from .context import (
     service_class,
     writes_entities,
 )
-from .csharp import CsUsings, cs_string
+from .csharp import CsUsings, cs_string, pascal_name
+from .documents import list_of
 from .dtos import create_columns, create_dto, update_columns, update_namespace, update_type
 from .samples import missing_value, sample_value
 
@@ -99,6 +102,7 @@ def _factories_file(context: dict, makeable: list[dict]) -> dict:
                 value = context["orm"]["emptyList"](context)
             else:
                 value = sample_value(column, info["table"]["checks"], context["schema"]["enums"])
+            value = _document_value(info, column) or value
             values.append(f"        entity.{column['prop']} = {value};")
         insert = query(info, "insert")
         entity = info["entity"]
@@ -120,6 +124,7 @@ def _factories_file(context: dict, makeable: list[dict]) -> dict:
                 *from_parents,
                 f"        return await uow.{info['attr']}.{query_name(context, insert)}(entity);",
                 "    }",
+                *(line for item in info["nested"].values() for line in _nested_factories(context, item)),
             ]
         )
     body = []
@@ -137,6 +142,61 @@ def _factories_file(context: dict, makeable: list[dict]) -> dict:
             "}",
         ],
     )
+
+
+# Nested documents
+
+
+def _factory_of(item: dict) -> str:
+    return "New" + "".join(item["path"].split(".")).replace("Document", "")
+
+
+def _document_value(info: dict, column: dict) -> str | None:
+    """A column that holds documents, or a list of them, as a C# expression; None for any other."""
+    nested = info["nested"].get(column["column"]["name"])
+    return _nested_value(column["column"]["type"], nested) if nested else None
+
+
+def _nested_value(column_type: dict, nested: dict) -> str:
+    if column_type["kind"] == "array":
+        return f"[{_nested_value(column_type['items'], nested)}]"
+    return f"{_factory_of(nested)}(n)"
+
+
+def _nested_factories(context: dict, item: dict) -> list[str]:
+    """A factory per class of nested document, without the identifier it is given when it is stored."""
+    values = []
+    for field in item["fields"]:
+        column = field["column"]
+        if column["name"] == "_id" or column["type"]["kind"] == "unknown":
+            continue
+        if field["nested"]:
+            value = _nested_value(column["type"], field["nested"])
+        elif column["type"]["kind"] == "array":
+            value = context["orm"]["emptyList"](context)
+        else:
+            sample = {"column": column, "cs": field["cs"]}
+            value = sample_value(sample, column.get("checks") or [], context["schema"]["enums"])
+        values.append(f"        {field['prop']} = {value},")
+    return [
+        "",
+        f"    /// <summary>A valid {item['path']}.</summary>",
+        f"    public static {item['path']} {_factory_of(item)}(int n) => new()",
+        "    {",
+        *values,
+        "    };",
+        *(line for inner in item["classes"] for line in _nested_factories(context, inner)),
+    ]
+
+
+def _item_sample(context: dict, items: dict) -> str:
+    """A value for an item of a list, as a C# expression for the number 7."""
+    if items["nested"] and items["type"]["kind"] == "json":
+        return f"Factories.{_factory_of(items['nested'])}(7)"
+    if items["type"]["kind"] == "array":
+        return f"new {items['cs']}()"
+    column = {**items["column"], "column": {**items["column"]["column"], "type": items["type"]}, "cs": items["cs"]}
+    return re.sub(r'\bn\b(?!")', "7", sample_value(column, [], context["schema"]["enums"]), flags=re.ASCII)
 
 
 def _changeable_text(info: dict) -> dict | None:
@@ -283,6 +343,37 @@ def _repository_tests(context: dict, info: dict) -> list[list]:
                     stored,
                     f"await {repo}.{query_name(context, remove)}(stored);",
                     f"Assert.Null(await {repo}.{query_name(context, get_by_key)}({key_of('stored')}));",
+                ],
+            )
+        )
+    for adding in [item for item in info["queries"] if item["kind"] == "addItem"]:
+        listed = list_of(info, adding)
+        removing = query(info, "removeItem", adding["columns"])
+        if not removing or not get_by_key:
+            continue
+        prop = listed["column"]["prop"]
+        if listed["by"] == "id":
+            which = f"added.{prop}![before].Id!"
+        else:
+            which = "item" if listed["by"] == "value" else f"before, added.{prop}!.Count"
+        add_call = f"{repo}.{query_name(context, adding)}({key_of('stored')}, item)"
+        remove_name = f"{repo}.{query_name(context, removing)}"
+        tests.append(
+            _test(
+                f"AddsAndRemovesOneItemOf{pascal_name(prop)}",
+                [
+                    stored,
+                    f"var before = stored.{prop}?.Count ?? 0;",
+                    f"{listed['cs']} item = {_item_sample(context, listed)};",
+                    f"var added = await {add_call};",
+                    f"Assert.Equal(before + 1, added!.{prop}!.Count);",
+                    f"var removed = await {remove_name}({key_of('stored')}, {which});",
+                    f"Assert.Equal(before, removed!.{prop}!.Count);",
+                    *(
+                        [f"Assert.Null(await {remove_name}({key_of('stored')}, 0, before + 5));"]
+                        if listed["by"] == "position"
+                        else []
+                    ),
                 ],
             )
         )
@@ -516,6 +607,42 @@ def _service_tests(context: dict, info: dict, usings: CsUsings) -> list[list]:
                     f"var created = await service.{operation_name(context, create)}({source('row')});",
                     f"await service.{operation_name(context, remove)}({key_of('created')}{version('created')});",
                     f"await Assert.ThrowsAsync<NotFoundException>(() => service.{operation_name(context, get)}({key_of('created')}));",
+                ],
+            )
+        )
+    for operation in [item for item in info["operations"] if item["kind"] == "addItem"]:
+        listed = list_of(info, operation)
+        without = op("removeItem", operation["columns"])
+        if not create or not without or listed["column"]["column"]["name"] in info["hidden"]:
+            continue
+        usings.add(errors_namespace(context))
+        prop = listed["column"]["prop"]
+        if listed["by"] == "id":
+            which, missing = f"added.{prop}![before].Id!", f'"{"f" * 24}"'
+        else:
+            which, missing = ("item", None) if listed["by"] == "value" else ("before", "99")
+        remove_name = f"service.{operation_name(context, without)}"
+        tests.append(
+            _test(
+                f"AddsAndRemovesOneItemOf{pascal_name(prop)}",
+                [
+                    *opening,
+                    *start,
+                    *row("row", 1),
+                    f"var created = await service.{operation_name(context, create)}({source('row')});",
+                    f"var before = created.{prop}?.Count ?? 0;",
+                    f"{listed['cs']} item = {_item_sample(context, listed)};",
+                    f"var added = await service.{operation_name(context, operation)}({key_of('created')}, item{version('created')});",
+                    f"Assert.Equal(before + 1, added.{prop}!.Count);",
+                    f"var removed = await {remove_name}({key_of('created')}, {which}{version('added')});",
+                    f"Assert.Equal(before, removed.{prop}!.Count);",
+                    *(
+                        [
+                            f"await Assert.ThrowsAsync<NotFoundException>(() => {remove_name}({key_of('created')}, {missing}{version('removed')}));"
+                        ]
+                        if missing
+                        else []
+                    ),
                 ],
             )
         )

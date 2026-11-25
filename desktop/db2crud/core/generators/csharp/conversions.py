@@ -13,11 +13,13 @@ project compiles only while the folder exists (delete it inside the application)
 
 import re
 
-from ...conversions.plan import without_hidden
+from ...conversions.plan import has_todo, lossy, without_hidden
 from ...js import js_string
+from ...matching.names import fields_of
 from ..types import lines
 from .context import column_of, errors_namespace, find_info, namespace_of, path_of, query, query_name
 from .csharp import CsUsings, cs_string, local_name, pascal_name
+from .documents import FREE
 from .dtos import create_columns, create_dto, read_columns, read_dto
 
 MODELS_FOLDER = "application-models"
@@ -273,10 +275,48 @@ _NUMBERS = {"byte", "sbyte", "short", "ushort", "int", "uint", "long", "ulong", 
 _PARSED = {*_NUMBERS, "DateTime", "DateTimeOffset", "DateOnly", "TimeOnly", "TimeSpan"}
 
 
+_LIST = re.compile(
+    r"^(?:(?:List|IList|IEnumerable|ICollection|IReadOnlyList|IReadOnlyCollection|HashSet|ISet)<(.+)>|(.+)\[\])$"
+)
+_KEPT = object()
+
+
+def _core_document(models: dict, expression: str, source: str, target: str, body: dict):
+    """What a document database keeps in its own way; _KEPT for the rest."""
+    if target == FREE:
+        taken = source == "object" or source.startswith("Dictionary<")
+        return f"{FREE}.Create({expression})" if taken else None
+    if source == FREE:
+        return None
+    if source == "DateOnly" and target == "DateTime":
+        return f"{expression}.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc)"
+    if source == "string" and target == "DateTime":
+        body["usings"].add("System.Globalization")
+        styles = "DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal"
+        return f"DateTime.Parse({expression}, CultureInfo.InvariantCulture, {styles})"
+    from_item = None if source == "byte[]" else _LIST.match(source)
+    to_item = None if target == "byte[]" else _LIST.match(target)
+    if not from_item or not to_item:
+        return _KEPT
+    item = _typed("item", from_item.group(1) or from_item.group(2))
+    converted = _convert(models, item, to_item.group(1) or to_item.group(2), body)
+    if converted is None:
+        return None
+    items = expression if converted == "item" else f"{expression}.Select(item => {converted})"
+    collect = "ToArray" if to_item.group(2) else "ToHashSet" if "Set<" in target else "ToList"
+    return f"{items}.{collect}()"
+
+
 def _core(models: dict, expression: str, source: str, target: str, body: dict) -> str | None:
     """A value that is there, of one C# type, as another; None when DB2CRUD does not convert them."""
     if source == target or target == "object":
         return expression
+    if models.get("documents"):
+        if any(item["name"] in (source, target) for item in models["schema"]["enums"]):
+            body["usings"].add(models["namespace"])
+        converted = _core_document(models, expression, source, target, body)
+        if converted is not _KEPT:
+            return converted
 
     def invariant() -> str:
         body["usings"].add("System.Globalization")
@@ -512,7 +552,153 @@ def _column_typed(column: dict, root: str) -> dict:
     return _typed(f"{root}.{column['prop']}", column["propType"])
 
 
-def _write_expression(context: dict, models: dict, column: dict, value: dict, model: dict | None, body: dict) -> dict:
+# Nested documents. A nested is {context, models, info, plan, body, aliases, methods: those written so far}
+
+
+def _nested_model(nested: dict, name: str) -> str:
+    """How a nested model is written: by an alias when the entity or a DTO of the file has its name."""
+    names = conversion_names(nested["context"], nested["plan"])
+    namespace = nested["models"]["namespace"]
+    if name not in (nested["info"]["entity"], names["target"], names["source"]):
+        nested["body"]["usings"].add(namespace)
+        return name
+    nested["aliases"].add(f"using {name}Model = {namespace}.{name};")
+    return f"{name}Model"
+
+
+def _import_entity(nested: dict) -> None:
+    """The entity by its own name, also beside a model named like it."""
+    context, info = nested["context"], nested["info"]
+    ns = namespace_of(context, info, "entity")
+    nested["body"]["usings"].add(ns)
+    models = nested["models"]["schema"]["models"]
+    if ns != conversions_namespace(context, info) and any(item["name"] == info["entity"] for item in models):
+        nested["aliases"].add(f"using {info['entity']} = {ns}.{info['entity']};")
+
+
+def _model_named(nested: dict, name: str) -> dict:
+    schema = nested["models"]["schema"]
+    model = next(item for item in schema["models"] if item["name"] == name)
+    return {**model, "fields": fields_of(model, schema)}
+
+
+def _call_for(method: str, many: bool, value: dict, to: str) -> str:
+    """A nested document, or each of a list, converted by a method; `to` is the type it becomes."""
+    nullable = to.endswith("?")
+    expression = value["expression"]
+    if many:
+        if re.search(r"\[\]\??$", to):
+            collect = "ToArray()"
+        else:
+            collect = "ToHashSet()" if to.startswith("HashSet<") else "ToList()"
+        if not value["nullable"]:
+            return f"{expression}.Select({method}).{collect}"
+        return f"{expression}?.Select({method}).{collect}{'' if nullable else ' ?? []'}"
+    if not value["nullable"]:
+        return f"{method}({expression})"
+    return f"{expression} is null ? null : {method}({expression})" if nullable else f"{method}({expression}!)"
+
+
+def _built(type_text: str, values: list[dict], positional: bool) -> list[str]:
+    """The initializer of a class or the call to a constructor, as the statements of a method."""
+    if positional:
+        return [f"        return new {type_text}(", *_argument_lines(values, "            "), "        );"]
+    return [f"        return new {type_text}", "        {", *_initializer_lines(values, "            "), "        };"]
+
+
+def _write_document(nested: dict, value: dict, kept: dict, path: str) -> str:
+    """Writes the method that gives a nested document from its model, and those inside it; gives its name."""
+    models, body = nested["models"], nested["body"]
+    name = f"{nested['plan']['model']}{path}ToDocument"
+    model = _model_named(nested, value["model"])
+    todos = []
+    values = []
+    for item in value["values"]:
+        field = next(candidate for candidate in kept["fields"] if candidate["column"]["name"] == item["column"])
+        inner = item["value"]
+        if inner["kind"] == "todo":
+            todos.append(f"        // TODO: {field['prop']}: {_todo_text(inner)}")
+            continue
+        if inner["kind"] not in ("field", "document"):
+            continue
+        read = _walk(models, model, inner["path"], "value")
+        if inner["kind"] == "document":
+            method = _write_document(nested, inner, field["nested"], path + field["prop"])
+            call = _call_for(method, inner["many"], read, field["propType"])
+            values.append({"name": field["prop"], "expression": call})
+            continue
+        converted = _fit(models, read, field["propType"], body)
+        if converted is not None:
+            values.append({"name": field["prop"], "expression": converted})
+        else:
+            todos.append(f"        // TODO: {field['prop']}: {_WHY['unsupported']} ({read['type']} to {field['cs']})")
+    _import_entity(nested)
+    collection = nested["info"]["name"]
+    nested["methods"].append(
+        [
+            f"    /// <summary>{_article(value['model'])} as the documents of the {collection} collection keep it.</summary>",
+            f"    private static {kept['path']} {name}({_nested_model(nested, value['model'])} value)",
+            "    {",
+            *([f"        // Not stored: {', '.join(value['unused'])}"] if value["unused"] else []),
+            *todos,
+            *_built(kept["path"], values, False),
+            "    }",
+        ]
+    )
+    return name
+
+
+def _read_document(nested: dict, value: dict, kept: dict, path: str) -> str:
+    """Writes the method that gives a model from its nested document, and those inside it; gives its name."""
+    models, body = nested["models"], nested["body"]
+    name = f"{nested['plan']['model']}{path}FromDocument"
+    model = _model_named(nested, value["model"])
+    given: set[str] = set()
+    values = []
+    for field in model["fields"]:
+        item = next((candidate for candidate in value["values"] if candidate["field"] == field["name"]), None)
+        target = _field_cs(model, field)
+        written = {"name": _member_of(model, field["name"]), "expression": "default!"}
+        values.append(written)
+        inner = item["value"] if item else None
+        if inner is None or inner["kind"] not in ("todo", "column", "document"):
+            continue
+        given.add(written["name"])
+        if inner["kind"] == "todo":
+            written["todo"] = _todo_text(inner)
+            continue
+        source = next(candidate for candidate in kept["fields"] if candidate["column"]["name"] == inner["column"])
+        read = _typed(f"value.{source['prop']}", source["propType"])
+        if inner["kind"] == "document":
+            method = _read_document(nested, inner, source["nested"], path + source["prop"])
+            written["expression"] = _call_for(method, inner["many"], read, target)
+            continue
+        converted = _fit(models, read, target, body)
+        if converted is None:
+            written["todo"] = f"{_WHY['unsupported']} ({source['cs']} to {target})"
+        else:
+            written["expression"] = converted
+    positional = model.get("construction") == "positional"
+    type_text = _nested_model(nested, value["model"])
+    _import_entity(nested)
+    article = _article(value["model"]).split(" ")[0].lower()
+    # Built by its properties: the fields the plan does not give keep the model's defaults
+    chosen = values if positional else [item for item in values if item["name"] in given]
+    nested["methods"].append(
+        [
+            f"    /// <summary>A document of the {nested['info']['name']} collection as {article} {value['model']}.</summary>",
+            f"    private static {type_text} {name}({kept['path']} value)",
+            "    {",
+            *_built(type_text, chosen, positional),
+            "    }",
+        ]
+    )
+    return name
+
+
+def _write_expression(
+    context: dict, models: dict, column: dict, value: dict, model: dict | None, body: dict, nested: dict
+) -> dict:
     def unsupported(detail: str) -> dict:
         return {"expression": "default!", "todo": f"{_WHY['unsupported']} ({detail})"}
 
@@ -528,6 +714,13 @@ def _write_expression(context: dict, models: dict, column: dict, value: dict, mo
         return {"expression": converted}
 
     kind = value["kind"]
+    if kind == "document":
+        given = source(value["path"])
+        kept = nested["info"]["nested"].get(column["column"]["name"])
+        if not given or not kept:
+            return unsupported(column["prop"])
+        method = _write_document(nested, value, kept, column["prop"])
+        return {"expression": _call_for(method, value["many"], given, column["propType"])}
     if kind == "field":
         return finish(source(value["path"]))
     if kind == "lookup":
@@ -559,7 +752,7 @@ def _write_expression(context: dict, models: dict, column: dict, value: dict, mo
 
 
 def _read_expression(
-    context: dict, models: dict, info: dict, model: dict, field: dict, value: dict, body: dict
+    context: dict, models: dict, info: dict, model: dict, field: dict, value: dict, body: dict, nested: dict
 ) -> dict:
     target = _field_cs(model, field)
 
@@ -575,6 +768,13 @@ def _read_expression(
         return {"expression": converted}
 
     kind = value["kind"]
+    if kind == "document":
+        kept = info["nested"].get(value["column"])
+        if not kept:
+            return unsupported(field["name"])
+        column = column_of(info, value["column"])
+        method = _read_document(nested, value, kept, column["prop"])
+        return {"expression": _call_for(method, value["many"], _column_typed(column, "row"), target)}
     if kind == "column":
         return finish(_column_typed(column_of(info, value["column"]), "row"))
     if kind == "lookup":
@@ -661,7 +861,11 @@ def conversion_file(context: dict, plans: list[dict], schema: dict) -> dict | No
     info = find_info(context, plans[0]["table"])
     if info is None:
         return None
-    models = {"schema": schema, "namespace": models_namespace(context)}
+    models = {
+        "schema": schema,
+        "namespace": models_namespace(context),
+        "documents": bool(context["orm"].get("documents")),
+    }
     ns = conversions_namespace(context, info)
     usings = CsUsings(ns)
     aliases: set[str] = set()
@@ -671,6 +875,14 @@ def conversion_file(context: dict, plans: list[dict], schema: dict) -> dict | No
     record = context["settings"]["dtoKind"] != "class"
     for plan in plans:
         model = next((item for item in schema["models"] if item["name"] == plan["model"]), None)
+        scope = {
+            "context": context,
+            "models": models,
+            "info": info,
+            "plan": plan,
+            "aliases": aliases,
+            "methods": methods,
+        }
         names = conversion_names(context, plan)
         if names["clash"]:
             aliases.add(f"using {names['model']} = {models['namespace']}.{plan['model']};")
@@ -685,7 +897,9 @@ def conversion_file(context: dict, plans: list[dict], schema: dict) -> dict | No
                 if item["value"]["kind"] == "todo":
                     values.append({"name": column["prop"], "expression": "default!", "todo": _todo_text(item["value"])})
                 else:
-                    written = _write_expression(context, models, column, item["value"], model, body)
+                    written = _write_expression(
+                        context, models, column, item["value"], model, body, {**scope, "body": body}
+                    )
                     values.append({"name": column["prop"], **written})
             if dtos and record:
                 # Every value of the create DTO, in its order; those the model does not give are null
@@ -731,7 +945,9 @@ def conversion_file(context: dict, plans: list[dict], schema: dict) -> dict | No
                 elif item["value"]["kind"] == "todo":
                     values.append({"name": name, "expression": "default!", "todo": _todo_text(item["value"])})
                 else:
-                    read = _read_expression(context, models, info, model, field, item["value"], body)
+                    read = _read_expression(
+                        context, models, info, model, field, item["value"], body, {**scope, "body": body}
+                    )
                     values.append({"name": name, **read})
             given = {_member_of(model, item["field"]) for item in plan["read"]}
             if body["uow"]:
@@ -789,10 +1005,6 @@ def conversion_file(context: dict, plans: list[dict], schema: dict) -> dict | No
     return {"path": path_of(ns, name), "content": content}
 
 
-def _has_todo(items: list[dict] | None) -> bool:
-    return any(item["value"]["kind"] == "todo" for item in items or [])
-
-
 def conversion_test_file(
     context: dict, plans: list[dict], schema: dict, can_make, database_members: list
 ) -> dict | None:
@@ -810,7 +1022,7 @@ def conversion_test_file(
         if (
             not info
             or plan["read"] is None
-            or _has_todo(plan["read"])
+            or has_todo(plan["read"])
             or not can_make(info)
             or not any(item["name"] == plan["model"] for item in schema["models"])
         ):
@@ -818,7 +1030,7 @@ def conversion_test_file(
         names = conversion_names(context, plan)
         dtos = _uses_dtos(context, info)
         reads = any(item["value"]["kind"] in ("lookup", "children") for item in plan["read"])
-        writes = plan["write"] is not None and not _has_todo(plan["write"])
+        writes = plan["write"] is not None and not has_todo(plan["write"])
         write_uow = writes and any(item["value"]["kind"] == "lookup" for item in plan["write"])
         usings.add(conversions_namespace(context, info), namespace_of(context, info, "entity"))
         reader = f"{names['source']}Of"
@@ -847,8 +1059,16 @@ def conversion_test_file(
         if writes:
             body.append(f"var values = {call(write_uow, names['write'], 'model')};")
             for item in plan["write"]:
-                prop = column_of(info, item["column"])["prop"]
-                body.append(f"Assert.Equal(row.{prop}, values.{prop});")
+                column = column_of(info, item["column"])
+                model = next(found for found in schema["models"] if found["name"] == plan["model"])
+                # A value the model keeps with less detail is not written back as it was
+                if context["orm"].get("documents") and lossy(
+                    item["value"], column["column"]["type"], fields_of(model, schema), schema
+                ):
+                    continue
+                # Nested documents are compared by what they hold
+                check = "Equivalent" if item["value"]["kind"] == "document" else "Equal"
+                body.append(f"Assert.{check}(row.{column['prop']}, values.{column['prop']});")
         else:
             body.append("Assert.NotNull(model);")
         method = f"Reads{plan['model']}AndWritesItBack" if writes else f"Reads{plan['model']}"

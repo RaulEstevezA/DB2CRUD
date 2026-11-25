@@ -1,5 +1,8 @@
-"""The C# generator: .NET 10 data access layers with no web framework, over EF Core or ADO.NET, the strategy it is given.
-Every file of the project, composed from the modules of this folder. Mirrors web/src/core/generators/csharp/generator.ts."""
+"""The C# generator: .NET 10 data access layers with no web framework, over EF Core, ADO.NET or the MongoDB driver, the
+strategy it is given. Every file of the project, composed from the modules of this folder. Mirrors
+web/src/core/generators/csharp/generator.ts."""
+
+import re
 
 from ...conversions.plan import plan_conversions
 from .context import create_context
@@ -29,9 +32,23 @@ def _code(context: dict) -> list[dict]:
     return [file for file in files if file is not None]
 
 
+def _named(orm: dict, files: list[dict]) -> list[dict]:
+    """The files with the database classes named as the strategy asks: `SqlUnitOfWork` is `MongoUnitOfWork` in a document
+    database."""
+    prefix = orm.get("prefix")
+    if not prefix:
+        return files
+
+    def rename(text: str) -> str:
+        return re.sub(r"\bSql(?=UnitOfWork\b|\w+Repository\b)", prefix, text)
+
+    return [{**item, "path": rename(item["path"]), "content": rename(item["content"])} for item in files]
+
+
 def _generate(orm: dict, schema: dict, design: dict, settings: dict, models: dict | None = None) -> list[dict]:
     context = create_context(orm, schema, design, settings)
-    plans = service_plans(context, plan_conversions(schema, design, models)) if models else []
+    documents = bool(orm.get("documents"))
+    plans = service_plans(context, plan_conversions(schema, design, models, documents)) if models else []
     conversions = conversion_files(context, models["schema"], plans) if models else []
     tests = test_files(context)
     conversion_tests = (
@@ -45,7 +62,7 @@ def _generate(orm: dict, schema: dict, design: dict, settings: dict, models: dic
         if models and tests and settings["tests"] in ("all", "services")
         else None
     )
-    return [
+    files = [
         readme_file(context),
         *project_files(context, bool(conversions) and settings["modelsSource"] == "import"),
         env_example_file(context),
@@ -56,6 +73,7 @@ def _generate(orm: dict, schema: dict, design: dict, settings: dict, models: dic
         *tests,
         *([conversion_tests] if conversion_tests else []),
     ]
+    return _named(orm, files)
 
 
 def csharp_generator(orm: dict) -> dict:
