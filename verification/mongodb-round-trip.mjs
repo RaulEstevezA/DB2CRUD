@@ -55,7 +55,8 @@ it('does not undo what others change in a list', async () => {
   await Promise.all([uow().orders.addLine(id, item), uow().orders.addLine(id, item), uow().orders.addLine(id, { ...item, status: 'sent' })])
   const found = (await uow().orders.READ_ID(id))!
   expect(found.lines).toHaveLength(4)
-  await Promise.all(found.lines.slice(1, 3).map((line) => uow().orders.removeLine(id, line._id!)))
+  // The three were added at the same time, so in any order
+  await Promise.all(found.lines.slice(1).filter((line) => line.status === 'pending').map((line) => uow().orders.removeLine(id, line._id!)))
   expect((await uow().orders.READ_ID(id))!.lines.map((line) => line.status)).toEqual(['pending', 'sent'])
   // A document that does not follow the schema is refused by the database layer too
   await expect(uow().orders.addLine(id, { quantity: 1 } as never)).rejects.toMatchObject({ name: 'ValidationFailedError' })
