@@ -8,6 +8,10 @@ Client-side tool that generates the data access layer of a database that already
 - 🇬🇧 **English:** [Full documentation](./README_en.md)
 - 🇪🇸 **Español:** [Documentación completa](./README_es.md)
 
+<p align="center">
+  <img src="docs/images/web_app.png" alt="DB2CRUD: a Model2DB project of an online shop on the left; on the right, the proposed repository and service of customers, with three decisions waiting for review" width="720">
+</p>
+
 ## What is this repository?
 
 DB2CRUD starts from a database you already have: a Model2DB project, ORM code, SQL DDL or MongoDB collections, and, if you have them, the models of your application. It proposes the repositories with the queries the schema allows, the services that convert between models and entities, validate and report domain errors, and the entities that are missing. It writes Python, TypeScript, Java, C#, PHP, Kotlin, Rust and Swift, with an ORM, without one (SQL) or for MongoDB.
