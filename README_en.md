@@ -2,8 +2,7 @@
 
 DB2CRUD generates the data access layer of a database you already have: entities when they are missing, repositories and services, linked to the models of your application. It does not design the database or write migrations (that is [Model2DB](https://github.com/RaulEstevezA/Model2DB)), and it does not write controllers or endpoints. Everything happens on your side, in the browser: what you paste or open is never sent anywhere, no database is connected to, and code is analyzed, never run.
 
-> [!IMPORTANT]
-> DB2CRUD is in development and not published on the website yet. Everything below works today in the web and the desktop version; the details are in the [changelog](./CHANGELOG.md).
+**Try it online:** [raulesteveza.github.io/tools/DB2CRUD](https://raulesteveza.github.io/tools/DB2CRUD/)
 
 ```text
 Paste or open the database and the models  →  Review the proposed repositories and services  →  Choose the language and library  →  Download the code
@@ -47,8 +46,8 @@ Every choice of style is a setting: entities or DTOs, how updates come, transact
 
 ## Versions
 
-- **Web**: React + TypeScript + Vite, in the browser.
-- **Desktop**: Python + PySide6, the same tool as an installable app, checked against the same cases in `shared/test-cases/` ([desktop/README_en.md](./desktop/README_en.md)).
+- **Web**: React + TypeScript + Vite, in the browser: [raulesteveza.github.io/tools/DB2CRUD](https://raulesteveza.github.io/tools/DB2CRUD/).
+- **Desktop**: Python + PySide6, the same tool as an installable app ([download](./desktop/README_en.md#download)), checked against the same cases in `shared/test-cases/` ([desktop/README_en.md](./desktop/README_en.md)).
 
 ## Development
 

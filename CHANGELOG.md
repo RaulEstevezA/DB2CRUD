@@ -1,8 +1,10 @@
 # Changelog
 
-Notable changes to DB2CRUD, the web and the desktop version together. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow [Semantic Versioning](https://semver.org/). Desktop releases will be tagged `v<version>` and published on [Releases](https://github.com/RaulEstevezA/DB2CRUD/releases).
+Notable changes to DB2CRUD, the web and the desktop version together. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow [Semantic Versioning](https://semver.org/). Desktop releases are tagged `v<version>` and published on [Releases](https://github.com/RaulEstevezA/DB2CRUD/releases).
 
 ## [Unreleased]
+
+## [0.1.0] - 2026-11-25
 
 DB2CRUD starts from the code of Model2API (which continues as Controller2API), keeping what reads models and dropping what designs and writes an API: endpoints, OpenAPI, authentication, the framework generators and their project format.
 
@@ -90,4 +92,5 @@ DB2CRUD starts from the code of Model2API (which continues as Controller2API), k
 - Reading ORM code: Doctrine names between backticks, Drizzle foreign keys of a table to itself, Sequelize references with a schema, Django tables of another schema and computed columns written as `RawSQL`.
 - Python: columns named like a type (`date`, `time`, `str`, `list`…) no longer break the entities and the DTOs.
 
-[Unreleased]: https://github.com/RaulEstevezA/DB2CRUD/commits/main
+[Unreleased]: https://github.com/RaulEstevezA/DB2CRUD/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/RaulEstevezA/DB2CRUD/releases/tag/v0.1.0

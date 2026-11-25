@@ -2,8 +2,7 @@
 
 DB2CRUD genera la capa de acceso a datos de una base de datos que ya tienes: entidades cuando faltan, repositorios y servicios, relacionados con los modelos de tu aplicación. No diseña la base de datos ni escribe migraciones (eso es [Model2DB](https://github.com/RaulEstevezA/Model2DB)), ni escribe controladores o endpoints. Todo ocurre en tu lado, en el navegador: lo que pegas o abres no se envía a ningún sitio, no se conecta a ninguna base de datos y el código se analiza, nunca se ejecuta.
 
-> [!IMPORTANT]
-> DB2CRUD está en desarrollo y todavía no se ha publicado en la web. Todo lo que sigue funciona ya en la versión web y en la de escritorio; los detalles están en el [registro de cambios](./CHANGELOG.md).
+**Pruébalo en la web:** [raulesteveza.github.io/tools/DB2CRUD](https://raulesteveza.github.io/tools/DB2CRUD/)
 
 ```text
 Pegar o abrir la base de datos y los modelos  →  Revisar los repositorios y servicios propuestos  →  Elegir lenguaje y biblioteca  →  Descargar el código
@@ -47,8 +46,8 @@ Todo lo que es cuestión de gusto es un ajuste: entidades o DTOs, cómo llegan l
 
 ## Versiones
 
-- **Web**: React + TypeScript + Vite, en el navegador.
-- **Escritorio**: Python + PySide6, la misma herramienta como aplicación instalable, comprobada con los mismos casos de `shared/test-cases/` ([desktop/README_es.md](./desktop/README_es.md)).
+- **Web**: React + TypeScript + Vite, en el navegador: [raulesteveza.github.io/tools/DB2CRUD](https://raulesteveza.github.io/tools/DB2CRUD/).
+- **Escritorio**: Python + PySide6, la misma herramienta como aplicación instalable ([descarga](./desktop/README_es.md#descarga)), comprobada con los mismos casos de `shared/test-cases/` ([desktop/README_es.md](./desktop/README_es.md)).
 
 ## Desarrollo
 

@@ -16,7 +16,7 @@ What the tool does and its philosophy are in the [main README](../README_en.md).
 | Linux (x64) | [DB2CRUD-Linux.tar.gz](https://github.com/RaulEstevezA/DB2CRUD/releases/latest/download/DB2CRUD-Linux.tar.gz) |
 | Linux (ARM64, Ubuntu 24.04 or newer) | [DB2CRUD-Linux-ARM64.tar.gz](https://github.com/RaulEstevezA/DB2CRUD/releases/latest/download/DB2CRUD-Linux-ARM64.tar.gz) |
 
-Every version is in [Releases](https://github.com/RaulEstevezA/DB2CRUD/releases). The links work once the first version is released.
+Every version is in [Releases](https://github.com/RaulEstevezA/DB2CRUD/releases).
 
 > [!NOTE]
 > The packaged app has been built and checked on **macOS** (Apple Silicon). The Windows and Linux builds are compiled by GitHub Actions and pass the tests and an automatic start-up check, but nobody has used them on a real computer yet. If you find a problem, write to [contact.raulesteveza@gmail.com](mailto:contact.raulesteveza@gmail.com).
