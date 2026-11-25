@@ -1320,3 +1320,268 @@ export function withRustRoundTrip(files, settings, code) {
     { path: 'tests/data/round_trip.rs', content: content.replaceAll('READ_ID', read).replaceAll('CRATE', name.replaceAll('-', '_')) },
   ]
 }
+
+// Swift: the same, in swift-testing
+
+const SWIFT_SHOP = `import Foundation
+import MongoKitten
+import Testing
+@testable import MODULE
+
+extension DataTests {
+    /// What no other test of the project says.
+    @Suite struct RoundTripTests {
+        private func stored(_ uow: MongoUnitOfWork, _ collection: String) async throws -> BsonDocument? {
+            try await uow.db.find(collection, [:], limit: 1).first
+        }
+
+        @Test func keepsEveryValueAndItsType() async throws {
+            try await TestDatabase.with { uow in
+                var product = try await uow.products.insert(Factories.newProduct(1))
+                let found = try await uow.products.READ_ID(product.id!)
+                #expect(found == product)
+                product.related = ["0123456789abcdef01234567"]
+                try await uow.products.update(product)
+                let related = try await uow.products.READ_ID(product.id!)?.related
+                #expect(related == product.related)
+                let document = try #require(try await stored(uow, "products"))
+                #expect(document["_id"] is ObjectId)
+                #expect(document["price"] is Decimal128)
+                #expect((document["reference"] as? Binary)?.data.count == 16)
+                #expect((document["related"] as? BsonDocument)?["0"] is ObjectId)
+                let order = try await Factories.addOrder(uow, 2)
+                let read = try await uow.orders.READ_ID(order.id!)
+                #expect(read?.lines == order.lines)
+                #expect(read?.notes == order.notes)
+                let lines = try await stored(uow, "orders")?["lines"] as? BsonDocument
+                let line = try #require(lines?["0"] as? BsonDocument)
+                #expect(line["_id"] is ObjectId)
+                #expect(line["product"] is ObjectId)
+                #expect(line["price"] is Decimal128)
+                let customer = try await Factories.addCustomer(uow, 5)
+                let other = try await uow.customers.READ_ID(customer.id!)
+                #expect(other?.address == customer.address)
+                #expect(other?.preferences == customer.preferences)
+                #expect(other?.extra == customer.extra)
+            }
+        }
+
+        @Test func keepsNumbersAndMoments() async throws {
+            try await TestDatabase.with { uow in
+                let texts = ["0", "-1", "0.01", "-12345.6789", "9999999999999999999999999999999999", "12345678901234567890.12345678901234", "1000000"]
+                for text in texts {
+                    let decimal = Decimal(string: text)!
+                    let read = try Bson.asDecimal(try Bson.ofDecimal(decimal))
+                    #expect(read == decimal)
+                }
+                // As the server writes it, and as it reads it
+                let reply = try await uow.db.run([
+                    "aggregate": 1, "cursor": [:] as BsonDocument,
+                    "pipeline": [
+                        ["$documents": [["a": try Bson.ofDecimal(Decimal(string: "-12.50")!)] as BsonDocument] as BsonDocument] as BsonDocument,
+                        ["$project": ["text": ["$toString": "$a"] as BsonDocument, "half": ["$divide": ["$a", 4] as BsonDocument] as BsonDocument] as BsonDocument] as BsonDocument,
+                    ] as BsonDocument,
+                ])
+                let batch = (reply["cursor"] as? BsonDocument)?["firstBatch"] as? BsonDocument
+                let row = try #require(batch?["0"] as? BsonDocument)
+                #expect(row["text"] as? String == "-12.5")
+                let half = try row["half"].map(Bson.asDecimal)
+                #expect(half == Decimal(string: "-3.125"))
+                for millis in [1_767_268_800_123, 1_767_268_800_001, 999, -1500, -1] {
+                    let document: BsonDocument = ["d": try Bson.ofDate(Date(timeIntervalSince1970: Double(millis) / 1000))]
+                    let date = try document["d"].map(Bson.asDate)
+                    #expect((date!.timeIntervalSince1970 * 1000).rounded() == Double(millis))
+                }
+            }
+        }
+
+        @Test func changesOnlyWhatIsDifferent() async throws {
+            try await TestDatabase.with { uow in
+                var inserted = try await Factories.addCustomer(uow, 1)
+                let id = inserted.id!
+                try await uow.db.update("customers", [:], ["$set": ["unknown": 1, "address.unknown": 2] as BsonDocument])
+                let first = try await uow.customers.READ_ID(id)
+                var one = try #require(first)
+                var other = one
+                one.name = "one"
+                other.level = "gold"
+                other.address?.city = "Madrid"
+                other.passwordHash = nil
+                try await uow.customers.update(one)
+                try await uow.customers.update(other)
+                var document = try #require(try await stored(uow, "customers"))
+                #expect(document["name"] as? String == "one")
+                #expect(document["level"] as? String == "gold")
+                #expect(document["unknown"] as? Int == 1)
+                let address = document["address"] as? BsonDocument
+                #expect(address?["city"] as? String == "Madrid")
+                #expect(address?["unknown"] as? Int == 2)
+                #expect(document["passwordHash"] == nil)
+                // The entity an insert gives changes only its fields too
+                inserted.name = "again"
+                try await uow.customers.update(inserted)
+                document = try #require(try await stored(uow, "customers"))
+                #expect(document["name"] as? String == "again")
+                #expect(document["level"] as? String == "gold")
+            }
+        }
+
+        @Test func doesNotUndoWhatOthersChangeInAList() async throws {
+            try await TestDatabase.with { uow in
+                let id = try await Factories.addOrder(uow, 1).id!
+                let read = try await uow.orders.READ_ID(id)
+                var mine = try #require(read)
+                try await withThrowingTaskGroup(of: Void.self) { group in
+                    for n in 0..<4 { group.addTask { _ = try await uow.orders.addLine(id, Factories.newOrderLine(n)) } }
+                    try await group.waitForAll()
+                }
+                mine.number = 99
+                try await uow.orders.update(mine)
+                let found = try await uow.orders.READ_ID(id)
+                let lines = try #require(found?.lines)
+                #expect(lines.count == 5)
+                for line in lines.dropFirst() { _ = try await uow.orders.removeLine(id, line.id!) }
+                #expect(try await uow.orders.READ_ID(id)?.lines?.count == 1)
+                #expect(try await uow.orders.addLine(String(repeating: "f", count: 24), Order.Line()) == nil)
+                #expect(try await uow.orders.READ_ID("nothing") == nil)
+                #expect(try await uow.orders.addLine("nothing", Order.Line()) == nil)
+                #expect(try await uow.orders.removeLine(id, "nothing") == nil)
+            }
+        }
+
+        @Test func refusesRepeatedAndWrongValues() async throws {
+            try await TestDatabase.with { uow in
+                try await Factories.addCustomer(uow, 1)
+                #expect(isConflict(await refusal { try await Factories.addCustomer(uow, 1) }))
+                // A document with a value of another type is not read as if it had none
+                #expect(throws: BsonError.self) { try Bson.read(["a": "text"], "a", Bson.asDouble) }
+                #expect(try Bson.read(["a": Int32(2)], "a", Bson.asDouble) == 2)
+            }
+        }
+
+        @Test func readsAllTheDocumentsOfACursor() async throws {
+            try await TestDatabase.with { uow in
+                for n in 0..<300 { try await uow.db.insert("many", ["n": n]) }
+                #expect(try await uow.db.find("many", [:]).count == 300)
+                #expect(try await uow.db.count("many", [:]) == 300)
+            }
+        }
+TRANSACTION
+        @Test func createsNothingInTheDatabase() async throws {
+            try await TestDatabase.with { uow in
+                try await uow.db.run(["dropDatabase": 1])
+                let app = try await AppDatabase(url: ProcessInfo.processInfo.environment["TEST_DATABASE_URL"]!)
+                let other = MongoUnitOfWork(db: app.database)
+                let found = try await other.customers.READ_ID(String(repeating: "f", count: 24))
+                await app.shutdown()
+                #expect(found == nil)
+                let reply = try await uow.db.run(["listCollections": 1])
+                let names = (reply["cursor"] as? BsonDocument)?["firstBatch"] as? BsonDocument
+                #expect(names?.isEmpty == true)
+            }
+        }
+    }
+}
+`
+
+const SWIFT_TRANSACTION = `
+        @Test func undoesATransactionThatFails() async throws {
+            struct Stop: Error {}
+            try await TestDatabase.with { uow in
+                await #expect(throws: Stop.self) {
+                    try await uow.transaction { inside in
+                        var customer = try await Factories.addCustomer(inside, 1)
+                        customer.name = "changed"
+                        try await inside.customers.update(customer)
+                        #expect(try await inside.customers.READ_ID(customer.id!)?.name == "changed")
+                        let refused = await refusal { try await Factories.addCustomer(inside, 1) }
+                        #expect(isConflict(refused))
+                        throw Stop()
+                    }
+                }
+                #expect(try await stored(uow, "customers") == nil)
+                try await uow.transaction { inside in
+                    try await Factories.addCustomer(inside, 1)
+                    try await inside.transaction { joined in _ = try await Factories.addCustomer(joined, 2) }
+                }
+                #expect(try await uow.db.count("customers", [:]) == 2)
+                // A cursor longer than a batch, and a count, inside a transaction
+                for n in 0..<300 { try await uow.db.insert("many", ["n": n]) }
+                let counts = try await uow.db.transaction { inside in
+                    [try await inside.find("many", [:]).count, try await inside.count("many", [:])]
+                }
+                #expect(counts == [300, 300])
+            }
+        }
+`
+
+const SWIFT_CLINIC = `import Foundation
+import MongoKitten
+import Testing
+@testable import MODULE
+
+extension DataTests {
+    /// What no other test of the project says.
+    @Suite struct RoundTripTests {
+        @Test func fitsTheValidatorsOfTheCollections() async throws {
+            try await TestDatabase.with { uow in
+                // The collections with the validators of their own script, as a command of the server
+VALIDATORS
+                let patient = try await uow.patients.insert(Factories.newPatient(1))
+                let read = try await uow.patients.findById(patient.id!)
+                var found = try #require(read)
+                #expect(found.birth == patient.birth)
+                #expect(found.balance == patient.balance)
+                var room = try await Factories.addRoom(uow, 1)
+                found.weight = 70
+                found.balance = nil
+                found.visits = 3
+                found.contacts?.append(Patient.Contact(kind: "email", value: "a@b.c"))
+                room.beds = 4
+                try await uow.patients.update(found)
+                try await uow.rooms.update(room)
+                let again = try await uow.patients.findById(patient.id!)
+                let changed = try #require(again)
+                #expect(changed.weight == 70)
+                #expect(changed.balance == nil)
+                #expect(changed.visits == 3)
+                #expect(changed.contacts?.count == 2)
+                #expect(try await uow.rooms.findById(room.id!)?.beds == 4)
+                #expect(isConflict(await refusal { try await uow.patients.insert(Factories.newPatient(1)) }))
+                try await Factories.addPatient(uow, 2)
+                // What only the validator of the collection knows is refused too
+                var wrong = Factories.newPatient(3)
+                wrong.blood = "Z"
+                let refused = wrong
+                #expect(isConflict(await refusal { try await uow.patients.insert(refused) }))
+                #expect(isConflict(await refusal { try await uow.patients.addContact(patient.id!, Patient.Contact(kind: "fax", value: "")) }))
+            }
+        }
+    }
+}
+`
+
+/** A value as a literal of a document in Swift. */
+const swiftDoc = (value) =>
+  Array.isArray(value)
+    ? `[${value.map(swiftDoc).join(', ')}] as BsonDocument`
+    : value && typeof value === 'object'
+      ? `[${Object.entries(value).map(([name, item]) => `${JSON.stringify(name)}: ${swiftDoc(item)}`).join(', ') || ':'}] as BsonDocument`
+      : JSON.stringify(value)
+
+export function withSwiftRoundTrip(files, settings, code) {
+  if (settings.architecture === 'table') return files
+  const read = settings.verbs === 'get' ? 'getById' : 'findById'
+  const module = /\.library\(name: "(\w+)"/.exec(files.find((file) => file.path === 'Package.swift').content)[1]
+  const commands = Object.entries(clinicValidators()).map(
+    ([collection, validator], index) =>
+      `                let validator${index}: BsonDocument = ${swiftDoc(validator)}\n                try await uow.db.run(["collMod": ${JSON.stringify(collection)}, "validator": validator${index}, "validationAction": "error"])`,
+  )
+  const content = code.endsWith('shop.ts')
+    ? SWIFT_SHOP.replace('TRANSACTION', () => (settings.transactions === 'operation' ? SWIFT_TRANSACTION : ''))
+    : SWIFT_CLINIC.replace('VALIDATORS', () => commands.join('\n'))
+  return [
+    ...files,
+    { path: `Tests/${module}Tests/RoundTripTests.swift`, content: content.replaceAll('READ_ID', read).replaceAll('MODULE', module) },
+  ]
+}

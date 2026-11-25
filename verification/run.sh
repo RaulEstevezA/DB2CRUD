@@ -19,7 +19,7 @@ runner_of() {
     doctrine-* | eloquent-* | php-sql-* | mongophp-*) echo ./runners/php.sh ;;
     exposed-* | kotlin-sql-* | mongokotlin-*) echo ./runners/kotlin.sh ;;
     seaorm-* | rust-sql-* | mongorust-*) echo ./runners/rust.sh ;;
-    fluent-* | swift-sql-*) echo ./runners/swift.sh ;;
+    fluent-* | swift-sql-* | mongoswift-*) echo ./runners/swift.sh ;;
   esac
 }
 

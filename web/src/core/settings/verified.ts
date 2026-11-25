@@ -886,6 +886,30 @@ export const VERIFIED: readonly VerifiedStack[] = [
     ],
     date: '2026-11-25',
   },
+  {
+    language: 'swift',
+    orm: 'mongoswift',
+    database: 'mongodb',
+    execution: 'async',
+    scenarios: [
+      'mongoswift-mongodb-defaults',
+      'mongoswift-mongodb-operation',
+      'mongoswift-mongodb-struct-dtos-patch-cursor-by-table',
+      'mongoswift-mongodb-struct-dtos-full-caller',
+      'mongoswift-mongodb-no-interfaces-services-tests',
+      'mongoswift-mongodb-repositories-only',
+      'mongoswift-mongodb-validators',
+      'mongoswift-mongodb-validators-dtos',
+      'mongoswift-mongodb-from-mongosh',
+      'mongoswift-mongodb-from-documents',
+      'mongoswift-mongodb-from-model2db',
+      'mongoswift-mongodb-from-model2db-validators',
+      'mongoswift-mongodb-conversions',
+      'mongoswift-mongodb-conversions-dtos',
+      'mongoswift-mongodb-conversions-import',
+    ],
+    date: '2026-11-25',
+  },
 ]
 
 /** Whether this stack has passed the verification. */

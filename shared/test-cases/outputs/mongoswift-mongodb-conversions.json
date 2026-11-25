@@ -1,0 +1,911 @@
+{
+ "schema": {
+  "format": "db-schema",
+  "version": 1,
+  "dialect": "mongodb",
+  "source": {
+   "kind": "orm",
+   "format": "mongodb"
+  },
+  "tables": [
+   {
+    "name": "customers",
+    "columns": [
+     {
+      "name": "_id",
+      "type": {
+       "sql": "ObjectId",
+       "kind": "text",
+       "length": 24,
+       "fixed": true,
+       "objectId": true
+      },
+      "nullable": false,
+      "generated": "uuid"
+     },
+     {
+      "name": "email",
+      "type": {
+       "sql": "string",
+       "kind": "text"
+      },
+      "nullable": false
+     },
+     {
+      "name": "level",
+      "type": {
+       "sql": "string",
+       "kind": "text"
+      },
+      "nullable": true
+     },
+     {
+      "name": "since",
+      "type": {
+       "sql": "date",
+       "kind": "datetime",
+       "timezone": true
+      },
+      "nullable": false
+     },
+     {
+      "name": "address",
+      "type": {
+       "sql": "object",
+       "kind": "json",
+       "fields": [
+        {
+         "name": "street",
+         "type": {
+          "sql": "string",
+          "kind": "text"
+         },
+         "nullable": false
+        },
+        {
+         "name": "zip code",
+         "type": {
+          "sql": "string",
+          "kind": "text"
+         },
+         "nullable": false
+        },
+        {
+         "name": "location",
+         "type": {
+          "sql": "object",
+          "kind": "json",
+          "fields": [
+           {
+            "name": "latitude",
+            "type": {
+             "sql": "double",
+             "kind": "float",
+             "bits": 64
+            },
+            "nullable": false
+           },
+           {
+            "name": "longitude",
+            "type": {
+             "sql": "double",
+             "kind": "float",
+             "bits": 64
+            },
+            "nullable": false
+           }
+          ]
+         },
+         "nullable": true
+        }
+       ]
+      },
+      "nullable": false
+     },
+     {
+      "name": "tags",
+      "type": {
+       "sql": "array<string>",
+       "kind": "array",
+       "items": {
+        "sql": "string",
+        "kind": "text"
+       }
+      },
+      "nullable": true
+     }
+    ],
+    "primaryKey": [
+     "_id"
+    ],
+    "foreignKeys": [],
+    "uniques": [
+     {
+      "columns": [
+       "email"
+      ]
+     }
+    ],
+    "indexes": [],
+    "checks": [
+     {
+      "sql": "level IN ('basic', 'gold')",
+      "parsed": {
+       "kind": "in",
+       "column": "level",
+       "values": [
+        "basic",
+        "gold"
+       ]
+      }
+     }
+    ],
+    "origin": {
+     "line": 2,
+     "column": 1
+    }
+   },
+   {
+    "name": "orders",
+    "columns": [
+     {
+      "name": "_id",
+      "type": {
+       "sql": "ObjectId",
+       "kind": "text",
+       "length": 24,
+       "fixed": true,
+       "objectId": true
+      },
+      "nullable": false,
+      "generated": "uuid"
+     },
+     {
+      "name": "code",
+      "type": {
+       "sql": "string",
+       "kind": "text"
+      },
+      "nullable": false
+     },
+     {
+      "name": "lines",
+      "type": {
+       "sql": "array<object>",
+       "kind": "array",
+       "items": {
+        "sql": "object",
+        "kind": "json",
+        "fields": [
+         {
+          "name": "_id",
+          "type": {
+           "sql": "ObjectId",
+           "kind": "text",
+           "length": 24,
+           "fixed": true,
+           "objectId": true
+          },
+          "nullable": true
+         },
+         {
+          "name": "sku",
+          "type": {
+           "sql": "string",
+           "kind": "text"
+          },
+          "nullable": false
+         },
+         {
+          "name": "quantity",
+          "type": {
+           "sql": "int",
+           "kind": "integer",
+           "bits": 32
+          },
+          "nullable": false
+         },
+         {
+          "name": "price",
+          "type": {
+           "sql": "decimal",
+           "kind": "decimal"
+          },
+          "nullable": false
+         },
+         {
+          "name": "status",
+          "type": {
+           "sql": "string",
+           "kind": "enum",
+           "name": "orders_lines_status"
+          },
+          "nullable": true
+         },
+         {
+          "name": "discounts",
+          "type": {
+           "sql": "array<object>",
+           "kind": "array",
+           "items": {
+            "sql": "object",
+            "kind": "json",
+            "fields": [
+             {
+              "name": "reason",
+              "type": {
+               "sql": "string",
+               "kind": "text"
+              },
+              "nullable": false
+             },
+             {
+              "name": "percent",
+              "type": {
+               "sql": "double",
+               "kind": "float",
+               "bits": 64
+              },
+              "nullable": false
+             }
+            ]
+           }
+          },
+          "nullable": true
+         }
+        ]
+       }
+      },
+      "nullable": false
+     },
+     {
+      "name": "shipping",
+      "type": {
+       "sql": "object",
+       "kind": "json",
+       "fields": [
+        {
+         "name": "carrier",
+         "type": {
+          "sql": "string",
+          "kind": "text"
+         },
+         "nullable": false
+        },
+        {
+         "name": "sentOn",
+         "type": {
+          "sql": "date",
+          "kind": "datetime",
+          "timezone": true
+         },
+         "nullable": false
+        }
+       ]
+      },
+      "nullable": true
+     }
+    ],
+    "primaryKey": [
+     "_id"
+    ],
+    "foreignKeys": [],
+    "uniques": [
+     {
+      "columns": [
+       "code"
+      ]
+     }
+    ],
+    "indexes": [],
+    "checks": [],
+    "origin": {
+     "line": 30,
+     "column": 1
+    }
+   },
+   {
+    "name": "shipments",
+    "columns": [
+     {
+      "name": "_id",
+      "type": {
+       "sql": "ObjectId",
+       "kind": "text",
+       "length": 24,
+       "fixed": true,
+       "objectId": true
+      },
+      "nullable": false,
+      "generated": "uuid"
+     },
+     {
+      "name": "parcel",
+      "type": {
+       "sql": "object",
+       "kind": "json",
+       "fields": [
+        {
+         "name": "weight",
+         "type": {
+          "sql": "double",
+          "kind": "float",
+          "bits": 64
+         },
+         "nullable": false
+        },
+        {
+         "name": "contents",
+         "type": {
+          "sql": "string",
+          "kind": "text"
+         },
+         "nullable": false
+        },
+        {
+         "name": "size",
+         "type": {
+          "sql": "object",
+          "kind": "json",
+          "fields": [
+           {
+            "name": "height",
+            "type": {
+             "sql": "double",
+             "kind": "float",
+             "bits": 64
+            },
+            "nullable": false
+           }
+          ]
+         },
+         "nullable": true
+        }
+       ]
+      },
+      "nullable": false
+     },
+     {
+      "name": "stops",
+      "type": {
+       "sql": "array<object>",
+       "kind": "array",
+       "items": {
+        "sql": "object",
+        "kind": "json",
+        "fields": [
+         {
+          "name": "city",
+          "type": {
+           "sql": "string",
+           "kind": "text"
+          },
+          "nullable": true
+         }
+        ]
+       }
+      },
+      "nullable": true
+     }
+    ],
+    "primaryKey": [
+     "_id"
+    ],
+    "foreignKeys": [],
+    "uniques": [],
+    "indexes": [],
+    "checks": [],
+    "origin": {
+     "line": 70,
+     "column": 1
+    }
+   }
+  ],
+  "enums": [
+   {
+    "name": "orders_lines_status",
+    "values": [
+     "pending",
+     "sent"
+    ],
+    "storage": "check"
+   }
+  ],
+  "notes": []
+ },
+ "decisions": [],
+ "settings": {
+  "name": "mongoswift-mongodb-conversions",
+  "language": "swift",
+  "orm": "mongoswift",
+  "database": "mongodb"
+ },
+ "models": {
+  "schema": {
+   "format": "model-schema",
+   "version": 1,
+   "origin": {
+    "format": "swift",
+    "language": "swift",
+    "framework": "codable"
+   },
+   "models": [
+    {
+     "name": "Location",
+     "kind": "struct",
+     "fields": [
+      {
+       "name": "latitude",
+       "type": {
+        "kind": "primitive",
+        "name": "float",
+        "bits": 64
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "Double"
+      },
+      {
+       "name": "longitude",
+       "type": {
+        "kind": "primitive",
+        "name": "float",
+        "bits": 64
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "Double"
+      }
+     ],
+     "framework": "codable",
+     "construction": "named"
+    },
+    {
+     "name": "Address",
+     "kind": "struct",
+     "fields": [
+      {
+       "name": "street",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String"
+      },
+      {
+       "name": "zipCode",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String"
+      },
+      {
+       "name": "location",
+       "type": {
+        "kind": "model",
+        "name": "Location"
+       },
+       "nullable": true,
+       "optional": false,
+       "originalType": "Location?"
+      }
+     ],
+     "framework": "codable",
+     "construction": "named"
+    },
+    {
+     "name": "Customer",
+     "kind": "struct",
+     "fields": [
+      {
+       "name": "id",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String"
+      },
+      {
+       "name": "email",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String"
+      },
+      {
+       "name": "level",
+       "type": {
+        "kind": "enum",
+        "name": "Level"
+       },
+       "nullable": true,
+       "optional": false,
+       "originalType": "Level?"
+      },
+      {
+       "name": "since",
+       "type": {
+        "kind": "primitive",
+        "name": "datetime"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "Date"
+      },
+      {
+       "name": "address",
+       "type": {
+        "kind": "model",
+        "name": "Address"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "Address"
+      },
+      {
+       "name": "tags",
+       "type": {
+        "kind": "array",
+        "items": {
+         "kind": "primitive",
+         "name": "string"
+        }
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "[String]"
+      }
+     ],
+     "framework": "codable",
+     "construction": "named"
+    },
+    {
+     "name": "Discount",
+     "kind": "struct",
+     "fields": [
+      {
+       "name": "reason",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String"
+      },
+      {
+       "name": "percent",
+       "type": {
+        "kind": "primitive",
+        "name": "float",
+        "bits": 64
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "Double"
+      }
+     ],
+     "framework": "codable",
+     "construction": "named"
+    },
+    {
+     "name": "OrderLine",
+     "kind": "struct",
+     "fields": [
+      {
+       "name": "id",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": true,
+       "optional": false,
+       "originalType": "String?"
+      },
+      {
+       "name": "sku",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String"
+      },
+      {
+       "name": "quantity",
+       "type": {
+        "kind": "primitive",
+        "name": "integer",
+        "bits": 64
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "Int"
+      },
+      {
+       "name": "price",
+       "type": {
+        "kind": "primitive",
+        "name": "decimal"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "Decimal"
+      },
+      {
+       "name": "status",
+       "type": {
+        "kind": "enum",
+        "name": "LineStatus"
+       },
+       "nullable": true,
+       "optional": false,
+       "originalType": "LineStatus?"
+      },
+      {
+       "name": "discounts",
+       "type": {
+        "kind": "array",
+        "items": {
+         "kind": "model",
+         "name": "Discount"
+        }
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "[Discount]"
+      }
+     ],
+     "framework": "codable",
+     "construction": "named"
+    },
+    {
+     "name": "Shipping",
+     "kind": "struct",
+     "fields": [
+      {
+       "name": "carrier",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String"
+      },
+      {
+       "name": "sentOn",
+       "type": {
+        "kind": "primitive",
+        "name": "datetime"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "Date"
+      }
+     ],
+     "framework": "codable",
+     "construction": "named"
+    },
+    {
+     "name": "Order",
+     "kind": "struct",
+     "fields": [
+      {
+       "name": "id",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String"
+      },
+      {
+       "name": "code",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String"
+      },
+      {
+       "name": "lines",
+       "type": {
+        "kind": "array",
+        "items": {
+         "kind": "model",
+         "name": "OrderLine"
+        }
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "[OrderLine]"
+      },
+      {
+       "name": "shipping",
+       "type": {
+        "kind": "model",
+        "name": "Shipping"
+       },
+       "nullable": true,
+       "optional": false,
+       "originalType": "Shipping?"
+      }
+     ],
+     "framework": "codable",
+     "construction": "named"
+    },
+    {
+     "name": "Parcel",
+     "kind": "struct",
+     "fields": [
+      {
+       "name": "weight",
+       "type": {
+        "kind": "primitive",
+        "name": "float",
+        "bits": 64
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "Double"
+      },
+      {
+       "name": "size",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String"
+      },
+      {
+       "name": "fragile",
+       "type": {
+        "kind": "primitive",
+        "name": "boolean"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "Bool"
+      }
+     ],
+     "framework": "codable",
+     "construction": "named"
+    },
+    {
+     "name": "Shipment",
+     "kind": "struct",
+     "fields": [
+      {
+       "name": "id",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String"
+      },
+      {
+       "name": "parcel",
+       "type": {
+        "kind": "model",
+        "name": "Parcel"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "Parcel"
+      },
+      {
+       "name": "stops",
+       "type": {
+        "kind": "array",
+        "items": {
+         "kind": "primitive",
+         "name": "string"
+        }
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "[String]"
+      }
+     ],
+     "framework": "codable",
+     "construction": "named"
+    }
+   ],
+   "enums": [
+    {
+     "name": "Level",
+     "values": [
+      {
+       "name": "basic",
+       "value": "basic"
+      },
+      {
+       "name": "gold",
+       "value": "gold"
+      }
+     ]
+    },
+    {
+     "name": "LineStatus",
+     "values": [
+      {
+       "name": "pending",
+       "value": "pending"
+      },
+      {
+       "name": "sent",
+       "value": "sent"
+      }
+     ]
+    }
+   ]
+  },
+  "project": null
+ },
+ "files": {
+  ".env.example": "# Where the database is, and who connects\nDATABASE_URL=mongodb://localhost:27017/app\n# The database the tests use (it is emptied by the tests): one of the same kind as DATABASE_URL\n# TEST_DATABASE_URL=\n",
+  ".gitignore": ".build/\n.swiftpm/\n.env\n*.db\n",
+  "Package.swift": "// swift-tools-version:6.0\nimport PackageDescription\n\nlet package = Package(\n    name: \"mongoswift-mongodb-conversions\",\n    platforms: [.macOS(.v13)],\n    products: [.library(name: \"MongoswiftMongodbConversions\", targets: [\"MongoswiftMongodbConversions\"])],\n    dependencies: [\n        .package(url: \"https://github.com/orlandos-nl/MongoKitten.git\", from: \"7.17.0\"),\n    ],\n    targets: [\n        .target(\n            name: \"MongoswiftMongodbConversions\",\n            dependencies: [\n                .product(name: \"MongoKitten\", package: \"MongoKitten\"),\n                .product(name: \"MongoClient\", package: \"MongoKitten\"),\n                .product(name: \"MongoCore\", package: \"MongoKitten\"),\n                \"ApplicationModels\",\n            ]\n        ),\n        // The application models: a copy of the types DB2CRUD read.\n        .target(name: \"ApplicationModels\", path: \"Sources/ApplicationModels\"),\n        .testTarget(\n            name: \"MongoswiftMongodbConversionsTests\",\n            dependencies: [\"MongoswiftMongodbConversions\", .product(name: \"MongoKitten\", package: \"MongoKitten\")]\n        ),\n    ]\n)\n",
+  "README.md": "# mongoswift-mongodb-conversions\n\nData access layer generated by [DB2CRUD](https://github.com/RaulEstevezA/DB2CRUD) for a database that already exists: plain entities, repositories and services with MongoKitten, in Swift with async/await. It does not create or migrate the database, and it depends on no web framework.\n\n## Settings\n\n- Database: mongodb.\n- Entities: written for the tables the input had no type for.\n- Services: take and return the entities; updates take a Patch per field: .absent, or set to a value that may be nil.\n- Transactions: every repository write is committed at once.\n- Lists: lists return pages by offset and limit.\n\n## Layout\n\n```text\nSources/MongoswiftMongodbConversions/AppDatabase.swift   the connection of DATABASE_URL\nSources/MongoswiftMongodbConversions/Bson.swift          values of documents, and what changed in one\nSources/MongoswiftMongodbConversions/UnitOfWork.swift    the repositories of every table, and the transaction of each operation\nSources/MongoswiftMongodbConversions/Errors.swift        DomainError: notFound, conflict, validationFailed; no HTTP codes\nSources/MongoswiftMongodbConversions/Entities/          one entity per collection\nSources/MongoswiftMongodbConversions/Repositories/      the repositories of each table\nSources/MongoswiftMongodbConversions/Services/          one service per table\nTests/MongoswiftMongodbConversionsTests/            repositories against a database, services on the in-memory repositories\ncrud-contract.json                     what was written, for CRUD2Controller\n```\n\n## Running the tests\n\n```bash\nTEST_DATABASE_URL=\"mongodb://localhost:27017/app\" swift test   # a real, disposable database: it is emptied\n```\n\nLook for `TODO` in the code: each one marks a decision the input did not settle.\n",
+  "Sources/ApplicationModels/Address.swift": "import Foundation\n\n/// Address, as the application has it.\npublic struct Address: Sendable, Equatable {\n    public var street: String\n    public var zipCode: String\n    public var location: Location?\n\n    public init(street: String, zipCode: String, location: Location? = nil) {\n        self.street = street\n        self.zipCode = zipCode\n        self.location = location\n    }\n}\n",
+  "Sources/ApplicationModels/Customer.swift": "import Foundation\n\n/// Customer, as the application has it.\npublic struct Customer: Sendable, Equatable {\n    public var id: String\n    public var email: String\n    public var level: Level?\n    public var since: Date\n    public var address: Address\n    public var tags: [String]\n\n    public init(id: String, email: String, level: Level? = nil, since: Date, address: Address, tags: [String]) {\n        self.id = id\n        self.email = email\n        self.level = level\n        self.since = since\n        self.address = address\n        self.tags = tags\n    }\n}\n",
+  "Sources/ApplicationModels/Discount.swift": "import Foundation\n\n/// Discount, as the application has it.\npublic struct Discount: Sendable, Equatable {\n    public var reason: String\n    public var percent: Double\n\n    public init(reason: String, percent: Double) {\n        self.reason = reason\n        self.percent = percent\n    }\n}\n",
+  "Sources/ApplicationModels/Level.swift": "/// Level, as the application has it.\npublic enum Level: String, Sendable, Equatable {\n    case basic = \"basic\"\n    case gold = \"gold\"\n}\n",
+  "Sources/ApplicationModels/LineStatus.swift": "/// LineStatus, as the application has it.\npublic enum LineStatus: String, Sendable, Equatable {\n    case pending = \"pending\"\n    case sent = \"sent\"\n}\n",
+  "Sources/ApplicationModels/Location.swift": "import Foundation\n\n/// Location, as the application has it.\npublic struct Location: Sendable, Equatable {\n    public var latitude: Double\n    public var longitude: Double\n\n    public init(latitude: Double, longitude: Double) {\n        self.latitude = latitude\n        self.longitude = longitude\n    }\n}\n",
+  "Sources/ApplicationModels/Order.swift": "import Foundation\n\n/// Order, as the application has it.\npublic struct Order: Sendable, Equatable {\n    public var id: String\n    public var code: String\n    public var lines: [OrderLine]\n    public var shipping: Shipping?\n\n    public init(id: String, code: String, lines: [OrderLine], shipping: Shipping? = nil) {\n        self.id = id\n        self.code = code\n        self.lines = lines\n        self.shipping = shipping\n    }\n}\n",
+  "Sources/ApplicationModels/OrderLine.swift": "import Foundation\n\n/// OrderLine, as the application has it.\npublic struct OrderLine: Sendable, Equatable {\n    public var id: String?\n    public var sku: String\n    public var quantity: Int\n    public var price: Decimal\n    public var status: LineStatus?\n    public var discounts: [Discount]\n\n    public init(id: String? = nil, sku: String, quantity: Int, price: Decimal, status: LineStatus? = nil, discounts: [Discount]) {\n        self.id = id\n        self.sku = sku\n        self.quantity = quantity\n        self.price = price\n        self.status = status\n        self.discounts = discounts\n    }\n}\n",
+  "Sources/ApplicationModels/Parcel.swift": "import Foundation\n\n/// Parcel, as the application has it.\npublic struct Parcel: Sendable, Equatable {\n    public var weight: Double\n    public var size: String\n    public var fragile: Bool\n\n    public init(weight: Double, size: String, fragile: Bool) {\n        self.weight = weight\n        self.size = size\n        self.fragile = fragile\n    }\n}\n",
+  "Sources/ApplicationModels/Shipment.swift": "import Foundation\n\n/// Shipment, as the application has it.\npublic struct Shipment: Sendable, Equatable {\n    public var id: String\n    public var parcel: Parcel\n    public var stops: [String]\n\n    public init(id: String, parcel: Parcel, stops: [String]) {\n        self.id = id\n        self.parcel = parcel\n        self.stops = stops\n    }\n}\n",
+  "Sources/ApplicationModels/Shipping.swift": "import Foundation\n\n/// Shipping, as the application has it.\npublic struct Shipping: Sendable, Equatable {\n    public var carrier: String\n    public var sentOn: Date\n\n    public init(carrier: String, sentOn: Date) {\n        self.carrier = carrier\n        self.sentOn = sentOn\n    }\n}\n",
+  "Sources/MongoswiftMongodbConversions/AppDatabase.swift": "import Foundation\nimport MongoClient\nimport MongoCore\nimport MongoKitten\n\n/// The database DATABASE_URL names, through MongoKitten. It creates no collection and no index: the database already exists.\npublic final class AppDatabase: Sendable {\n    public static let defaultURL = \"mongodb://localhost:27017/app\"\n\n    /// What the repositories work on.\n    public let database: Db\n\n    /// The database at url (DATABASE_URL, or defaultURL, by default).\n    public init(url: String = ProcessInfo.processInfo.environment[\"DATABASE_URL\"] ?? AppDatabase.defaultURL) async throws {\n        self.database = Db(mongo: try await MongoDatabase.connect(to: url))\n    }\n\n    /// Closes the connections.\n    public func shutdown() async {\n        await (database.mongo.pool as? MongoCluster)?.disconnect()\n    }\n}\n\n/// What the database answers when it does not do something.\npublic struct MongoRefusal: Error, CustomStringConvertible {\n    public let code: Int\n    public let description: String\n}\n\n/// Whether the database refused a write: a unique value taken, or one the validator of the collection does not take.\nfunc isRefusal(_ error: any Error) -> Bool {\n    (error as? MongoRefusal).map { [11000, 121].contains($0.code) } ?? false\n}\n\n/// What the repositories work on: the database, or the transaction of a session (MongoDB has them on replica sets only).\npublic struct Db: Sendable {\n    public let mongo: MongoDatabase\n\n    /// Runs a command, and gives what the database answers.\n    @discardableResult\n    public func run(_ command: BsonDocument, on connection: MongoConnection? = nil) async throws -> BsonDocument {\n        let connection = if let connection { connection } else { try await mongo.pool.next(for: .writable) }\n        let reply = try await connection.executeCodable(\n            command, decodeAs: BsonDocument.self, namespace: mongo.commandNamespace, in: mongo.activeTransaction,\n            sessionId: mongo.sessionId ?? connection.implicitSessionId)\n        guard let ok = reply[\"ok\"], try Bson.asDouble(ok) == 1 else { throw refusal(reply) }\n        if let errors = reply[\"writeErrors\"] as? BsonDocument, let first = errors[\"0\"] as? BsonDocument { throw refusal(first) }\n        return reply\n    }\n\n    private func refusal(_ reply: BsonDocument) -> MongoRefusal {\n        let code = try? reply[\"code\"].map(Bson.asInt32)\n        return MongoRefusal(code: code ?? 0, description: reply[\"errmsg\"] as? String ?? \"the database answered an error\")\n    }\n\n    /// The documents of a filter, in order; at most limit of them when it is not 0.\n    public func find(\n        _ collection: String, _ filter: BsonDocument, sort: BsonDocument? = nil, skip: Int = 0, limit: Int = 0\n    ) async throws -> [BsonDocument] {\n        var command: BsonDocument = [\"find\": collection, \"filter\": filter]\n        if let sort { command[\"sort\"] = sort }\n        if skip > 0 { command[\"skip\"] = skip }\n        if limit > 0 { command[\"limit\"] = limit }\n        // The rest of a cursor is read on the connection that opened it\n        let connection = try await mongo.pool.next(for: .writable)\n        var cursor = try await run(command, on: connection)[\"cursor\"] as? BsonDocument ?? [:]\n        var found = documents(cursor[\"firstBatch\"])\n        while let id = cursor[\"id\"] as? Int, id != 0 {\n            cursor = try await run([\"getMore\": id, \"collection\": collection], on: connection)[\"cursor\"] as? BsonDocument ?? [:]\n            found += documents(cursor[\"nextBatch\"])\n        }\n        return found\n    }\n\n    private func documents(_ batch: (any BsonPrimitive)?) -> [BsonDocument] {\n        (batch as? BsonDocument ?? [:]).compactMap { $0.1 as? BsonDocument }\n    }\n\n    /// How many documents a filter has; an aggregation, as a count cannot be in a transaction.\n    public func count(_ collection: String, _ filter: BsonDocument) async throws -> Int {\n        let stages: BsonDocument = [[\"$match\": filter] as BsonDocument, [\"$count\": \"n\"] as BsonDocument]\n        let reply = try await run([\"aggregate\": collection, \"pipeline\": stages, \"cursor\": [:] as BsonDocument])\n        guard let cursor = reply[\"cursor\"] as? BsonDocument, let first = documents(cursor[\"firstBatch\"]).first else { return 0 }\n        return try first[\"n\"].map(Bson.asInt64) ?? 0\n    }\n\n    public func insert(_ collection: String, _ document: BsonDocument) async throws {\n        try await run([\"insert\": collection, \"documents\": [document] as BsonDocument])\n    }\n\n    public func update(_ collection: String, _ filter: BsonDocument, _ change: BsonDocument) async throws {\n        let update: BsonDocument = [\"q\": filter, \"u\": change]\n        try await run([\"update\": collection, \"updates\": [update] as BsonDocument])\n    }\n\n    public func delete(_ collection: String, _ filter: BsonDocument) async throws {\n        let delete: BsonDocument = [\"q\": filter, \"limit\": 1]\n        try await run([\"delete\": collection, \"deletes\": [delete] as BsonDocument])\n    }\n\n    /// Changes one document where it is, and gives it as it is then; nil when there is none.\n    public func change(_ collection: String, _ filter: BsonDocument, _ change: BsonDocument) async throws -> BsonDocument? {\n        try await run([\"findAndModify\": collection, \"query\": filter, \"update\": change, \"new\": true])[\"value\"] as? BsonDocument\n    }\n\n    /// Runs work in a transaction, committed when it ends and undone when it throws; it joins the one already open.\n    public func transaction<T: Sendable>(_ work: @escaping @Sendable (Db) async throws -> T) async throws -> T {\n        if mongo.isInTransaction { return try await work(self) }\n        let session = try await mongo.startTransaction(autoCommitChanges: false)\n        do {\n            let result = try await work(Db(mongo: session))\n            try await session.commit()\n            return result\n        } catch {\n            try? await session.abort()\n            throw error\n        }\n    }\n}\n",
+  "Sources/MongoswiftMongodbConversions/Bson.swift": "import Foundation\nimport MongoKitten\n\npublic typealias BsonDocument = BSON.Document\npublic typealias BsonPrimitive = BSON.Primitive\n\n/// A value nothing says the shape of, as the document has it.\npublic struct BsonValue: Sendable, Equatable {\n    public let value: any BsonPrimitive\n\n    public init(_ value: any BsonPrimitive) {\n        self.value = value\n    }\n\n    public static func == (lhs: BsonValue, rhs: BsonValue) -> Bool {\n        lhs.value.equals(rhs.value)\n    }\n}\n\n/// The document an entity was read from, or stored as: a change writes only the fields that differ. It is no part of the\n/// value of the entity.\nstruct Loaded: Sendable, Equatable {\n    var document: BsonDocument?\n\n    static func == (lhs: Loaded, rhs: Loaded) -> Bool { true }\n}\n\n/// What is read from a document and written as one.\nprotocol DocumentValue {\n    static func from(_ document: BsonDocument) throws -> Self\n    func toDocument() throws -> BsonDocument\n}\n\n/// A document has a value of another type, or a value cannot be stored.\nstruct BsonError: Error, CustomStringConvertible {\n    let description: String\n}\n\n/// Values between Swift and the documents of MongoDB, and what changed in a document.\nenum Bson {\n    static var null: any BsonPrimitive { BSON.Null() }\n\n    static func newId() -> String { BSON.ObjectId().hexString }\n\n    /// Whether a text is an identifier of MongoDB.\n    static func isObjectId(_ text: String) -> Bool { BSON.ObjectId(text) != nil }\n\n    /// The update that takes a document from what it was to what it is: only the fields that differ, and inside a nested\n    /// document only its own.\n    static func changes(_ before: BsonDocument?, _ now: BsonDocument, _ fields: [String]) -> BsonDocument {\n        var set: BsonDocument = [:]\n        var unset: BsonDocument = [:]\n        for field in fields { compare(field, before?[field], now[field], &set, &unset) }\n        var result: BsonDocument = [:]\n        if !set.isEmpty { result[\"$set\"] = set }\n        if !unset.isEmpty { result[\"$unset\"] = unset }\n        return result\n    }\n\n    private static func compare(\n        _ path: String, _ before: (any BsonPrimitive)?, _ now: (any BsonPrimitive)?, _ set: inout BsonDocument, _ unset: inout BsonDocument\n    ) {\n        guard let now else {\n            if before != nil { unset[path] = \"\" }\n            return\n        }\n        guard let before else {\n            set[path] = now\n            return\n        }\n        if before.equals(now) { return }\n        if let old = before as? BsonDocument, let new = now as? BsonDocument, !old.isArray, !new.isArray {\n            for name in Set(old.keys).union(new.keys).sorted() { compare(\"\\(path).\\(name)\", old[name], new[name], &set, &unset) }\n        } else {\n            set[path] = now\n        }\n    }\n\n    /// An update that also sets some fields of the document.\n    static func alsoSet(_ changes: BsonDocument, _ now: BsonDocument, _ fields: [String]) -> BsonDocument {\n        var result = changes\n        var set = changes[\"$set\"] as? BsonDocument ?? [:]\n        for field in fields { set[field] = now[field] }\n        result[\"$set\"] = set\n        return result\n    }\n\n    /// A field of a document, if it has it.\n    static func read<T>(_ document: BsonDocument, _ field: String, _ from: (any BsonPrimitive) throws -> T) throws -> T? {\n        guard let value = document[field], !(value is BSON.Null) else { return nil }\n        return try from(value)\n    }\n\n    /// Writes a field of a document, if there is a value: what is nil is left out.\n    static func write<T>(_ document: inout BsonDocument, _ field: String, _ value: T?, _ to: (T) throws -> any BsonPrimitive) throws {\n        if let value { document[field] = try to(value) }\n    }\n\n    /// Reads a list with the function of its items.\n    static func asList<T>(_ from: @escaping (any BsonPrimitive) throws -> T) -> (any BsonPrimitive) throws -> [T] {\n        { value in\n            guard let items = value as? BsonDocument, items.isArray else { throw unexpected(value) }\n            return try items.compactMap { $0.1 is BSON.Null ? nil : try from($0.1) }\n        }\n    }\n\n    /// Writes a list with the function of its items.\n    static func ofList<T>(_ to: @escaping (T) throws -> any BsonPrimitive) -> ([T]) throws -> any BsonPrimitive {\n        { items in\n            var document = BsonDocument(isArray: true)\n            for item in items { document.append(try to(item)) }\n            return document\n        }\n    }\n\n    /// Reads a nested document as its struct.\n    static func asNested<T: DocumentValue>(_ type: T.Type) -> (any BsonPrimitive) throws -> T {\n        { value in\n            guard let document = value as? BsonDocument, !document.isArray else { throw unexpected(value) }\n            return try T.from(document)\n        }\n    }\n\n    /// Writes a struct as a nested document.\n    static func ofNested<T: DocumentValue>(_ value: T) throws -> any BsonPrimitive { try value.toDocument() }\n\n    static func asObjectId(_ value: any BsonPrimitive) throws -> String {\n        guard let read = (value as? BSON.ObjectId)?.hexString else { throw unexpected(value) }\n        return read\n    }\n\n    static func ofObjectId(_ value: String) throws -> any BsonPrimitive { try BSON.ObjectId.make(from: value) }\n\n    static func asText(_ value: any BsonPrimitive) throws -> String {\n        guard let read = value as? String else { throw unexpected(value) }\n        return read\n    }\n\n    static func ofText(_ value: String) throws -> any BsonPrimitive { value }\n\n    static func asBool(_ value: any BsonPrimitive) throws -> Bool {\n        guard let read = value as? Bool else { throw unexpected(value) }\n        return read\n    }\n\n    static func ofBool(_ value: Bool) throws -> any BsonPrimitive { value }\n\n    static func asInt32(_ value: any BsonPrimitive) throws -> Int {\n        guard let read = whole(value) else { throw unexpected(value) }\n        return read\n    }\n\n    static func ofInt32(_ value: Int) throws -> any BsonPrimitive { Int32(value) }\n\n    static func asInt64(_ value: any BsonPrimitive) throws -> Int {\n        guard let read = whole(value) else { throw unexpected(value) }\n        return read\n    }\n\n    static func ofInt64(_ value: Int) throws -> any BsonPrimitive { value }\n\n    static func asFloat(_ value: any BsonPrimitive) throws -> Float {\n        guard let read = number(value).map(Float.init) else { throw unexpected(value) }\n        return read\n    }\n\n    static func ofFloat(_ value: Float) throws -> any BsonPrimitive { Double(value) }\n\n    static func asDouble(_ value: any BsonPrimitive) throws -> Double {\n        guard let read = number(value) else { throw unexpected(value) }\n        return read\n    }\n\n    static func ofDouble(_ value: Double) throws -> any BsonPrimitive { value }\n\n    static func asDecimal(_ value: any BsonPrimitive) throws -> Decimal {\n        guard let read = decimal(value) else { throw unexpected(value) }\n        return read\n    }\n\n    static func ofDecimal(_ value: Decimal) throws -> any BsonPrimitive { try decimal128(value) }\n\n    static func asDate(_ value: any BsonPrimitive) throws -> Date {\n        guard let read = value as? Date else { throw unexpected(value) }\n        return read\n    }\n\n    /// The driver cuts a moment to its millisecond: half of one more keeps it.\n    static func ofDate(_ value: Date) throws -> any BsonPrimitive {\n        let millis = (value.timeIntervalSince1970 * 1000).rounded()\n        return Date(timeIntervalSince1970: (millis + (millis < 0 ? -0.5 : 0.5)) / 1000)\n    }\n\n    static func asUUID(_ value: any BsonPrimitive) throws -> UUID {\n        guard let read = uuid(value) else { throw unexpected(value) }\n        return read\n    }\n\n    static func ofUUID(_ value: UUID) throws -> any BsonPrimitive { BSON.Binary(subType: .uuid, buffer: ByteBuffer(bytes: withUnsafeBytes(of: value.uuid) { Array($0) })) }\n\n    static func asData(_ value: any BsonPrimitive) throws -> Data {\n        guard let read = (value as? BSON.Binary)?.data else { throw unexpected(value) }\n        return read\n    }\n\n    static func ofData(_ value: Data) throws -> any BsonPrimitive { BSON.Binary(buffer: ByteBuffer(bytes: value)) }\n\n    static func asAny(_ value: any BsonPrimitive) throws -> BsonValue { BsonValue(value) }\n\n    static func ofAny(_ value: BsonValue) throws -> any BsonPrimitive { value.value }\n\n    private static func unexpected(_ value: any BsonPrimitive) -> BsonError {\n        BsonError(description: \"a document has a value of another type: \\(value)\")\n    }\n\n    /// A whole number, whatever the type it was stored with.\n    private static func whole(_ value: any BsonPrimitive) -> Int? {\n        switch value {\n        case let number as Int32: Int(number)\n        case let number as Int: number\n        case let number as Double: Int(exactly: number)\n        default: nil\n        }\n    }\n\n    /// A number, whatever the type it was stored with.\n    private static func number(_ value: any BsonPrimitive) -> Double? {\n        switch value {\n        case let number as Double: number\n        case let number as Int32: Double(number)\n        case let number as Int: Double(number)\n        default: nil\n        }\n    }\n\n    private static func uuid(_ value: any BsonPrimitive) -> UUID? {\n        guard let bytes = (value as? BSON.Binary)?.data, bytes.count == 16 else { return nil }\n        return bytes.withUnsafeBytes { UUID(uuid: $0.loadUnaligned(as: uuid_t.self)) }\n    }\n\n    private static let tenTo19: UInt64 = 10_000_000_000_000_000_000\n\n    /// An exact number, whatever the type it was stored with. The driver keeps a Decimal128 as it is: its 16 bytes are read here.\n    private static func decimal(_ value: any BsonPrimitive) -> Decimal? {\n        if let whole = whole(value) { return Decimal(whole) }\n        if let number = value as? Double { return Decimal(string: \"\\(number)\") }\n        guard value is BSON.Decimal128 else { return nil }\n        let bytes = [UInt8](([\"v\": value] as BsonDocument).makeData())[7..<23]\n        let low = bytes.prefix(8).reversed().reduce(UInt64(0)) { $0 << 8 | UInt64($1) }\n        let high = bytes.suffix(8).reversed().reduce(UInt64(0)) { $0 << 8 | UInt64($1) }\n        // An infinity, or not a number\n        if high >> 59 & 0b1111 == 0b1111 { return nil }\n        let exponent = Int(high >> 49 & 0x3fff) - 6176\n        let (quotient, rest) = tenTo19.dividingFullWidth((high & 0x1_ffff_ffff_ffff, low))\n        guard let digits = Decimal(string: \"\\(quotient)\" + String(repeating: \"0\", count: 19 - \"\\(rest)\".count) + \"\\(rest)\") else { return nil }\n        return Decimal(sign: high >> 63 == 1 ? .minus : .plus, exponent: exponent, significand: digits)\n    }\n\n    /// A number as a Decimal128, which has 34 digits.\n    private static func decimal128(_ value: Decimal) throws -> any BsonPrimitive {\n        let text = \"\\(value.magnitude)\"\n        let parts = text.split(separator: \".\", omittingEmptySubsequences: false)\n        let digits = parts.joined().drop { $0 == \"0\" }\n        let decimals = parts.count > 1 ? parts[1].count : 0\n        guard digits.count <= 34, let upper = UInt64(\"0\" + digits.dropLast(19)), let lower = UInt64(\"0\" + digits.suffix(19)) else {\n            throw BsonError(description: \"a Decimal128 has 34 digits: \\(value)\")\n        }\n        let product = upper.multipliedFullWidth(by: tenTo19)\n        let (low, carry) = product.low.addingReportingOverflow(lower)\n        let sign: UInt64 = value < 0 ? 1 : 0\n        let high = sign << 63 | UInt64(6176 - decimals) << 49 | product.high + (carry ? 1 : 0)\n        let bytes = [low, high].flatMap { word in (0..<8).map { UInt8(truncatingIfNeeded: word >> UInt64(8 * $0)) } }\n        guard let stored = BsonDocument(bytes: [24, 0, 0, 0, 0x13, 0x76, 0] + bytes + [0])[\"v\"] else {\n            throw BsonError(description: \"a Decimal128 that is not valid: \\(value)\")\n        }\n        return stored\n    }\n}\n",
+  "Sources/MongoswiftMongodbConversions/Common.swift": "/// A page of a list: the rows from an offset, and how many there are in all.\npublic struct Page<T: Sendable>: Sendable {\n    public let items: [T]\n    public let total: Int\n    public let offset: Int\n    public let limit: Int\n\n    public init(items: [T], total: Int, offset: Int, limit: Int) {\n        self.items = items\n        self.total = total\n        self.offset = offset\n        self.limit = limit\n    }\n\n    /// The same page with every row turned into something else.\n    public func map<R: Sendable>(_ transform: (T) throws -> R) rethrows -> Page<R> {\n        Page<R>(items: try items.map(transform), total: total, offset: offset, limit: limit)\n    }\n}\n\n/// A field of an update: absent (it keeps its value), or set to a value, which may be nil.\npublic enum Patch<T: Sendable>: Sendable {\n    case absent\n    case set(T)\n\n    /// The value given, or nil when the field is absent.\n    public var given: T? {\n        switch self {\n        case .absent: nil\n        case .set(let value): value\n        }\n    }\n}\n\n/// The rows of a table kept in memory, shared by the copies of an in-memory repository.\nactor MemoryRows<Row: Sendable> {\n    private var rows: [Row] = []\n    private var lastId = 0\n\n    var all: [Row] { rows }\n\n    /// The next number of a key the database would number.\n    func nextId() -> Int {\n        lastId += 1\n        return lastId\n    }\n\n    /// Keeps a row, in place of the ones same tells apart.\n    func store(_ row: Row, replacing same: @Sendable (Row) -> Bool) {\n        rows.removeAll(where: same)\n        rows.append(row)\n    }\n\n    func remove(where same: @Sendable (Row) -> Bool) {\n        rows.removeAll(where: same)\n    }\n}\n\n/// Orders two values that may be nil, nil first.\nfunc less<T: Comparable>(_ a: T?, _ b: T?) -> Bool {\n    switch (a, b) {\n    case let (a?, b?): a < b\n    case (nil, _?): true\n    default: false\n    }\n}\n",
+  "Sources/MongoswiftMongodbConversions/Entities/Customer.swift": "import Foundation\nimport MongoKitten\n\n/// A document of the \"customers\" collection. A property stays nil until it is set or read.\npublic struct Customer: Sendable, Equatable {\n    public var id: String?\n    public var email: String?\n    public var level: String?\n    public var since: Date?\n    public var address: Customer.Address?\n    public var tags: [String]?\n    /// As it was read: a change writes only what differs\n    var loadedDocument = Loaded()\n\n    public init(id: String? = nil, email: String? = nil, level: String? = nil, since: Date? = nil, address: Customer.Address? = nil, tags: [String]? = nil) {\n        self.id = id\n        self.email = email\n        self.level = level\n        self.since = since\n        self.address = address\n        self.tags = tags\n    }\n\n    /// A nested document: it is stored with the one that holds it.\n    public struct Address: Sendable, Equatable {\n        public var street: String?\n        public var zipCode: String?\n        public var location: Customer.Address.Location?\n\n        public init(street: String? = nil, zipCode: String? = nil, location: Customer.Address.Location? = nil) {\n            self.street = street\n            self.zipCode = zipCode\n            self.location = location\n        }\n\n        /// A nested document: it is stored with the one that holds it.\n        public struct Location: Sendable, Equatable {\n            public var latitude: Double?\n            public var longitude: Double?\n\n            public init(latitude: Double? = nil, longitude: Double? = nil) {\n                self.latitude = latitude\n                self.longitude = longitude\n            }\n        }\n    }\n}\n\nextension Customer: DocumentValue {\n    /// What a document holds.\n    static func from(_ document: BsonDocument) throws -> Customer {\n        var entity = Customer(\n            id: try Bson.read(document, \"_id\", Bson.asObjectId),\n            email: try Bson.read(document, \"email\", Bson.asText),\n            level: try Bson.read(document, \"level\", Bson.asText),\n            since: try Bson.read(document, \"since\", Bson.asDate),\n            address: try Bson.read(document, \"address\", Bson.asNested(Customer.Address.self)),\n            tags: try Bson.read(document, \"tags\", Bson.asList(Bson.asText)))\n        entity.loadedDocument = Loaded(document: try entity.toDocument())\n        return entity\n    }\n\n    /// Its document: what is nil is left out.\n    func toDocument() throws -> BsonDocument {\n        var document: BsonDocument = [:]\n        try Bson.write(&document, \"_id\", self.id, Bson.ofObjectId)\n        try Bson.write(&document, \"email\", self.email, Bson.ofText)\n        try Bson.write(&document, \"level\", self.level, Bson.ofText)\n        try Bson.write(&document, \"since\", self.since, Bson.ofDate)\n        try Bson.write(&document, \"address\", self.address, Bson.ofNested)\n        try Bson.write(&document, \"tags\", self.tags, Bson.ofList(Bson.ofText))\n        return document\n    }\n}\n\nextension Customer.Address: DocumentValue {\n    /// What a document holds.\n    static func from(_ document: BsonDocument) throws -> Customer.Address {\n        return Customer.Address(\n            street: try Bson.read(document, \"street\", Bson.asText),\n            zipCode: try Bson.read(document, \"zip code\", Bson.asText),\n            location: try Bson.read(document, \"location\", Bson.asNested(Customer.Address.Location.self)))\n    }\n\n    /// Its document: what is nil is left out.\n    func toDocument() throws -> BsonDocument {\n        var document: BsonDocument = [:]\n        try Bson.write(&document, \"street\", self.street, Bson.ofText)\n        try Bson.write(&document, \"zip code\", self.zipCode, Bson.ofText)\n        try Bson.write(&document, \"location\", self.location, Bson.ofNested)\n        return document\n    }\n}\n\nextension Customer.Address.Location: DocumentValue {\n    /// What a document holds.\n    static func from(_ document: BsonDocument) throws -> Customer.Address.Location {\n        return Customer.Address.Location(\n            latitude: try Bson.read(document, \"latitude\", Bson.asDouble),\n            longitude: try Bson.read(document, \"longitude\", Bson.asDouble))\n    }\n\n    /// Its document: what is nil is left out.\n    func toDocument() throws -> BsonDocument {\n        var document: BsonDocument = [:]\n        try Bson.write(&document, \"latitude\", self.latitude, Bson.ofDouble)\n        try Bson.write(&document, \"longitude\", self.longitude, Bson.ofDouble)\n        return document\n    }\n}\n",
+  "Sources/MongoswiftMongodbConversions/Entities/Order.swift": "import Foundation\nimport MongoKitten\n\n/// A document of the \"orders\" collection. A property stays nil until it is set or read.\npublic struct Order: Sendable, Equatable {\n    public var id: String?\n    public var code: String?\n    public var lines: [Order.Line]?\n    public var shipping: Order.Shipping?\n    /// As it was read: a change writes only what differs\n    var loadedDocument = Loaded()\n\n    public init(id: String? = nil, code: String? = nil, lines: [Order.Line]? = nil, shipping: Order.Shipping? = nil) {\n        self.id = id\n        self.code = code\n        self.lines = lines\n        self.shipping = shipping\n    }\n\n    /// Gives an identifier to the documents of its lists that have none: MongoDB numbers only whole documents.\n    mutating func identifyItems() {\n        lines = lines?.map { item in var item = item; item.id = item.id ?? Bson.newId(); return item }\n    }\n\n    /// A nested document: it is stored with the one that holds it.\n    public struct Line: Sendable, Equatable {\n        public var id: String?\n        public var sku: String?\n        public var quantity: Int?\n        public var price: Decimal?\n        public var status: String?\n        public var discounts: [Order.Line.Discount]?\n\n        public init(id: String? = nil, sku: String? = nil, quantity: Int? = nil, price: Decimal? = nil, status: String? = nil, discounts: [Order.Line.Discount]? = nil) {\n            self.id = id\n            self.sku = sku\n            self.quantity = quantity\n            self.price = price\n            self.status = status\n            self.discounts = discounts\n        }\n\n        /// A nested document: it is stored with the one that holds it.\n        public struct Discount: Sendable, Equatable {\n            public var reason: String?\n            public var percent: Double?\n\n            public init(reason: String? = nil, percent: Double? = nil) {\n                self.reason = reason\n                self.percent = percent\n            }\n        }\n    }\n\n    /// A nested document: it is stored with the one that holds it.\n    public struct Shipping: Sendable, Equatable {\n        public var carrier: String?\n        public var sentOn: Date?\n\n        public init(carrier: String? = nil, sentOn: Date? = nil) {\n            self.carrier = carrier\n            self.sentOn = sentOn\n        }\n    }\n}\n\nextension Order: DocumentValue {\n    /// What a document holds.\n    static func from(_ document: BsonDocument) throws -> Order {\n        var entity = Order(\n            id: try Bson.read(document, \"_id\", Bson.asObjectId),\n            code: try Bson.read(document, \"code\", Bson.asText),\n            lines: try Bson.read(document, \"lines\", Bson.asList(Bson.asNested(Order.Line.self))),\n            shipping: try Bson.read(document, \"shipping\", Bson.asNested(Order.Shipping.self)))\n        entity.loadedDocument = Loaded(document: try entity.toDocument())\n        return entity\n    }\n\n    /// Its document: what is nil is left out.\n    func toDocument() throws -> BsonDocument {\n        var document: BsonDocument = [:]\n        try Bson.write(&document, \"_id\", self.id, Bson.ofObjectId)\n        try Bson.write(&document, \"code\", self.code, Bson.ofText)\n        try Bson.write(&document, \"lines\", self.lines, Bson.ofList(Bson.ofNested))\n        try Bson.write(&document, \"shipping\", self.shipping, Bson.ofNested)\n        return document\n    }\n}\n\nextension Order.Line: DocumentValue {\n    /// What a document holds.\n    static func from(_ document: BsonDocument) throws -> Order.Line {\n        return Order.Line(\n            id: try Bson.read(document, \"_id\", Bson.asObjectId),\n            sku: try Bson.read(document, \"sku\", Bson.asText),\n            quantity: try Bson.read(document, \"quantity\", Bson.asInt32),\n            price: try Bson.read(document, \"price\", Bson.asDecimal),\n            status: try Bson.read(document, \"status\", Bson.asText),\n            discounts: try Bson.read(document, \"discounts\", Bson.asList(Bson.asNested(Order.Line.Discount.self))))\n    }\n\n    /// Its document: what is nil is left out.\n    func toDocument() throws -> BsonDocument {\n        var document: BsonDocument = [:]\n        try Bson.write(&document, \"_id\", self.id, Bson.ofObjectId)\n        try Bson.write(&document, \"sku\", self.sku, Bson.ofText)\n        try Bson.write(&document, \"quantity\", self.quantity, Bson.ofInt32)\n        try Bson.write(&document, \"price\", self.price, Bson.ofDecimal)\n        try Bson.write(&document, \"status\", self.status, Bson.ofText)\n        try Bson.write(&document, \"discounts\", self.discounts, Bson.ofList(Bson.ofNested))\n        return document\n    }\n}\n\nextension Order.Line.Discount: DocumentValue {\n    /// What a document holds.\n    static func from(_ document: BsonDocument) throws -> Order.Line.Discount {\n        return Order.Line.Discount(\n            reason: try Bson.read(document, \"reason\", Bson.asText),\n            percent: try Bson.read(document, \"percent\", Bson.asDouble))\n    }\n\n    /// Its document: what is nil is left out.\n    func toDocument() throws -> BsonDocument {\n        var document: BsonDocument = [:]\n        try Bson.write(&document, \"reason\", self.reason, Bson.ofText)\n        try Bson.write(&document, \"percent\", self.percent, Bson.ofDouble)\n        return document\n    }\n}\n\nextension Order.Shipping: DocumentValue {\n    /// What a document holds.\n    static func from(_ document: BsonDocument) throws -> Order.Shipping {\n        return Order.Shipping(\n            carrier: try Bson.read(document, \"carrier\", Bson.asText),\n            sentOn: try Bson.read(document, \"sentOn\", Bson.asDate))\n    }\n\n    /// Its document: what is nil is left out.\n    func toDocument() throws -> BsonDocument {\n        var document: BsonDocument = [:]\n        try Bson.write(&document, \"carrier\", self.carrier, Bson.ofText)\n        try Bson.write(&document, \"sentOn\", self.sentOn, Bson.ofDate)\n        return document\n    }\n}\n",
+  "Sources/MongoswiftMongodbConversions/Entities/Shipment.swift": "import Foundation\nimport MongoKitten\n\n/// A document of the \"shipments\" collection. A property stays nil until it is set or read.\npublic struct Shipment: Sendable, Equatable {\n    public var id: String?\n    public var parcel: Shipment.Parcel?\n    public var stops: [Shipment.Stop]?\n    /// As it was read: a change writes only what differs\n    var loadedDocument = Loaded()\n\n    public init(id: String? = nil, parcel: Shipment.Parcel? = nil, stops: [Shipment.Stop]? = nil) {\n        self.id = id\n        self.parcel = parcel\n        self.stops = stops\n    }\n\n    /// A nested document: it is stored with the one that holds it.\n    public struct Parcel: Sendable, Equatable {\n        public var weight: Double?\n        public var contents: String?\n        public var size: Shipment.Parcel.Size?\n\n        public init(weight: Double? = nil, contents: String? = nil, size: Shipment.Parcel.Size? = nil) {\n            self.weight = weight\n            self.contents = contents\n            self.size = size\n        }\n\n        /// A nested document: it is stored with the one that holds it.\n        public struct Size: Sendable, Equatable {\n            public var height: Double?\n\n            public init(height: Double? = nil) {\n                self.height = height\n            }\n        }\n    }\n\n    /// A nested document: it is stored with the one that holds it.\n    public struct Stop: Sendable, Equatable {\n        public var city: String?\n\n        public init(city: String? = nil) {\n            self.city = city\n        }\n    }\n}\n\nextension Shipment: DocumentValue {\n    /// What a document holds.\n    static func from(_ document: BsonDocument) throws -> Shipment {\n        var entity = Shipment(\n            id: try Bson.read(document, \"_id\", Bson.asObjectId),\n            parcel: try Bson.read(document, \"parcel\", Bson.asNested(Shipment.Parcel.self)),\n            stops: try Bson.read(document, \"stops\", Bson.asList(Bson.asNested(Shipment.Stop.self))))\n        entity.loadedDocument = Loaded(document: try entity.toDocument())\n        return entity\n    }\n\n    /// Its document: what is nil is left out.\n    func toDocument() throws -> BsonDocument {\n        var document: BsonDocument = [:]\n        try Bson.write(&document, \"_id\", self.id, Bson.ofObjectId)\n        try Bson.write(&document, \"parcel\", self.parcel, Bson.ofNested)\n        try Bson.write(&document, \"stops\", self.stops, Bson.ofList(Bson.ofNested))\n        return document\n    }\n}\n\nextension Shipment.Parcel: DocumentValue {\n    /// What a document holds.\n    static func from(_ document: BsonDocument) throws -> Shipment.Parcel {\n        return Shipment.Parcel(\n            weight: try Bson.read(document, \"weight\", Bson.asDouble),\n            contents: try Bson.read(document, \"contents\", Bson.asText),\n            size: try Bson.read(document, \"size\", Bson.asNested(Shipment.Parcel.Size.self)))\n    }\n\n    /// Its document: what is nil is left out.\n    func toDocument() throws -> BsonDocument {\n        var document: BsonDocument = [:]\n        try Bson.write(&document, \"weight\", self.weight, Bson.ofDouble)\n        try Bson.write(&document, \"contents\", self.contents, Bson.ofText)\n        try Bson.write(&document, \"size\", self.size, Bson.ofNested)\n        return document\n    }\n}\n\nextension Shipment.Parcel.Size: DocumentValue {\n    /// What a document holds.\n    static func from(_ document: BsonDocument) throws -> Shipment.Parcel.Size {\n        return Shipment.Parcel.Size(\n            height: try Bson.read(document, \"height\", Bson.asDouble))\n    }\n\n    /// Its document: what is nil is left out.\n    func toDocument() throws -> BsonDocument {\n        var document: BsonDocument = [:]\n        try Bson.write(&document, \"height\", self.height, Bson.ofDouble)\n        return document\n    }\n}\n\nextension Shipment.Stop: DocumentValue {\n    /// What a document holds.\n    static func from(_ document: BsonDocument) throws -> Shipment.Stop {\n        return Shipment.Stop(\n            city: try Bson.read(document, \"city\", Bson.asText))\n    }\n\n    /// Its document: what is nil is left out.\n    func toDocument() throws -> BsonDocument {\n        var document: BsonDocument = [:]\n        try Bson.write(&document, \"city\", self.city, Bson.ofText)\n        return document\n    }\n}\n",
+  "Sources/MongoswiftMongodbConversions/Errors.swift": "/// What is wrong with one field.\npublic struct FieldError: Sendable, Equatable {\n    public let field: String\n    public let message: String\n\n    public init(_ field: String, _ message: String) {\n        self.field = field\n        self.message = message\n    }\n}\n\n/// Every error a service throws on purpose. They carry no HTTP codes: whoever calls the services translates them.\npublic enum DomainError: Error, Sendable, Equatable, CustomStringConvertible {\n    /// No row has this key.\n    case notFound(entity: String, key: String)\n    /// The change clashes with what is stored: a unique value, a newer version, rows that depend on it.\n    case conflict(entity: String, reason: String, fields: [String])\n    /// The values break the rules of the table: missing, too long, out of range, pointing nowhere.\n    case validationFailed(entity: String, errors: [FieldError])\n\n    public var description: String {\n        switch self {\n        case .notFound(let entity, let key): \"No \\(entity) has the key \\(key)\"\n        case .conflict(let entity, let reason, _): \"\\(entity): \\(reason)\"\n        case .validationFailed(let entity, let errors):\n            \"\\(entity): \" + errors.map { \"\\($0.field): \\($0.message)\" }.joined(separator: \"; \")\n        }\n    }\n\n    /// The fields a validation refused.\n    public var invalidFields: [String] {\n        if case .validationFailed(_, let errors) = self { errors.map(\\.field) } else { [] }\n    }\n}\n",
+  "Sources/MongoswiftMongodbConversions/Repositories/CustomerRepository.swift": "import Foundation\nimport MongoKitten\n\n/// Where customers rows are kept. Services depend only on this protocol.\npublic protocol CustomerRepository: Sendable {\n    /// The row with this primary key, or nil.\n    func findById(_ id: String) async throws -> Customer?\n\n    /// At most limit rows from offset, by primary key, and how many there are.\n    func list(offset: Int, limit: Int) async throws -> Page<Customer>\n\n    /// The row with this email, or nil.\n    func findByEmail(_ email: String) async throws -> Customer?\n\n    /// Stores a new row; the values the database fills are read back.\n    @discardableResult\n    func insert(_ entity: Customer) async throws -> Customer\n\n    /// Stores the changes made to a row.\n    @discardableResult\n    func update(_ entity: Customer) async throws -> Customer\n\n    /// Removes a row.\n    func delete(_ entity: Customer) async throws\n\n    /// Adds an item to tags, and gives the row as it is then, if there is one.\n    func addTag(_ id: String, _ tag: String) async throws -> Customer?\n\n    /// Removes an item from tags, and gives the row as it is then, if there is one.\n    func removeTag(_ id: String, _ tag: String) async throws -> Customer?\n}\n\n/// Keeps customers rows in the database, through MongoKitten: on the database of the unit of work, or on its transaction.\npublic struct MongoCustomerRepository: CustomerRepository {\n    let database: Db\n\n    public init(db: Db) {\n        self.database = db\n    }\n\n    public func findById(_ id: String) async throws -> Customer? {\n        guard Bson.isObjectId(id) else { return nil }\n        let documentFilter: BsonDocument = [\"_id\": try Bson.ofObjectId(id)]\n        return try await database.find(\"customers\", documentFilter, limit: 1).first.map(Customer.from)\n    }\n\n    public func list(offset: Int, limit: Int) async throws -> Page<Customer> {\n        let documentFilter: BsonDocument = [:]\n        let total = try await database.count(\"customers\", documentFilter)\n        let found = limit > 0 ? try await database.find(\"customers\", documentFilter, sort: [\"_id\": 1], skip: offset, limit: limit) : []\n        return Page(items: try found.map(Customer.from), total: total, offset: offset, limit: limit)\n    }\n\n    public func findByEmail(_ email: String) async throws -> Customer? {\n        let documentFilter: BsonDocument = [\"email\": try Bson.ofText(email)]\n        return try await database.find(\"customers\", documentFilter, limit: 1).first.map(Customer.from)\n    }\n\n    @discardableResult\n    public func insert(_ entity: Customer) async throws -> Customer {\n        var entity = entity\n        entity.id = entity.id ?? Bson.newId()\n        let document = try entity.toDocument()\n        try await write { try await database.insert(\"customers\", document) }\n        entity.loadedDocument = Loaded(document: document)\n        return entity\n    }\n\n    @discardableResult\n    public func update(_ entity: Customer) async throws -> Customer {\n        var entity = entity\n        let now = try entity.toDocument()\n        let fields = [\"email\", \"level\", \"since\", \"address\", \"tags\"]\n        let changes = Bson.changes(entity.loadedDocument.document, now, fields)\n        if !changes.isEmpty, let id = now[\"_id\"] {\n            try await write { try await database.update(\"customers\", [\"_id\": id], changes) }\n        }\n        entity.loadedDocument = Loaded(document: now)\n        return entity\n    }\n\n    public func delete(_ entity: Customer) async throws {\n        let documentFilter: BsonDocument = [\"_id\": try Bson.ofObjectId(entity.id!)]\n        try await write { try await database.delete(\"customers\", documentFilter) }\n    }\n\n    public func addTag(_ id: String, _ tag: String) async throws -> Customer? {\n        guard Bson.isObjectId(id) else { return nil }\n        let change: BsonDocument = [\"$push\": [\"tags\": try Bson.ofText(tag)] as BsonDocument]\n        let documentFilter: BsonDocument = [\"_id\": try Bson.ofObjectId(id)]\n        return try await write { try await database.change(\"customers\", documentFilter, change) }.map(Customer.from)\n    }\n\n    public func removeTag(_ id: String, _ tag: String) async throws -> Customer? {\n        guard Bson.isObjectId(id) else { return nil }\n        let change: BsonDocument = [\"$pull\": [\"tags\": try Bson.ofText(tag)] as BsonDocument]\n        let documentFilter: BsonDocument = [\"_id\": try Bson.ofObjectId(id)]\n        return try await write { try await database.change(\"customers\", documentFilter, change) }.map(Customer.from)\n    }\n\n    /// Runs a write; a database refusal (a unique value, a row still pointed to) becomes a conflict.\n    private func write<T>(_ work: () async throws -> T) async throws -> T {\n        do {\n            return try await work()\n        } catch let error where isRefusal(error) {\n            throw DomainError.conflict(entity: \"Customer\", reason: \"the database refused the change: \\(error)\", fields: [])\n        }\n    }\n}\n\n/// Keeps customers rows in memory, for tests and for trying the services without a database.\npublic final class MemoryCustomerRepository: CustomerRepository {\n    private let rows = MemoryRows<Customer>()\n\n    public init() {}\n\n    /// The rows reads see, by primary key.\n    private func visible() async -> [Customer] {\n        await rows.all.sorted(by: isBefore)\n    }\n\n    public func findById(_ id: String) async throws -> Customer? {\n        await visible().first { $0.id == id }\n    }\n\n    public func list(offset: Int, limit: Int) async throws -> Page<Customer> {\n        let rows = await visible()\n        return Page(items: Array(rows.dropFirst(offset).prefix(limit)), total: rows.count, offset: offset, limit: limit)\n    }\n\n    public func findByEmail(_ email: String) async throws -> Customer? {\n        await visible().first { $0.email == email }\n    }\n\n    @discardableResult\n    public func insert(_ entity: Customer) async throws -> Customer {\n        var entity = entity\n        entity.id = entity.id ?? Bson.newId()\n        let row = entity\n        await rows.store(row) { sameKey($0, row) }\n        return row\n    }\n\n    @discardableResult\n    public func update(_ entity: Customer) async throws -> Customer {\n        await rows.store(entity) { sameKey($0, entity) }\n        return entity\n    }\n\n    public func delete(_ entity: Customer) async throws {\n        await rows.remove { sameKey($0, entity) }\n    }\n\n    public func addTag(_ id: String, _ tag: String) async throws -> Customer? {\n        guard var found = await visible().first(where: { $0.id == id }) else { return nil }\n        found.tags = (found.tags ?? []) + [tag]\n        let row = found\n        await rows.store(row) { sameKey($0, row) }\n        return row\n    }\n\n    public func removeTag(_ id: String, _ tag: String) async throws -> Customer? {\n        guard var found = await visible().first(where: { $0.id == id }) else { return nil }\n        found.tags?.removeAll { $0 == tag }\n        let row = found\n        await rows.store(row) { sameKey($0, row) }\n        return row\n    }\n}\n\n/// Whether two rows have the same key.\nfileprivate func sameKey(_ a: Customer, _ b: Customer) -> Bool {\n    a.id == b.id\n}\n\n/// Whether a row comes before another, by primary key.\nfileprivate func isBefore(_ a: Customer, _ b: Customer) -> Bool {\n    return less(a.id, b.id)\n}\n",
+  "Sources/MongoswiftMongodbConversions/Repositories/OrderRepository.swift": "import Foundation\nimport MongoKitten\n\n/// Where orders rows are kept. Services depend only on this protocol.\npublic protocol OrderRepository: Sendable {\n    /// The row with this primary key, or nil.\n    func findById(_ id: String) async throws -> Order?\n\n    /// At most limit rows from offset, by primary key, and how many there are.\n    func list(offset: Int, limit: Int) async throws -> Page<Order>\n\n    /// The row with this code, or nil.\n    func findByCode(_ code: String) async throws -> Order?\n\n    /// Stores a new row; the values the database fills are read back.\n    @discardableResult\n    func insert(_ entity: Order) async throws -> Order\n\n    /// Stores the changes made to a row.\n    @discardableResult\n    func update(_ entity: Order) async throws -> Order\n\n    /// Removes a row.\n    func delete(_ entity: Order) async throws\n\n    /// Adds an item to lines, and gives the row as it is then, if there is one.\n    func addLine(_ id: String, _ line: Order.Line) async throws -> Order?\n\n    /// Removes an item from lines, and gives the row as it is then, if there is one.\n    func removeLine(_ id: String, _ lineId: String) async throws -> Order?\n}\n\n/// Keeps orders rows in the database, through MongoKitten: on the database of the unit of work, or on its transaction.\npublic struct MongoOrderRepository: OrderRepository {\n    let database: Db\n\n    public init(db: Db) {\n        self.database = db\n    }\n\n    public func findById(_ id: String) async throws -> Order? {\n        guard Bson.isObjectId(id) else { return nil }\n        let documentFilter: BsonDocument = [\"_id\": try Bson.ofObjectId(id)]\n        return try await database.find(\"orders\", documentFilter, limit: 1).first.map(Order.from)\n    }\n\n    public func list(offset: Int, limit: Int) async throws -> Page<Order> {\n        let documentFilter: BsonDocument = [:]\n        let total = try await database.count(\"orders\", documentFilter)\n        let found = limit > 0 ? try await database.find(\"orders\", documentFilter, sort: [\"_id\": 1], skip: offset, limit: limit) : []\n        return Page(items: try found.map(Order.from), total: total, offset: offset, limit: limit)\n    }\n\n    public func findByCode(_ code: String) async throws -> Order? {\n        let documentFilter: BsonDocument = [\"code\": try Bson.ofText(code)]\n        return try await database.find(\"orders\", documentFilter, limit: 1).first.map(Order.from)\n    }\n\n    @discardableResult\n    public func insert(_ entity: Order) async throws -> Order {\n        var entity = entity\n        entity.id = entity.id ?? Bson.newId()\n        entity.identifyItems()\n        let document = try entity.toDocument()\n        try await write { try await database.insert(\"orders\", document) }\n        entity.loadedDocument = Loaded(document: document)\n        return entity\n    }\n\n    @discardableResult\n    public func update(_ entity: Order) async throws -> Order {\n        var entity = entity\n        entity.identifyItems()\n        let now = try entity.toDocument()\n        let fields = [\"code\", \"lines\", \"shipping\"]\n        let changes = Bson.changes(entity.loadedDocument.document, now, fields)\n        if !changes.isEmpty, let id = now[\"_id\"] {\n            try await write { try await database.update(\"orders\", [\"_id\": id], changes) }\n        }\n        entity.loadedDocument = Loaded(document: now)\n        return entity\n    }\n\n    public func delete(_ entity: Order) async throws {\n        let documentFilter: BsonDocument = [\"_id\": try Bson.ofObjectId(entity.id!)]\n        try await write { try await database.delete(\"orders\", documentFilter) }\n    }\n\n    public func addLine(_ id: String, _ line: Order.Line) async throws -> Order? {\n        guard Bson.isObjectId(id) else { return nil }\n        var line = line\n        line.id = line.id ?? Bson.newId()\n        let change: BsonDocument = [\"$push\": [\"lines\": try Bson.ofNested(line)] as BsonDocument]\n        let documentFilter: BsonDocument = [\"_id\": try Bson.ofObjectId(id)]\n        return try await write { try await database.change(\"orders\", documentFilter, change) }.map(Order.from)\n    }\n\n    public func removeLine(_ id: String, _ lineId: String) async throws -> Order? {\n        guard Bson.isObjectId(id) else { return nil }\n        guard Bson.isObjectId(lineId) else { return nil }\n        let change: BsonDocument = [\"$pull\": [\"lines\": [\"_id\": try Bson.ofObjectId(lineId)] as BsonDocument] as BsonDocument]\n        let documentFilter: BsonDocument = [\"_id\": try Bson.ofObjectId(id)]\n        return try await write { try await database.change(\"orders\", documentFilter, change) }.map(Order.from)\n    }\n\n    /// Runs a write; a database refusal (a unique value, a row still pointed to) becomes a conflict.\n    private func write<T>(_ work: () async throws -> T) async throws -> T {\n        do {\n            return try await work()\n        } catch let error where isRefusal(error) {\n            throw DomainError.conflict(entity: \"Order\", reason: \"the database refused the change: \\(error)\", fields: [])\n        }\n    }\n}\n\n/// Keeps orders rows in memory, for tests and for trying the services without a database.\npublic final class MemoryOrderRepository: OrderRepository {\n    private let rows = MemoryRows<Order>()\n\n    public init() {}\n\n    /// The rows reads see, by primary key.\n    private func visible() async -> [Order] {\n        await rows.all.sorted(by: isBefore)\n    }\n\n    public func findById(_ id: String) async throws -> Order? {\n        await visible().first { $0.id == id }\n    }\n\n    public func list(offset: Int, limit: Int) async throws -> Page<Order> {\n        let rows = await visible()\n        return Page(items: Array(rows.dropFirst(offset).prefix(limit)), total: rows.count, offset: offset, limit: limit)\n    }\n\n    public func findByCode(_ code: String) async throws -> Order? {\n        await visible().first { $0.code == code }\n    }\n\n    @discardableResult\n    public func insert(_ entity: Order) async throws -> Order {\n        var entity = entity\n        entity.id = entity.id ?? Bson.newId()\n        entity.identifyItems()\n        let row = entity\n        await rows.store(row) { sameKey($0, row) }\n        return row\n    }\n\n    @discardableResult\n    public func update(_ entity: Order) async throws -> Order {\n        var entity = entity\n        entity.identifyItems()\n        let row = entity\n        await rows.store(row) { sameKey($0, row) }\n        return row\n    }\n\n    public func delete(_ entity: Order) async throws {\n        await rows.remove { sameKey($0, entity) }\n    }\n\n    public func addLine(_ id: String, _ line: Order.Line) async throws -> Order? {\n        guard var found = await visible().first(where: { $0.id == id }) else { return nil }\n        var line = line\n        line.id = line.id ?? Bson.newId()\n        found.lines = (found.lines ?? []) + [line]\n        let row = found\n        await rows.store(row) { sameKey($0, row) }\n        return row\n    }\n\n    public func removeLine(_ id: String, _ lineId: String) async throws -> Order? {\n        guard var found = await visible().first(where: { $0.id == id }) else { return nil }\n        found.lines?.removeAll { $0.id == lineId }\n        let row = found\n        await rows.store(row) { sameKey($0, row) }\n        return row\n    }\n}\n\n/// Whether two rows have the same key.\nfileprivate func sameKey(_ a: Order, _ b: Order) -> Bool {\n    a.id == b.id\n}\n\n/// Whether a row comes before another, by primary key.\nfileprivate func isBefore(_ a: Order, _ b: Order) -> Bool {\n    return less(a.id, b.id)\n}\n",
+  "Sources/MongoswiftMongodbConversions/Repositories/ShipmentRepository.swift": "import Foundation\nimport MongoKitten\n\n/// Where shipments rows are kept. Services depend only on this protocol.\npublic protocol ShipmentRepository: Sendable {\n    /// The row with this primary key, or nil.\n    func findById(_ id: String) async throws -> Shipment?\n\n    /// At most limit rows from offset, by primary key, and how many there are.\n    func list(offset: Int, limit: Int) async throws -> Page<Shipment>\n\n    /// Stores a new row; the values the database fills are read back.\n    @discardableResult\n    func insert(_ entity: Shipment) async throws -> Shipment\n\n    /// Stores the changes made to a row.\n    @discardableResult\n    func update(_ entity: Shipment) async throws -> Shipment\n\n    /// Removes a row.\n    func delete(_ entity: Shipment) async throws\n\n    /// Adds an item to stops, and gives the row as it is then, if there is one.\n    func addStop(_ id: String, _ stop: Shipment.Stop) async throws -> Shipment?\n\n    /// Removes an item from stops that has this size, and gives the row as it is then, if there is one.\n    func removeStop(_ id: String, _ position: Int, _ size: Int) async throws -> Shipment?\n}\n\n/// Keeps shipments rows in the database, through MongoKitten: on the database of the unit of work, or on its transaction.\npublic struct MongoShipmentRepository: ShipmentRepository {\n    let database: Db\n\n    public init(db: Db) {\n        self.database = db\n    }\n\n    public func findById(_ id: String) async throws -> Shipment? {\n        guard Bson.isObjectId(id) else { return nil }\n        let documentFilter: BsonDocument = [\"_id\": try Bson.ofObjectId(id)]\n        return try await database.find(\"shipments\", documentFilter, limit: 1).first.map(Shipment.from)\n    }\n\n    public func list(offset: Int, limit: Int) async throws -> Page<Shipment> {\n        let documentFilter: BsonDocument = [:]\n        let total = try await database.count(\"shipments\", documentFilter)\n        let found = limit > 0 ? try await database.find(\"shipments\", documentFilter, sort: [\"_id\": 1], skip: offset, limit: limit) : []\n        return Page(items: try found.map(Shipment.from), total: total, offset: offset, limit: limit)\n    }\n\n    @discardableResult\n    public func insert(_ entity: Shipment) async throws -> Shipment {\n        var entity = entity\n        entity.id = entity.id ?? Bson.newId()\n        let document = try entity.toDocument()\n        try await write { try await database.insert(\"shipments\", document) }\n        entity.loadedDocument = Loaded(document: document)\n        return entity\n    }\n\n    @discardableResult\n    public func update(_ entity: Shipment) async throws -> Shipment {\n        var entity = entity\n        let now = try entity.toDocument()\n        let fields = [\"parcel\", \"stops\"]\n        let changes = Bson.changes(entity.loadedDocument.document, now, fields)\n        if !changes.isEmpty, let id = now[\"_id\"] {\n            try await write { try await database.update(\"shipments\", [\"_id\": id], changes) }\n        }\n        entity.loadedDocument = Loaded(document: now)\n        return entity\n    }\n\n    public func delete(_ entity: Shipment) async throws {\n        let documentFilter: BsonDocument = [\"_id\": try Bson.ofObjectId(entity.id!)]\n        try await write { try await database.delete(\"shipments\", documentFilter) }\n    }\n\n    public func addStop(_ id: String, _ stop: Shipment.Stop) async throws -> Shipment? {\n        guard Bson.isObjectId(id) else { return nil }\n        let change: BsonDocument = [\"$push\": [\"stops\": try Bson.ofNested(stop)] as BsonDocument]\n        let documentFilter: BsonDocument = [\"_id\": try Bson.ofObjectId(id)]\n        return try await write { try await database.change(\"shipments\", documentFilter, change) }.map(Shipment.from)\n    }\n\n    public func removeStop(_ id: String, _ position: Int, _ size: Int) async throws -> Shipment? {\n        guard Bson.isObjectId(id) else { return nil }\n        let head: BsonDocument = [\"$slice\": [\"$stops\", position] as BsonDocument]\n        let tail: BsonDocument = [\"$slice\": [\"$stops\", position + 1, max(size, 1)] as BsonDocument]\n        let set: BsonDocument = [\"stops\": [\"$concatArrays\": [head, tail] as BsonDocument] as BsonDocument]\n        let change: BsonDocument = [[\"$set\": set] as BsonDocument]\n        let documentFilter: BsonDocument = [\"_id\": try Bson.ofObjectId(id), \"stops\": [\"$size\": size] as BsonDocument]\n        return try await write { try await database.change(\"shipments\", documentFilter, change) }.map(Shipment.from)\n    }\n\n    /// Runs a write; a database refusal (a unique value, a row still pointed to) becomes a conflict.\n    private func write<T>(_ work: () async throws -> T) async throws -> T {\n        do {\n            return try await work()\n        } catch let error where isRefusal(error) {\n            throw DomainError.conflict(entity: \"Shipment\", reason: \"the database refused the change: \\(error)\", fields: [])\n        }\n    }\n}\n\n/// Keeps shipments rows in memory, for tests and for trying the services without a database.\npublic final class MemoryShipmentRepository: ShipmentRepository {\n    private let rows = MemoryRows<Shipment>()\n\n    public init() {}\n\n    /// The rows reads see, by primary key.\n    private func visible() async -> [Shipment] {\n        await rows.all.sorted(by: isBefore)\n    }\n\n    public func findById(_ id: String) async throws -> Shipment? {\n        await visible().first { $0.id == id }\n    }\n\n    public func list(offset: Int, limit: Int) async throws -> Page<Shipment> {\n        let rows = await visible()\n        return Page(items: Array(rows.dropFirst(offset).prefix(limit)), total: rows.count, offset: offset, limit: limit)\n    }\n\n    @discardableResult\n    public func insert(_ entity: Shipment) async throws -> Shipment {\n        var entity = entity\n        entity.id = entity.id ?? Bson.newId()\n        let row = entity\n        await rows.store(row) { sameKey($0, row) }\n        return row\n    }\n\n    @discardableResult\n    public func update(_ entity: Shipment) async throws -> Shipment {\n        await rows.store(entity) { sameKey($0, entity) }\n        return entity\n    }\n\n    public func delete(_ entity: Shipment) async throws {\n        await rows.remove { sameKey($0, entity) }\n    }\n\n    public func addStop(_ id: String, _ stop: Shipment.Stop) async throws -> Shipment? {\n        guard var found = await visible().first(where: { $0.id == id }) else { return nil }\n        found.stops = (found.stops ?? []) + [stop]\n        let row = found\n        await rows.store(row) { sameKey($0, row) }\n        return row\n    }\n\n    public func removeStop(_ id: String, _ position: Int, _ size: Int) async throws -> Shipment? {\n        guard var found = await visible().first(where: { $0.id == id }) else { return nil }\n        guard found.stops?.count == size, position >= 0, position < size else { return nil }\n        found.stops?.remove(at: position)\n        let row = found\n        await rows.store(row) { sameKey($0, row) }\n        return row\n    }\n}\n\n/// Whether two rows have the same key.\nfileprivate func sameKey(_ a: Shipment, _ b: Shipment) -> Bool {\n    a.id == b.id\n}\n\n/// Whether a row comes before another, by primary key.\nfileprivate func isBefore(_ a: Shipment, _ b: Shipment) -> Bool {\n    return less(a.id, b.id)\n}\n",
+  "Sources/MongoswiftMongodbConversions/Services/CustomerChanges.swift": "import Foundation\n\n/// The values of a Customer that change: fields left .absent keep their value; .set(nil) empties one.\npublic struct CustomerChanges: Sendable {\n    public var email: Patch<String?>\n    public var level: Patch<String?>\n    public var since: Patch<Date?>\n    public var address: Patch<Customer.Address?>\n    public var tags: Patch<[String]?>\n\n    public init(email: Patch<String?> = .absent, level: Patch<String?> = .absent, since: Patch<Date?> = .absent, address: Patch<Customer.Address?> = .absent, tags: Patch<[String]?> = .absent) {\n        self.email = email\n        self.level = level\n        self.since = since\n        self.address = address\n        self.tags = tags\n    }\n}\n",
+  "Sources/MongoswiftMongodbConversions/Services/CustomerConversions.swift": "import ApplicationModels\nimport Foundation\n\n/// Conversions between the application models and the \"customers\" table: what the service takes and returns.\npublic enum CustomerConversions {\n    /// A Customer as the customers table takes it.\n    public static func customerModelToCustomer(_ model: ApplicationModels.Customer) -> Customer {\n        return Customer(\n            email: model.email,\n            level: model.level.map { each in { () -> String in switch each { case .basic: return \"basic\"; case .gold: return \"gold\" } }() },\n            since: model.since,\n            address: customerAddressToDocument(model.address),\n            tags: model.tags\n        )\n    }\n\n    /// A row of the customers table as a Customer.\n    public static func customerToCustomerModel(_ row: Customer) -> ApplicationModels.Customer {\n        return ApplicationModels.Customer(\n            id: row.id!,\n            email: row.email!,\n            level: row.level.map { each in { () -> Level in switch each { case \"basic\": return .basic; case \"gold\": return .gold; default: fatalError(\"No Level for this value\") } }() },\n            since: row.since!,\n            address: customerAddressFromDocument(row.address!),\n            tags: (row.tags ?? [])\n        )\n    }\n\n    /// A Location as the documents of the customers collection keep it.\n    private static func customerAddressLocationToDocument(_ value: Location) -> Customer.Address.Location {\n        return Customer.Address.Location(\n            latitude: value.latitude,\n            longitude: value.longitude\n        )\n    }\n\n    /// An Address as the documents of the customers collection keep it.\n    private static func customerAddressToDocument(_ value: Address) -> Customer.Address {\n        return Customer.Address(\n            street: value.street,\n            zipCode: value.zipCode,\n            location: value.location.map(customerAddressLocationToDocument)\n        )\n    }\n\n    /// A document of the customers collection as a Location.\n    private static func customerAddressLocationFromDocument(_ value: Customer.Address.Location) -> Location {\n        return Location(\n            latitude: value.latitude!,\n            longitude: value.longitude!\n        )\n    }\n\n    /// A document of the customers collection as an Address.\n    private static func customerAddressFromDocument(_ value: Customer.Address) -> Address {\n        return Address(\n            street: value.street!,\n            zipCode: value.zipCode!,\n            location: value.location.map(customerAddressLocationFromDocument)\n        )\n    }\n}\n",
+  "Sources/MongoswiftMongodbConversions/Services/CustomerService.swift": "import Foundation\n\n/// Operations on customers. Repositories commit every write.\npublic struct CustomerService: Sendable {\n    private let unitOfWork: any UnitOfWork\n\n    public init(unitOfWork: any UnitOfWork) {\n        self.unitOfWork = unitOfWork\n    }\n\n    /// Stores a new Customer after checking it.\n    @discardableResult\n    public func createCustomer(_ customer: Customer) async throws -> Customer {\n        let values = Values(email: customer.email.map(Optional.some), level: customer.level.map(Optional.some), since: customer.since.map(Optional.some), address: customer.address.map(Optional.some), tags: customer.tags.map(Optional.some))\n        return try await unitOfWork.transaction { uow in\n            try await checkValues(uow, values, nil)\n            var entity = Customer()\n            applyValues(&entity, values)\n            return try await uow.customers.insert(entity)\n        }\n    }\n\n    /// The Customer with this key; notFound when there is none.\n    public func getCustomer(_ id: String) async throws -> Customer {\n        try await find(unitOfWork, id)\n    }\n\n    /// A page of customers, by primary key.\n    public func listCustomers(offset: Int, limit: Int) async throws -> Page<Customer> {\n        try await unitOfWork.customers.list(offset: offset, limit: limit)\n    }\n\n    /// Changes the given values of a Customer.\n    @discardableResult\n    public func updateCustomer(_ id: String, _ changes: CustomerChanges) async throws -> Customer {\n        let values = given(changes)\n        return try await unitOfWork.transaction { uow in\n            var current = try await find(uow, id)\n            try await checkValues(uow, values, current)\n            applyValues(&current, values)\n            return try await uow.customers.update(current)\n        }\n    }\n\n    /// Deletes a Customer.\n    public func deleteCustomer(_ id: String) async throws {\n        try await unitOfWork.transaction { uow in\n            let current = try await find(uow, id)\n            try await uow.customers.delete(current)\n        }\n    }\n\n    /// The Customer with this email, or nil.\n    public func findCustomerByEmail(_ email: String) async throws -> Customer? {\n        try await unitOfWork.customers.findByEmail(email)\n    }\n\n    /// Adds an item to tags.\n    @discardableResult\n    public func addTag(_ id: String, _ tag: String) async throws -> Customer {\n        return try await unitOfWork.transaction { uow in\n            _ = try await find(uow, id)\n            guard let changed = try await uow.customers.addTag(id, tag) else {\n                throw DomainError.notFound(entity: \"Customer\", key: \"\\(id)\")\n            }\n            return changed\n        }\n    }\n\n    /// Removes an item from tags, by its value.\n    @discardableResult\n    public func removeTag(_ id: String, _ tag: String) async throws -> Customer {\n        return try await unitOfWork.transaction { uow in\n            let current = try await find(uow, id)\n            if !(current.tags ?? []).contains(tag) {\n                throw DomainError.notFound(entity: \"Tag\", key: \"\\(tag)\")\n            }\n            guard let changed = try await uow.customers.removeTag(id, tag) else {\n                throw DomainError.notFound(entity: \"Customer\", key: \"\\(id)\")\n            }\n            return changed\n        }\n    }\n}\n\n/// The values a create or an update gives, by field: nil when not given, .some(nil) when given empty.\nfileprivate struct Values: Sendable {\n    var email: String?? = nil\n    var level: String?? = nil\n    var since: Date?? = nil\n    var address: Customer.Address?? = nil\n    var tags: [String]?? = nil\n}\n\n/// Checks the values against the rules of the \"customers\" table, and the rows they point to; throws validationFailed with every problem.\nfileprivate func validate(_ uow: any UnitOfWork, _ values: Values, _ current: Customer?) async throws {\n    let creating = current == nil\n    var errors: [FieldError] = []\n    if values.email ?? nil == nil && (creating || values.email != nil) {\n        errors.append(FieldError(\"email\", \"is required\"))\n    }\n    if let value = values.level ?? nil {\n        if ![\"basic\", \"gold\"].contains(value) {\n            errors.append(FieldError(\"level\", \"must be one of: basic, gold\"))\n        }\n    }\n    if values.since ?? nil == nil && (creating || values.since != nil) {\n        errors.append(FieldError(\"since\", \"is required\"))\n    }\n    if let value = values.address ?? nil {\n        checkCustomerAddress(value, \"address\", &errors)\n    } else if creating || values.address != nil {\n        errors.append(FieldError(\"address\", \"is required\"))\n    }\n    if !errors.isEmpty { throw DomainError.validationFailed(entity: \"Customer\", errors: errors) }\n}\n\n/// Values that must be unique are not taken by another row.\nfileprivate func checkUnique(_ uow: any UnitOfWork, _ values: Values, _ current: Customer?) async throws {\n    if let email = values.email ?? current?.email,\n       let other = try await uow.customers.findByEmail(email),\n       current.map({ other.id != $0.id }) ?? true {\n        throw DomainError.conflict(entity: \"Customer\", reason: \"email is already taken\", fields: [\"email\"])\n    }\n}\n\n/// Every check before a write: the values, the rows they point to, the unique values.\nfileprivate func checkValues(_ uow: any UnitOfWork, _ values: Values, _ current: Customer?) async throws {\n    try await validate(uow, values, current)\n    try await checkUnique(uow, values, current)\n}\n\n/// Sets the given values on the entity.\nfileprivate func applyValues(_ entity: inout Customer, _ values: Values) {\n    if let value = values.email { entity.email = value }\n    if let value = values.level { entity.level = value }\n    if let value = values.since { entity.since = value }\n    if let value = values.address { entity.address = value }\n    if let value = values.tags { entity.tags = value }\n}\n\n/// What a Customer.Address does not follow of its rules, each with the path of its field.\nfileprivate func checkCustomerAddress(_ value: Customer.Address, _ path: String, _ errors: inout [FieldError]) {\n    if value.street == nil { errors.append(FieldError(\"\\(path).street\", \"is required\")) }\n    if value.zipCode == nil { errors.append(FieldError(\"\\(path).zip code\", \"is required\")) }\n    if let held = value.location {\n        checkCustomerAddressLocation(held, \"\\(path).location\", &errors)\n    }\n}\n\n/// What a Customer.Address.Location does not follow of its rules, each with the path of its field.\nfileprivate func checkCustomerAddressLocation(_ value: Customer.Address.Location, _ path: String, _ errors: inout [FieldError]) {\n    if value.latitude == nil { errors.append(FieldError(\"\\(path).latitude\", \"is required\")) }\n    if value.longitude == nil { errors.append(FieldError(\"\\(path).longitude\", \"is required\")) }\n}\n\n/// The values an update gives, by field.\nfileprivate func given(_ changes: CustomerChanges) -> Values {\n    Values(email: changes.email.given, level: changes.level.given, since: changes.since.given, address: changes.address.given, tags: changes.tags.given)\n}\n\n/// The Customer with this key; notFound when there is none.\nfileprivate func find(_ uow: any UnitOfWork, _ id: String) async throws -> Customer {\n    guard let row = try await uow.customers.findById(id) else {\n        throw DomainError.notFound(entity: \"Customer\", key: \"\\(id)\")\n    }\n    return row\n}\n",
+  "Sources/MongoswiftMongodbConversions/Services/OrderChanges.swift": "import Foundation\n\n/// The values of a Order that change: fields left .absent keep their value; .set(nil) empties one.\npublic struct OrderChanges: Sendable {\n    public var code: Patch<String?>\n    public var lines: Patch<[Order.Line]?>\n    public var shipping: Patch<Order.Shipping?>\n\n    public init(code: Patch<String?> = .absent, lines: Patch<[Order.Line]?> = .absent, shipping: Patch<Order.Shipping?> = .absent) {\n        self.code = code\n        self.lines = lines\n        self.shipping = shipping\n    }\n}\n",
+  "Sources/MongoswiftMongodbConversions/Services/OrderConversions.swift": "import ApplicationModels\nimport Foundation\n\n/// Conversions between the application models and the \"orders\" table: what the service takes and returns.\npublic enum OrderConversions {\n    /// An Order as the orders table takes it.\n    public static func orderModelToOrder(_ model: ApplicationModels.Order) -> Order {\n        return Order(\n            code: model.code,\n            lines: model.lines.map(orderLinesToDocument),\n            shipping: model.shipping.map(orderShippingToDocument)\n        )\n    }\n\n    /// A row of the orders table as an Order.\n    public static func orderToOrderModel(_ row: Order) -> ApplicationModels.Order {\n        return ApplicationModels.Order(\n            id: row.id!,\n            code: row.code!,\n            lines: (row.lines ?? []).map(orderLinesFromDocument),\n            shipping: row.shipping.map(orderShippingFromDocument)\n        )\n    }\n\n    /// A Discount as the documents of the orders collection keep it.\n    private static func orderLinesDiscountsToDocument(_ value: Discount) -> Order.Line.Discount {\n        return Order.Line.Discount(\n            reason: value.reason,\n            percent: value.percent\n        )\n    }\n\n    /// An OrderLine as the documents of the orders collection keep it.\n    private static func orderLinesToDocument(_ value: OrderLine) -> Order.Line {\n        return Order.Line(\n            id: value.id,\n            sku: value.sku,\n            quantity: value.quantity,\n            price: value.price,\n            status: value.status.map { each in { () -> String in switch each { case .pending: return \"pending\"; case .sent: return \"sent\" } }() },\n            discounts: value.discounts.map(orderLinesDiscountsToDocument)\n        )\n    }\n\n    /// A Shipping as the documents of the orders collection keep it.\n    private static func orderShippingToDocument(_ value: Shipping) -> Order.Shipping {\n        return Order.Shipping(\n            carrier: value.carrier,\n            sentOn: value.sentOn\n        )\n    }\n\n    /// A document of the orders collection as a Discount.\n    private static func orderLinesDiscountsFromDocument(_ value: Order.Line.Discount) -> Discount {\n        return Discount(\n            reason: value.reason!,\n            percent: value.percent!\n        )\n    }\n\n    /// A document of the orders collection as an OrderLine.\n    private static func orderLinesFromDocument(_ value: Order.Line) -> OrderLine {\n        return OrderLine(\n            id: value.id,\n            sku: value.sku!,\n            quantity: value.quantity!,\n            price: value.price!,\n            status: value.status.map { each in { () -> LineStatus in switch each { case \"pending\": return .pending; case \"sent\": return .sent; default: fatalError(\"No LineStatus for this value\") } }() },\n            discounts: (value.discounts ?? []).map(orderLinesDiscountsFromDocument)\n        )\n    }\n\n    /// A document of the orders collection as a Shipping.\n    private static func orderShippingFromDocument(_ value: Order.Shipping) -> Shipping {\n        return Shipping(\n            carrier: value.carrier!,\n            sentOn: value.sentOn!\n        )\n    }\n}\n",
+  "Sources/MongoswiftMongodbConversions/Services/OrderService.swift": "import Foundation\n\n/// Operations on orders. Repositories commit every write.\npublic struct OrderService: Sendable {\n    private let unitOfWork: any UnitOfWork\n\n    public init(unitOfWork: any UnitOfWork) {\n        self.unitOfWork = unitOfWork\n    }\n\n    /// Stores a new Order after checking it.\n    @discardableResult\n    public func createOrder(_ order: Order) async throws -> Order {\n        let values = Values(code: order.code.map(Optional.some), lines: order.lines.map(Optional.some), shipping: order.shipping.map(Optional.some))\n        return try await unitOfWork.transaction { uow in\n            try await checkValues(uow, values, nil)\n            var entity = Order()\n            applyValues(&entity, values)\n            return try await uow.orders.insert(entity)\n        }\n    }\n\n    /// The Order with this key; notFound when there is none.\n    public func getOrder(_ id: String) async throws -> Order {\n        try await find(unitOfWork, id)\n    }\n\n    /// A page of orders, by primary key.\n    public func listOrders(offset: Int, limit: Int) async throws -> Page<Order> {\n        try await unitOfWork.orders.list(offset: offset, limit: limit)\n    }\n\n    /// Changes the given values of a Order.\n    @discardableResult\n    public func updateOrder(_ id: String, _ changes: OrderChanges) async throws -> Order {\n        let values = given(changes)\n        return try await unitOfWork.transaction { uow in\n            var current = try await find(uow, id)\n            try await checkValues(uow, values, current)\n            applyValues(&current, values)\n            return try await uow.orders.update(current)\n        }\n    }\n\n    /// Deletes a Order.\n    public func deleteOrder(_ id: String) async throws {\n        try await unitOfWork.transaction { uow in\n            let current = try await find(uow, id)\n            try await uow.orders.delete(current)\n        }\n    }\n\n    /// The Order with this code, or nil.\n    public func findOrderByCode(_ code: String) async throws -> Order? {\n        try await unitOfWork.orders.findByCode(code)\n    }\n\n    /// Adds an item to lines.\n    @discardableResult\n    public func addLine(_ id: String, _ line: Order.Line) async throws -> Order {\n        var errors: [FieldError] = []\n        checkOrderLine(line, \"lines\", &errors)\n        if !errors.isEmpty { throw DomainError.validationFailed(entity: \"Order\", errors: errors) }\n        return try await unitOfWork.transaction { uow in\n            _ = try await find(uow, id)\n            guard let changed = try await uow.orders.addLine(id, line) else {\n                throw DomainError.notFound(entity: \"Order\", key: \"\\(id)\")\n            }\n            return changed\n        }\n    }\n\n    /// Removes an item from lines, by its identifier.\n    @discardableResult\n    public func removeLine(_ id: String, _ lineId: String) async throws -> Order {\n        return try await unitOfWork.transaction { uow in\n            let current = try await find(uow, id)\n            if !(current.lines ?? []).contains(where: { $0.id == lineId }) {\n                throw DomainError.notFound(entity: \"Line\", key: \"\\(lineId)\")\n            }\n            guard let changed = try await uow.orders.removeLine(id, lineId) else {\n                throw DomainError.notFound(entity: \"Order\", key: \"\\(id)\")\n            }\n            return changed\n        }\n    }\n}\n\n/// The values a create or an update gives, by field: nil when not given, .some(nil) when given empty.\nfileprivate struct Values: Sendable {\n    var code: String?? = nil\n    var lines: [Order.Line]?? = nil\n    var shipping: Order.Shipping?? = nil\n}\n\n/// Checks the values against the rules of the \"orders\" table, and the rows they point to; throws validationFailed with every problem.\nfileprivate func validate(_ uow: any UnitOfWork, _ values: Values, _ current: Order?) async throws {\n    let creating = current == nil\n    var errors: [FieldError] = []\n    if values.code ?? nil == nil && (creating || values.code != nil) {\n        errors.append(FieldError(\"code\", \"is required\"))\n    }\n    if let value = values.lines ?? nil {\n        for (i0, item0) in value.enumerated() {\n            checkOrderLine(item0, \"lines.\\(i0)\", &errors)\n        }\n    } else if creating || values.lines != nil {\n        errors.append(FieldError(\"lines\", \"is required\"))\n    }\n    if let value = values.shipping ?? nil {\n        checkOrderShipping(value, \"shipping\", &errors)\n    }\n    if !errors.isEmpty { throw DomainError.validationFailed(entity: \"Order\", errors: errors) }\n}\n\n/// Values that must be unique are not taken by another row.\nfileprivate func checkUnique(_ uow: any UnitOfWork, _ values: Values, _ current: Order?) async throws {\n    if let code = values.code ?? current?.code,\n       let other = try await uow.orders.findByCode(code),\n       current.map({ other.id != $0.id }) ?? true {\n        throw DomainError.conflict(entity: \"Order\", reason: \"code is already taken\", fields: [\"code\"])\n    }\n}\n\n/// Every check before a write: the values, the rows they point to, the unique values.\nfileprivate func checkValues(_ uow: any UnitOfWork, _ values: Values, _ current: Order?) async throws {\n    try await validate(uow, values, current)\n    try await checkUnique(uow, values, current)\n}\n\n/// Sets the given values on the entity.\nfileprivate func applyValues(_ entity: inout Order, _ values: Values) {\n    if let value = values.code { entity.code = value }\n    if let value = values.lines { entity.lines = value }\n    if let value = values.shipping { entity.shipping = value }\n}\n\n/// What a Order.Line does not follow of its rules, each with the path of its field.\nfileprivate func checkOrderLine(_ value: Order.Line, _ path: String, _ errors: inout [FieldError]) {\n    if value.sku == nil { errors.append(FieldError(\"\\(path).sku\", \"is required\")) }\n    if value.quantity == nil { errors.append(FieldError(\"\\(path).quantity\", \"is required\")) }\n    if value.price == nil { errors.append(FieldError(\"\\(path).price\", \"is required\")) }\n    if let held = value.status {\n        if ![\"pending\", \"sent\"].contains(held) {\n            errors.append(FieldError(\"\\(path).status\", \"must be one of: pending, sent\"))\n        }\n    }\n    if let held = value.discounts {\n        for (i0, item0) in held.enumerated() {\n            checkOrderLineDiscount(item0, \"\\(path).discounts.\\(i0)\", &errors)\n        }\n    }\n}\n\n/// What a Order.Line.Discount does not follow of its rules, each with the path of its field.\nfileprivate func checkOrderLineDiscount(_ value: Order.Line.Discount, _ path: String, _ errors: inout [FieldError]) {\n    if value.reason == nil { errors.append(FieldError(\"\\(path).reason\", \"is required\")) }\n    if value.percent == nil { errors.append(FieldError(\"\\(path).percent\", \"is required\")) }\n}\n\n/// What a Order.Shipping does not follow of its rules, each with the path of its field.\nfileprivate func checkOrderShipping(_ value: Order.Shipping, _ path: String, _ errors: inout [FieldError]) {\n    if value.carrier == nil { errors.append(FieldError(\"\\(path).carrier\", \"is required\")) }\n    if value.sentOn == nil { errors.append(FieldError(\"\\(path).sentOn\", \"is required\")) }\n}\n\n/// The values an update gives, by field.\nfileprivate func given(_ changes: OrderChanges) -> Values {\n    Values(code: changes.code.given, lines: changes.lines.given, shipping: changes.shipping.given)\n}\n\n/// The Order with this key; notFound when there is none.\nfileprivate func find(_ uow: any UnitOfWork, _ id: String) async throws -> Order {\n    guard let row = try await uow.orders.findById(id) else {\n        throw DomainError.notFound(entity: \"Order\", key: \"\\(id)\")\n    }\n    return row\n}\n",
+  "Sources/MongoswiftMongodbConversions/Services/ShipmentChanges.swift": "import Foundation\n\n/// The values of a Shipment that change: fields left .absent keep their value; .set(nil) empties one.\npublic struct ShipmentChanges: Sendable {\n    public var parcel: Patch<Shipment.Parcel?>\n    public var stops: Patch<[Shipment.Stop]?>\n\n    public init(parcel: Patch<Shipment.Parcel?> = .absent, stops: Patch<[Shipment.Stop]?> = .absent) {\n        self.parcel = parcel\n        self.stops = stops\n    }\n}\n",
+  "Sources/MongoswiftMongodbConversions/Services/ShipmentConversions.swift": "import ApplicationModels\nimport Foundation\n\n/// Conversions between the application models and the \"shipments\" table: what the service takes and returns.\npublic enum ShipmentConversions {\n    /// A Shipment as the shipments table takes it.\n    public static func shipmentModelToShipment(_ model: ApplicationModels.Shipment) -> Shipment {\n        return Shipment(\n            parcel: shipmentParcelToDocument(model.parcel)\n            // TODO: stops: DB2CRUD does not write this conversion (stops)\n        )\n    }\n\n    /// A row of the shipments table as a Shipment.\n    public static func shipmentToShipmentModel(_ row: Shipment) -> ApplicationModels.Shipment {\n        return ApplicationModels.Shipment(\n            id: row.id!,\n            parcel: shipmentParcelFromDocument(row.parcel!),\n            stops: { () -> [String] in fatalError(\"stops: DB2CRUD does not write this conversion (stops)\") }()\n        )\n    }\n\n    /// A Parcel as the documents of the shipments collection keep it.\n    private static func shipmentParcelToDocument(_ value: Parcel) -> Shipment.Parcel {\n        // Not stored: fragile\n        return Shipment.Parcel(\n            weight: value.weight\n            // TODO: contents: no field of the model gives it (contents)\n            // TODO: size: DB2CRUD does not write this conversion (size)\n        )\n    }\n\n    /// A document of the shipments collection as a Parcel.\n    private static func shipmentParcelFromDocument(_ value: Shipment.Parcel) -> Parcel {\n        return Parcel(\n            weight: value.weight!,\n            size: { () -> String in fatalError(\"size: DB2CRUD does not write this conversion (size)\") }(),\n            fragile: { () -> Bool in fatalError(\"fragile: no field of the model gives it (fragile)\") }()\n        )\n    }\n}\n",
+  "Sources/MongoswiftMongodbConversions/Services/ShipmentService.swift": "import Foundation\n\n/// Operations on shipments. Repositories commit every write.\npublic struct ShipmentService: Sendable {\n    private let unitOfWork: any UnitOfWork\n\n    public init(unitOfWork: any UnitOfWork) {\n        self.unitOfWork = unitOfWork\n    }\n\n    /// Stores a new Shipment after checking it.\n    @discardableResult\n    public func createShipment(_ shipment: Shipment) async throws -> Shipment {\n        let values = Values(parcel: shipment.parcel.map(Optional.some), stops: shipment.stops.map(Optional.some))\n        return try await unitOfWork.transaction { uow in\n            try await checkValues(uow, values, nil)\n            var entity = Shipment()\n            applyValues(&entity, values)\n            return try await uow.shipments.insert(entity)\n        }\n    }\n\n    /// The Shipment with this key; notFound when there is none.\n    public func getShipment(_ id: String) async throws -> Shipment {\n        try await find(unitOfWork, id)\n    }\n\n    /// A page of shipments, by primary key.\n    public func listShipments(offset: Int, limit: Int) async throws -> Page<Shipment> {\n        try await unitOfWork.shipments.list(offset: offset, limit: limit)\n    }\n\n    /// Changes the given values of a Shipment.\n    @discardableResult\n    public func updateShipment(_ id: String, _ changes: ShipmentChanges) async throws -> Shipment {\n        let values = given(changes)\n        return try await unitOfWork.transaction { uow in\n            var current = try await find(uow, id)\n            try await checkValues(uow, values, current)\n            applyValues(&current, values)\n            return try await uow.shipments.update(current)\n        }\n    }\n\n    /// Deletes a Shipment.\n    public func deleteShipment(_ id: String) async throws {\n        try await unitOfWork.transaction { uow in\n            let current = try await find(uow, id)\n            try await uow.shipments.delete(current)\n        }\n    }\n\n    /// Adds an item to stops.\n    @discardableResult\n    public func addStop(_ id: String, _ stop: Shipment.Stop) async throws -> Shipment {\n        var errors: [FieldError] = []\n        checkShipmentStop(stop, \"stops\", &errors)\n        if !errors.isEmpty { throw DomainError.validationFailed(entity: \"Shipment\", errors: errors) }\n        return try await unitOfWork.transaction { uow in\n            _ = try await find(uow, id)\n            guard let changed = try await uow.shipments.addStop(id, stop) else {\n                throw DomainError.notFound(entity: \"Shipment\", key: \"\\(id)\")\n            }\n            return changed\n        }\n    }\n\n    /// Removes an item from stops, by its position.\n    @discardableResult\n    public func removeStop(_ id: String, _ position: Int) async throws -> Shipment {\n        return try await unitOfWork.transaction { uow in\n            let current = try await find(uow, id)\n            if !(current.stops ?? []).indices.contains(position) {\n                throw DomainError.notFound(entity: \"Stop\", key: \"\\(position)\")\n            }\n            guard let changed = try await uow.shipments.removeStop(id, position, (current.stops ?? []).count) else {\n                throw DomainError.conflict(entity: \"Shipment\", reason: \"was changed by someone else since it was read\", fields: [\"stops\"])\n            }\n            return changed\n        }\n    }\n}\n\n/// The values a create or an update gives, by field: nil when not given, .some(nil) when given empty.\nfileprivate struct Values: Sendable {\n    var parcel: Shipment.Parcel?? = nil\n    var stops: [Shipment.Stop]?? = nil\n}\n\n/// Checks the values against the rules of the \"shipments\" table, and the rows they point to; throws validationFailed with every problem.\nfileprivate func validate(_ uow: any UnitOfWork, _ values: Values, _ current: Shipment?) async throws {\n    let creating = current == nil\n    var errors: [FieldError] = []\n    if let value = values.parcel ?? nil {\n        checkShipmentParcel(value, \"parcel\", &errors)\n    } else if creating || values.parcel != nil {\n        errors.append(FieldError(\"parcel\", \"is required\"))\n    }\n    if let value = values.stops ?? nil {\n        for (i0, item0) in value.enumerated() {\n            checkShipmentStop(item0, \"stops.\\(i0)\", &errors)\n        }\n    }\n    if !errors.isEmpty { throw DomainError.validationFailed(entity: \"Shipment\", errors: errors) }\n}\n\n/// Every check before a write: the values, the rows they point to, the unique values.\nfileprivate func checkValues(_ uow: any UnitOfWork, _ values: Values, _ current: Shipment?) async throws {\n    try await validate(uow, values, current)\n}\n\n/// Sets the given values on the entity.\nfileprivate func applyValues(_ entity: inout Shipment, _ values: Values) {\n    if let value = values.parcel { entity.parcel = value }\n    if let value = values.stops { entity.stops = value }\n}\n\n/// What a Shipment.Parcel does not follow of its rules, each with the path of its field.\nfileprivate func checkShipmentParcel(_ value: Shipment.Parcel, _ path: String, _ errors: inout [FieldError]) {\n    if value.weight == nil { errors.append(FieldError(\"\\(path).weight\", \"is required\")) }\n    if value.contents == nil { errors.append(FieldError(\"\\(path).contents\", \"is required\")) }\n    if let held = value.size {\n        checkShipmentParcelSize(held, \"\\(path).size\", &errors)\n    }\n}\n\n/// What a Shipment.Parcel.Size does not follow of its rules, each with the path of its field.\nfileprivate func checkShipmentParcelSize(_ value: Shipment.Parcel.Size, _ path: String, _ errors: inout [FieldError]) {\n    if value.height == nil { errors.append(FieldError(\"\\(path).height\", \"is required\")) }\n}\n\n/// What a Shipment.Stop does not follow of its rules, each with the path of its field.\nfileprivate func checkShipmentStop(_ value: Shipment.Stop, _ path: String, _ errors: inout [FieldError]) {\n}\n\n/// The values an update gives, by field.\nfileprivate func given(_ changes: ShipmentChanges) -> Values {\n    Values(parcel: changes.parcel.given, stops: changes.stops.given)\n}\n\n/// The Shipment with this key; notFound when there is none.\nfileprivate func find(_ uow: any UnitOfWork, _ id: String) async throws -> Shipment {\n    guard let row = try await uow.shipments.findById(id) else {\n        throw DomainError.notFound(entity: \"Shipment\", key: \"\\(id)\")\n    }\n    return row\n}\n",
+  "Sources/MongoswiftMongodbConversions/UnitOfWork.swift": "/// What services depend on: a repository per table and a transaction. Every repository write is committed at once; transaction() only groups the code.\npublic protocol UnitOfWork: Sendable {\n    var customers: any CustomerRepository { get }\n    var orders: any OrderRepository { get }\n    var shipments: any ShipmentRepository { get }\n\n    /// Runs work with the repositories of the transaction; commits when it ends, rolls back when it throws.\n    func transaction<T: Sendable>(_ work: @escaping @Sendable (any UnitOfWork) async throws -> T) async throws -> T\n}\n\n/// The repositories over one database, and its transaction.\npublic struct MongoUnitOfWork: UnitOfWork {\n    public let db: Db\n\n    public init(db: Db) {\n        self.db = db\n    }\n\n    public var customers: any CustomerRepository { MongoCustomerRepository(db: db) }\n\n    public var orders: any OrderRepository { MongoOrderRepository(db: db) }\n\n    public var shipments: any ShipmentRepository { MongoShipmentRepository(db: db) }\n\n    /// Every write is committed at once: this only groups the code.\n    public func transaction<T: Sendable>(_ work: @escaping @Sendable (any UnitOfWork) async throws -> T) async throws -> T {\n        try await work(self)\n    }\n}\n\n/// The in-memory repositories, for tests and for trying the services without a database.\npublic final class MemoryUnitOfWork: UnitOfWork {\n    public let customers: any CustomerRepository = MemoryCustomerRepository()\n    public let orders: any OrderRepository = MemoryOrderRepository()\n    public let shipments: any ShipmentRepository = MemoryShipmentRepository()\n\n    public init() {}\n\n    /// Memory has no transactions: changes are kept as they are made.\n    public func transaction<T: Sendable>(_ work: @escaping @Sendable (any UnitOfWork) async throws -> T) async throws -> T {\n        try await work(self)\n    }\n}\n",
+  "Tests/MongoswiftMongodbConversionsTests/ConversionTests.swift": "import Foundation\nimport Testing\n@testable import MongoswiftMongodbConversions\n\nextension DataTests {\n    /// The conversions between the application models and the tables.\n    @Suite struct ConversionTests {\n\n        @Test func readsCustomerAndWritesItBack() async throws {\n            let uow = MemoryUnitOfWork()\n            let row = try await Factories.addCustomer(uow, 1)\n            let model = CustomerConversions.customerToCustomerModel(row)\n            let values = CustomerConversions.customerModelToCustomer(model)\n            #expect(values.email == row.email)\n            #expect(values.level == row.level)\n            #expect(values.since == row.since)\n            #expect(values.address == row.address)\n            #expect(values.tags == row.tags)\n        }\n\n        @Test func readsOrderAndWritesItBack() async throws {\n            let uow = MemoryUnitOfWork()\n            let row = try await Factories.addOrder(uow, 1)\n            let model = OrderConversions.orderToOrderModel(row)\n            let values = OrderConversions.orderModelToOrder(model)\n            #expect(values.code == row.code)\n            #expect(values.lines == row.lines)\n            #expect(values.shipping == row.shipping)\n        }\n    }\n}\n",
+  "Tests/MongoswiftMongodbConversionsTests/CustomerRepositoryTests.swift": "import Foundation\nimport Testing\n@testable import MongoswiftMongodbConversions\n\nextension DataTests {\n    /// The repository of the \"customers\" table, against the test database.\n    @Suite struct CustomerRepositoryTests {\n\n        @Test func isStoredAndReadBack() async throws {\n            try await TestDatabase.with { uow in\n                let stored = try await Factories.addCustomer(uow, 1)\n                let row = try await uow.customers.findById(stored.id!)\n                let found = try #require(row)\n                #expect(found.id == stored.id)\n                #expect(try await uow.customers.findByEmail(stored.email!) != nil)\n            }\n        }\n\n        @Test func listsRowsByKey() async throws {\n            try await TestDatabase.with { uow in\n                try await Factories.addCustomer(uow, 1)\n                try await Factories.addCustomer(uow, 2)\n                let page = try await uow.customers.list(offset: 0, limit: 1)\n                #expect(page.total == 2)\n                #expect(page.items.count == 1)\n            }\n        }\n\n        @Test func isDeleted() async throws {\n            try await TestDatabase.with { uow in\n                let stored = try await Factories.addCustomer(uow, 1)\n                try await uow.customers.delete(stored)\n                #expect(try await uow.customers.findById(stored.id!) == nil)\n            }\n        }\n\n        @Test func addsAndRemovesOneItemOfTags() async throws {\n            try await TestDatabase.with { uow in\n                let stored = try await Factories.addCustomer(uow, 1)\n                let before = (stored.tags ?? []).count\n                let n = 7\n                let item = \"tags-\\(n)\"\n                let adding = try await uow.customers.addTag(stored.id!, item)\n                let added = try #require(adding)\n                #expect((added.tags ?? []).count == before + 1)\n                let removing = try await uow.customers.removeTag(stored.id!, item)\n                let removed = try #require(removing)\n                #expect((removed.tags ?? []).count == before)\n            }\n        }\n    }\n}\n",
+  "Tests/MongoswiftMongodbConversionsTests/CustomerServiceTests.swift": "import Foundation\nimport Testing\n@testable import MongoswiftMongodbConversions\n\nextension DataTests {\n    /// The service of the \"customers\" table, on the in-memory repositories.\n    @Suite struct CustomerServiceTests {\n\n        @Test func createsAValidRow() async throws {\n            let uow = MemoryUnitOfWork()\n            let service = CustomerService(unitOfWork: uow)\n            let row = Factories.newCustomer(1)\n            let created = try await service.createCustomer(row)\n            let found = try await service.getCustomer(created.id!)\n            #expect(created.id == found.id)\n        }\n\n        @Test func refusesAMissingValue() async throws {\n            let uow = MemoryUnitOfWork()\n            let service = CustomerService(unitOfWork: uow)\n            var row = Factories.newCustomer(1)\n            row.email = nil\n            let error = await refusal { try await service.createCustomer(row) }\n            #expect(error?.invalidFields == [\"email\"])\n        }\n\n        @Test func refusesARepeatedUniqueValue() async throws {\n            let uow = MemoryUnitOfWork()\n            let service = CustomerService(unitOfWork: uow)\n            let row = Factories.newCustomer(1)\n            let first = try await service.createCustomer(row)\n            var again = Factories.newCustomer(2)\n            again.email = first.email\n            #expect(isConflict(await refusal { try await service.createCustomer(again) }))\n        }\n\n        @Test func keepsItsOwnUniqueValue() async throws {\n            let uow = MemoryUnitOfWork()\n            let service = CustomerService(unitOfWork: uow)\n            let row = Factories.newCustomer(1)\n            let created = try await service.createCustomer(row)\n            let updated = try await service.updateCustomer(created.id!, CustomerChanges(email: .set(created.email)))\n            #expect(created.email == updated.email)\n        }\n\n        @Test func saysWhenARowIsMissing() async throws {\n            let uow = MemoryUnitOfWork()\n            let service = CustomerService(unitOfWork: uow)\n            #expect(isNotFound(await refusal { try await service.getCustomer(\"ffffffffffffffffffffffff\") }))\n        }\n\n        @Test func deletesARow() async throws {\n            let uow = MemoryUnitOfWork()\n            let service = CustomerService(unitOfWork: uow)\n            let row = Factories.newCustomer(1)\n            let created = try await service.createCustomer(row)\n            try await service.deleteCustomer(created.id!)\n            #expect(isNotFound(await refusal { try await service.getCustomer(created.id!) }))\n        }\n\n        @Test func addsAndRemovesOneItemOfTags() async throws {\n            let uow = MemoryUnitOfWork()\n            let service = CustomerService(unitOfWork: uow)\n            let row = Factories.newCustomer(1)\n            let created = try await service.createCustomer(row)\n            let before = (created.tags ?? []).count\n            let n = 7\n            let item = \"tags-\\(n)\"\n            let added = try await service.addTag(created.id!, item)\n            #expect((added.tags ?? []).count == before + 1)\n            let removed = try await service.removeTag(created.id!, item)\n            #expect((removed.tags ?? []).count == before)\n        }\n    }\n}\n",
+  "Tests/MongoswiftMongodbConversionsTests/Factories.swift": "import Foundation\n@testable import MongoswiftMongodbConversions\n\n/// Rows for the tests: valid values for every column, and the rows they point to.\nenum Factories {\n    /// A valid Customer that is not stored yet; n makes its unique values differ.\n    static func newCustomer(_ n: Int) -> Customer {\n        Customer(email: \"email-\\(n)\", level: \"basic\", since: Date(timeIntervalSince1970: TimeInterval(1_767_268_800 + (n % 28) * 86_400)), address: newCustomerAddress(n), tags: [])\n    }\n\n    /// A stored Customer.\n    @discardableResult\n    static func addCustomer(_ uow: any UnitOfWork, _ n: Int) async throws -> Customer {\n        let entity = newCustomer(n)\n        return try await uow.customers.insert(entity)\n    }\n\n    /// A valid Customer.Address; n makes its values differ.\n    static func newCustomerAddress(_ n: Int) -> Customer.Address {\n        Customer.Address(street: \"street-\\(n)\", zipCode: \"zipcode-\\(n)\", location: newCustomerAddressLocation(n))\n    }\n\n    /// A valid Customer.Address.Location; n makes its values differ.\n    static func newCustomerAddressLocation(_ n: Int) -> Customer.Address.Location {\n        Customer.Address.Location(latitude: Double(n) + 0.5, longitude: Double(n) + 0.5)\n    }\n\n    /// A valid Order that is not stored yet; n makes its unique values differ.\n    static func newOrder(_ n: Int) -> Order {\n        Order(code: \"code-\\(n)\", lines: [newOrderLine(n)], shipping: newOrderShipping(n))\n    }\n\n    /// A stored Order.\n    @discardableResult\n    static func addOrder(_ uow: any UnitOfWork, _ n: Int) async throws -> Order {\n        let entity = newOrder(n)\n        return try await uow.orders.insert(entity)\n    }\n\n    /// A valid Order.Line; n makes its values differ.\n    static func newOrderLine(_ n: Int) -> Order.Line {\n        Order.Line(sku: \"sku-\\(n)\", quantity: n, price: Decimal(string: \"\\(n % 10000).50\")!, status: \"pending\", discounts: [newOrderLineDiscount(n)])\n    }\n\n    /// A valid Order.Line.Discount; n makes its values differ.\n    static func newOrderLineDiscount(_ n: Int) -> Order.Line.Discount {\n        Order.Line.Discount(reason: \"reason-\\(n)\", percent: Double(n) + 0.5)\n    }\n\n    /// A valid Order.Shipping; n makes its values differ.\n    static func newOrderShipping(_ n: Int) -> Order.Shipping {\n        Order.Shipping(carrier: \"carrier-\\(n)\", sentOn: Date(timeIntervalSince1970: TimeInterval(1_767_268_800 + (n % 28) * 86_400)))\n    }\n\n    /// A valid Shipment that is not stored yet; n makes its unique values differ.\n    static func newShipment(_ n: Int) -> Shipment {\n        Shipment(parcel: newShipmentParcel(n), stops: [newShipmentStop(n)])\n    }\n\n    /// A stored Shipment.\n    @discardableResult\n    static func addShipment(_ uow: any UnitOfWork, _ n: Int) async throws -> Shipment {\n        let entity = newShipment(n)\n        return try await uow.shipments.insert(entity)\n    }\n\n    /// A valid Shipment.Parcel; n makes its values differ.\n    static func newShipmentParcel(_ n: Int) -> Shipment.Parcel {\n        Shipment.Parcel(weight: Double(n) + 0.5, contents: \"contents-\\(n)\", size: newShipmentParcelSize(n))\n    }\n\n    /// A valid Shipment.Parcel.Size; n makes its values differ.\n    static func newShipmentParcelSize(_ n: Int) -> Shipment.Parcel.Size {\n        Shipment.Parcel.Size(height: Double(n) + 0.5)\n    }\n\n    /// A valid Shipment.Stop; n makes its values differ.\n    static func newShipmentStop(_ n: Int) -> Shipment.Stop {\n        Shipment.Stop(city: \"city-\\(n)\")\n    }\n}\n",
+  "Tests/MongoswiftMongodbConversionsTests/OrderRepositoryTests.swift": "import Foundation\nimport Testing\n@testable import MongoswiftMongodbConversions\n\nextension DataTests {\n    /// The repository of the \"orders\" table, against the test database.\n    @Suite struct OrderRepositoryTests {\n\n        @Test func isStoredAndReadBack() async throws {\n            try await TestDatabase.with { uow in\n                let stored = try await Factories.addOrder(uow, 1)\n                let row = try await uow.orders.findById(stored.id!)\n                let found = try #require(row)\n                #expect(found.id == stored.id)\n                #expect(try await uow.orders.findByCode(stored.code!) != nil)\n            }\n        }\n\n        @Test func listsRowsByKey() async throws {\n            try await TestDatabase.with { uow in\n                try await Factories.addOrder(uow, 1)\n                try await Factories.addOrder(uow, 2)\n                let page = try await uow.orders.list(offset: 0, limit: 1)\n                #expect(page.total == 2)\n                #expect(page.items.count == 1)\n            }\n        }\n\n        @Test func isDeleted() async throws {\n            try await TestDatabase.with { uow in\n                let stored = try await Factories.addOrder(uow, 1)\n                try await uow.orders.delete(stored)\n                #expect(try await uow.orders.findById(stored.id!) == nil)\n            }\n        }\n\n        @Test func addsAndRemovesOneItemOfLines() async throws {\n            try await TestDatabase.with { uow in\n                let stored = try await Factories.addOrder(uow, 1)\n                let before = (stored.lines ?? []).count\n                let n = 7\n                let item = Factories.newOrderLine(n)\n                let adding = try await uow.orders.addLine(stored.id!, item)\n                let added = try #require(adding)\n                #expect((added.lines ?? []).count == before + 1)\n                let removing = try await uow.orders.removeLine(stored.id!, (added.lines ?? [])[before].id!)\n                let removed = try #require(removing)\n                #expect((removed.lines ?? []).count == before)\n            }\n        }\n    }\n}\n",
+  "Tests/MongoswiftMongodbConversionsTests/OrderServiceTests.swift": "import Foundation\nimport Testing\n@testable import MongoswiftMongodbConversions\n\nextension DataTests {\n    /// The service of the \"orders\" table, on the in-memory repositories.\n    @Suite struct OrderServiceTests {\n\n        @Test func createsAValidRow() async throws {\n            let uow = MemoryUnitOfWork()\n            let service = OrderService(unitOfWork: uow)\n            let row = Factories.newOrder(1)\n            let created = try await service.createOrder(row)\n            let found = try await service.getOrder(created.id!)\n            #expect(created.id == found.id)\n        }\n\n        @Test func refusesAMissingValue() async throws {\n            let uow = MemoryUnitOfWork()\n            let service = OrderService(unitOfWork: uow)\n            var row = Factories.newOrder(1)\n            row.code = nil\n            let error = await refusal { try await service.createOrder(row) }\n            #expect(error?.invalidFields == [\"code\"])\n        }\n\n        @Test func refusesARepeatedUniqueValue() async throws {\n            let uow = MemoryUnitOfWork()\n            let service = OrderService(unitOfWork: uow)\n            let row = Factories.newOrder(1)\n            let first = try await service.createOrder(row)\n            var again = Factories.newOrder(2)\n            again.code = first.code\n            #expect(isConflict(await refusal { try await service.createOrder(again) }))\n        }\n\n        @Test func keepsItsOwnUniqueValue() async throws {\n            let uow = MemoryUnitOfWork()\n            let service = OrderService(unitOfWork: uow)\n            let row = Factories.newOrder(1)\n            let created = try await service.createOrder(row)\n            let updated = try await service.updateOrder(created.id!, OrderChanges(code: .set(created.code)))\n            #expect(created.code == updated.code)\n        }\n\n        @Test func saysWhenARowIsMissing() async throws {\n            let uow = MemoryUnitOfWork()\n            let service = OrderService(unitOfWork: uow)\n            #expect(isNotFound(await refusal { try await service.getOrder(\"ffffffffffffffffffffffff\") }))\n        }\n\n        @Test func deletesARow() async throws {\n            let uow = MemoryUnitOfWork()\n            let service = OrderService(unitOfWork: uow)\n            let row = Factories.newOrder(1)\n            let created = try await service.createOrder(row)\n            try await service.deleteOrder(created.id!)\n            #expect(isNotFound(await refusal { try await service.getOrder(created.id!) }))\n        }\n\n        @Test func addsAndRemovesOneItemOfLines() async throws {\n            let uow = MemoryUnitOfWork()\n            let service = OrderService(unitOfWork: uow)\n            let row = Factories.newOrder(1)\n            let created = try await service.createOrder(row)\n            let before = (created.lines ?? []).count\n            let n = 7\n            let item = Factories.newOrderLine(n)\n            let added = try await service.addLine(created.id!, item)\n            #expect((added.lines ?? []).count == before + 1)\n            let removed = try await service.removeLine(created.id!, (added.lines ?? [])[before].id!)\n            #expect((removed.lines ?? []).count == before)\n            #expect(isNotFound(await refusal { try await service.removeLine(created.id!, \"ffffffffffffffffffffffff\") }))\n        }\n    }\n}\n",
+  "Tests/MongoswiftMongodbConversionsTests/ShipmentRepositoryTests.swift": "import Foundation\nimport Testing\n@testable import MongoswiftMongodbConversions\n\nextension DataTests {\n    /// The repository of the \"shipments\" table, against the test database.\n    @Suite struct ShipmentRepositoryTests {\n\n        @Test func isStoredAndReadBack() async throws {\n            try await TestDatabase.with { uow in\n                let stored = try await Factories.addShipment(uow, 1)\n                let row = try await uow.shipments.findById(stored.id!)\n                let found = try #require(row)\n                #expect(found.id == stored.id)\n            }\n        }\n\n        @Test func listsRowsByKey() async throws {\n            try await TestDatabase.with { uow in\n                try await Factories.addShipment(uow, 1)\n                try await Factories.addShipment(uow, 2)\n                let page = try await uow.shipments.list(offset: 0, limit: 1)\n                #expect(page.total == 2)\n                #expect(page.items.count == 1)\n            }\n        }\n\n        @Test func isDeleted() async throws {\n            try await TestDatabase.with { uow in\n                let stored = try await Factories.addShipment(uow, 1)\n                try await uow.shipments.delete(stored)\n                #expect(try await uow.shipments.findById(stored.id!) == nil)\n            }\n        }\n\n        @Test func addsAndRemovesOneItemOfStops() async throws {\n            try await TestDatabase.with { uow in\n                let stored = try await Factories.addShipment(uow, 1)\n                let before = (stored.stops ?? []).count\n                let n = 7\n                let item = Factories.newShipmentStop(n)\n                let adding = try await uow.shipments.addStop(stored.id!, item)\n                let added = try #require(adding)\n                #expect((added.stops ?? []).count == before + 1)\n                let removing = try await uow.shipments.removeStop(stored.id!, before, (added.stops ?? []).count)\n                let removed = try #require(removing)\n                #expect((removed.stops ?? []).count == before)\n                #expect(try await uow.shipments.removeStop(stored.id!, 0, before + 5) == nil)\n            }\n        }\n    }\n}\n",
+  "Tests/MongoswiftMongodbConversionsTests/ShipmentServiceTests.swift": "import Foundation\nimport Testing\n@testable import MongoswiftMongodbConversions\n\nextension DataTests {\n    /// The service of the \"shipments\" table, on the in-memory repositories.\n    @Suite struct ShipmentServiceTests {\n\n        @Test func createsAValidRow() async throws {\n            let uow = MemoryUnitOfWork()\n            let service = ShipmentService(unitOfWork: uow)\n            let row = Factories.newShipment(1)\n            let created = try await service.createShipment(row)\n            let found = try await service.getShipment(created.id!)\n            #expect(created.id == found.id)\n        }\n\n        @Test func refusesAMissingValue() async throws {\n            let uow = MemoryUnitOfWork()\n            let service = ShipmentService(unitOfWork: uow)\n            var row = Factories.newShipment(1)\n            row.parcel = nil\n            let error = await refusal { try await service.createShipment(row) }\n            #expect(error?.invalidFields == [\"parcel\"])\n        }\n\n        @Test func saysWhenARowIsMissing() async throws {\n            let uow = MemoryUnitOfWork()\n            let service = ShipmentService(unitOfWork: uow)\n            #expect(isNotFound(await refusal { try await service.getShipment(\"ffffffffffffffffffffffff\") }))\n        }\n\n        @Test func deletesARow() async throws {\n            let uow = MemoryUnitOfWork()\n            let service = ShipmentService(unitOfWork: uow)\n            let row = Factories.newShipment(1)\n            let created = try await service.createShipment(row)\n            try await service.deleteShipment(created.id!)\n            #expect(isNotFound(await refusal { try await service.getShipment(created.id!) }))\n        }\n\n        @Test func addsAndRemovesOneItemOfStops() async throws {\n            let uow = MemoryUnitOfWork()\n            let service = ShipmentService(unitOfWork: uow)\n            let row = Factories.newShipment(1)\n            let created = try await service.createShipment(row)\n            let before = (created.stops ?? []).count\n            let n = 7\n            let item = Factories.newShipmentStop(n)\n            let added = try await service.addStop(created.id!, item)\n            #expect((added.stops ?? []).count == before + 1)\n            let removed = try await service.removeStop(created.id!, before)\n            #expect((removed.stops ?? []).count == before)\n            #expect(isNotFound(await refusal { try await service.removeStop(created.id!, 99) }))\n        }\n    }\n}\n",
+  "Tests/MongoswiftMongodbConversionsTests/TestDatabase.swift": "import Foundation\nimport MongoKitten\nimport Testing\n@testable import MongoswiftMongodbConversions\n\n/// Every test is in this suite, one after another: they all empty the same database.\n@Suite(.serialized) struct DataTests {}\n\n/// The test database: the MongoDB database TEST_DATABASE_URL names, created again before every test.\nenum TestDatabase {\n    /// Runs body with the repositories over the test database, with every table dropped and created again first.\n    static func with(_ body: (MongoUnitOfWork) async throws -> Void) async throws {\n        let url = try #require(\n            ProcessInfo.processInfo.environment[\"TEST_DATABASE_URL\"],\n            \"The database tests need a disposable MongoDB database (a replica set, for its transactions): set TEST_DATABASE_URL (it is emptied)\")\n        let app = try await AppDatabase(url: url)\n        do {\n            try await recreate(app.database)\n            try await body(MongoUnitOfWork(db: app.database))\n        } catch {\n            await app.shutdown()\n            throw error\n        }\n        await app.shutdown()\n    }\n\n    /// Drops the database and creates its collections and their indexes again.\n    private static func recreate(_ db: Db) async throws {\n        try await db.run([\"dropDatabase\": 1])\n        try await db.run([\"create\": \"customers\"])\n        try await db.run([\"createIndexes\": \"customers\", \"indexes\": [[\"key\": [\"email\": 1] as BsonDocument, \"name\": \"email_1\", \"unique\": true] as BsonDocument] as BsonDocument])\n        try await db.run([\"create\": \"orders\"])\n        try await db.run([\"createIndexes\": \"orders\", \"indexes\": [[\"key\": [\"code\": 1] as BsonDocument, \"name\": \"code_1\", \"unique\": true] as BsonDocument] as BsonDocument])\n        try await db.run([\"create\": \"shipments\"])\n    }\n}\n\n/// The DomainError work throws, or nil when it throws none.\nfunc refusal<T>(_ work: () async throws -> T) async -> DomainError? {\n    do {\n        _ = try await work()\n        return nil\n    } catch let error as DomainError {\n        return error\n    } catch {\n        return nil\n    }\n}\n\nfunc isConflict(_ error: DomainError?) -> Bool {\n    if case .some(.conflict) = error { true } else { false }\n}\n\nfunc isNotFound(_ error: DomainError?) -> Bool {\n    if case .some(.notFound) = error { true } else { false }\n}\n\nextension DataTests {\n    /// The tests run on the database they were asked to.\n    @Suite struct DatabaseTests {\n        @Test func isTheTestDatabase() async throws {\n            try await TestDatabase.with { uow in\n                let value = uow.db.mongo.name\n                let url = ProcessInfo.processInfo.environment[\"TEST_DATABASE_URL\"] ?? \"\"\n                #expect(url.split(separator: \"/\").last?.split(separator: \"?\").first.map(String.init) == value)\n            }\n        }\n    }\n}\n",
+  "crud-contract.json": "{\n  \"format\": \"crud-contract\",\n  \"version\": 1,\n  \"stack\": {\n    \"language\": \"swift\",\n    \"orm\": \"mongoswift\",\n    \"database\": \"mongodb\",\n    \"execution\": \"async\"\n  },\n  \"transactions\": \"repository\",\n  \"paging\": \"offset\",\n  \"types\": [\n    {\n      \"name\": \"Customer\",\n      \"module\": \"MongoswiftMongodbConversions\",\n      \"file\": \"Sources/MongoswiftMongodbConversions/Entities/Customer.swift\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"swift\": \"String\",\n            \"length\": 24\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"email\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"swift\": \"String\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"level\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"swift\": \"String?\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"since\",\n          \"type\": {\n            \"kind\": \"datetime\",\n            \"swift\": \"Date\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"address\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"swift\": \"Customer.Address\",\n            \"fields\": [\n              {\n                \"name\": \"street\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"zip code\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"location\",\n                \"type\": {\n                  \"kind\": \"json\",\n                  \"fields\": [\n                    {\n                      \"name\": \"latitude\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    },\n                    {\n                      \"name\": \"longitude\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"tags\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"swift\": \"[String]?\"\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"CustomerChanges\",\n      \"module\": \"MongoswiftMongodbConversions\",\n      \"file\": \"Sources/MongoswiftMongodbConversions/Services/CustomerChanges.swift\",\n      \"kind\": \"update\",\n      \"updates\": \"patch\",\n      \"fields\": [\n        {\n          \"name\": \"email\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"swift\": \"String\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"level\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"swift\": \"String?\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"since\",\n          \"type\": {\n            \"kind\": \"datetime\",\n            \"swift\": \"Date\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"address\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"swift\": \"Customer.Address\",\n            \"fields\": [\n              {\n                \"name\": \"street\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"zip code\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"location\",\n                \"type\": {\n                  \"kind\": \"json\",\n                  \"fields\": [\n                    {\n                      \"name\": \"latitude\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    },\n                    {\n                      \"name\": \"longitude\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"tags\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"swift\": \"[String]?\"\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"Order\",\n      \"module\": \"MongoswiftMongodbConversions\",\n      \"file\": \"Sources/MongoswiftMongodbConversions/Entities/Order.swift\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"swift\": \"String\",\n            \"length\": 24\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"code\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"swift\": \"String\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"lines\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"swift\": \"[Order.Line]\",\n            \"fields\": [\n              {\n                \"name\": \"_id\",\n                \"type\": {\n                  \"kind\": \"text\",\n                  \"length\": 24\n                },\n                \"nullable\": true\n              },\n              {\n                \"name\": \"sku\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"quantity\",\n                \"type\": {\n                  \"kind\": \"integer\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"price\",\n                \"type\": {\n                  \"kind\": \"decimal\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"status\",\n                \"type\": {\n                  \"kind\": \"enum\"\n                },\n                \"nullable\": true\n              },\n              {\n                \"name\": \"discounts\",\n                \"type\": {\n                  \"kind\": \"array\",\n                  \"fields\": [\n                    {\n                      \"name\": \"reason\",\n                      \"type\": {\n                        \"kind\": \"text\"\n                      },\n                      \"nullable\": false\n                    },\n                    {\n                      \"name\": \"percent\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"shipping\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"swift\": \"Order.Shipping?\",\n            \"fields\": [\n              {\n                \"name\": \"carrier\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"sentOn\",\n                \"type\": {\n                  \"kind\": \"datetime\"\n                },\n                \"nullable\": false\n              }\n            ]\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"OrderChanges\",\n      \"module\": \"MongoswiftMongodbConversions\",\n      \"file\": \"Sources/MongoswiftMongodbConversions/Services/OrderChanges.swift\",\n      \"kind\": \"update\",\n      \"updates\": \"patch\",\n      \"fields\": [\n        {\n          \"name\": \"code\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"swift\": \"String\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"lines\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"swift\": \"[Order.Line]\",\n            \"fields\": [\n              {\n                \"name\": \"_id\",\n                \"type\": {\n                  \"kind\": \"text\",\n                  \"length\": 24\n                },\n                \"nullable\": true\n              },\n              {\n                \"name\": \"sku\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"quantity\",\n                \"type\": {\n                  \"kind\": \"integer\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"price\",\n                \"type\": {\n                  \"kind\": \"decimal\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"status\",\n                \"type\": {\n                  \"kind\": \"enum\"\n                },\n                \"nullable\": true\n              },\n              {\n                \"name\": \"discounts\",\n                \"type\": {\n                  \"kind\": \"array\",\n                  \"fields\": [\n                    {\n                      \"name\": \"reason\",\n                      \"type\": {\n                        \"kind\": \"text\"\n                      },\n                      \"nullable\": false\n                    },\n                    {\n                      \"name\": \"percent\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"shipping\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"swift\": \"Order.Shipping?\",\n            \"fields\": [\n              {\n                \"name\": \"carrier\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"sentOn\",\n                \"type\": {\n                  \"kind\": \"datetime\"\n                },\n                \"nullable\": false\n              }\n            ]\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"Shipment\",\n      \"module\": \"MongoswiftMongodbConversions\",\n      \"file\": \"Sources/MongoswiftMongodbConversions/Entities/Shipment.swift\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"swift\": \"String\",\n            \"length\": 24\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"parcel\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"swift\": \"Shipment.Parcel\",\n            \"fields\": [\n              {\n                \"name\": \"weight\",\n                \"type\": {\n                  \"kind\": \"float\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"contents\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"size\",\n                \"type\": {\n                  \"kind\": \"json\",\n                  \"fields\": [\n                    {\n                      \"name\": \"height\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"stops\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"swift\": \"[Shipment.Stop]?\",\n            \"fields\": [\n              {\n                \"name\": \"city\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"ShipmentChanges\",\n      \"module\": \"MongoswiftMongodbConversions\",\n      \"file\": \"Sources/MongoswiftMongodbConversions/Services/ShipmentChanges.swift\",\n      \"kind\": \"update\",\n      \"updates\": \"patch\",\n      \"fields\": [\n        {\n          \"name\": \"parcel\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"swift\": \"Shipment.Parcel\",\n            \"fields\": [\n              {\n                \"name\": \"weight\",\n                \"type\": {\n                  \"kind\": \"float\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"contents\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"size\",\n                \"type\": {\n                  \"kind\": \"json\",\n                  \"fields\": [\n                    {\n                      \"name\": \"height\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"stops\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"swift\": \"[Shipment.Stop]?\",\n            \"fields\": [\n              {\n                \"name\": \"city\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        }\n      ]\n    }\n  ],\n  \"errors\": [\n    {\n      \"kind\": \"notFound\",\n      \"name\": \"DomainError.notFound\",\n      \"module\": \"MongoswiftMongodbConversions\"\n    },\n    {\n      \"kind\": \"conflict\",\n      \"name\": \"DomainError.conflict\",\n      \"module\": \"MongoswiftMongodbConversions\"\n    },\n    {\n      \"kind\": \"validation\",\n      \"name\": \"DomainError.validationFailed\",\n      \"module\": \"MongoswiftMongodbConversions\"\n    }\n  ],\n  \"common\": \"MongoswiftMongodbConversions\",\n  \"services\": [\n    {\n      \"name\": \"CustomerService\",\n      \"module\": \"MongoswiftMongodbConversions\",\n      \"operations\": [\n        {\n          \"name\": \"createCustomer\",\n          \"kind\": \"create\",\n          \"errors\": [\n            \"validation\",\n            \"conflict\"\n          ]\n        },\n        {\n          \"name\": \"getCustomer\",\n          \"kind\": \"get\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"listCustomers\",\n          \"kind\": \"list\",\n          \"errors\": []\n        },\n        {\n          \"name\": \"updateCustomer\",\n          \"kind\": \"update\",\n          \"errors\": [\n            \"notFound\",\n            \"validation\",\n            \"conflict\"\n          ]\n        },\n        {\n          \"name\": \"deleteCustomer\",\n          \"kind\": \"delete\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"findCustomerByEmail\",\n          \"kind\": \"find\",\n          \"by\": [\n            \"email\"\n          ],\n          \"errors\": []\n        },\n        {\n          \"name\": \"addTag\",\n          \"kind\": \"addItem\",\n          \"by\": [\n            \"tags\"\n          ],\n          \"errors\": [\n            \"notFound\",\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"removeTag\",\n          \"kind\": \"removeItem\",\n          \"by\": [\n            \"tags\"\n          ],\n          \"errors\": [\n            \"notFound\",\n            \"conflict\"\n          ]\n        }\n      ]\n    },\n    {\n      \"name\": \"OrderService\",\n      \"module\": \"MongoswiftMongodbConversions\",\n      \"operations\": [\n        {\n          \"name\": \"createOrder\",\n          \"kind\": \"create\",\n          \"errors\": [\n            \"validation\",\n            \"conflict\"\n          ]\n        },\n        {\n          \"name\": \"getOrder\",\n          \"kind\": \"get\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"listOrders\",\n          \"kind\": \"list\",\n          \"errors\": []\n        },\n        {\n          \"name\": \"updateOrder\",\n          \"kind\": \"update\",\n          \"errors\": [\n            \"notFound\",\n            \"validation\",\n            \"conflict\"\n          ]\n        },\n        {\n          \"name\": \"deleteOrder\",\n          \"kind\": \"delete\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"findOrderByCode\",\n          \"kind\": \"find\",\n          \"by\": [\n            \"code\"\n          ],\n          \"errors\": []\n        },\n        {\n          \"name\": \"addLine\",\n          \"kind\": \"addItem\",\n          \"by\": [\n            \"lines\"\n          ],\n          \"errors\": [\n            \"notFound\",\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"removeLine\",\n          \"kind\": \"removeItem\",\n          \"by\": [\n            \"lines\"\n          ],\n          \"errors\": [\n            \"notFound\",\n            \"conflict\"\n          ]\n        }\n      ]\n    },\n    {\n      \"name\": \"ShipmentService\",\n      \"module\": \"MongoswiftMongodbConversions\",\n      \"operations\": [\n        {\n          \"name\": \"createShipment\",\n          \"kind\": \"create\",\n          \"errors\": [\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"getShipment\",\n          \"kind\": \"get\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"listShipments\",\n          \"kind\": \"list\",\n          \"errors\": []\n        },\n        {\n          \"name\": \"updateShipment\",\n          \"kind\": \"update\",\n          \"errors\": [\n            \"notFound\",\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"deleteShipment\",\n          \"kind\": \"delete\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"addStop\",\n          \"kind\": \"addItem\",\n          \"by\": [\n            \"stops\"\n          ],\n          \"errors\": [\n            \"notFound\",\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"removeStop\",\n          \"kind\": \"removeItem\",\n          \"by\": [\n            \"stops\"\n          ],\n          \"errors\": [\n            \"notFound\",\n            \"conflict\"\n          ]\n        }\n      ]\n    }\n  ]\n}\n"
+ }
+}
