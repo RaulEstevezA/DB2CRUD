@@ -3,6 +3,8 @@
  * database and kotlin.test on JUnit), the README, an example environment, .gitignore and crud-contract.json for CRUD2Controller.
  */
 import type { GeneratedFile } from '../../export/files.ts'
+import { nestedFields } from '../../schema/documents.ts'
+import type { DbType } from '../../schema/types.ts'
 import { lines } from '../types.ts'
 import {
   commonPackage,
@@ -88,14 +90,14 @@ export function envExampleFile(context: Context): GeneratedFile {
   return {
     path: '.env.example',
     content: lines(
-      '# Where the database is (a JDBC URL), and who connects',
+      context.orm.url ? '# Where the database is' : '# Where the database is (a JDBC URL), and who connects',
       `DATABASE_URL=${defaultUrl(context)}`,
-      sqlite ? null : ['DATABASE_USER=app', 'DATABASE_PASSWORD=app'],
+      sqlite || context.orm.url ? null : ['DATABASE_USER=app', 'DATABASE_PASSWORD=app'],
       sqlite
         ? '# The tests use SQLite in a temporary file unless this names another database (it is emptied by the tests)'
         : '# The database the tests use (it is emptied by the tests): one of the same kind as DATABASE_URL',
       '# TEST_DATABASE_URL=',
-      sqlite ? null : ['# TEST_DATABASE_USER=', '# TEST_DATABASE_PASSWORD='],
+      sqlite || context.orm.url ? null : ['# TEST_DATABASE_USER=', '# TEST_DATABASE_PASSWORD='],
       '',
     ),
   }
@@ -164,7 +166,7 @@ export function readmeFile(context: Context): GeneratedFile {
       '',
       '```bash',
       sqlite ? 'gradle test                                       # SQLite in a temporary file' : null,
-      `TEST_DATABASE_URL="${defaultUrl(context)}"${sqlite ? '' : ' TEST_DATABASE_USER=app TEST_DATABASE_PASSWORD=app'} gradle test   # a real, disposable database: it is emptied`,
+      `TEST_DATABASE_URL="${defaultUrl(context)}"${sqlite || context.orm.url ? '' : ' TEST_DATABASE_USER=app TEST_DATABASE_PASSWORD=app'} gradle test   # a real, disposable database: it is emptied`,
       '```',
       '',
       'Look for `TODO` in the code: each one marks a decision the input did not settle.',
@@ -174,11 +176,17 @@ export function readmeFile(context: Context): GeneratedFile {
 }
 
 function typeOf(column: ColumnInfo): Record<string, unknown> {
-  const type = column.column.type
+  const { kind, ...rest } = plainType(column.column.type)
+  return { kind, kotlin: storedType(column), ...rest }
+}
+
+function plainType(type: DbType): Record<string, unknown> {
+  // What a nested document, or each of a list of them, holds
+  const fields = nestedFields(type)
   return {
     kind: type.kind,
-    kotlin: storedType(column),
     ...(type.kind === 'text' && type.length !== undefined ? { length: type.length } : {}),
+    ...(fields ? { fields: fields.map((field) => ({ name: field.name, type: plainType(field.type), nullable: field.nullable })) } : {}),
   }
 }
 

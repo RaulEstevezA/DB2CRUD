@@ -4,6 +4,7 @@
  * different numbers do not clash on unique columns. Mirrors php/common/samples.ts.
  */
 import type { DbCheck, DbEnum } from '../../schema/types.ts'
+import { isObjectId } from '../../schema/documents.ts'
 import { boundedNumber } from '../samples.ts'
 import type { ColumnInfo } from './context.ts'
 import { ktLiteral } from './repositories.ts'
@@ -48,6 +49,7 @@ export function sampleValue(column: ColumnInfo, checks: DbCheck[], enums: DbEnum
         ? `${whole({ ...column, kt: 'Int' }, checks)} + 0.5f`
         : `${whole({ ...column, kt: 'Int' }, checks)} + 0.5`
     case 'text': {
+      if (type.objectId) return '"%024x".format(n)'
       const length = type.length ?? 40
       if (type.fixed) return `(n % ${10 ** Math.min(length, 9)}).toString().padStart(${length}, '0')`
       // The column name and the number, as long as it fits; n stays below 1000 in the tests
@@ -63,8 +65,10 @@ export function sampleValue(column: ColumnInfo, checks: DbCheck[], enums: DbEnum
     case 'boolean':
       return 'true'
     case 'date':
+      if (column.kt === 'String') return '"2026-01-%02d".format(n % 28 + 1)'
       return 'LocalDate.of(2026, 1, n % 28 + 1)'
     case 'time':
+      if (column.kt === 'String') return '"12:%02d:00".format(n % 60)'
       return 'LocalTime.of(12, n % 60)'
     case 'datetime':
       if (column.kt === 'OffsetDateTime') {
@@ -82,6 +86,7 @@ export function sampleValue(column: ColumnInfo, checks: DbCheck[], enums: DbEnum
       // As long as the column, when its length may be fixed: the database fills shorter values
       return type.length !== undefined && type.length <= 64 ? `ByteArray(${type.length}) { n.toByte() }` : 'byteArrayOf(n.toByte())'
     case 'json':
+      if (column.kt === 'Any') return 'mapOf("n" to n)'
       return '"{\\"n\\": $n}"'
     case 'array':
       return '"[]"'
@@ -93,6 +98,7 @@ export function sampleValue(column: ColumnInfo, checks: DbCheck[], enums: DbEnum
 /** A key no row has, as a Kotlin expression, for the tests of missing rows. */
 export function missingValue(column: ColumnInfo, imports: KtImports): string {
   if (column.ktImport) imports.add(column.ktImport)
+  if (isObjectId(column.column.type)) return `"${'f'.repeat(24)}"`
   switch (column.kt) {
     case 'Long':
       return '999999L'

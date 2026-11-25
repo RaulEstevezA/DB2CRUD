@@ -27,7 +27,8 @@ import {
   type TableInfo,
 } from './context.ts'
 import { createColumns, createDto, readColumns, readDto, updateClass, updateColumns, updateType } from './dtos.ts'
-import { KtImports, ktString } from './kotlin.ts'
+import { checkCall, documentCheckFunctions, documentRules, listOf } from './documents.ts'
+import { KtImports, ktString, typeName } from './kotlin.ts'
 
 interface Writer {
   context: Context
@@ -64,7 +65,7 @@ function valueRules(column: ColumnInfo, checks: DbCheck[]): string[] {
   const name = column.column.name
   const type = column.column.type
   const rule = (condition: string, message: string) => `if (${condition}) errors += FieldError(${ktString(name)}, ${ktString(message)})`
-  if (type.kind === 'text' && type.length !== undefined)
+  if (type.kind === 'text' && type.length !== undefined && !type.objectId)
     rules.push(rule(`value is String && value.length > ${type.length}`, `is longer than ${type.length} characters`))
   for (const check of checks) {
     const parsed = check.parsed
@@ -99,7 +100,7 @@ function validateMethod(writer: Writer): Block {
       : !column.column.nullable
         ? { condition: `!creating && ${key} in values`, message: 'cannot be empty' }
         : null
-    const rules = valueRules(column, info.table.checks)
+    const rules = [...valueRules(column, info.table.checks), ...documentRules(context, info, column)]
     if (!missing && rules.length === 0) continue
     const report = missing && `if (${missing.condition}) errors += FieldError(${ktString(name)}, ${ktString(missing.message)})`
     blocks.push([
@@ -407,8 +408,57 @@ function operationLines(writer: Writer, operation: OperationDesign): Block {
     // One item of a list: only document databases have them
     case 'addItem':
     case 'removeItem':
-      return []
+      return itemLines(writer, operation, name)
   }
+}
+
+/** Adds or removes one item of a list, so two people changing the same list do not undo each other. */
+function itemLines(writer: Writer, operation: OperationDesign, name: string): Block {
+  const { context, info, imports } = writer
+  const adds = operation.kind === 'addItem'
+  const change = query(info, adds ? 'addItem' : 'removeItem', operation.columns)
+  if (!change || !query(info, 'getByKey')) return []
+  const list = listOf(info, change)
+  if (list.column.ktImport) imports.add(list.column.ktImport)
+  const kept = list.column.column.name
+  const params = adds ? [{ name: list.item, type: list.kt }] : list.params
+  const [param] = params
+  const version = info.version ? `, version: ${info.version.kt}` : ''
+  const items = `current.${list.column.prop}.orEmpty()`
+  const missing =
+    list.by === 'id'
+      ? `${items}.none { it.id == ${param.name} }`
+      : list.by === 'value'
+        ? `${param.name} !in ${items}`
+        : `${param.name} !in ${items}.indices`
+  const position = !adds && list.by === 'position'
+  imports.add(qualified(errorsPackage(context), 'NotFoundException'))
+  if (position) imports.add(qualified(errorsPackage(context), 'ConflictException'))
+  const checked = adds && list.nested !== null && list.type.kind === 'json'
+  const gone = position
+    ? `ConflictException(${ktString(info.entity)}, "was changed by someone else since it was read", listOf(${ktString(list.column.key)}))`
+    : `NotFoundException(${ktString(info.entity)}, ${keyValue(info)})`
+  const args = [keyArgs(info), ...params.map((item) => item.name), ...(position ? [`${items}.size`] : [])].join(', ')
+  return [
+    adds
+      ? `/** Adds an item to ${kept}${info.version ? ', read at version' : ''}. */`
+      : `/** Removes an item from ${kept}, by its ${list.by === 'id' ? 'identifier' : list.by}${info.version ? ', read at version' : ''}. */`,
+    `fun ${name}(${keyParams(info)}, ${params.map((item) => `${item.name}: ${item.type}`).join(', ')}${version}): ${resultType(writer)} {`,
+    ...(checked
+      ? [
+          '    val errors = mutableListOf<FieldError>()',
+          `    ${checkCall(list.nested!, list.item, kept)}`,
+          `    if (errors.isNotEmpty()) throw ValidationFailedException(${ktString(info.entity)}, errors)`,
+        ]
+      : []),
+    `    return ${inTransaction([
+      `${adds && !info.version ? '' : 'val current = '}find(uow, ${keyArgs(info)})`,
+      ...versionCheck(writer),
+      ...(adds ? [] : [`if (${missing}) throw NotFoundException(${ktString(typeName(list.item.replace(/`/g, '')))}, ${param.name})`]),
+      out(writer, `${repo(info)}.${queryName(context, change)}(${args}) ?: throw ${gone}`),
+    ]).join('\n    ')}`,
+    '}',
+  ]
 }
 
 function linkLines(writer: Writer, operation: OperationDesign, name: string): Block {
@@ -488,10 +538,12 @@ export function serviceFile(context: Context, info: TableInfo): GeneratedFile | 
   const helpers: Block[] = [findMethod(writer), readMethod(writer)]
   if (writes) helpers.unshift(validateMethod(writer), uniqueMethod(writer), checkMethod(writer), applyMethod(writer))
   if (writes && updates) helpers.push(givenMethod(writer))
+  if (writes) helpers.push(...documentCheckFunctions(context, info))
   const hidden = info.hidden.length > 0 && !dtos
   const members = [...operations, ...helpers.filter((block) => block.length > 0)]
   return ktFile(pathOf(pkg, serviceClass(info)), pkg, imports.write(), [
     `/** Operations on ${info.name}. ${TRANSACTIONS[context.settings.transactions]} */`,
+    writes && info.columns.some((column) => column.kt.includes('<')) && '@Suppress("UNCHECKED_CAST")',
     `class ${serviceClass(info)}(private val unitOfWork: UnitOfWork) {`,
     hidden &&
       `    // TODO: ${info.hidden.join(', ')} ${info.hidden.length === 1 ? 'is' : 'are'} returned with the entity; use DTOs to leave ${info.hidden.length === 1 ? 'it' : 'them'} out`,

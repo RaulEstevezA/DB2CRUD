@@ -11,8 +11,18 @@
  * with `modelsSource: 'import'`, used from the user's package: the copy then goes to `application-models/`, a source
  * folder the build adds while it exists (delete it inside the application).
  */
-import { withoutHidden, type ConversionPlan, type ModelPath, type ReadValue, type Todo, type WriteValue } from '../../conversions/plan.ts'
+import {
+  type ConversionPlan,
+  hasTodo,
+  lossy,
+  type ModelPath,
+  type ReadValue,
+  type Todo,
+  withoutHidden,
+  type WriteValue,
+} from '../../conversions/plan.ts'
 import type { GeneratedFile } from '../../export/files.ts'
+import { fieldsOf } from '../../matching/names.ts'
 import type { MapperTransform } from '../../interop/mapper/read.ts'
 import type { EnumDef, FieldDef, ModelDef, ModelSchema, TypeRef } from '../../model/schema.ts'
 import {
@@ -30,6 +40,7 @@ import {
   type Context,
   type TableInfo,
 } from './context.ts'
+import type { NestedClass } from './documents.ts'
 import { createDto, readColumns, readDto } from './dtos.ts'
 import { KtImports, ktString, memberName } from './kotlin.ts'
 import { closeTest, openTest } from './tests.ts'
@@ -75,6 +86,8 @@ interface Models {
   schema: ModelSchema
   pkg: string
   imports?: KtImports
+  /** The database keeps documents: moments have no offset, and lists are lists */
+  documents?: boolean
 }
 
 const KNOWN: Record<string, string> = {
@@ -267,9 +280,40 @@ const TEMPORAL = new Set(['LocalDate', 'LocalDateTime', 'LocalTime', 'OffsetDate
 /** `x!!`, with parentheses when the expression ends a chain of safe calls. */
 const sure = (expression: string) => (/\?\.|\?:| /.test(expression) ? `(${expression})!!` : `${expression}!!`)
 
+const LIST = /^(?:List|MutableList|Set|MutableSet|Collection)<(.+)>$/
+
+/** `.toSet()`, when a list must become another collection. */
+const collect = (type: string) =>
+  /^Set</.test(type) ? '.toSet()' : /^Mutable(List|Set)</.test(type) ? `.to${/^\w+/.exec(type)![0]}()` : ''
+
+/** What a document database keeps in its own way; undefined for the rest. */
+function coreDocument(models: Models, expression: string, from: string, to: string): string | null | undefined {
+  if (from === 'LocalDate' && to === 'Instant') {
+    models.imports?.add('java.time.ZoneOffset')
+    return `${expression}.atStartOfDay(ZoneOffset.UTC).toInstant()`
+  }
+  if (from === 'Instant' && to === 'LocalDate') {
+    models.imports?.add('java.time.ZoneOffset')
+    return `${expression}.atOffset(ZoneOffset.UTC).toLocalDate()`
+  }
+  if (from === 'Any') return null
+  const fromItem = LIST.exec(from)
+  const toItem = LIST.exec(to)
+  if (!fromItem || !toItem) return undefined
+  const converted = convert(models, typed('item', fromItem[1]), toItem[1])
+  if (converted === null) return null
+  return converted === 'item'
+    ? `${expression}${collect(to) || (from.startsWith('List<') || from.startsWith('Mutable') ? '' : '.toList()')}`
+    : `${expression}.map { item -> ${converted} }${collect(to)}`
+}
+
 /** A value that is there, of one Kotlin type, as another; null when DB2CRUD does not convert them. */
 function core(models: Models, expression: string, from: string, to: string): string | null {
   if (from === to || to === 'Any') return expression
+  if (models.documents) {
+    const converted = coreDocument(models, expression, from, to)
+    if (converted !== undefined) return converted
+  }
   const utc = () => {
     models.imports?.add('java.time.ZoneOffset')
     return 'ZoneOffset.UTC'
@@ -328,6 +372,8 @@ function convert(models: Models, value: Typed, to: string): string | null {
   const nullableTarget = to.endsWith('?')
   const { expression } = value
   if (!value.nullable) return core(models, expression, value.type, target)
+  // A list that is not there is an empty one
+  if (models.documents && !nullableTarget && LIST.test(target)) return core(models, `${expression}.orEmpty()`, value.type, target)
   if (!nullableTarget) return core(models, sure(expression), value.type, target)
   const converted = core(models, 'it', value.type, target)
   if (converted === null) return null
@@ -458,6 +504,158 @@ function walk(models: Models, model: ModelDef | undefined, path: ModelPath, root
 const columnTyped = (column: ColumnInfo, root: string, entity: boolean) =>
   typed(`${root}.${column.prop}`, column.kt, entity || column.column.nullable)
 
+// Nested documents
+
+interface Nested {
+  context: Context
+  models: Models
+  info: TableInfo
+  plan: ConversionPlan
+  imports: KtImports
+  /** The functions written so far */
+  functions: string[][]
+}
+
+/** How a nested model is written: by an alias when the entity or a DTO of the file has its name. */
+function nestedModel({ context, models, info, plan, imports }: Nested, name: string): string {
+  const { target, source } = conversionNames(context, plan)
+  const clash = [info.entity, target, source].includes(name)
+  imports.add(`${qualified(models.pkg, name)}${clash ? ` as ${name}Model` : ''}`)
+  return clash ? `${name}Model` : name
+}
+
+const modelNamed = ({ models }: Nested, name: string): ModelDef => {
+  const model = models.schema.models.find((item) => item.name === name)!
+  return { ...model, fields: fieldsOf(model, models.schema) }
+}
+
+const importEntity = ({ context, info, imports }: Nested) => imports.add(qualified(packageOf(context, info, 'entity'), info.entity))
+
+const upperFirst = (text: string) => text.charAt(0).toUpperCase() + text.slice(1).replace(/`/g, '')
+
+/** A nested document, or each of a list, converted by a function; `to` is the type it becomes. */
+function callFor(name: string, many: boolean, value: Typed, to: string): string {
+  const nullable = to.endsWith('?')
+  const { expression } = value
+  if (many) {
+    const collected = collect(to)
+    if (!value.nullable) return `${expression}.map { ${name}(it) }${collected}`
+    if (!nullable) return `${expression}.orEmpty().map { ${name}(it) }${collected}`
+    return `${expression}?.map { ${name}(it) }${collected && `?${collected}`}`
+  }
+  if (!value.nullable) return `${name}(${expression})`
+  return nullable ? `${expression}?.let { ${name}(it) }` : `${name}(${sure(expression)})`
+}
+
+/** A class built with named arguments: the values left out take their default, null. */
+const namedLines = (type: string, values: Value[]): string[] => [
+  `    return ${type}(`,
+  ...values.map((value) =>
+    value.expression === null ? `        //${comment(value).slice(3)}` : `        ${value.name} = ${value.expression},${comment(value)}`,
+  ),
+  '    )',
+]
+
+/** What a property of a model could be hidden by */
+const PARAMETERS = new Set(['row', 'uow', 'value'])
+
+/** A model built as the application has it, from the values the plan gives. */
+const modelLines = (type: string, model: ModelDef, values: Value[], given: Set<string>): string[] =>
+  model.construction === 'properties'
+    ? [
+        // Built by its properties: the fields the plan does not give keep the model's defaults
+        `    return ${type}().apply {`,
+        ...values
+          .filter((value) => given.has(value.name))
+          .map((value) =>
+            value.expression === null
+              ? `        //${comment(value).slice(3)}`
+              : `        ${PARAMETERS.has(value.name) ? 'this.' : ''}${value.name} = ${value.expression}${comment(value)}`,
+          ),
+        '    }',
+      ]
+    : [
+        `    return ${type}(`,
+        // Kotlin's TODO() stands for a value left to the user, and says why when it runs
+        ...values.map((value) =>
+          value.expression === null
+            ? `        ${value.name} = TODO(${ktString(`${value.name}: ${value.todo}`)}),`
+            : `        ${value.name} = ${value.expression},${comment(value)}`,
+        ),
+        '    )',
+      ]
+
+/** The value of a field no column gives. */
+const leftOut = (name: string, type: string): Value =>
+  type.endsWith('?') ? { name, expression: 'null' } : { name, expression: null, todo: 'no column gives it' }
+
+/** Writes the function that gives a nested document from its model, and those inside it; gives its name. */
+function writeDocument(nested: Nested, value: WriteValue & { kind: 'document' }, kept: NestedClass, path: string): string {
+  const { models } = nested
+  const name = `${lowerFirst(nested.plan.model)}${path}ToDocument`
+  const model = modelNamed(nested, value.model)
+  const values = value.values.flatMap((item): Value[] => {
+    const field = kept.fields.find((candidate) => candidate.column.name === item.column)!
+    if (item.value.kind === 'todo') return [{ name: field.prop, expression: null, todo: todoText(item.value) }]
+    if (item.value.kind !== 'field' && item.value.kind !== 'document') return []
+    const read = walk(models, model, item.value.path, 'value')!
+    if (item.value.kind === 'document') {
+      const inner = writeDocument(nested, item.value, field.nested!, path + upperFirst(field.prop))
+      return [{ name: field.prop, expression: callFor(inner, item.value.many, read, `${field.kt}?`) }]
+    }
+    const converted = fit(models, read, `${field.kt}?`)
+    if (converted !== null) return [{ name: field.prop, expression: converted }]
+    return [{ name: field.prop, expression: null, todo: `${WHY.unsupported} (${read.type} to ${field.kt})` }]
+  })
+  importEntity(nested)
+  nested.functions.push([
+    `/** ${article(value.model)} as the documents of the ${nested.info.name} collection keep it. */`,
+    ...(values.every((item) => item.expression === null) ? ['@Suppress("UNUSED_PARAMETER")'] : []),
+    `private fun ${name}(value: ${nestedModel(nested, value.model)}): ${kept.path} {`,
+    ...(value.unused.length > 0 ? [`    // Not stored: ${value.unused.join(', ')}`] : []),
+    ...namedLines(kept.path, values),
+    '}',
+  ])
+  return name
+}
+
+/** Writes the function that gives a model from its nested document, and those inside it; gives its name. */
+function readDocument(nested: Nested, value: ReadValue & { kind: 'document' }, kept: NestedClass, path: string): string {
+  const { models } = nested
+  const name = `${lowerFirst(nested.plan.model)}${path}FromDocument`
+  const model = modelNamed(nested, value.model)
+  const given = new Set<string>()
+  const values = model.fields.map((field): Value => {
+    const item = value.values.find((candidate) => candidate.field === field.name)
+    const prop = memberOf(model, field.name)
+    const target = fieldKt(model, field)
+    if (!item || (item.value.kind !== 'todo' && item.value.kind !== 'column' && item.value.kind !== 'document'))
+      return leftOut(prop, target)
+    given.add(prop)
+    if (item.value.kind === 'todo') return { name: prop, expression: null, todo: todoText(item.value) }
+    const column = item.value.column
+    const from = kept.fields.find((candidate) => candidate.column.name === column)!
+    const read = typed(`value.${from.prop}`, from.kt, true)
+    if (item.value.kind === 'document') {
+      const inner = readDocument(nested, item.value, from.nested!, path + upperFirst(from.prop))
+      return { name: prop, expression: callFor(inner, item.value.many, read, target) }
+    }
+    const converted = fit(models, read, target)
+    return converted === null
+      ? { name: prop, expression: null, todo: `${WHY.unsupported} (${from.kt} to ${target})` }
+      : { name: prop, expression: converted }
+  })
+  const type = nestedModel(nested, value.model)
+  importEntity(nested)
+  nested.functions.push([
+    `/** A document of the ${nested.info.name} collection as ${article(value.model).split(' ')[0].toLowerCase()} ${value.model}. */`,
+    `private fun ${name}(value: ${kept.path}): ${type} {`,
+    ...modelLines(type, model, values, given),
+    '}',
+  ])
+  return name
+}
+
 function writeExpression(
   context: Context,
   models: Models,
@@ -465,6 +663,7 @@ function writeExpression(
   value: Exclude<WriteValue, Todo>,
   model: ModelDef | undefined,
   body: Body,
+  nested: Nested,
 ): { expression: string | null; todo?: string } {
   const unsupported = (detail: string) => ({ expression: null, todo: `${WHY.unsupported} (${detail})` })
   const source = (path: ModelPath) => walk(models, model, path, 'model')
@@ -475,9 +674,12 @@ function writeExpression(
     return converted === null ? unsupported(`${result.type} to ${column.kt}`) : { expression: converted }
   }
   switch (value.kind) {
-    // Only strategies of document databases have them
-    case 'document':
-      return unsupported(value.model)
+    case 'document': {
+      const given = source(value.path)
+      const kept = nested.info.nested.get(column.column.name)
+      if (!given || !kept) return unsupported(column.prop)
+      return { expression: callFor(writeDocument(nested, value, kept, upperFirst(column.prop)), value.many, given, `${column.kt}?`) }
+    }
     case 'field':
       return finish(source(value.path))
     case 'lookup': {
@@ -517,6 +719,7 @@ function readExpression(
   field: FieldDef,
   value: Exclude<ReadValue, Todo>,
   body: Body,
+  nested: Nested,
 ): { expression: string | null; todo?: string } {
   const target = fieldKt(model, field)
   const own = (name: string) => columnTyped(columnOf(info, name), 'row', !dtos)
@@ -527,9 +730,12 @@ function readExpression(
     return converted === null ? unsupported(`${result.type} to ${target}`) : { expression: converted }
   }
   switch (value.kind) {
-    // Only strategies of document databases have them
-    case 'document':
-      return unsupported(value.model)
+    case 'document': {
+      const kept = info.nested.get(value.column)
+      if (!kept) return unsupported(field.name)
+      const name = readDocument(nested, value, kept, upperFirst(columnOf(info, value.column).prop))
+      return { expression: callFor(name, value.many, own(value.column), target) }
+    }
     case 'column':
       return finish(own(value.column))
     case 'lookup': {
@@ -598,13 +804,14 @@ export function conversionFile(context: Context, plans: ConversionPlan[], schema
   if (!info) return null
   const pkg = conversionsPackage(context, info)
   const imports = new KtImports(pkg)
-  const models: Models = { schema, pkg: context.settings.modelsModule, imports }
+  const models: Models = { schema, pkg: context.settings.modelsModule, imports, documents: context.orm.documents }
   const helpers = new Set<'pair' | 'part' | 'rest'>()
   const functions: string[][] = []
   const dtos = usesDtos(context, info)
   for (const plan of plans) {
     const model = schema.models.find((item) => item.name === plan.model)
     const names = conversionNames(context, plan)
+    const nested: Nested = { context, models, info, plan, imports, functions: [] }
     imports.add(`${qualified(models.pkg, plan.model)}${names.clash ? ` as ${names.model}` : ''}`)
     if (plan.write) {
       const body: Body = { lines: [], imports, helpers }
@@ -612,7 +819,7 @@ export function conversionFile(context: Context, plans: ConversionPlan[], schema
       for (const item of plan.write) {
         const column = columnOf(info, item.column)
         if (item.value.kind === 'todo') values.push({ name: column.prop, expression: null, todo: todoText(item.value) })
-        else values.push({ name: column.prop, ...writeExpression(context, models, column, item.value, model, body) })
+        else values.push({ name: column.prop, ...writeExpression(context, models, column, item.value, model, body, nested) })
       }
       imports.add(qualified(packageOf(context, info, dtos ? 'dtos' : 'entity'), names.target))
       const uow = readsRows(plan.write)
@@ -621,14 +828,7 @@ export function conversionFile(context: Context, plans: ConversionPlan[], schema
         `/** ${article(plan.model)} as the ${info.name} table takes it. */`,
         `fun ${names.write}(model: ${names.model}${uow ? ', uow: UnitOfWork' : ''}): ${names.target} {`,
         ...body.lines.map((line) => `    ${line}`),
-        // Named arguments: the values left out take their default, null
-        `    return ${names.target}(`,
-        ...values.map((value) =>
-          value.expression === null
-            ? `        //${comment(value).slice(3)}`
-            : `        ${value.name} = ${value.expression},${comment(value)}`,
-        ),
-        '    )',
+        ...namedLines(names.target, values),
         '}',
       ])
     }
@@ -639,47 +839,23 @@ export function conversionFile(context: Context, plans: ConversionPlan[], schema
         const item = plan.read.find((candidate) => candidate.field === field.name)
         const name = memberOf(model, field.name)
         const type = fieldKt(model, field)
-        if (!item)
-          values.push({ name, expression: type.endsWith('?') ? 'null' : null, todo: type.endsWith('?') ? undefined : 'no column gives it' })
+        if (!item) values.push(leftOut(name, type))
         else if (item.value.kind === 'todo') values.push({ name, expression: null, todo: todoText(item.value) })
-        else values.push({ name, ...readExpression(context, models, info, dtos, model, field, item.value, body) })
+        else values.push({ name, ...readExpression(context, models, info, dtos, model, field, item.value, body, nested) })
       }
       imports.add(qualified(packageOf(context, info, dtos ? 'dtos' : 'entity'), names.source))
       const uow = readsRows(plan.read)
       if (uow) imports.add(qualified(context.base, 'UnitOfWork'))
       const given = new Set(plan.read.map((item) => memberOf(model, item.field)))
-      const result =
-        model.construction === 'properties'
-          ? [
-              // Built by its properties: the fields the plan does not give keep the model's defaults
-              `    return ${names.model}().apply {`,
-              ...values
-                .filter((value) => given.has(value.name))
-                .map((value) =>
-                  value.expression === null
-                    ? `        //${comment(value).slice(3)}`
-                    : `        ${value.name} = ${value.expression}${comment(value)}`,
-                ),
-              '    }',
-            ]
-          : [
-              `    return ${names.model}(`,
-              // Kotlin's TODO() stands for a value left to the user, and says why when it runs
-              ...values.map((value) =>
-                value.expression === null
-                  ? `        ${value.name} = TODO(${ktString(`${value.name}: ${value.todo}`)}),`
-                  : `        ${value.name} = ${value.expression},${comment(value)}`,
-              ),
-              '    )',
-            ]
       functions.push([
         `/** A row of the ${info.name} table as ${article(plan.model).split(' ')[0].toLowerCase()} ${plan.model}. */`,
         `fun ${names.read}(row: ${names.source}${uow ? ', uow: UnitOfWork' : ''}): ${names.model} {`,
         ...body.lines.map((line) => `    ${line}`),
-        ...result,
+        ...modelLines(names.model, model, values, given),
         '}',
       ])
     }
+    functions.push(...nested.functions)
   }
   const blocks = [...functions, ...(['pair', 'part', 'rest'] as const).filter((name) => helpers.has(name)).map((name) => HELPERS[name])]
   const name = conversionsObject(info)
@@ -690,8 +866,6 @@ export function conversionFile(context: Context, plans: ConversionPlan[], schema
     '}',
   ])
 }
-
-const hasTodo = (items: { value: { kind: string } }[] | null) => (items ?? []).some((item) => item.value.kind === 'todo')
 
 /**
  * The tests of the conversions: a row stored by the factories is read as the model, and a model that goes both ways
@@ -717,7 +891,9 @@ export function conversionTestFile(
   const readers = new Map<string, string[]>()
   for (const plan of plans) {
     const info = findInfo(context, plan.table)
-    if (!info || !plan.read || hasTodo(plan.read) || !canMake(info) || !schema.models.some((item) => item.name === plan.model)) continue
+    if (!info || !plan.read || hasTodo(plan.read) || !canMake(info)) continue
+    const model = schema.models.find((item) => item.name === plan.model)
+    if (!model) continue
     const names = conversionNames(context, plan)
     const dtos = usesDtos(context, info)
     const writes = plan.write !== null && !hasTodo(plan.write)
@@ -740,9 +916,12 @@ export function conversionTestFile(
       ...(writes
         ? [
             `val values = ${object}.${names.write}(model${readsRows(plan.write) ? ', uow' : ''})`,
-            ...plan.write!.map(
-              (item) => `assertEquals(row.${columnOf(info, item.column).prop}, values.${columnOf(info, item.column).prop})`,
-            ),
+            ...plan.write!.flatMap((item) => {
+              const column = columnOf(info, item.column)
+              // A value the model keeps with less detail is not written back as it was
+              if (context.orm.documents && lossy(item.value, column.column.type, fieldsOf(model, schema), schema)) return []
+              return [`assertEquals(row.${column.prop}, values.${column.prop})`]
+            }),
           ]
         : ['assertNotNull(model)']),
     ]

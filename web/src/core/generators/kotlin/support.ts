@@ -94,7 +94,7 @@ const URLS: Record<string, string> = {
   sqlite: 'jdbc:sqlite:app.db',
 }
 
-export const defaultUrl = (context: Context) => URLS[context.settings.database] ?? URLS.postgresql
+export const defaultUrl = (context: Context) => context.orm.url ?? URLS[context.settings.database] ?? URLS.postgresql
 
 const how = (context: Context) => ({
   operation: 'Each service operation runs in transaction(): committed when it ends, rolled back when it throws.',

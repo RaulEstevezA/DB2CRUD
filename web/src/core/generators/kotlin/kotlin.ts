@@ -39,7 +39,7 @@ export class KtImports {
   }
 
   add(...names: string[]): this {
-    for (const name of names) this.names.add(name)
+    for (const name of names) for (const item of name.split(',')) if (item) this.names.add(item)
     return this
   }
 

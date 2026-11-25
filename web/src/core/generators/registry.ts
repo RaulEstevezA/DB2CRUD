@@ -17,6 +17,7 @@ import { springDataOrm } from './java/springdata/index.ts'
 import { sqlOrm as javaSqlOrm } from './java/sql/index.ts'
 import { exposedOrm } from './kotlin/exposed/index.ts'
 import { sqlOrm as kotlinSqlOrm } from './kotlin/sql/index.ts'
+import { mongodbOrm as kotlinMongodbOrm } from './kotlin/mongodb/index.ts'
 import { kotlinGenerator } from './kotlin/generator.ts'
 import { seaormOrm } from './rust/seaorm/index.ts'
 import { sqlOrm as rustSqlOrm } from './rust/sql/index.ts'
@@ -66,6 +67,7 @@ export const GENERATORS: readonly Generator[] = [
   phpGenerator(phpMongodbOrm),
   kotlinGenerator(exposedOrm),
   kotlinGenerator(kotlinSqlOrm),
+  kotlinGenerator(kotlinMongodbOrm),
   rustGenerator(seaormOrm),
   rustGenerator(rustSqlOrm),
   swiftGenerator(fluentOrm),

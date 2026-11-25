@@ -12,6 +12,12 @@ import type { Method } from './repositories.ts'
 
 export interface KotlinOrm {
   id: OrmId
+  /** Columns may hold documents and lists of them, as classes of their own; the entities are always the project's */
+  documents?: boolean
+  /** What the names of the database classes start with, when it is not `Sql`: `MongoUnitOfWork` */
+  prefix?: string
+  /** The address of the database, when it is not a JDBC URL */
+  url?: string
   /** What repositories and the unit of work take, which holds the transaction: its name, its type and what to import */
   holder: { name: string; type: string; ktImport: string; text: string }
   /** A list without items as the entities keep it, as a Kotlin expression */

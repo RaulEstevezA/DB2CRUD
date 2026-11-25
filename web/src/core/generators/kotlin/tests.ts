@@ -26,7 +26,9 @@ import {
   type TableInfo,
 } from './context.ts'
 import { createColumns, createDto, updateClass, updateColumns, updateType } from './dtos.ts'
-import { KtImports, ktString } from './kotlin.ts'
+import type { DbType } from '../../schema/types.ts'
+import { listOf, type ListInfo, type NestedClass } from './documents.ts'
+import { KtImports, ktString, typeName } from './kotlin.ts'
 import { missingValue, sampleValue } from './samples.ts'
 
 const isNullableKey = (info: TableInfo, key: TableInfo['table']['foreignKeys'][number]) =>
@@ -76,9 +78,10 @@ function factoriesFile(context: Context, makeable: TableInfo[]): GeneratedFile {
         // No sample is sure to fit a type that is not known
         if (column.column.nullable && (isKey || column.column.type.kind === 'unknown')) return []
         const value =
-          column.column.type.kind === 'array'
+          documentValue(info, column) ??
+          (column.column.type.kind === 'array'
             ? context.orm.emptyList(context)
-            : sampleValue(column, info.table.checks, context.schema.enums, imports)
+            : sampleValue(column, info.table.checks, context.schema.enums, imports))
         return [`        ${column.prop} = ${value},`]
       })
     const insert = query(info, 'insert')!
@@ -96,6 +99,7 @@ function factoriesFile(context: Context, makeable: TableInfo[]): GeneratedFile {
       ...fromParents,
       `        return uow.${info.attr}.${queryName(context, insert)}(entity)`,
       '    }',
+      ...[...info.nested.values()].flatMap((item) => nestedFactories(context, item, imports)),
     ]
   })
   return ktFile(testPath(context, 'Factories'), context.base, imports.write(), [
@@ -105,6 +109,55 @@ function factoriesFile(context: Context, makeable: TableInfo[]): GeneratedFile {
     '}',
   ])
 }
+
+// Nested documents
+
+const factoryOf = (item: NestedClass) => `new${item.path.split('.').join('')}`
+
+/** A column that holds documents, or a list of them, as a Kotlin expression; null for any other. */
+function documentValue(info: TableInfo, column: ColumnInfo): string | null {
+  const nested = info.nested.get(column.column.name)
+  return nested ? nestedValue(column.column.type, nested) : null
+}
+
+const nestedValue = (type: DbType, nested: NestedClass): string =>
+  type.kind === 'array' ? `listOf(${nestedValue(type.items, nested)})` : `${factoryOf(nested)}(n)`
+
+/** A factory per class of nested document, without the identifier it is given when it is stored. */
+function nestedFactories(context: Context, item: NestedClass, imports: KtImports): string[] {
+  const values = item.fields
+    .filter((field) => field.column.name !== '_id' && field.column.type.kind !== 'unknown')
+    .map((field) => {
+      if (/\bInstant\b/.test(field.kt)) imports.add('java.time.Instant')
+      if (/\bBigDecimal\b/.test(field.kt)) imports.add('java.math.BigDecimal')
+      if (/\bUUID\b/.test(field.kt)) imports.add('java.util.UUID')
+      const column = { column: field.column, kt: field.kt, ktImport: null } as ColumnInfo
+      const value = field.nested
+        ? nestedValue(field.column.type, field.nested)
+        : field.column.type.kind === 'array'
+          ? context.orm.emptyList(context)
+          : sampleValue(column, field.column.checks ?? [], context.schema.enums, imports)
+      return `            ${field.prop} = ${value},`
+    })
+  return [
+    '',
+    `    /** A valid ${item.path}; n makes its values differ. */`,
+    `    fun ${factoryOf(item)}(n: Int): ${item.path} =`,
+    `        ${item.path}(`,
+    ...values,
+    '        )',
+    ...item.classes.flatMap((inner) => nestedFactories(context, inner, imports)),
+  ]
+}
+
+/** A value for an item of a list, as a Kotlin expression of n. */
+function itemSample(context: Context, list: ListInfo, imports: KtImports): string {
+  if (list.nested && list.type.kind === 'json') return `Factories.${factoryOf(list.nested)}(n)`
+  if (list.type.kind === 'array') return context.orm.emptyList(context)
+  return sampleValue({ ...list.column, column: { ...list.column.column, type: list.type }, kt: list.kt }, [], context.schema.enums, imports)
+}
+
+const itemTest = (list: ListInfo) => `addsAndRemovesOneItemOf${typeName(list.column.key)}`
 
 // Tests of each table
 
@@ -143,7 +196,7 @@ function whenSet(columns: ColumnInfo[], assert: string): string[] {
 /** The assertion that two values of a column are the same: arrays are compared by what they hold. */
 const same = (column: ColumnInfo) => (column.kt === 'ByteArray' ? 'kotlin.test.assertContentEquals' : 'assertEquals')
 
-function repositoryTests(context: Context, info: TableInfo): string[][] {
+function repositoryTests(context: Context, info: TableInfo, imports: KtImports): string[][] {
   const repo = `uow.${info.attr}`
   const keyOf = (variable: string) => info.key.map((column) => stored(`${variable}.${column.prop}`, column)).join(', ')
   const args = (columns: ColumnInfo[]) => columns.map((column) => `stored.${column.prop}!!`).join(', ')
@@ -216,6 +269,28 @@ function repositoryTests(context: Context, info: TableInfo): string[][] {
         `assertNull(${repo}.${queryName(context, getByKey)}(${keyOf('stored')}))`,
       ]),
     )
+  for (const adding of info.queries.filter((item) => item.kind === 'addItem')) {
+    const list = listOf(info, adding)
+    const removing = query(info, 'removeItem', adding.columns)
+    if (!removing || !getByKey) continue
+    if (list.column.ktImport) imports.add(list.column.ktImport)
+    const items = (variable: string) => `${variable}.${list.column.prop}.orEmpty()`
+    const which = list.by === 'id' ? `${items('added')}[before].id!!` : list.by === 'value' ? 'item' : `before, ${items('added')}.size`
+    const removeItem = `${repo}.${queryName(context, removing)}(${keyOf('stored')}`
+    tests.push(
+      test(itemTest(list), [
+        'val n = 7',
+        stored1,
+        `val before = ${items('stored')}.size`,
+        `val item: ${list.kt} = ${itemSample(context, list, imports)}`,
+        `val added = ${repo}.${queryName(context, adding)}(${keyOf('stored')}, item)!!`,
+        `assertEquals(before + 1, ${items('added')}.size)`,
+        `val removed = ${removeItem}, ${which})!!`,
+        `assertEquals(before, ${items('removed')}.size)`,
+        list.by === 'position' && `assertNull(${removeItem}, 0, before + 5))`,
+      ]),
+    )
+  }
   return tests
 }
 
@@ -272,7 +347,7 @@ function serviceTests(context: Context, info: TableInfo, imports: KtImports): st
     )
     return `${updateType(context, info)}(${fields.join(', ')})`
   }
-  const version = (variable: string) => (info.version ? `, ${member(variable, info.version)}` : '')
+  const version = (variable: string) => (info.version ? `, ${member(variable, info.version)}${info.version.column.nullable ? '!!' : ''}` : '')
   const tests: string[][] = []
   const open = [`val service = ${service}(uow)`]
   if (create) {
@@ -395,6 +470,35 @@ function serviceTests(context: Context, info: TableInfo, imports: KtImports): st
       ]),
     )
   }
+  for (const operation of info.operations.filter((item) => item.kind === 'addItem')) {
+    const list = listOf(info, operation)
+    const without = op('removeItem', operation.columns)
+    if (!create || !without || info.hidden.includes(list.column.column.name)) continue
+    if (list.column.ktImport) imports.add(list.column.ktImport)
+    imports.add(qualified(errorsPackage(context), 'NotFoundException'), 'kotlin.test.assertFailsWith')
+    // A DTO says when the list is never missing
+    const items = (variable: string) =>
+      dtos && !list.column.column.nullable ? `${variable}.${list.column.prop}` : `${variable}.${list.column.prop}.orEmpty()`
+    const which = list.by === 'id' ? `${items('added')}[before].id!!` : list.by === 'value' ? 'item' : 'before'
+    const missing = list.by === 'id' ? `"${'f'.repeat(24)}"` : list.by === 'value' ? null : '99'
+    const removeItem = `service.${operationName(context, without)}(${keyOf('created')}`
+    tests.push(
+      test(itemTest(list), [
+        'val n = 7',
+        ...open,
+        ...parentsFirst,
+        ...row('row', 1),
+        `val created = service.${operationName(context, create)}(${input('row')})`,
+        `val before = ${items('created')}.size`,
+        `val item: ${list.kt} = ${itemSample(context, list, imports)}`,
+        `val added = service.${operationName(context, operation)}(${keyOf('created')}, item${version('created')})`,
+        `assertEquals(before + 1, ${items('added')}.size)`,
+        `val removed = ${removeItem}, ${which}${version('added')})`,
+        `assertEquals(before, ${items('removed')}.size)`,
+        missing !== null && `assertFailsWith<NotFoundException> { ${removeItem}, ${missing}${version('removed')}) }`,
+      ]),
+    )
+  }
   return tests
 }
 
@@ -436,7 +540,7 @@ export function testFiles(context: Context): GeneratedFile[] {
     const entityClass = qualified(packageOf(context, info, 'entity'), info.entity)
     if (tests === 'all' || tests === 'repositories') {
       const imports = new KtImports(context.base).add(...assertions)
-      const blocks = repositoryTests(context, info)
+      const blocks = repositoryTests(context, info, imports)
       files.push(
         ktFile(testPath(context, `${info.entity}RepositoryTest`), context.base, imports.write(), [
           `/** The repository of the "${info.name}" table, against the test database. */`,

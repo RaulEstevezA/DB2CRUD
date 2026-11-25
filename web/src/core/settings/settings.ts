@@ -28,6 +28,7 @@ export type OrmId =
   | 'springdata'
   | 'mongodriver'
   | 'mongophp'
+  | 'mongokotlin'
   | 'beanie'
   /** No ORM: SQL through each database's driver */
   | 'sql'
@@ -332,6 +333,17 @@ export const STACKS: readonly StackInfo[] = [
     orm: 'sql',
     label: 'SQL (JDBC)',
     databases: ['postgresql', 'mysql', 'mariadb', 'sqlite'],
+    execution: ['sync'],
+    errors: ['exceptions'],
+    dtoKinds: ['data', 'class'],
+    updates: ['patch', 'optional', 'full'],
+  },
+  {
+    language: 'kotlin',
+    orm: 'mongokotlin',
+    label: 'MongoDB Kotlin driver 5',
+    databases: ['mongodb'],
+    transactions: 'repository',
     execution: ['sync'],
     errors: ['exceptions'],
     dtoKinds: ['data', 'class'],

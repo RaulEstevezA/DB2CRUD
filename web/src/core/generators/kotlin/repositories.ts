@@ -20,6 +20,8 @@ import {
   type Context,
   type TableInfo,
 } from './context.ts'
+import { isObjectId } from '../../schema/documents.ts'
+import { identifiedLists, listOf } from './documents.ts'
 import { KtImports, ktString } from './kotlin.ts'
 
 export interface Method {
@@ -82,6 +84,26 @@ export function repositoryMethods(context: Context, info: TableInfo, imports: Kt
       case 'update':
         add([{ name: 'entity', type: entity }], entity, 'Stores the changes made to a row.')
         break
+      case 'addItem':
+      case 'removeItem': {
+        const list = listOf(info, query)
+        if (list.column.ktImport) imports.add(list.column.ktImport)
+        const adds = query.kind === 'addItem'
+        // Told apart by its position, it is only removed from a list of the size it was seen in
+        const size = !adds && list.by === 'position' ? [{ name: 'size', type: 'Int' }] : []
+        add(
+          [
+            ...info.key.map((column) => ({ name: column.prop, type: column.kt })),
+            ...(adds ? [{ name: list.item, type: list.kt }] : list.params),
+            ...size,
+          ],
+          `${entity}?`,
+          adds
+            ? `Adds an item to ${query.columns[0]}, and gives the row as it is then, if there is one.`
+            : `Removes an item from ${query.columns[0]}${size.length > 0 ? ' that has this size' : ''}, and gives the row as it is then, if there is one.`,
+        )
+        break
+      }
       case 'delete':
         add([{ name: 'entity', type: entity }], 'Unit', 'Removes a row.')
         break
@@ -127,12 +149,16 @@ export function ktLiteral(column: ColumnInfo, value: string | number | boolean):
   }
 }
 
-function memoryFill(column: ColumnInfo, imports: KtImports): string | null {
+export function memoryFill(column: ColumnInfo, imports: KtImports): string | null {
   const db = column.column
   const target = `entity.${column.prop}`
   if (db.generated === 'identity') {
     const next = column.kt === 'Long' ? 'nextId++' : column.kt === 'Short' ? '(nextId++).toShort()' : '(nextId++).toInt()'
     return `${target} = ${target} ?: ${next}`
+  }
+  if (db.generated === 'uuid' && isObjectId(db.type)) {
+    imports.add('org.bson.types.ObjectId')
+    return `${target} = ${target} ?: ObjectId().toHexString()`
   }
   if (db.generated === 'uuid') {
     imports.add('java.util.UUID')
@@ -156,7 +182,7 @@ function memoryVisible(info: TableInfo): string {
   return info.soft.column.type.kind === 'boolean' ? `it.${info.soft.prop} != true` : `it.${info.soft.prop} == null`
 }
 
-function memoryBody(context: Context, info: TableInfo, method: Method): string[] {
+function memoryBody(context: Context, info: TableInfo, method: Method, imports: KtImports): string[] {
   const conditions = method.query.columns.map((name) => `it.${columnOf(info, name).prop} == ${columnOf(info, name).prop}`).join(' && ')
   switch (method.query.kind) {
     case 'getByKey':
@@ -177,12 +203,46 @@ function memoryBody(context: Context, info: TableInfo, method: Method): string[]
       return ['return visible()']
     case 'insert':
     case 'update':
-      return ['rows[keyOf(entity)] = entity', 'return entity']
+      return [...(identifiedLists(info).length > 0 ? ['entity.identifyItems()'] : []), 'rows[keyOf(entity)] = entity', 'return entity']
+    case 'addItem':
+    case 'removeItem':
+      return memoryItem(info, method, imports)
     case 'delete':
       return ['rows.remove(keyOf(entity))']
     default:
       return ['throw UnsupportedOperationException()']
   }
+}
+
+/** One item of a list added or removed in memory. */
+function memoryItem(info: TableInfo, method: Method, imports: KtImports): string[] {
+  const list = listOf(info, method.query)
+  const [param] = list.params
+  const items = `found.${list.column.prop}`
+  const adds = method.query.kind === 'addItem'
+  const position = !adds && list.by === 'position'
+  const keys = info.key.map((column) => `it.${column.prop} == ${column.prop}`).join(' && ')
+  if (adds && list.by === 'id') imports.add('org.bson.types.ObjectId')
+  const version = info.version
+  const touched = info.columns.filter(({ column }) => column.generated === 'onUpdateNow')
+  for (const column of touched) if (column.ktImport) imports.add(column.ktImport)
+  const change = adds
+    ? [
+        ...(list.by === 'id' ? [`${list.item}.id = ${list.item}.id ?: ObjectId().toHexString()`] : []),
+        // A list in a list is one item, not several
+        `${items} = ${items}.orEmpty() + listOf(${list.item})`,
+      ]
+    : position
+      ? [`${items} = ${items}.orEmpty().filterIndexed { index, _ -> index != position }`]
+      : [`${items} = ${items}.orEmpty().filter { it${list.by === 'id' ? '.id' : ''} != ${param.name} }`]
+  return [
+    `val found = visible().firstOrNull { ${keys} } ?: return null`,
+    ...(position ? [`if (${items}.orEmpty().size != size) return null`] : []),
+    ...change,
+    ...(version ? [`found.${version.prop} = (found.${version.prop} ?: 0) + 1`] : []),
+    ...touched.map((column) => `found.${column.prop} = ${column.kt}.now()`),
+    'return found',
+  ]
 }
 
 function block(method: Method, body: string[], modifier: string, doc: boolean): string[] {
@@ -241,7 +301,7 @@ export function repositoryFiles(context: Context, info: TableInfo): GeneratedFil
     const methods = repositoryMethods(context, info, imports)
     const fills = info.columns.map((column) => memoryFill(column, imports)).filter((line): line is string => line !== null)
     const bodies = methods.flatMap((item) => {
-      const body = memoryBody(context, info, item)
+      const body = memoryBody(context, info, item, imports)
       return block(item, item.query.kind === 'insert' ? [...fills, ...body] : body, 'override ', false)
     })
     const identity = info.columns.some((column) => column.column.generated === 'identity')
