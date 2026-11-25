@@ -35,9 +35,11 @@ Pegar o abrir la base de datos y los modelos  →  Revisar los repositorios y se
 | Java 21 | JPA (Hibernate 7) | JDBC | Spring Data MongoDB 5 |
 | C# (.NET 10) | EF Core 9 | ADO.NET | MongoDB.Driver 3 |
 | PHP 8.4 | Doctrine ORM 3, Eloquent 12 | PDO | mongodb/mongodb 2 |
-| Kotlin (JVM) | Exposed 1.6 | JDBC | MongoDB Kotlin driver 5 |
-| Rust | SeaORM 2 | sqlx | MongoDB Rust driver 3 |
-| Swift | Fluent (FluentKit 1) | SQLKit | MongoKitten 7 |
+| Kotlin (JVM), experimental | Exposed 1.6 | JDBC | MongoDB Kotlin driver 5 |
+| Rust, experimental | SeaORM 2 | sqlx | MongoDB Rust driver 3 |
+| Swift, experimental | Fluent (FluentKit 1) | SQLKit | MongoKitten 7 |
+
+Kotlin, Rust y Swift son **experimentales**: funcionan y reciben correcciones, pero las funciones nuevas se escriben para los otros cinco lenguajes.
 
 Los proyectos relacionales son para PostgreSQL, MySQL, MariaDB o SQLite. Todas las combinaciones se han verificado en Docker, en esas cuatro bases de datos o en MongoDB 8.
 

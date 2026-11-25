@@ -8,6 +8,7 @@ DB2CRUD starts from the code of Model2API (which continues as Controller2API), k
 
 ### Added
 
+- Web and desktop: Kotlin, Rust and Swift are marked as experimental. They keep working and get fixes, but new features are written for Python, TypeScript, Java, C# and PHP.
 - **MongoDB**, web and desktop: reads Mongoose schemas (types, required, defaults, enums and limits, references, nested documents and lists, indexes, `timestamps`) and the `$jsonSchema` validators of collections (a mongosh script, `db.getCollectionInfos()` or one validator), and writes TypeScript with Mongoose 8: entities with typed nested documents, repositories that write only what changed, services that check references, transactions in a session, and tests. The stack follows the kind of database that was read.
 - MongoDB, web and desktop: repositories and services add and remove one item of a nested list in the database (by its identifier, its value or its position), and services check the rules of nested documents. Document stacks store each write on its own by default, since transactions need a replica set.
 - MongoDB, web and desktop: reads Spring Data MongoDB classes (`@Document`, `@Field`, references, indexes, Bean Validation limits, nested classes), and writes Java 21 with Spring Data MongoDB 5 as a library, with no Spring application: entities with a class per nested document, repositories over a `MongoTemplate` that write only what changed, and tests. Verified in Docker on MongoDB 8.

@@ -4,6 +4,7 @@ Choices that shape the project, with the reason, so they are not undone by accid
 
 | Decision | Reason |
 |---|---|
+| Kotlin, Rust and Swift are experimental (2026-11-25): they stay and get fixes, new features are written for Python, TypeScript, Java, C# and PHP only, and no more languages or ODMs are added for now | Each feature costs once per language, kind of data access and version (web and desktop). Those five are the most likely to be used; the three are already written and verified, so removing them would save little. Real use will say whether they come back or go |
 | No backend | Models and code may be private; everything DB2CRUD does fits in the browser (personal_web_style `UX_GUIDE.md`, local processing) |
 | A desktop version in Python + PySide6, mirroring the web core | Same as the other tools of the suite; both versions pass the cases in `shared/test-cases/` |
 | Importers start from Mapper's parsers and model | The suite should read a model the same way in every tool, and DB2CRUD reads application models in as many formats as Mapper, with the validations each field declares |

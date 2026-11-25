@@ -35,9 +35,11 @@ Paste or open the database and the models  →  Review the proposed repositories
 | Java 21 | JPA (Hibernate 7) | JDBC | Spring Data MongoDB 5 |
 | C# (.NET 10) | EF Core 9 | ADO.NET | MongoDB.Driver 3 |
 | PHP 8.4 | Doctrine ORM 3, Eloquent 12 | PDO | mongodb/mongodb 2 |
-| Kotlin (JVM) | Exposed 1.6 | JDBC | MongoDB Kotlin driver 5 |
-| Rust | SeaORM 2 | sqlx | MongoDB Rust driver 3 |
-| Swift | Fluent (FluentKit 1) | SQLKit | MongoKitten 7 |
+| Kotlin (JVM), experimental | Exposed 1.6 | JDBC | MongoDB Kotlin driver 5 |
+| Rust, experimental | SeaORM 2 | sqlx | MongoDB Rust driver 3 |
+| Swift, experimental | Fluent (FluentKit 1) | SQLKit | MongoKitten 7 |
+
+Kotlin, Rust and Swift are **experimental**: they work and get fixes, but new features are written for the other five languages.
 
 Relational projects are for PostgreSQL, MySQL, MariaDB or SQLite. Every combination has been verified in Docker, on those four databases or on MongoDB 8.
 
