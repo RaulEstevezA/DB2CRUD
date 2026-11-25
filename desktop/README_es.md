@@ -66,9 +66,9 @@ El resultado queda en `dist/`: `DB2CRUD.app` en macOS y una carpeta `DB2CRUD` co
 
 ```
 db2crud/
-  core/          La misma lógica que web/src/core/, módulo a módulo: modelo, importadores, análisis, decisiones
-                 y exportación
-  ui/            La ventana (PySide6): panel de modelos, textos y tema
+  core/          La misma lógica que web/src/core/, módulo a módulo: modelo, importadores, diseño del CRUD,
+                 relación de campos, conversiones, generadores y exportación
+  ui/            La ventana (PySide6): paneles de base de datos, diseño y proyecto, textos y tema
   workspace.py   Lectura de la entrada, como web/src/app/workspace.ts
   examples.py    Los ejemplos incluidos, los mismos que web/src/examples/
 packaging/       Spec de PyInstaller, lanzador, prueba de arranque e iconos
