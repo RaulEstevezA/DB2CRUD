@@ -683,3 +683,224 @@ export function withCsharpRoundTrip(files, settings, code) {
     : CSHARP_CLINIC.replace('VALIDATORS', JSON.stringify(JSON.stringify(clinicValidators())))
   return [...files, { path: 'tests/App.Tests/RoundTripTests.cs', content: content.replaceAll('READ_ID', read).replaceAll('FindByIdAsync', read) }]
 }
+
+// PHP: the same, in PHPUnit
+
+const PHP_SHOP = `<?php
+
+declare(strict_types=1);
+
+namespace Tests;
+
+use App\\Database;
+use App\\Errors\\ConflictException;
+use App\\Errors\\ValidationFailedException;
+use App\\MongoUnitOfWork;
+use MongoDB\\BSON\\Binary;
+use MongoDB\\BSON\\Decimal128;
+use MongoDB\\BSON\\ObjectId;
+use PHPUnit\\Framework\\TestCase;
+
+final class RoundTripTest extends TestCase
+{
+    private MongoUnitOfWork $uow;
+
+    protected function setUp(): void
+    {
+        $this->uow = TestDatabase::open();
+    }
+
+    private function stored(string $collection): ?array
+    {
+        return $this->uow->db->collection($collection)->findOne();
+    }
+
+    public function testKeepsEveryValueAndItsType(): void
+    {
+        $product = Factories::newProduct(1);
+        $product->related = ['0123456789abcdef01234567'];
+        $product->picture = "\\x00\\xff bytes";
+        $this->uow->products->insert($product);
+        $found = $this->uow->products->READ_ID($product->id);
+        self::assertEquals(get_object_vars($product), get_object_vars($found));
+        self::assertSame($product->price, $found->price);
+        $document = $this->stored('products');
+        self::assertInstanceOf(ObjectId::class, $document['_id']);
+        self::assertInstanceOf(Decimal128::class, $document['price']);
+        self::assertSame(Binary::TYPE_UUID, $document['reference']->getType());
+        self::assertInstanceOf(ObjectId::class, $document['related'][0]);
+        self::assertIsFloat($document['stock']);
+        $customer = Factories::newCustomer(1);
+        $customer->extra = ['a' => null, 'b' => new ObjectId(), 'c' => [1, ['d' => 2.5]]];
+        $this->uow->customers->insert($customer);
+        $read = $this->uow->customers->READ_ID($customer->id);
+        self::assertEquals($customer->extra, $read->extra);
+        self::assertEquals($customer->address, $read->address);
+        $order = Factories::addOrder($this->uow, 2);
+        $again = $this->uow->orders->READ_ID($order->id);
+        self::assertEquals($order->lines, $again->lines);
+        self::assertEquals($order->notes, $again->notes);
+        $line = $this->uow->db->collection('orders')->findOne()['lines'][0];
+        self::assertInstanceOf(ObjectId::class, $line['_id']);
+        self::assertInstanceOf(ObjectId::class, $line['product']);
+        self::assertInstanceOf(Decimal128::class, $line['price']);
+    }
+
+    public function testChangesOnlyWhatIsDifferent(): void
+    {
+        $stored = Factories::addCustomer($this->uow, 1);
+        $this->uow->db->collection('customers')->updateOne([], ['$set' => ['unknown' => 1, 'address.unknown' => 2]]);
+        $one = $this->uow->customers->READ_ID($stored->id);
+        $other = $this->uow->customers->READ_ID($stored->id);
+        $one->name = 'one';
+        $other->level = 'gold';
+        $other->address['city'] = 'Madrid';
+        $other->passwordHash = null;
+        $this->uow->customers->update($one);
+        $this->uow->customers->update($other);
+        $document = $this->stored('customers');
+        self::assertSame(['one', 'gold', 1], [$document['name'], $document['level'], $document['unknown']]);
+        self::assertSame(['Madrid', 2], [$document['address']['city'], $document['address']['unknown']]);
+        self::assertArrayNotHasKey('passwordHash', $document);
+        // The entity an insert gives changes only its fields too
+        $stored->name = 'again';
+        $this->uow->customers->update($stored);
+        self::assertSame('gold', $this->stored('customers')['level']);
+    }
+
+    public function testKeepsTheUnknownFieldsOfItems(): void
+    {
+        $order = Factories::addOrder($this->uow, 1);
+        $this->uow->db->collection('orders')->updateOne([], ['$set' => ['lines.0.unknown' => 5]]);
+        $found = $this->uow->orders->READ_ID($order->id);
+        $found->lines[] = Factories::newOrder(2)->lines[0];
+        $this->uow->orders->update($found);
+        $lines = $this->stored('orders')['lines'];
+        self::assertSame([5, null], array_map(fn (array $line) => $line['unknown'] ?? null, $lines));
+        self::assertInstanceOf(ObjectId::class, $lines[1]['_id']);
+    }
+
+    public function testDoesNotUndoWhatOthersChangeInAList(): void
+    {
+        $id = Factories::addOrder($this->uow, 1)->id;
+        $mine = $this->uow->orders->READ_ID($id);
+        foreach ([1, 2, 3] as $n) {
+            $this->uow->orders->addLine($id, Factories::newOrder($n)->lines[0]);
+        }
+        $mine->number = 99.0;
+        $this->uow->orders->update($mine);
+        $found = $this->uow->orders->READ_ID($id);
+        self::assertCount(4, $found->lines);
+        foreach (array_slice($found->lines, 1) as $line) {
+            $this->uow->orders->removeLine($id, $line['_id']);
+        }
+        self::assertCount(1, $this->uow->orders->READ_ID($id)->lines);
+        self::assertNull($this->uow->orders->addLine(str_repeat('f', 24), Factories::newOrder(1)->lines[0]));
+        self::assertNull($this->uow->orders->READ_ID('nothing'));
+        self::assertNull($this->uow->orders->addLine('nothing', Factories::newOrder(1)->lines[0]));
+        self::assertNull($this->uow->orders->removeLine($id, 'nothing'));
+    }
+
+    public function testRefusesRepeatedAndWrongValues(): void
+    {
+        Factories::addCustomer($this->uow, 1);
+        try {
+            Factories::addCustomer($this->uow, 1);
+            self::fail('A repeated value was taken');
+        } catch (ConflictException) {
+        }
+        $product = Factories::addProduct($this->uow, 1);
+        $product->related = ['nothing'];
+        $this->expectException(ValidationFailedException::class);
+        $this->uow->products->update($product);
+    }
+TRANSACTION
+    public function testCreatesNothingInTheDatabase(): void
+    {
+        $this->uow->db->database->drop();
+        $other = new MongoUnitOfWork(Database::open(TestDatabase::url()));
+        self::assertNull($other->customers->READ_ID(str_repeat('f', 24)));
+        self::assertSame([], iterator_to_array($this->uow->db->database->listCollectionNames()));
+    }
+}
+`
+
+const PHP_TRANSACTION = `
+    public function testUndoesATransactionThatFails(): void
+    {
+        try {
+            $this->uow->transaction(function (\\App\\UnitOfWork $inside): void {
+                $customer = Factories::addCustomer($inside, 1);
+                $customer->name = 'changed';
+                $inside->customers->update($customer);
+                throw new \\LogicException('stop');
+            });
+        } catch (\\LogicException) {
+        }
+        self::assertNull($this->stored('customers'));
+        $this->uow->transaction(fn (\\App\\UnitOfWork $inside) => Factories::addCustomer($inside, 1));
+        self::assertNotNull($this->stored('customers'));
+    }
+`
+
+const PHP_CLINIC = `<?php
+
+declare(strict_types=1);
+
+namespace Tests;
+
+use App\\Errors\\ConflictException;
+use PHPUnit\\Framework\\TestCase;
+
+final class RoundTripTest extends TestCase
+{
+    public function testFitsTheValidatorsOfTheCollections(): void
+    {
+        $uow = TestDatabase::open();
+        // The collections with the validators of their own script, as JSON
+        foreach (json_decode(VALIDATORS, true) as $name => $validator) {
+            $uow->db->database->command(['collMod' => $name, 'validator' => $validator, 'validationAction' => 'error']);
+        }
+        $patient = $uow->patients->insert(Factories::newPatient(1));
+        $found = $uow->patients->findById($patient->id);
+        self::assertEquals(get_object_vars($patient), get_object_vars($found));
+        $room = Factories::addRoom($uow, 1);
+        $found->weight = 70.0;
+        $found->balance = null;
+        $found->visits = 3;
+        $found->contacts[] = ['kind' => 'email', 'value' => 'a@b.c'];
+        $room->beds = 4;
+        $uow->patients->update($found);
+        $uow->rooms->update($room);
+        $changed = $uow->patients->findById($patient->id);
+        self::assertSame([70.0, null, 3, 2], [$changed->weight, $changed->balance, $changed->visits, count($changed->contacts)]);
+        self::assertSame(4, $uow->rooms->findById($room->id)->beds);
+        Factories::addPatient($uow, 2);
+        // What only the validator of the collection knows is refused too
+        $wrong = Factories::newPatient(3);
+        $wrong->blood = 'Z';
+        $refused = [
+            fn () => $uow->patients->insert(Factories::newPatient(1)),
+            fn () => $uow->patients->insert($wrong),
+            fn () => $uow->patients->addContact($patient->id, ['kind' => 'fax', 'value' => '']),
+        ];
+        foreach ($refused as $index => $write) {
+            try {
+                $write();
+                self::fail("The write {$index} was taken");
+            } catch (ConflictException) {
+            }
+        }
+    }
+}
+`
+
+export function withPhpRoundTrip(files, settings, code) {
+  if (settings.architecture === 'table') return files
+  const shop = code.endsWith('shop.ts')
+  const read = settings.verbs === 'get' ? 'getById' : 'findById'
+  const content = shop
+    ? PHP_SHOP.replace('TRANSACTION', settings.transactions === 'operation' ? PHP_TRANSACTION : '')
+    : PHP_CLINIC.replace('VALIDATORS', () => `'${JSON.stringify(clinicValidators()).replace(/'/g, "\\'")}'`)
+  return [...files, { path: 'tests/RoundTripTest.php', content: content.replaceAll('READ_ID', read) }]
+}

@@ -16,7 +16,7 @@ runner_of() {
     typeorm-* | prisma-* | drizzle-* | sequelize-* | mongoose-* | typescript-sql-*) echo ./runners/node.sh ;;
     jpa-* | springdata-* | java-sql-*) echo ./runners/java.sh ;;
     efcore-* | csharp-sql-* | mongodriver-*) echo ./runners/dotnet.sh ;;
-    doctrine-* | eloquent-* | php-sql-*) echo ./runners/php.sh ;;
+    doctrine-* | eloquent-* | php-sql-* | mongophp-*) echo ./runners/php.sh ;;
     exposed-* | kotlin-sql-*) echo ./runners/kotlin.sh ;;
     seaorm-* | rust-sql-*) echo ./runners/rust.sh ;;
     fluent-* | swift-sql-*) echo ./runners/swift.sh ;;

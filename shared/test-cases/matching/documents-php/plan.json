@@ -1,0 +1,554 @@
+[
+ {
+  "table": "customers",
+  "model": "Customer",
+  "direction": "both",
+  "write": [
+   {
+    "column": "email",
+    "value": {
+     "kind": "field",
+     "path": [
+      "email"
+     ]
+    }
+   },
+   {
+    "column": "level",
+    "value": {
+     "kind": "field",
+     "path": [
+      "level"
+     ]
+    }
+   },
+   {
+    "column": "since",
+    "value": {
+     "kind": "field",
+     "path": [
+      "since"
+     ]
+    }
+   },
+   {
+    "column": "address",
+    "value": {
+     "kind": "document",
+     "path": [
+      "address"
+     ],
+     "model": "Address",
+     "many": false,
+     "values": [
+      {
+       "column": "street",
+       "value": {
+        "kind": "field",
+        "path": [
+         "street"
+        ]
+       }
+      },
+      {
+       "column": "zip code",
+       "value": {
+        "kind": "field",
+        "path": [
+         "zipCode"
+        ]
+       }
+      },
+      {
+       "column": "location",
+       "value": {
+        "kind": "document",
+        "path": [
+         "location"
+        ],
+        "model": "Location",
+        "many": false,
+        "values": [
+         {
+          "column": "latitude",
+          "value": {
+           "kind": "field",
+           "path": [
+            "latitude"
+           ]
+          }
+         },
+         {
+          "column": "longitude",
+          "value": {
+           "kind": "field",
+           "path": [
+            "longitude"
+           ]
+          }
+         }
+        ],
+        "unused": []
+       }
+      }
+     ],
+     "unused": []
+    }
+   },
+   {
+    "column": "tags",
+    "value": {
+     "kind": "field",
+     "path": [
+      "tags"
+     ]
+    }
+   }
+  ],
+  "read": [
+   {
+    "field": "id",
+    "value": {
+     "kind": "column",
+     "column": "_id"
+    }
+   },
+   {
+    "field": "email",
+    "value": {
+     "kind": "column",
+     "column": "email"
+    }
+   },
+   {
+    "field": "level",
+    "value": {
+     "kind": "column",
+     "column": "level"
+    }
+   },
+   {
+    "field": "since",
+    "value": {
+     "kind": "column",
+     "column": "since"
+    }
+   },
+   {
+    "field": "address",
+    "value": {
+     "kind": "document",
+     "column": "address",
+     "model": "Address",
+     "many": false,
+     "values": [
+      {
+       "field": "street",
+       "value": {
+        "kind": "column",
+        "column": "street"
+       }
+      },
+      {
+       "field": "zipCode",
+       "value": {
+        "kind": "column",
+        "column": "zip code"
+       }
+      },
+      {
+       "field": "location",
+       "value": {
+        "kind": "document",
+        "column": "location",
+        "model": "Location",
+        "many": false,
+        "values": [
+         {
+          "field": "latitude",
+          "value": {
+           "kind": "column",
+           "column": "latitude"
+          }
+         },
+         {
+          "field": "longitude",
+          "value": {
+           "kind": "column",
+           "column": "longitude"
+          }
+         }
+        ]
+       }
+      }
+     ]
+    }
+   },
+   {
+    "field": "tags",
+    "value": {
+     "kind": "column",
+     "column": "tags"
+    }
+   }
+  ]
+ },
+ {
+  "table": "orders",
+  "model": "Order",
+  "direction": "both",
+  "write": [
+   {
+    "column": "code",
+    "value": {
+     "kind": "field",
+     "path": [
+      "code"
+     ]
+    }
+   },
+   {
+    "column": "lines",
+    "value": {
+     "kind": "document",
+     "path": [
+      "lines"
+     ],
+     "model": "OrderLine",
+     "many": true,
+     "values": [
+      {
+       "column": "_id",
+       "value": {
+        "kind": "field",
+        "path": [
+         "id"
+        ]
+       }
+      },
+      {
+       "column": "sku",
+       "value": {
+        "kind": "field",
+        "path": [
+         "sku"
+        ]
+       }
+      },
+      {
+       "column": "quantity",
+       "value": {
+        "kind": "field",
+        "path": [
+         "quantity"
+        ]
+       }
+      },
+      {
+       "column": "price",
+       "value": {
+        "kind": "field",
+        "path": [
+         "price"
+        ]
+       }
+      },
+      {
+       "column": "status",
+       "value": {
+        "kind": "field",
+        "path": [
+         "status"
+        ]
+       }
+      },
+      {
+       "column": "discounts",
+       "value": {
+        "kind": "document",
+        "path": [
+         "discounts"
+        ],
+        "model": "Discount",
+        "many": true,
+        "values": [
+         {
+          "column": "reason",
+          "value": {
+           "kind": "field",
+           "path": [
+            "reason"
+           ]
+          }
+         },
+         {
+          "column": "percent",
+          "value": {
+           "kind": "field",
+           "path": [
+            "percent"
+           ]
+          }
+         }
+        ],
+        "unused": []
+       }
+      }
+     ],
+     "unused": []
+    }
+   },
+   {
+    "column": "shipping",
+    "value": {
+     "kind": "document",
+     "path": [
+      "shipping"
+     ],
+     "model": "Shipping",
+     "many": false,
+     "values": [
+      {
+       "column": "carrier",
+       "value": {
+        "kind": "field",
+        "path": [
+         "carrier"
+        ]
+       }
+      },
+      {
+       "column": "sentOn",
+       "value": {
+        "kind": "field",
+        "path": [
+         "sentOn"
+        ]
+       }
+      }
+     ],
+     "unused": []
+    }
+   }
+  ],
+  "read": [
+   {
+    "field": "id",
+    "value": {
+     "kind": "column",
+     "column": "_id"
+    }
+   },
+   {
+    "field": "code",
+    "value": {
+     "kind": "column",
+     "column": "code"
+    }
+   },
+   {
+    "field": "lines",
+    "value": {
+     "kind": "document",
+     "column": "lines",
+     "model": "OrderLine",
+     "many": true,
+     "values": [
+      {
+       "field": "id",
+       "value": {
+        "kind": "column",
+        "column": "_id"
+       }
+      },
+      {
+       "field": "sku",
+       "value": {
+        "kind": "column",
+        "column": "sku"
+       }
+      },
+      {
+       "field": "quantity",
+       "value": {
+        "kind": "column",
+        "column": "quantity"
+       }
+      },
+      {
+       "field": "price",
+       "value": {
+        "kind": "column",
+        "column": "price"
+       }
+      },
+      {
+       "field": "status",
+       "value": {
+        "kind": "column",
+        "column": "status"
+       }
+      },
+      {
+       "field": "discounts",
+       "value": {
+        "kind": "document",
+        "column": "discounts",
+        "model": "Discount",
+        "many": true,
+        "values": [
+         {
+          "field": "reason",
+          "value": {
+           "kind": "column",
+           "column": "reason"
+          }
+         },
+         {
+          "field": "percent",
+          "value": {
+           "kind": "column",
+           "column": "percent"
+          }
+         }
+        ]
+       }
+      }
+     ]
+    }
+   },
+   {
+    "field": "shipping",
+    "value": {
+     "kind": "document",
+     "column": "shipping",
+     "model": "Shipping",
+     "many": false,
+     "values": [
+      {
+       "field": "carrier",
+       "value": {
+        "kind": "column",
+        "column": "carrier"
+       }
+      },
+      {
+       "field": "sentOn",
+       "value": {
+        "kind": "column",
+        "column": "sentOn"
+       }
+      }
+     ]
+    }
+   }
+  ]
+ },
+ {
+  "table": "shipments",
+  "model": "Shipment",
+  "direction": "both",
+  "write": [
+   {
+    "column": "parcel",
+    "value": {
+     "kind": "document",
+     "path": [
+      "parcel"
+     ],
+     "model": "Parcel",
+     "many": false,
+     "values": [
+      {
+       "column": "weight",
+       "value": {
+        "kind": "field",
+        "path": [
+         "weight"
+        ]
+       }
+      },
+      {
+       "column": "contents",
+       "value": {
+        "kind": "todo",
+        "reason": "noField",
+        "detail": "contents"
+       }
+      },
+      {
+       "column": "size",
+       "value": {
+        "kind": "todo",
+        "reason": "unsupported",
+        "detail": "size"
+       }
+      }
+     ],
+     "unused": [
+      "fragile"
+     ]
+    }
+   },
+   {
+    "column": "stops",
+    "value": {
+     "kind": "todo",
+     "reason": "unsupported",
+     "detail": "stops"
+    }
+   }
+  ],
+  "read": [
+   {
+    "field": "id",
+    "value": {
+     "kind": "column",
+     "column": "_id"
+    }
+   },
+   {
+    "field": "parcel",
+    "value": {
+     "kind": "document",
+     "column": "parcel",
+     "model": "Parcel",
+     "many": false,
+     "values": [
+      {
+       "field": "weight",
+       "value": {
+        "kind": "column",
+        "column": "weight"
+       }
+      },
+      {
+       "field": "size",
+       "value": {
+        "kind": "todo",
+        "reason": "unsupported",
+        "detail": "size"
+       }
+      },
+      {
+       "field": "fragile",
+       "value": {
+        "kind": "todo",
+        "reason": "noField",
+        "detail": "fragile"
+       }
+      }
+     ]
+    }
+   },
+   {
+    "field": "stops",
+    "value": {
+     "kind": "todo",
+     "reason": "unsupported",
+     "detail": "stops"
+    }
+   }
+  ]
+ }
+]

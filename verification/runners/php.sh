@@ -1,20 +1,20 @@
 #!/usr/bin/env bash
-# Runs the generated PHP projects (Doctrine, Eloquent, PDO) in a clean container: installs their dependencies with Composer,
-# checks the syntax of every file and runs their own tests with PHPUnit. The image (PHP with the PostgreSQL
-# and MySQL drivers, and Composer) is built once; Composer downloads are cached in a Docker volume.
+# Runs the generated PHP projects (Doctrine, Eloquent, PDO, MongoDB) in a clean container: installs their dependencies with Composer,
+# checks the syntax of every file and runs their own tests with PHPUnit. The image (PHP with the PostgreSQL,
+# MySQL and MongoDB drivers, and Composer) is built once; Composer downloads are cached in a Docker volume.
 #
 # Usage: verification/runners/php.sh <scenario-folder>...
 # With DOCKER_NETWORK and TEST_DATABASE_NODE_URL set (see with-database.sh), the tests run on that database.
 # Exit status: 0 when every project passes, 1 otherwise.
 set -u
 
-IMAGE="db2crud-php:8.5"
+IMAGE="db2crud-php:8.5-mongodb"
 if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
   docker build --quiet -t "$IMAGE" - >/dev/null <<'DOCKERFILE' || exit 1
 FROM php:8.5-cli
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 ADD --chmod=0755 https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
-RUN install-php-extensions pdo_pgsql pdo_mysql zip
+RUN install-php-extensions pdo_pgsql pdo_mysql zip mongodb
 DOCKERFILE
 fi
 
