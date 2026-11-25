@@ -108,8 +108,7 @@ const en = {
       invalid: `The project is damaged${path ? ` (${path})` : ''}.`,
       unreadableInput: 'The models inside the project cannot be read.',
       noModels: 'The project has no models.',
-      notRelational:
-        'The project is for a database without tables (MongoDB, Redis, Cassandra…): not supported yet. For MongoDB, paste the Mongoose schemas, the Spring Data or Beanie documents or the validators Model2DB writes.',
+      unsupportedDatabase: 'The project is for a database DB2CRUD does not support (Couchbase, Redis, Cassandra, ScyllaDB…).',
       unknownInput:
         'It is neither a Model2DB project, nor SQL DDL, nor ORM code it can read (SQLAlchemy, SQLModel, Django, Tortoise, Prisma, TypeORM, Sequelize, Drizzle, JPA/Hibernate, EF Core, Doctrine, Eloquent, Mongoose, Spring Data MongoDB and Beanie so far), nor validators or documents (with their _id) of MongoDB.',
       noTables:
@@ -451,8 +450,7 @@ const es: Messages = {
       invalid: `El proyecto está dañado${path ? ` (${path})` : ''}.`,
       unreadableInput: 'No se pueden leer los modelos del proyecto.',
       noModels: 'El proyecto no tiene modelos.',
-      notRelational:
-        'El proyecto es para una base de datos sin tablas (MongoDB, Redis, Cassandra…): todavía no se admite. Para MongoDB, pega los esquemas de Mongoose, los documentos de Spring Data o Beanie o los validadores que escribe Model2DB.',
+      unsupportedDatabase: 'El proyecto es para una base de datos que DB2CRUD no admite (Couchbase, Redis, Cassandra, ScyllaDB…).',
       unknownInput:
         'No es un proyecto de Model2DB, ni DDL de SQL, ni código ORM que sepa leer (por ahora, SQLAlchemy, SQLModel, Django, Tortoise, Prisma, TypeORM, Sequelize, Drizzle, JPA/Hibernate, EF Core, Doctrine, Eloquent, Mongoose, Spring Data MongoDB y Beanie), ni validadores ni documentos (con su _id) de MongoDB.',
       noTables:

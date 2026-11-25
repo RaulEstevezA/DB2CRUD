@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { proposeCrud } from '../../../crud/propose.ts'
+import { nestedFields } from '../../../schema/documents.ts'
 import { findTable } from '../../../schema/types.ts'
 import { validateDbSchema } from '../../../schema/validate.ts'
 import { readModel2DBProject } from '../read.ts'
-import { shopProject } from './fixtures.ts'
+import { BLOG_MODELS, NOTES_MODELS, shopProject } from './fixtures.ts'
 
-function read(output: string, engine?: Parameters<typeof shopProject>[1], text?: string) {
-  const result = readModel2DBProject(shopProject(output, engine, text))
+function read(output: string, engine?: Parameters<typeof shopProject>[1], text?: string, format?: Parameters<typeof shopProject>[3]) {
+  const result = readModel2DBProject(shopProject(output, engine, text, format))
   if (!result.ok) throw new Error(`not read: ${result.error}`)
   return result.schema
 }
@@ -68,6 +69,50 @@ describe('readModel2DBProject', () => {
     expect(read('flyway').tables.every((table) => table.entity === undefined)).toBe(true)
   })
 
+  it('reads the collections of a project for MongoDB, with the references a validator cannot say', () => {
+    const schema = read('mongodb')
+    expect(schema).toMatchObject({ dialect: 'mongodb', source: { kind: 'model2db', format: 'mongodb' }, notes: [] })
+    expect(validateDbSchema(schema)).toEqual([])
+    expect(schema.tables.map((table) => table.name)).toEqual(['customers', 'orders'])
+    expect(findTable(schema, 'orders')).toMatchObject({
+      primaryKey: ['_id'],
+      foreignKeys: [{ columns: ['customer'], references: { table: 'customers', columns: ['_id'] } }],
+      indexes: [{ name: 'ix_orders_customer', columns: ['customer'] }],
+    })
+    // The identifier is in the field next to the reference
+    expect(findTable(read('mongodb', undefined, NOTES_MODELS, 'prisma'), 'notes')!.foreignKeys).toEqual([
+      { columns: ['authorId'], references: { table: 'users', columns: ['_id'] } },
+    ])
+  })
+
+  it('names the entities of a project for MongoDB when its output writes classes', () => {
+    expect(read('pymongo').tables.every((table) => table.entity === undefined)).toBe(true)
+    expect(read('mongoengine').tables.map((table) => table.entity)).toEqual(['Customer', 'Order'])
+  })
+
+  it('reads the documents as the library of the project stores them', () => {
+    const post = (output: string) => {
+      const schema = read(output, undefined, BLOG_MODELS, 'python')
+      expect(validateDbSchema(schema)).toEqual([])
+      const table = findTable(schema, 'posts')!
+      const type = (name: string) => table.columns.find((column) => column.name === name)!.type
+      const comment = nestedFields(type('comments'))!
+      return {
+        key: type('_id').kind,
+        author: type('author').kind,
+        references: table.foreignKeys.length,
+        comment: comment.map((field) => field.name),
+        marks: comment[2].type,
+      }
+    }
+    const comment = ['id', 'text', 'marks']
+    expect(post('mongodb')).toMatchObject({ key: 'text', author: 'text', references: 1, comment, marks: { items: { kind: 'text' } } })
+    expect(post('mongoengine')).toMatchObject({ key: 'text', author: 'text', references: 1, comment })
+    expect(post('mongoose')).toMatchObject({ key: 'uuid', author: 'uuid', references: 1, comment, marks: { items: { kind: 'uuid' } } })
+    expect(post('spring-data-mongodb')).toMatchObject({ key: 'uuid', author: 'uuid', references: 1, comment: ['_id', 'text', 'marks'] })
+    expect(post('beanie')).toMatchObject({ key: 'uuid', author: 'json', references: 0, comment })
+  })
+
   it('gives a schema the CRUD design can be proposed from', () => {
     const design = proposeCrud(read('postgresql'))
     expect(design.services.map((service) => service.name)).toEqual(['CustomerService', 'OrderService', 'OrderLineService'])
@@ -76,7 +121,8 @@ describe('readModel2DBProject', () => {
   it('says why a project cannot be read', () => {
     expect(readModel2DBProject('not json')).toEqual({ ok: false, error: 'notJson' })
     expect(readModel2DBProject('{"format": "mapper-project"}')).toEqual({ ok: false, error: 'notProject' })
-    expect(readModel2DBProject(shopProject('mongodb'))).toEqual({ ok: false, error: 'notRelational' })
+    for (const output of ['redis', 'couchbase', 'toString'])
+      expect(readModel2DBProject(shopProject(output))).toEqual({ ok: false, error: 'unsupportedDatabase' })
     expect(readModel2DBProject(shopProject('postgresql', 'postgresql', 'export const x = 1'))).toEqual({ ok: false, error: 'noModels' })
     const damaged = JSON.parse(shopProject('postgresql'))
     damaged.output.strings = 42

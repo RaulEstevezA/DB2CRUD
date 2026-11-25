@@ -44,7 +44,7 @@ const TYPES: Record<string, DbType> = {
   object: { sql: 'object', kind: 'json' },
 }
 
-interface Reading {
+export interface Reading {
   enums: DbEnum[]
   notes: DbNote[]
 }
@@ -129,7 +129,7 @@ function fieldsOf(schema: Map<string, Expr>, where: string, reading: Reading): {
   })
 }
 
-function tableOf(name: string, schema: Expr, line: number, reading: Reading): DbTable {
+function tableOf(name: string, schema: Expr, reading: Reading, line?: number): DbTable {
   const table: DbTable = {
     name,
     columns: [],
@@ -138,7 +138,7 @@ function tableOf(name: string, schema: Expr, line: number, reading: Reading): Db
     uniques: [],
     indexes: [],
     checks: [],
-    origin: { line, column: 1 },
+    ...(line !== undefined ? { origin: { line, column: 1 } } : {}),
   }
   for (const field of fieldsOf(entriesOf(schema), name, reading)) {
     table.columns.push(field.column)
@@ -150,6 +150,10 @@ function tableOf(name: string, schema: Expr, line: number, reading: Reading): Db
   return table
 }
 
+/** Collections whose `$jsonSchema` is known, not read from a script. */
+export const collectionsOf = (collections: { name: string; schema: Expr }[], reading: Reading): DbTable[] =>
+  collections.map(({ name, schema }) => tableOf(name, schema, reading))
+
 /** The `$jsonSchema` of the options of a collection. */
 const validatorOf = (options: Expr | undefined): Expr | undefined => entriesOf(entriesOf(options).get('validator')).get('$jsonSchema')
 
@@ -160,7 +164,7 @@ function readMongodb(files: SourceFile[]): DbSchema {
   const add = (name: string, schema: Expr | undefined, line: number) => {
     // Nothing says what its documents hold
     if (!schema) reading.notes.push({ code: 'orm.noValidator', params: { table: name }, origin: { line, column: 1 } })
-    if (schema && !tables.some((table) => table.name === name)) tables.push(tableOf(name, schema, line, reading))
+    if (schema && !tables.some((table) => table.name === name)) tables.push(tableOf(name, schema, reading, line))
   }
   for (const file of files) {
     let tokens: Token[]

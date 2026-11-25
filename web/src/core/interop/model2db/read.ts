@@ -2,18 +2,20 @@
  * Reads a saved Model2DB project (`model2db-project`) into a physical schema. The project keeps the input
  * text, the design decisions and the output settings, not the tables, so the tables are built again the
  * way Model2DB builds them, with a copy of its code (`vendor/`, decision 15): the input is read with its
- * parsers, the saved design is fitted to it, and the relational build runs with the project's naming,
- * text type and engine. The result is then written as `db-schema`.
+ * parsers, the saved design is fitted to it, and the relational or document build runs with the project's
+ * naming, text type and engine. The result is then written as `db-schema`.
  */
 import type { DbCheck, DbColumn, DbEnum, DbNote, DbSchema, DbTable, DbType, Dialect } from '../../schema/types.ts'
+import { documentSchema, DOCUMENT_OUTPUTS } from './documents.ts'
 import { reconcile } from './vendor/design/edit.ts'
 import { sqlColumnType } from './vendor/generate/sql/sql.ts'
 import { readProject, type Model2DBProject, type ProjectError } from './vendor/interop/project.ts'
 import { detectFormat, parseInput } from './vendor/parsers/registry.ts'
+import type { ModelSchema } from './vendor/model/schema.ts'
 import { buildRelational } from './vendor/physical/relational.ts'
 import type { Column, ColumnType, PhysicalEnum, RelationalSchema, Table } from './vendor/physical/types.ts'
 
-export type Model2DBReadError = ProjectError | 'unreadableInput' | 'noModels' | 'notRelational'
+export type Model2DBReadError = ProjectError | 'unreadableInput' | 'noModels' | 'unsupportedDatabase'
 
 export type Model2DBReadResult = { ok: true; schema: DbSchema } | { ok: false; error: Model2DBReadError; path?: string }
 
@@ -47,7 +49,6 @@ const RELATIONAL_OUTPUTS: Record<string, readonly RelationalDialect[] | null> = 
 /** Outputs that write SQL or migrations, not classes: their tables have no entity of their own. */
 const SQL_OUTPUTS = new Set(['postgresql', 'mysql', 'mariadb', 'sqlite', 'sqlserver', 'oracle', 'flyway', 'liquibase'])
 
-/** Model2DB's document databases are not read from its projects yet. */
 type RelationalDialect = Exclude<Dialect, 'mongodb'>
 
 function engineOf(output: string, engine: RelationalDialect): RelationalDialect {
@@ -56,18 +57,21 @@ function engineOf(output: string, engine: RelationalDialect): RelationalDialect 
   return engines.includes(engine) ? engine : engines[0]
 }
 
-/** The tables Model2DB builds for the project, as Model2DB itself does when the project is opened. */
-function relationalOf(project: Model2DBProject): { physical: RelationalSchema; engine: RelationalDialect } | Model2DBReadError {
-  const { input, output } = project
-  if (!(output.output in RELATIONAL_OUTPUTS)) return 'notRelational'
+/** The models written in the project, or why they cannot be read. */
+function modelsOf(input: Model2DBProject['input']): ModelSchema | Model2DBReadError {
   const format = input.format ?? detectFormat(input.text, input.fileName)
   if (!format) return 'unreadableInput'
   const outcome = parseInput(input.text, format, { rootName: 'Root' })
   if (!outcome.ok) return outcome.error.code === 'noModels' ? 'noModels' : 'unreadableInput'
-  if (outcome.schema.models.length === 0) return 'noModels'
-  const design = reconcile(project.designs.relational, outcome.schema, 'relational')
+  return outcome.schema.models.length === 0 ? 'noModels' : outcome.schema
+}
+
+/** The tables Model2DB builds for the project, as Model2DB itself does when the project is opened. */
+function relationalOf(project: Model2DBProject, models: ModelSchema): { physical: RelationalSchema; engine: RelationalDialect } {
+  const { output } = project
+  const design = reconcile(project.designs.relational, models, 'relational')
   const engine = engineOf(output.output, output.engine)
-  const physical = buildRelational(outcome.schema, design, { naming: output.naming.relational, strings: output.strings, dialect: engine })
+  const physical = buildRelational(models, design, { naming: output.naming.relational, strings: output.strings, dialect: engine })
   return { physical, engine }
 }
 
@@ -169,23 +173,31 @@ function dbEnum(item: PhysicalEnum): DbEnum | null {
 
 /** Advice about the queries of the design: it changes no table, and is for Model2DB to settle. */
 const QUERY_ADVICE = new Set(['queryPending', 'queryIndexes', 'queryNotIndexed'])
+const withoutAdvice = (notes: DbNote[]) => notes.filter((note) => !QUERY_ADVICE.has(note.code.replace(/^model2db\./, '')))
 
 /** What the build left pending or noted, so the interface can say it. */
 function notesOf(physical: RelationalSchema): DbNote[] {
   const notes: DbNote[] = physical.notes.map((note) => ({ code: `model2db.${note.code}`, params: note.params }))
   for (const table of physical.tables)
     for (const todo of table.todos) notes.push({ code: `model2db.${todo.code}`, params: { ...todo.params, table: table.name } })
-  return notes.filter((note) => !QUERY_ADVICE.has(note.code.slice('model2db.'.length)))
+  return withoutAdvice(notes)
 }
 
 /** The physical schema of a saved Model2DB project, or why it cannot be read. */
 export function readModel2DBProject(text: string): Model2DBReadResult {
   const read = readProject(text)
   if (!read.ok) return { ok: false, error: read.error, ...(read.path ? { path: read.path } : {}) }
-  const built = relationalOf(read.project)
-  if (typeof built === 'string') return { ok: false, error: built }
-  const { physical, engine } = built
-  const output = read.project.output.output
+  const { designs, input, output: settings } = read.project
+  const output = settings.output
+  const documents = Object.hasOwn(DOCUMENT_OUTPUTS, output)
+  if (!documents && !Object.hasOwn(RELATIONAL_OUTPUTS, output)) return { ok: false, error: 'unsupportedDatabase' }
+  const models = modelsOf(input)
+  if (typeof models === 'string') return { ok: false, error: models }
+  if (documents) {
+    const schema = documentSchema(models, reconcile(designs.document, models, 'document'), settings.naming.document, output)
+    return { ok: true, schema: { ...schema, notes: withoutAdvice(schema.notes) } }
+  }
+  const { physical, engine } = relationalOf(read.project, models)
   const withEntities = !SQL_OUTPUTS.has(output)
   return {
     ok: true,
