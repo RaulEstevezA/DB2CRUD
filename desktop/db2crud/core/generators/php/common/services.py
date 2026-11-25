@@ -20,6 +20,7 @@ from .context import (
     root_class,
     service_class,
 )
+from .documents import document_rule, list_of
 from .dtos import (
     create_columns,
     create_dto,
@@ -31,7 +32,7 @@ from .dtos import (
     update_columns,
     update_type,
 )
-from .php import PhpUses, access, php_string
+from .php import PhpUses, access, pascal_name, php_string
 from .repositories import doc_block
 
 NUMERIC = ("integer", "decimal", "float")
@@ -102,7 +103,7 @@ def _value_rules(column: dict, checks: list[dict]) -> list[str]:
             "}",
         ]
 
-    if column_type["kind"] == "text" and column_type.get("length") is not None:
+    if column_type["kind"] == "text" and column_type.get("length") is not None and not column_type.get("objectId"):
         length = column_type["length"]
         rules.extend(rule(f"is_string($value) && mb_strlen($value) > {length}", f"is longer than {length} characters"))
     for check in checks:
@@ -144,6 +145,11 @@ def _validate_method(writer: dict) -> list:
         else:
             missing = None
         rules = _value_rules(column, info["table"]["checks"])
+        nested = document_rule(context, column["column"]["type"])
+        if nested is not None:
+            uses.add(root_class(context, "Documents"))
+            problems = f"Documents::problems($value, {nested}, {php_string(name)})"
+            rules.append(f"$errors = [...$errors, ...{problems}];")
         if not missing and not rules:
             continue
         if missing:
@@ -621,7 +627,85 @@ def _operation_lines(writer: dict, operation: dict) -> list:
         ]
     if kind in ("link", "unlink"):
         return _link_lines(writer, operation, name)
+    # One item of a list: only document databases have them
+    if kind in ("addItem", "removeItem"):
+        return _item_lines(writer, operation, name)
     return []
+
+
+def _item_lines(writer: dict, operation: dict, name: str) -> list:
+    """Adds or removes one item of a list, so two people changing the same list do not undo each other."""
+    context, info, uses = writer["context"], writer["info"], writer["uses"]
+    adds = operation["kind"] == "addItem"
+    change = query(info, "addItem" if adds else "removeItem", operation["columns"])
+    if not change or not query(info, "getByKey"):
+        return []
+    listed = list_of(context, info, change)
+    kept = listed["column"]["column"]["name"]
+    params = [{"name": listed["item"], "type": listed["php"]}] if adds else listed["params"]
+    param = params[0]["name"]
+    version = f", {info['version']['php']} $version" if info["version"] else ""
+    items = f"({access('$current', listed['column']['prop'])} ?? [])"
+    if listed["by"] == "id":
+        missing = f"!in_array(${param}, array_column({items}, '_id'), true)"
+    elif listed["by"] == "value":
+        missing = f"!in_array(${param}, {items}, true)"
+    else:
+        missing = f"!array_key_exists(${param}, {items})"
+    position = not adds and listed["by"] == "position"
+    uses.add(error_class(context, "NotFoundException"), root_class(context, "UnitOfWork"))
+    if position:
+        uses.add(error_class(context, "ConflictException"))
+    rule = document_rule(context, listed["type"]) if adds else None
+    if rule is not None:
+        uses.add(root_class(context, "Documents"), error_class(context, "ValidationFailedException"))
+    entity = php_string(info["entity"])
+    if position:
+        field = php_string(listed["column"]["field"])
+        gone = f"new ConflictException({entity}, 'was changed by someone else since it was read', [{field}])"
+    else:
+        gone = f"new NotFoundException({entity}, {_key_value(info)})"
+    names = [f"${item['name']}" for item in params]
+    args = ", ".join([_key_args(info), *names, *([f"count({items})"] if position else [])])
+    read_at = ", read at $version" if info["version"] else ""
+    by = "identifier" if listed["by"] == "id" else listed["by"]
+    signature = ", ".join(f"{item['type']} ${item['name']}" for item in params)
+    call = f"{_repo(info)}->{query_name(context, change)}({args}) ?? throw {gone}"
+    label = php_string(pascal_name(listed["item"]))
+    return [
+        f"/** Adds an item to {kept}{read_at}. */"
+        if adds
+        else f"/** Removes an item from {kept}, by its {by}{read_at}. */",
+        f"public function {name}({_key_params(info)}, {signature}{version}): {_result_type(writer)}",
+        "{",
+        *(
+            [
+                f"    $errors = Documents::problems(${listed['item']}, {rule}, {php_string(kept)});",
+                "    if ($errors !== []) {",
+                f"        throw new ValidationFailedException({entity}, $errors);",
+                "    }",
+            ]
+            if rule is not None
+            else []
+        ),
+        *ind(
+            _in_transaction(
+                [
+                    f"{'' if adds and not info['version'] else '$current = '}self::find($uow, {_key_args(info)});",
+                    *_version_check(writer),
+                    *(
+                        []
+                        if adds
+                        else [f"if ({missing}) {{", f"    throw new NotFoundException({label}, ${param});", "}"]
+                    ),
+                    f"return {_out(writer, call)};",
+                ],
+                [*_key_locals(info), *names, *(["$version"] if info["version"] else [])],
+                _result_type(writer),
+            )
+        ),
+        "}",
+    ]
 
 
 def _link_lines(writer: dict, operation: dict, name: str) -> list:

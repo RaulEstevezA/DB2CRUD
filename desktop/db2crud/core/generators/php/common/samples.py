@@ -5,6 +5,7 @@ different numbers do not clash on unique columns. Mirrors web/src/core/generator
 import re
 
 from ....js import number_text
+from ....schema.documents import is_object_id
 from ...samples import bounded_number
 from .php import php_string
 
@@ -54,6 +55,8 @@ def sample_value(column: dict, checks: list[dict], enums: list[dict]) -> str:
     if kind == "float":
         return f"{_number(column, checks)} + 0.5"
     if kind == "text":
+        if column_type.get("objectId"):
+            return "sprintf('%024x', $n)"
         length = column_type.get("length")
         length = 40 if length is None else length
         if column_type.get("fixed"):
@@ -94,6 +97,8 @@ def sample_value(column: dict, checks: list[dict], enums: list[dict]) -> str:
 
 def missing_value(column: dict) -> str:
     """A key no row has, as a PHP expression, for the tests of missing rows."""
+    if is_object_id(column["column"]["type"]):
+        return "'" + "f" * 24 + "'"
     if column["php"] == "int":
         return "999999"
     if column["php"] == "float":

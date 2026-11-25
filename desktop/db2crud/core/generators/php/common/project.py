@@ -4,6 +4,7 @@ web/src/core/generators/php/common/project.ts."""
 
 import json
 
+from ....schema.documents import nested_fields
 from ...types import lines
 from .context import (
     common_namespace,
@@ -198,10 +199,21 @@ def readme_file(context: dict) -> dict:
 
 
 def _type_of(column: dict) -> dict:
-    column_type = column["column"]["type"]
-    result = {"kind": column_type["kind"], "php": stored_type(column)}
+    kept = _plain_type(column["column"]["type"])
+    return {"kind": kept.pop("kind"), "php": stored_type(column), **kept}
+
+
+def _plain_type(column_type: dict) -> dict:
+    result = {"kind": column_type["kind"]}
     if column_type["kind"] == "text" and column_type.get("length") is not None:
         result["length"] = column_type["length"]
+    # What a nested document, or each of a list of them, holds
+    fields = nested_fields(column_type)
+    if fields is not None:
+        result["fields"] = [
+            {"name": field["name"], "type": _plain_type(field["type"]), "nullable": field["nullable"]}
+            for field in fields
+        ]
     return result
 
 

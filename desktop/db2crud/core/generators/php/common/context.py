@@ -50,10 +50,16 @@ def _is_date_key(schema: dict, table: dict, name: str, seen: set[str] | None = N
 
 def _column_info(orm: dict, schema: dict, table: dict, column: dict) -> dict:
     generated = column.get("generated") is not None and column.get("generated") != "onUpdateNow"
+    # MongoDB's `_id` is the `id` of the entity, unless the documents have one of their own
+    own = (
+        bool(orm.get("documents"))
+        and column["name"] == "_id"
+        and any(item["name"] == "id" for item in table["columns"])
+    )
     return {
         "column": column,
-        "prop": orm["property"](column),
-        "field": field_name(column["name"]),
+        "prop": "documentId" if own else orm["property"](column),
+        "field": "documentId" if own else field_name(column["name"]),
         "php": "string"
         if orm.get("textDateKeys") and _is_date_key(schema, table, column["name"])
         else orm["phpType"](column["type"]),
@@ -76,7 +82,9 @@ def _table_info(orm: dict, schema: dict, design: dict, settings: dict, table: di
     key_names = table["primaryKey"] if table["primaryKey"] is not None else [c["name"] for c in table["columns"]]
     delete_mode = policy["delete"]["value"]
     concurrency = policy["concurrency"]["value"]
-    own_entities = not repository["entityMissing"] and schema["source"]["format"] == settings["orm"]
+    own_entities = (
+        not orm.get("documents") and not repository["entityMissing"] and schema["source"]["format"] == settings["orm"]
+    )
     writes_entity = settings["entities"] == "all" or (settings["entities"] == "missing" and not own_entities)
     folder = pascal_name(table["name"])
     children = policy["children"]

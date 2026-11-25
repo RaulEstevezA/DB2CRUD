@@ -849,6 +849,30 @@ VERIFIED = [
         ],
         "date": "2026-11-25",
     },
+    {
+        "language": "php",
+        "orm": "mongophp",
+        "database": "mongodb",
+        "execution": "sync",
+        "scenarios": [
+            "mongophp-mongodb-defaults",
+            "mongophp-mongodb-operation",
+            "mongophp-mongodb-readonly-dtos-partial-cursor-by-table",
+            "mongophp-mongodb-class-dtos-full-caller",
+            "mongophp-mongodb-no-interfaces-services-tests",
+            "mongophp-mongodb-repositories-only",
+            "mongophp-mongodb-validators",
+            "mongophp-mongodb-validators-dtos",
+            "mongophp-mongodb-from-mongosh",
+            "mongophp-mongodb-from-documents",
+            "mongophp-mongodb-from-model2db",
+            "mongophp-mongodb-from-model2db-validators",
+            "mongophp-mongodb-conversions",
+            "mongophp-mongodb-conversions-dtos",
+            "mongophp-mongodb-conversions-import",
+        ],
+        "date": "2026-11-25",
+    },
 ]
 
 

@@ -2,6 +2,7 @@
 field of an update: absent, or a value that may be null), new uuids, and the unit of work over the repositories, with
 its in-memory version. Mirrors web/src/core/generators/php/common/support.ts."""
 
+from ....schema.documents import is_object_id
 from .context import (
     class_name,
     common_namespace,
@@ -99,7 +100,11 @@ def error_files(context: dict) -> list[dict]:
 
 def makes_uuids(context: dict) -> bool:
     """Whether a repository makes uuids before an insert: a column the database fills with one."""
-    return any(column["column"].get("generated") == "uuid" for info in context["tables"] for column in info["columns"])
+    return any(
+        column["column"].get("generated") == "uuid" and not is_object_id(column["column"]["type"])
+        for info in context["tables"]
+        for column in info["columns"]
+    )
 
 
 PAGE = [

@@ -7,6 +7,7 @@ A method is {"query", "name", "params": [{"name", "type"}], "returns", "tags", "
 import re
 
 from ....js import number_text
+from ....schema.documents import is_object_id
 from .context import (
     class_name,
     column_of,
@@ -21,6 +22,7 @@ from .context import (
     repository_interface,
     sql_repository_class,
 )
+from .documents import identified_lists, list_of
 from .php import PhpUses, access, php_literal, php_string
 
 
@@ -80,6 +82,21 @@ def repository_methods(context: dict, info: dict, uses: PhpUses) -> list[dict]:
                 [{"name": "entity", "type": entity}],
                 entity,
                 "Stores the changes made to a row read from this repository.",
+            )
+        elif kind in ("addItem", "removeItem"):
+            listed = list_of(context, info, item)
+            adds = kind == "addItem"
+            # Told apart by its position, it is only removed from a list of the size it was seen in
+            size = [{"name": "size", "type": "int"}] if not adds and listed["by"] == "position" else []
+            own = [{"name": column["field"], "type": column["php"]} for column in info["key"]]
+            given = [{"name": listed["item"], "type": listed["php"]}] if adds else listed["params"]
+            stored = item["columns"][0]
+            add(
+                [*own, *given, *size],
+                f"?{entity}",
+                f"Adds an item to {stored}, and gives the row as it is then, if there is one."
+                if adds
+                else f"Removes an item from {stored}{' that has this size' if size else ''}, and gives the row as it is then, if there is one.",
             )
         elif kind == "delete":
             add([{"name": "entity", "type": entity}], "void", "Removes a row read from this repository.")
@@ -156,7 +173,7 @@ def default_literal(column: dict, value) -> str:
     return php_literal(value)
 
 
-def _memory_fill(context: dict, info: dict, column: dict, uses: PhpUses) -> list[str]:
+def memory_fill(context: dict, info: dict, column: dict, uses: PhpUses) -> list[str]:
     db = column["column"]
     target = access("$entity", column["prop"])
     primary = is_in(column, info["key"])
@@ -165,6 +182,8 @@ def _memory_fill(context: dict, info: dict, column: dict, uses: PhpUses) -> list
         if primary:
             return [f"if ({target} === null) {{", f"    {target} = $this->nextId++;", "}"]
         return [f"{target} ??= $this->nextId++;"]
+    if generated == "uuid" and is_object_id(db["type"]):
+        return [f"{target} ??= (string) new \\MongoDB\\BSON\\ObjectId();"]
     if generated == "uuid":
         uses.add(common_class(context, "Uuid"))
         return [f"{target} ??= Uuid::v4();"]
@@ -216,10 +235,52 @@ def _memory_body(context: dict, info: dict, method: dict) -> list:
             ]
         return ["return $this->visible();"]
     if kind in ("insert", "update"):
-        return ["$this->rows[self::keyText($entity)] = $entity;", "return $entity;"]
+        lists = [access("$entity", column["prop"]) for column in identified_lists(info)]
+        identify = [f"{prop} = \\App\\Documents::identify({prop});" for prop in lists]
+        return [*identify, "$this->rows[self::keyText($entity)] = $entity;", "return $entity;"]
+    if kind in ("addItem", "removeItem"):
+        return _memory_item(context, info, method)
     if kind == "delete":
         return ["unset($this->rows[self::keyText($entity)]);"]
     return ["throw new \\LogicException('not supported');"]
+
+
+def _memory_item(context: dict, info: dict, method: dict) -> list:
+    """One item of a list added or removed in memory."""
+    listed = list_of(context, info, method["query"])
+    param = listed["params"][0]["name"]
+    items = access("$row", listed["column"]["prop"])
+    adds = method["query"]["kind"] == "addItem"
+    position = not adds and listed["by"] == "position"
+    if adds:
+        item = f"${listed['item']}"
+        made = [f"[{item}] = \\App\\Documents::identify([{item}]);"] if listed["by"] == "id" else []
+        change = [*made, f"{items} = [...({items} ?? []), {item}];"]
+    elif position:
+        change = [f"{items} = array_values(array_diff_key({items} ?? [], [$position => true]));"]
+    else:
+        candidate = "($candidate['_id'] ?? null)" if listed["by"] == "id" else "$candidate"
+        kept = f"fn (mixed $candidate) => {candidate} !== ${param}"
+        change = [f"{items} = array_values(array_filter({items} ?? [], {kept}));"]
+    conditions = [f"{access('$row', column['prop'])} == ${column['field']}" for column in info["key"]]
+    if position:
+        conditions.append(f"count({items} ?? []) === $size")
+    if info["version"]:
+        version = access("$row", info["version"]["prop"])
+        change.append(f"{version} = ({version} ?? 0) + 1;")
+    change += [
+        f"{access('$row', column['prop'])} = new \\DateTimeImmutable();"
+        for column in info["columns"]
+        if column["column"].get("generated") == "onUpdateNow"
+    ]
+    return [
+        "foreach ($this->visible() as $row) {",
+        f"    if ({' && '.join(conditions)}) {{",
+        *(f"        {line}" for line in [*change, "return $row;"]),
+        "    }",
+        "}",
+        "return null;",
+    ]
 
 
 def repository_files(context: dict, info: dict) -> list[dict]:
@@ -278,7 +339,7 @@ def repository_files(context: dict, info: dict) -> list[dict]:
     if context["settings"]["memoryRepositories"]:
         uses = PhpUses(ns).add(entity_class)
         methods = repository_methods(context, info, uses)
-        fills = [line for column in info["columns"] for line in _memory_fill(context, info, column, uses)]
+        fills = [line for column in info["columns"] for line in memory_fill(context, info, column, uses)]
         bodies = []
         for method in methods:
             body = _memory_body(context, info, method)

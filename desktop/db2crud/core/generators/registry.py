@@ -16,6 +16,7 @@ from .kotlin.sql.index import SQL_ORM as KOTLIN_SQL_ORM
 from .php.common.generator import php_generator
 from .php.doctrine.index import DOCTRINE_ORM
 from .php.eloquent.index import ELOQUENT_ORM
+from .php.mongodb.index import MONGODB_ORM as PHP_MONGODB_ORM
 from .php.sql.index import SQL_ORM as PHP_SQL_ORM
 from .python.beanie.index import BEANIE_ORM
 from .python.common.generator import python_generator
@@ -56,6 +57,7 @@ GENERATORS = [
     php_generator(DOCTRINE_ORM),
     php_generator(ELOQUENT_ORM),
     php_generator(PHP_SQL_ORM),
+    php_generator(PHP_MONGODB_ORM),
     kotlin_generator(EXPOSED_ORM),
     kotlin_generator(KOTLIN_SQL_ORM),
     rust_generator(SEAORM_ORM),

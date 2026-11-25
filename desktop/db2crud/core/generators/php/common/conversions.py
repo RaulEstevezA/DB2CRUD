@@ -12,7 +12,9 @@ in PascalCase) or, with `modelsSource: import`, used from the user's namespace: 
 
 import re
 
-from ....conversions.plan import without_hidden
+from ....conversions.plan import has_todo, lossy, without_hidden
+from ....matching.names import fields_of
+from ....schema.documents import nested_fields
 from .context import (
     class_name,
     column_of,
@@ -482,7 +484,187 @@ def _walk(models: dict, model: dict | None, path: list[str], root: str) -> dict 
     return result
 
 
-def _write_expression(context: dict, models: dict, column: dict, value: dict, model: dict | None, body: dict) -> dict:
+# Nested documents. A nested is {context, models, info, plan, body, methods: those written so far}
+
+
+def _fit_document(context: dict, models: dict, value: dict, field: dict, kept: dict, reads: bool) -> str | None:
+    """A value of a list or of another type as a field or a document has it: lists are converted item by item."""
+    model = _type_ref_php(field["type"])
+    php_type = context["orm"]["phpType"]
+    expression = value["expression"]
+    if field["type"]["kind"] == "array" and kept["kind"] == "array":
+        column = php_type(kept["items"])
+        element = _type_ref_php(field["type"]["items"])
+        source, target = (column, element) if reads else (element, column)
+        item = _convert(models, _typed("$item", source), target)
+        if item is None or item == "$item":
+            return None if item is None else expression
+        mapped = f"array_map(fn (mixed $item) => {item}, {expression})"
+        return f"({expression} === null ? null : {mapped})" if value["nullable"] else mapped
+    # An exact number is a text with every decimal it has
+    if not reads and kept["kind"] == "decimal" and value["type"] == "float":
+        text = f"(string) {expression}"
+        return f"({expression} === null ? null : {text})" if value["nullable"] else text
+    return _convert(models, value, model if reads else php_type(kept))
+
+
+def _nested_model(nested: dict, name: str) -> str:
+    """The name a nested model is used by: an alias when the entity or a DTO of the file has its name."""
+    names = conversion_names(nested["context"], nested["plan"])
+    if name == nested["plan"]["model"]:
+        return names["model"]
+    local = f"{name}Model" if name in (nested["info"]["entity"], names["target"], names["source"]) else name
+    alias = "" if local == name else f" as {local}"
+    nested["body"]["uses"].add(f"{class_name(nested['models']['namespace'], name)}{alias}")
+    return local
+
+
+def _model_named(nested: dict, name: str) -> dict:
+    schema = nested["models"]["schema"]
+    model = next(item for item in schema["models"] if item["name"] == name)
+    return {**model, "fields": fields_of(model, schema)}
+
+
+def _call_for(method: str, many: bool, value: dict, otherwise: str = "null") -> str:
+    """A nested document, or each of a list, converted by a method; one that is missing is `otherwise`."""
+    expression = value["expression"]
+    call = f"array_map(self::{method}(...), {expression})" if many else f"self::{method}({expression})"
+    return f"({expression} === null ? {otherwise} : {call})" if value["nullable"] else call
+
+
+def _model_lines(model: dict, written: str, values: list[dict]) -> list[str]:
+    """The statements that build a model from its values."""
+    getters, named = _style_of(model)
+    if named:
+        return [
+            f"    return new {written}(",
+            *(f"        {value['name']}: {value['expression'] or 'null'},{_comment(value)}" for value in values),
+            "    );",
+        ]
+    # Built by its properties: the fields the plan does not give keep the model's defaults
+    result = [f"    $model = new {written}();"]
+    for value in values:
+        if value["expression"] is None and not value.get("todo"):
+            continue
+        if value["expression"] is None:
+            result.append(_todo_line(value, "    "))
+        elif getters:
+            setter = f"set{_capitalized(value['name'])}"
+            result.append(f"    $model->{setter}({value['expression']});{_comment(value)}")
+        else:
+            result.append(f"    {access('$model', value['name'])} = {value['expression']};{_comment(value)}")
+    return [*result, "    return $model;"]
+
+
+def _method_name(nested: dict, path: str, end: str) -> str:
+    return f"{_lower_first(nested['plan']['model'])}{path}{end}"
+
+
+def _inner_column(kept: dict, name: str) -> dict:
+    return next(item for item in nested_fields(kept) if item["name"] == name)
+
+
+def _write_document(nested: dict, value: dict, kept: dict, path: str) -> str:
+    """Writes the method that gives a nested document from its model, and those inside it; gives its name."""
+    context, models = nested["context"], nested["models"]
+    name = _method_name(nested, path, "ToDocument")
+    model = _model_named(nested, value["model"])
+    entries = []
+    for item in value["values"]:
+        column = _inner_column(kept, item["column"])
+        inner = item["value"]
+        if inner["kind"] == "todo":
+            entries.append(f"// TODO: {column['name']}: {_todo_text(inner)}")
+            continue
+        if inner["kind"] not in ("field", "document"):
+            continue
+        given = _walk(models, model, inner["path"], "$value")
+        field = next(candidate for candidate in model["fields"] if candidate["name"] == inner["path"][0])
+        if inner["kind"] == "document":
+            method = _write_document(nested, inner, column["type"], path + pascal_name(column["name"]))
+            expression = _call_for(method, inner["many"], given)
+        else:
+            expression = _fit_document(context, models, given, field, column["type"], False)
+        if expression is None:
+            entries.append(f"// TODO: {column['name']}: {_WHY['unsupported']} ({given['type']})")
+        else:
+            entries.append(f"{php_string(column['name'])} => {expression},")
+    collection = nested["info"]["name"]
+    nested["methods"].append(
+        [
+            "/**",
+            f" * {_article(value['model'])} as the documents of the {collection} collection keep it; what is missing is left out.",
+            " *",
+            " * @return array<string, mixed>",
+            " */",
+            f"private static function {name}({_nested_model(nested, value['model'])} $value): array",
+            "{",
+            *([f"    // Not stored: {', '.join(value['unused'])}"] if value["unused"] else []),
+            "    return array_filter([",
+            *(f"        {entry}" for entry in entries),
+            "    ], fn (mixed $item) => $item !== null);",
+            "}",
+        ]
+    )
+    return name
+
+
+def _absent(model: dict, field: dict) -> str:
+    """A missing value of a document, as a field of a model has it."""
+    return "[]" if field["type"]["kind"] == "array" and not _field_php(model, field).startswith("?") else "null"
+
+
+def _read_document(nested: dict, value: dict, kept: dict, path: str) -> str:
+    """Writes the method that gives a model from its nested document, and those inside it; gives its name."""
+    context, models = nested["context"], nested["models"]
+    name = _method_name(nested, path, "FromDocument")
+    model = _model_named(nested, value["model"])
+    values = []
+    for field in model["fields"]:
+        item = next((candidate for candidate in value["values"] if candidate["field"] == field["name"]), None)
+        written = {"name": _member_of(model, field["name"]), "expression": None}
+        values.append(written)
+        inner = item["value"] if item else None
+        if inner is None or inner["kind"] not in ("todo", "column", "document"):
+            continue
+        if inner["kind"] == "todo":
+            written["todo"] = _todo_text(inner)
+            continue
+        column = _inner_column(kept, inner["column"])
+        missing = column["nullable"] or "default" in column
+        key = f"$value[{php_string(column['name'])}]"
+        read = _typed(f"({key} ?? null)" if missing else key, context["orm"]["phpType"](column["type"]), missing)
+        if inner["kind"] == "document":
+            method = _read_document(nested, inner, column["type"], path + pascal_name(column["name"]))
+            expression = _call_for(method, inner["many"], read, _absent(model, field))
+        else:
+            given = _typed(f"({key} ?? [])", "array") if missing and _absent(model, field) == "[]" else read
+            expression = _fit_document(context, models, given, field, column["type"], True)
+        if expression is None:
+            written["todo"] = f"{_WHY['unsupported']} ({read['type']})"
+        else:
+            written["expression"] = expression
+    klass = _nested_model(nested, value["model"])
+    article = _article(value["model"]).split(" ")[0].lower()
+    nested["methods"].append(
+        [
+            "/**",
+            f" * A document of the {nested['info']['name']} collection as {article} {value['model']}.",
+            " *",
+            " * @param array<string, mixed> $value",
+            " */",
+            f"private static function {name}(array $value): {klass}",
+            "{",
+            *_model_lines(model, klass, values),
+            "}",
+        ]
+    )
+    return name
+
+
+def _write_expression(
+    context: dict, models: dict, column: dict, value: dict, model: dict | None, body: dict, nested: dict
+) -> dict:
     def unsupported(detail: str) -> dict:
         return {"expression": None, "todo": f"{_WHY['unsupported']} ({detail})"}
 
@@ -498,8 +680,21 @@ def _write_expression(context: dict, models: dict, column: dict, value: dict, mo
         return {"expression": converted}
 
     kind = value["kind"]
+    if kind == "document":
+        given = source(value["path"])
+        if given is None:
+            return unsupported(column["field"])
+        method = _write_document(nested, value, column["column"]["type"], pascal_name(column["field"]))
+        return {"expression": _call_for(method, value["many"], given)}
     if kind == "field":
-        return finish(source(value["path"]))
+        given = source(value["path"])
+        found = [item for item in model["fields"] if item["name"] == value["path"][0]] if model else []
+        if not context["orm"].get("documents") or given is None or not found:
+            return finish(given)
+        expression = _fit_document(context, models, given, found[0], column["column"]["type"], False)
+        if expression is None:
+            return unsupported(f"{given['type']} to {column['php']}")
+        return {"expression": expression}
     if kind == "lookup":
         other = find_info(context, value["table"])
         finder = query(other, "findByUnique", [value["by"]]) if other else None
@@ -529,7 +724,7 @@ def _write_expression(context: dict, models: dict, column: dict, value: dict, mo
 
 
 def _read_expression(
-    context: dict, models: dict, info: dict, dtos: bool, model: dict, field: dict, value: dict, body: dict
+    context: dict, models: dict, info: dict, dtos: bool, model: dict, field: dict, value: dict, body: dict, nested: dict
 ) -> dict:
     target = _field_php(model, field)
 
@@ -551,8 +746,23 @@ def _read_expression(
         return {"expression": converted}
 
     kind = value["kind"]
+    if kind == "document":
+        column = column_of(info, value["column"])
+        method = _read_document(nested, value, column["column"]["type"], pascal_name(column["field"]))
+        return {"expression": _call_for(method, value["many"], own(value["column"]), _absent(model, field))}
     if kind == "column":
-        return finish(own(value["column"]))
+        given = own(value["column"])
+        if not context["orm"].get("documents"):
+            return finish(given)
+        if given["nullable"] and _absent(model, field) == "[]" and given["type"] == "array":
+            kept = _typed(f"({given['expression']} ?? [])", "array")
+        else:
+            kept = given
+        kept_type = column_of(info, value["column"])["column"]["type"]
+        expression = _fit_document(context, models, kept, field, kept_type, True)
+        if expression is None:
+            return unsupported(f"{given['type']} to {target}")
+        return {"expression": expression}
     if kind == "lookup":
         other = find_info(context, value["table"])
         finder = (query(other, "getByKey") or query(other, "findByUnique", [value["key"]])) if other else None
@@ -639,6 +849,7 @@ def conversion_file(context: dict, plans: list[dict], schema: dict) -> dict | No
     dtos = _uses_dtos(context, info)
     for plan in plans:
         model = next((item for item in schema["models"] if item["name"] == plan["model"]), None)
+        scope = {"context": context, "models": models, "info": info, "plan": plan, "methods": methods}
         names = conversion_names(context, plan)
         alias = f" as {names['model']}" if names["clash"] else ""
         uses.add(f"{class_name(models['namespace'], plan['model'])}{alias}")
@@ -650,7 +861,9 @@ def conversion_file(context: dict, plans: list[dict], schema: dict) -> dict | No
                 if item["value"]["kind"] == "todo":
                     values.append({"name": column["field"], "expression": None, "todo": _todo_text(item["value"])})
                 else:
-                    written = _write_expression(context, models, column, item["value"], model, body)
+                    written = _write_expression(
+                        context, models, column, item["value"], model, body, {**scope, "body": body}
+                    )
                     values.append({"name": column["field"], **written})
             if dtos:
                 uses.add(class_name(namespace_of(context, info, "dtos"), names["target"]))
@@ -697,37 +910,14 @@ def conversion_file(context: dict, plans: list[dict], schema: dict) -> dict | No
                 elif item["value"]["kind"] == "todo":
                     values.append({"name": name, "expression": None, "todo": _todo_text(item["value"])})
                 else:
-                    read = _read_expression(context, models, info, dtos, model, field, item["value"], body)
+                    read = _read_expression(
+                        context, models, info, dtos, model, field, item["value"], body, {**scope, "body": body}
+                    )
                     values.append({"name": name, **read})
             uses.add(class_name(namespace_of(context, info, "dtos" if dtos else "entity"), names["source"]))
             if body["uow"]:
                 uses.add(root_class(context, "UnitOfWork"))
-            getters, named = _style_of(model)
-            if named:
-                result = [
-                    f"    return new {names['model']}(",
-                    *(
-                        f"        {value['name']}: {value['expression'] or 'null'},{_comment(value)}"
-                        for value in values
-                    ),
-                    "    );",
-                ]
-            else:
-                # Built by its properties: the fields the plan does not give keep the model's defaults
-                result = [f"    $model = new {names['model']}();"]
-                for value in values:
-                    if value["expression"] is None and not value.get("todo"):
-                        continue
-                    if value["expression"] is None:
-                        result.append(_todo_line(value, "    "))
-                    elif getters:
-                        setter = f"set{_capitalized(value['name'])}"
-                        result.append(f"    $model->{setter}({value['expression']});{_comment(value)}")
-                    else:
-                        result.append(
-                            f"    {access('$model', value['name'])} = {value['expression']};{_comment(value)}"
-                        )
-                result.append("    return $model;")
+            result = _model_lines(model, names["model"], values)
             article = _article(plan["model"]).split(" ")[0].lower()
             params = f"{names['source']} $row{', UnitOfWork $uow' if body['uow'] else ''}"
             methods.append(
@@ -756,10 +946,6 @@ def conversion_file(context: dict, plans: list[dict], schema: dict) -> dict | No
     return php_file(path_of(ns, name), ns, uses.write(), lines_)
 
 
-def _has_todo(items: list[dict] | None) -> bool:
-    return any(item["value"]["kind"] == "todo" for item in items or [])
-
-
 def conversion_test_file(context: dict, plans: list[dict], schema: dict, can_make, database_members) -> dict | None:
     """The tests of the conversions: a row stored by the factories is read as the model, and a model that goes both
     ways and leaves nothing to the user is written back, giving every value of the row (lookups and Mapper's
@@ -773,7 +959,7 @@ def conversion_test_file(context: dict, plans: list[dict], schema: dict, can_mak
         if (
             not info
             or plan["read"] is None
-            or _has_todo(plan["read"])
+            or has_todo(plan["read"])
             or not can_make(info)
             or not any(item["name"] == plan["model"] for item in schema["models"])
         ):
@@ -781,7 +967,7 @@ def conversion_test_file(context: dict, plans: list[dict], schema: dict, can_mak
         names = conversion_names(context, plan)
         dtos = _uses_dtos(context, info)
         reads = any(item["value"]["kind"] in ("lookup", "children") for item in plan["read"])
-        writes = plan["write"] is not None and not _has_todo(plan["write"])
+        writes = plan["write"] is not None and not has_todo(plan["write"])
         write_uow = writes and any(item["value"]["kind"] == "lookup" for item in plan["write"])
         klass = conversions_class(info)
         uses.add(class_name(conversions_namespace(context, info), klass))
@@ -813,6 +999,12 @@ def conversion_test_file(context: dict, plans: list[dict], schema: dict, can_mak
             body.append(f"$values = {klass}::{names['write']}($model{', $uow' if write_uow else ''});")
             for item in plan["write"]:
                 column = column_of(info, item["column"])
+                model = next(found for found in schema["models"] if found["name"] == plan["model"])
+                # A value the model keeps with less detail is not written back as it was
+                if context["orm"].get("documents") and lossy(
+                    item["value"], column["column"]["type"], fields_of(model, schema), schema
+                ):
+                    continue
                 given = f"$values->{column['field']}" if dtos else access("$values", column["prop"])
                 body.append(f"self::assertEquals({access('$row', column['prop'])}, {given});")
         else:

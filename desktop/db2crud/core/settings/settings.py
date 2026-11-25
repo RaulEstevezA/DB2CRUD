@@ -216,6 +216,17 @@ STACKS = [
         "updates": ["patch", "partial", "full"],
     },
     {
+        "language": "php",
+        "orm": "mongophp",
+        "label": "MongoDB PHP library 2",
+        "databases": ["mongodb"],
+        "transactions": "repository",
+        "execution": ["sync"],
+        "errors": ["exceptions"],
+        "dtoKinds": ["readonly", "class"],
+        "updates": ["patch", "partial", "full"],
+    },
+    {
         "language": "kotlin",
         "orm": "exposed",
         "label": "Exposed 1.6",

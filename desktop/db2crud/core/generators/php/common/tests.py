@@ -3,6 +3,7 @@ rows (and their parents first), repository tests against a real database created
 on the in-memory unit of work (or on the database when the project has no memory repositories). Mirrors
 web/src/core/generators/php/common/tests.ts."""
 
+from ....schema.documents import nested_fields
 from .context import (
     class_name,
     column_of,
@@ -19,8 +20,9 @@ from .context import (
     service_class,
     writes_entities,
 )
+from .documents import list_of
 from .dtos import create_columns, create_dto, partial_updates, update_class, update_columns, update_type
-from .php import PhpUses, access, php_string
+from .php import PhpUses, access, pascal_name, php_string
 from .samples import missing_value, sample_value
 
 TESTS_NS = "Tests"
@@ -125,9 +127,10 @@ def _factories_file(context: dict, makeable: list[dict]) -> dict:
             # No sample is sure to fit a type that is not known
             if column["column"]["nullable"] and (is_key or column["column"]["type"]["kind"] == "unknown"):
                 continue
-            values.append(
-                f"        {target} = {sample_value(column, info['table']['checks'], context['schema']['enums'])};"
+            sample = _document_sample(context, column["column"]["type"]) or sample_value(
+                column, info["table"]["checks"], context["schema"]["enums"]
             )
+            values.append(f"        {target} = {sample};")
         insert = query(info, "insert")
         blocks.append(
             [
@@ -163,6 +166,46 @@ def _factories_file(context: dict, makeable: list[dict]) -> dict:
 
 
 # Tests of each table
+
+
+# Nested documents
+
+
+def _document_sample(context: dict, column_type: dict) -> str | None:
+    """A document, or a list with one, as a PHP array, without the identifier it is given when it is stored; None for any
+    other value."""
+    fields = nested_fields(column_type)
+    if not context["orm"].get("documents") or fields is None:
+        return None
+    if column_type["kind"] == "array":
+        return f"[{_document_sample(context, column_type['items'])}]"
+    items = []
+    for field in fields:
+        if field["name"] == "_id" or field["type"]["kind"] == "unknown":
+            continue
+        column = {"column": field, "php": context["orm"]["phpType"](field["type"])}
+        value = _document_sample(context, field["type"]) or sample_value(
+            column, field.get("checks") or [], context["schema"]["enums"]
+        )
+        items.append(f"{php_string(field['name'])} => {value}")
+    return f"[{', '.join(items)}]"
+
+
+def _item_sample(context: dict, listed: dict) -> str:
+    """A value for an item of a list, as a PHP expression of $n."""
+    column = {
+        **listed["column"],
+        "column": {**listed["column"]["column"], "type": listed["type"]},
+        "php": listed["php"],
+    }
+    return _document_sample(context, listed["type"]) or sample_value(column, [], context["schema"]["enums"])
+
+
+def _which_item(listed: dict, items: str) -> str:
+    """The last item of a list, as the test tells it from the others."""
+    if listed["by"] == "id":
+        return f"{items}[$before]['_id']"
+    return "$item" if listed["by"] == "value" else "$before"
 
 
 def _changeable_text(info: dict) -> dict | None:
@@ -299,6 +342,33 @@ def _repository_tests(context: dict, info: dict) -> list[list]:
                     ),
                     f"{repo}->{query_name(context, remove)}($stored);",
                     f"self::assertNull({repo}->{query_name(context, get_by_key)}({keys}));",
+                ],
+            )
+        )
+    for adding in [item for item in info["queries"] if item["kind"] == "addItem"]:
+        listed = list_of(context, info, adding)
+        removing = query(info, "removeItem", adding["columns"])
+        if not removing or not get_by_key:
+            continue
+        prop = listed["column"]["prop"]
+        added = access("$added", prop)
+        which = f"{_which_item(listed, added)}{f', count({added})' if listed['by'] == 'position' else ''}"
+        remove_call = f"{repo}->{query_name(context, removing)}({key_of('$stored')}"
+        tests.append(
+            _test(
+                f"AddsAndRemovesOneItemOf{pascal_name(listed['column']['field'])}",
+                [
+                    "$n = 7;",
+                    stored,
+                    f"$before = count({access('$stored', prop)} ?? []);",
+                    f"$item = {_item_sample(context, listed)};",
+                    f"$added = {repo}->{query_name(context, adding)}({key_of('$stored')}, $item);",
+                    "self::assertNotNull($added);",
+                    f"self::assertCount($before + 1, {added});",
+                    f"$removed = {remove_call}, {which});",
+                    "self::assertNotNull($removed);",
+                    f"self::assertCount($before, {access('$removed', prop)});",
+                    *([f"self::assertNull({remove_call}, 0, $before + 5));"] if listed["by"] == "position" else []),
                 ],
             )
         )
@@ -546,6 +616,46 @@ def _service_tests(context: dict, info: dict, uses: PhpUses) -> list[list]:
                     f"$service->{operation_name(context, remove)}({keys}{version('$created')});",
                     "$this->expectException(NotFoundException::class);",
                     f"$service->{operation_name(context, get)}({keys});",
+                ],
+            )
+        )
+    for operation in [item for item in info["operations"] if item["kind"] == "addItem"]:
+        listed = list_of(context, info, operation)
+        without = op("removeItem", operation["columns"])
+        if not create or not without or listed["column"]["column"]["name"] in info["hidden"]:
+            continue
+        uses.add(error_class(context, "NotFoundException"))
+        column = listed["column"]
+        added = member("$added", column)
+        if listed["by"] == "id":
+            missing = f"'{'f' * 24}'"
+        else:
+            missing = None if listed["by"] == "value" else "99"
+        remove_name = f"$service->{operation_name(context, without)}({key_of('$created')}"
+        tests.append(
+            _test(
+                f"AddsAndRemovesOneItemOf{pascal_name(column['field'])}",
+                [
+                    *opened,
+                    "$n = 100;",
+                    *parents_first,
+                    *row("row", 1),
+                    f"$created = $service->{operation_name(context, create)}({payload('row')});",
+                    f"$before = count({member('$created', column)} ?? []);",
+                    f"$item = {_item_sample(context, listed)};",
+                    # In memory the service gives the same row again, so what it says now is read before the next change
+                    f"$added = $service->{operation_name(context, operation)}({key_of('$created')}, $item{version('$created')});",
+                    f"self::assertCount($before + 1, {added});",
+                    f"$removed = {remove_name}, {_which_item(listed, added)}{version('$added')});",
+                    f"self::assertCount($before, {member('$removed', column)});",
+                    *(
+                        [
+                            "$this->expectException(NotFoundException::class);",
+                            f"{remove_name}, {missing}{version('$removed')});",
+                        ]
+                        if missing
+                        else []
+                    ),
                 ],
             )
         )
