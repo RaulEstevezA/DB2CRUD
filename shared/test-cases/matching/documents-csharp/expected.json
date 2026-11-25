@@ -1,0 +1,604 @@
+{
+ "tables": [
+  {
+   "table": "customers",
+   "models": [
+    {
+     "direction": "both",
+     "model": {
+      "value": "Customer",
+      "status": "active",
+      "confidence": "exact",
+      "reasons": [
+       {
+        "code": "modelName",
+        "params": {
+         "model": "Customer"
+        }
+       }
+      ],
+      "options": [
+       "Customer",
+       null
+      ]
+     },
+     "columns": [
+      {
+       "column": "_id",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "Id"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldWords",
+          "params": {
+           "field": "Id"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "Id"
+         },
+         {
+          "kind": "field",
+          "field": "Email"
+         },
+         {
+          "kind": "field",
+          "field": "Since"
+         },
+         {
+          "kind": "field",
+          "field": "Address"
+         },
+         {
+          "kind": "field",
+          "field": "Tags"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "email",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "Email"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldWords",
+          "params": {
+           "field": "Email"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "Id"
+         },
+         {
+          "kind": "field",
+          "field": "Email"
+         },
+         {
+          "kind": "field",
+          "field": "Since"
+         },
+         {
+          "kind": "field",
+          "field": "Address"
+         },
+         {
+          "kind": "field",
+          "field": "Tags"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "level",
+       "source": {
+        "value": null,
+        "status": "active",
+        "confidence": "none",
+        "reasons": [
+         {
+          "code": "noField"
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "Id"
+         },
+         {
+          "kind": "field",
+          "field": "Email"
+         },
+         {
+          "kind": "field",
+          "field": "Since"
+         },
+         {
+          "kind": "field",
+          "field": "Address"
+         },
+         {
+          "kind": "field",
+          "field": "Tags"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "since",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "Since"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldWords",
+          "params": {
+           "field": "Since"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "Id"
+         },
+         {
+          "kind": "field",
+          "field": "Email"
+         },
+         {
+          "kind": "field",
+          "field": "Since"
+         },
+         {
+          "kind": "field",
+          "field": "Address"
+         },
+         {
+          "kind": "field",
+          "field": "Tags"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "address",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "Address"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldWords",
+          "params": {
+           "field": "Address"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "Id"
+         },
+         {
+          "kind": "field",
+          "field": "Email"
+         },
+         {
+          "kind": "field",
+          "field": "Since"
+         },
+         {
+          "kind": "field",
+          "field": "Address"
+         },
+         {
+          "kind": "field",
+          "field": "Tags"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "tags",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "Tags"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldWords",
+          "params": {
+           "field": "Tags"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "Id"
+         },
+         {
+          "kind": "field",
+          "field": "Email"
+         },
+         {
+          "kind": "field",
+          "field": "Since"
+         },
+         {
+          "kind": "field",
+          "field": "Address"
+         },
+         {
+          "kind": "field",
+          "field": "Tags"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      }
+     ],
+     "children": [],
+     "unused": []
+    }
+   ]
+  },
+  {
+   "table": "orders",
+   "models": [
+    {
+     "direction": "both",
+     "model": {
+      "value": "Order",
+      "status": "active",
+      "confidence": "exact",
+      "reasons": [
+       {
+        "code": "modelName",
+        "params": {
+         "model": "Order"
+        }
+       }
+      ],
+      "options": [
+       "Order",
+       null
+      ]
+     },
+     "columns": [
+      {
+       "column": "_id",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "Id"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldWords",
+          "params": {
+           "field": "Id"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "Id"
+         },
+         {
+          "kind": "field",
+          "field": "Code"
+         },
+         {
+          "kind": "field",
+          "field": "Lines"
+         },
+         {
+          "kind": "field",
+          "field": "Shipping"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "code",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "Code"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldWords",
+          "params": {
+           "field": "Code"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "Id"
+         },
+         {
+          "kind": "field",
+          "field": "Code"
+         },
+         {
+          "kind": "field",
+          "field": "Lines"
+         },
+         {
+          "kind": "field",
+          "field": "Shipping"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "lines",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "Lines"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldWords",
+          "params": {
+           "field": "Lines"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "Id"
+         },
+         {
+          "kind": "field",
+          "field": "Code"
+         },
+         {
+          "kind": "field",
+          "field": "Lines"
+         },
+         {
+          "kind": "field",
+          "field": "Shipping"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "shipping",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "Shipping"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldWords",
+          "params": {
+           "field": "Shipping"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "Id"
+         },
+         {
+          "kind": "field",
+          "field": "Code"
+         },
+         {
+          "kind": "field",
+          "field": "Lines"
+         },
+         {
+          "kind": "field",
+          "field": "Shipping"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      }
+     ],
+     "children": [],
+     "unused": []
+    }
+   ]
+  },
+  {
+   "table": "shipments",
+   "models": [
+    {
+     "direction": "both",
+     "model": {
+      "value": "Shipment",
+      "status": "active",
+      "confidence": "exact",
+      "reasons": [
+       {
+        "code": "modelName",
+        "params": {
+         "model": "Shipment"
+        }
+       }
+      ],
+      "options": [
+       "Shipment",
+       null
+      ]
+     },
+     "columns": [
+      {
+       "column": "_id",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "Id"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldWords",
+          "params": {
+           "field": "Id"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "Id"
+         },
+         {
+          "kind": "field",
+          "field": "Parcel"
+         },
+         {
+          "kind": "field",
+          "field": "Stops"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "parcel",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "Parcel"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldWords",
+          "params": {
+           "field": "Parcel"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "Id"
+         },
+         {
+          "kind": "field",
+          "field": "Parcel"
+         },
+         {
+          "kind": "field",
+          "field": "Stops"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "stops",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "Stops"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldWords",
+          "params": {
+           "field": "Stops"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "Id"
+         },
+         {
+          "kind": "field",
+          "field": "Parcel"
+         },
+         {
+          "kind": "field",
+          "field": "Stops"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      }
+     ],
+     "children": [],
+     "unused": []
+    }
+   ]
+  }
+ ]
+}

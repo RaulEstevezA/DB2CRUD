@@ -8,7 +8,7 @@ import { mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync }
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { onOriginalDatabase, originalDdl } from './original-ddl.mjs'
-import { withJavaRoundTrip, withPythonRoundTrip, withRoundTrip } from './mongodb-round-trip.mjs'
+import { withCsharpRoundTrip, withJavaRoundTrip, withPythonRoundTrip, withRoundTrip } from './mongodb-round-trip.mjs'
 import { SCENARIOS } from './scenarios/index.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -65,6 +65,7 @@ for (const scenario of SCENARIOS.filter((item) => item.id.startsWith(prefix))) {
   let files = generateProject(schema, design, { name: scenario.id, ...scenario.settings }, shared ? { schema: models, project } : null)
   // ENTITIES=1 leaves the tests as they are, creating their tables from the entities
   if (scenario.ddl && !process.env.ENTITIES) files = onOriginalDatabase(files, scenario.settings, dropStatements(schema, scenario.settings.database))
+  if (scenario.code?.startsWith('mongodb/') && scenario.settings.language === 'csharp') files = withCsharpRoundTrip(files, scenario.settings, scenario.code)
   if (scenario.code?.startsWith('mongodb/') && scenario.settings.language === 'java') files = withJavaRoundTrip(files, scenario.settings, scenario.code)
   if (scenario.code?.startsWith('mongodb/') && scenario.settings.language === 'python') files = withPythonRoundTrip(files, scenario.settings, scenario.code)
   if (scenario.code?.startsWith('mongodb/') && scenario.settings.language === 'typescript') files = withRoundTrip(files, scenario.settings, scenario.code)

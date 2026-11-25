@@ -1,0 +1,887 @@
+{
+ "schema": {
+  "format": "db-schema",
+  "version": 1,
+  "dialect": "mongodb",
+  "source": {
+   "kind": "orm",
+   "format": "mongodb"
+  },
+  "tables": [
+   {
+    "name": "customers",
+    "columns": [
+     {
+      "name": "_id",
+      "type": {
+       "sql": "ObjectId",
+       "kind": "text",
+       "length": 24,
+       "fixed": true,
+       "objectId": true
+      },
+      "nullable": false,
+      "generated": "uuid"
+     },
+     {
+      "name": "email",
+      "type": {
+       "sql": "string",
+       "kind": "text"
+      },
+      "nullable": false
+     },
+     {
+      "name": "level",
+      "type": {
+       "sql": "string",
+       "kind": "text"
+      },
+      "nullable": true
+     },
+     {
+      "name": "since",
+      "type": {
+       "sql": "date",
+       "kind": "datetime",
+       "timezone": true
+      },
+      "nullable": false
+     },
+     {
+      "name": "address",
+      "type": {
+       "sql": "object",
+       "kind": "json",
+       "fields": [
+        {
+         "name": "street",
+         "type": {
+          "sql": "string",
+          "kind": "text"
+         },
+         "nullable": false
+        },
+        {
+         "name": "zip code",
+         "type": {
+          "sql": "string",
+          "kind": "text"
+         },
+         "nullable": false
+        },
+        {
+         "name": "location",
+         "type": {
+          "sql": "object",
+          "kind": "json",
+          "fields": [
+           {
+            "name": "latitude",
+            "type": {
+             "sql": "double",
+             "kind": "float",
+             "bits": 64
+            },
+            "nullable": false
+           },
+           {
+            "name": "longitude",
+            "type": {
+             "sql": "double",
+             "kind": "float",
+             "bits": 64
+            },
+            "nullable": false
+           }
+          ]
+         },
+         "nullable": true
+        }
+       ]
+      },
+      "nullable": false
+     },
+     {
+      "name": "tags",
+      "type": {
+       "sql": "array<string>",
+       "kind": "array",
+       "items": {
+        "sql": "string",
+        "kind": "text"
+       }
+      },
+      "nullable": true
+     }
+    ],
+    "primaryKey": [
+     "_id"
+    ],
+    "foreignKeys": [],
+    "uniques": [
+     {
+      "columns": [
+       "email"
+      ]
+     }
+    ],
+    "indexes": [],
+    "checks": [
+     {
+      "sql": "level IN ('basic', 'gold')",
+      "parsed": {
+       "kind": "in",
+       "column": "level",
+       "values": [
+        "basic",
+        "gold"
+       ]
+      }
+     }
+    ],
+    "origin": {
+     "line": 2,
+     "column": 1
+    }
+   },
+   {
+    "name": "orders",
+    "columns": [
+     {
+      "name": "_id",
+      "type": {
+       "sql": "ObjectId",
+       "kind": "text",
+       "length": 24,
+       "fixed": true,
+       "objectId": true
+      },
+      "nullable": false,
+      "generated": "uuid"
+     },
+     {
+      "name": "code",
+      "type": {
+       "sql": "string",
+       "kind": "text"
+      },
+      "nullable": false
+     },
+     {
+      "name": "lines",
+      "type": {
+       "sql": "array<object>",
+       "kind": "array",
+       "items": {
+        "sql": "object",
+        "kind": "json",
+        "fields": [
+         {
+          "name": "_id",
+          "type": {
+           "sql": "ObjectId",
+           "kind": "text",
+           "length": 24,
+           "fixed": true,
+           "objectId": true
+          },
+          "nullable": true
+         },
+         {
+          "name": "sku",
+          "type": {
+           "sql": "string",
+           "kind": "text"
+          },
+          "nullable": false
+         },
+         {
+          "name": "quantity",
+          "type": {
+           "sql": "int",
+           "kind": "integer",
+           "bits": 32
+          },
+          "nullable": false
+         },
+         {
+          "name": "price",
+          "type": {
+           "sql": "decimal",
+           "kind": "decimal"
+          },
+          "nullable": false
+         },
+         {
+          "name": "status",
+          "type": {
+           "sql": "string",
+           "kind": "enum",
+           "name": "orders_lines_status"
+          },
+          "nullable": true
+         },
+         {
+          "name": "discounts",
+          "type": {
+           "sql": "array<object>",
+           "kind": "array",
+           "items": {
+            "sql": "object",
+            "kind": "json",
+            "fields": [
+             {
+              "name": "reason",
+              "type": {
+               "sql": "string",
+               "kind": "text"
+              },
+              "nullable": false
+             },
+             {
+              "name": "percent",
+              "type": {
+               "sql": "double",
+               "kind": "float",
+               "bits": 64
+              },
+              "nullable": false
+             }
+            ]
+           }
+          },
+          "nullable": true
+         }
+        ]
+       }
+      },
+      "nullable": false
+     },
+     {
+      "name": "shipping",
+      "type": {
+       "sql": "object",
+       "kind": "json",
+       "fields": [
+        {
+         "name": "carrier",
+         "type": {
+          "sql": "string",
+          "kind": "text"
+         },
+         "nullable": false
+        },
+        {
+         "name": "sentOn",
+         "type": {
+          "sql": "date",
+          "kind": "datetime",
+          "timezone": true
+         },
+         "nullable": false
+        }
+       ]
+      },
+      "nullable": true
+     }
+    ],
+    "primaryKey": [
+     "_id"
+    ],
+    "foreignKeys": [],
+    "uniques": [
+     {
+      "columns": [
+       "code"
+      ]
+     }
+    ],
+    "indexes": [],
+    "checks": [],
+    "origin": {
+     "line": 30,
+     "column": 1
+    }
+   },
+   {
+    "name": "shipments",
+    "columns": [
+     {
+      "name": "_id",
+      "type": {
+       "sql": "ObjectId",
+       "kind": "text",
+       "length": 24,
+       "fixed": true,
+       "objectId": true
+      },
+      "nullable": false,
+      "generated": "uuid"
+     },
+     {
+      "name": "parcel",
+      "type": {
+       "sql": "object",
+       "kind": "json",
+       "fields": [
+        {
+         "name": "weight",
+         "type": {
+          "sql": "double",
+          "kind": "float",
+          "bits": 64
+         },
+         "nullable": false
+        },
+        {
+         "name": "contents",
+         "type": {
+          "sql": "string",
+          "kind": "text"
+         },
+         "nullable": false
+        },
+        {
+         "name": "size",
+         "type": {
+          "sql": "object",
+          "kind": "json",
+          "fields": [
+           {
+            "name": "height",
+            "type": {
+             "sql": "double",
+             "kind": "float",
+             "bits": 64
+            },
+            "nullable": false
+           }
+          ]
+         },
+         "nullable": true
+        }
+       ]
+      },
+      "nullable": false
+     },
+     {
+      "name": "stops",
+      "type": {
+       "sql": "array<object>",
+       "kind": "array",
+       "items": {
+        "sql": "object",
+        "kind": "json",
+        "fields": [
+         {
+          "name": "city",
+          "type": {
+           "sql": "string",
+           "kind": "text"
+          },
+          "nullable": true
+         }
+        ]
+       }
+      },
+      "nullable": true
+     }
+    ],
+    "primaryKey": [
+     "_id"
+    ],
+    "foreignKeys": [],
+    "uniques": [],
+    "indexes": [],
+    "checks": [],
+    "origin": {
+     "line": 70,
+     "column": 1
+    }
+   }
+  ],
+  "enums": [
+   {
+    "name": "orders_lines_status",
+    "values": [
+     "pending",
+     "sent"
+    ],
+    "storage": "check"
+   }
+  ],
+  "notes": []
+ },
+ "decisions": [],
+ "settings": {
+  "name": "mongodriver-mongodb-conversions",
+  "language": "csharp",
+  "orm": "mongodriver",
+  "database": "mongodb"
+ },
+ "models": {
+  "schema": {
+   "format": "model-schema",
+   "version": 1,
+   "origin": {
+    "format": "csharp",
+    "language": "csharp"
+   },
+   "models": [
+    {
+     "name": "Location",
+     "kind": "record",
+     "fields": [
+      {
+       "name": "Latitude",
+       "type": {
+        "kind": "primitive",
+        "name": "float",
+        "bits": 64
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "double"
+      },
+      {
+       "name": "Longitude",
+       "type": {
+        "kind": "primitive",
+        "name": "float",
+        "bits": 64
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "double"
+      }
+     ],
+     "namespace": "Shop.Models",
+     "construction": "positional"
+    },
+    {
+     "name": "Address",
+     "kind": "record",
+     "fields": [
+      {
+       "name": "Street",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "string"
+      },
+      {
+       "name": "ZipCode",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "string"
+      },
+      {
+       "name": "Location",
+       "type": {
+        "kind": "model",
+        "name": "Location"
+       },
+       "nullable": true,
+       "optional": false,
+       "originalType": "Location?"
+      }
+     ],
+     "namespace": "Shop.Models",
+     "construction": "positional"
+    },
+    {
+     "name": "Customer",
+     "kind": "record",
+     "fields": [
+      {
+       "name": "Id",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "string"
+      },
+      {
+       "name": "Email",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "string"
+      },
+      {
+       "name": "Since",
+       "type": {
+        "kind": "primitive",
+        "name": "datetime"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "DateTimeOffset"
+      },
+      {
+       "name": "Address",
+       "type": {
+        "kind": "model",
+        "name": "Address"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "Address"
+      },
+      {
+       "name": "Tags",
+       "type": {
+        "kind": "array",
+        "items": {
+         "kind": "primitive",
+         "name": "string"
+        }
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "List<string>"
+      }
+     ],
+     "namespace": "Shop.Models",
+     "construction": "positional"
+    },
+    {
+     "name": "Discount",
+     "kind": "class",
+     "fields": [
+      {
+       "name": "Reason",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "string"
+      },
+      {
+       "name": "Percent",
+       "type": {
+        "kind": "primitive",
+        "name": "float",
+        "bits": 64
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "double"
+      }
+     ],
+     "namespace": "Shop.Models",
+     "construction": "properties"
+    },
+    {
+     "name": "OrderLine",
+     "kind": "class",
+     "fields": [
+      {
+       "name": "Id",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": true,
+       "optional": false,
+       "originalType": "string?"
+      },
+      {
+       "name": "Sku",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "string"
+      },
+      {
+       "name": "Quantity",
+       "type": {
+        "kind": "primitive",
+        "name": "integer",
+        "bits": 32
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "int"
+      },
+      {
+       "name": "Price",
+       "type": {
+        "kind": "primitive",
+        "name": "decimal"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "decimal"
+      },
+      {
+       "name": "Status",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": true,
+       "optional": false,
+       "originalType": "string?"
+      },
+      {
+       "name": "Discounts",
+       "type": {
+        "kind": "array",
+        "items": {
+         "kind": "model",
+         "name": "Discount"
+        }
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "Discount[]"
+      }
+     ],
+     "namespace": "Shop.Models",
+     "construction": "properties"
+    },
+    {
+     "name": "Shipping",
+     "kind": "record",
+     "fields": [
+      {
+       "name": "Carrier",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "string"
+      },
+      {
+       "name": "SentOn",
+       "type": {
+        "kind": "primitive",
+        "name": "date"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "DateOnly"
+      }
+     ],
+     "namespace": "Shop.Models",
+     "construction": "positional"
+    },
+    {
+     "name": "Order",
+     "kind": "record",
+     "fields": [
+      {
+       "name": "Id",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "string"
+      },
+      {
+       "name": "Code",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "string"
+      },
+      {
+       "name": "Lines",
+       "type": {
+        "kind": "array",
+        "items": {
+         "kind": "model",
+         "name": "OrderLine"
+        }
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "List<OrderLine>"
+      },
+      {
+       "name": "Shipping",
+       "type": {
+        "kind": "model",
+        "name": "Shipping"
+       },
+       "nullable": true,
+       "optional": false,
+       "originalType": "Shipping?"
+      }
+     ],
+     "namespace": "Shop.Models",
+     "construction": "positional"
+    },
+    {
+     "name": "Parcel",
+     "kind": "record",
+     "fields": [
+      {
+       "name": "Weight",
+       "type": {
+        "kind": "primitive",
+        "name": "float",
+        "bits": 64
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "double"
+      },
+      {
+       "name": "Size",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "string"
+      },
+      {
+       "name": "Fragile",
+       "type": {
+        "kind": "primitive",
+        "name": "boolean"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "bool"
+      }
+     ],
+     "namespace": "Shop.Models",
+     "construction": "positional"
+    },
+    {
+     "name": "Shipment",
+     "kind": "record",
+     "fields": [
+      {
+       "name": "Id",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "string"
+      },
+      {
+       "name": "Parcel",
+       "type": {
+        "kind": "model",
+        "name": "Parcel"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "Parcel"
+      },
+      {
+       "name": "Stops",
+       "type": {
+        "kind": "array",
+        "items": {
+         "kind": "primitive",
+         "name": "string"
+        }
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "List<string>"
+      }
+     ],
+     "namespace": "Shop.Models",
+     "construction": "positional"
+    }
+   ],
+   "enums": []
+  },
+  "project": null
+ },
+ "files": {
+  ".env.example": "# Where the database is (a connection string)\nDATABASE_CONNECTION=mongodb://localhost:27017/app\n# The database the tests use (it is emptied by the tests): one of the same kind as DATABASE_CONNECTION\n# TEST_DATABASE_CONNECTION=\n",
+  ".gitignore": "bin/\nobj/\n.env\n*.db\n",
+  "App.slnx": "<Solution>\n  <Project Path=\"src/App/App.csproj\" />\n  <Project Path=\"tests/App.Tests/App.Tests.csproj\" />\n</Solution>\n",
+  "README.md": "# mongodriver-mongodb-conversions\n\nData access layer generated by [DB2CRUD](https://github.com/RaulEstevezA/DB2CRUD) for a database that already exists: entities, repositories and services with the MongoDB driver, in C# for .NET 10. It does not create or migrate the database, and it depends on no web framework.\n\n## Settings\n\n- Database: mongodb.\n- Entities: written for the tables the input had no class for.\n- Services: take and return the entities; updates take a Patch<T> per field: absent, null or a value.\n- Transactions: every repository write is committed at once.\n- Lists: lists return pages by offset and limit.\n\n## Layout\n\n```text\nsrc/App/Database.cs              opens the database DATABASE_CONNECTION names\nsrc/App/Db.cs                    a database and the session of its transaction\nsrc/App/Documents.cs             what changed in a document\nsrc/App/IUnitOfWork.cs           the repositories of every table, and the transaction of each operation\nsrc/App/Errors/                  NotFoundException, ConflictException, ValidationFailedException: no HTTP codes\nsrc/App/Entities/                one entity per table\nsrc/App/Repositories/            the repositories of each table\nsrc/App/Services/                one service per table\ntests/App.Tests/                 repositories against a database, services on the in-memory repositories\ncrud-contract.json               what was written, for CRUD2Controller\n```\n\n## Running the tests\n\n```bash\nTEST_DATABASE_CONNECTION=\"mongodb://localhost:27017/app\" dotnet test   # a real, disposable database: it is dropped and created again; transactions need a replica set\n```\n\nLook for `TODO` in the code: each one marks a decision the input did not settle.\n",
+  "crud-contract.json": "{\n  \"format\": \"crud-contract\",\n  \"version\": 1,\n  \"stack\": {\n    \"language\": \"csharp\",\n    \"orm\": \"mongodriver\",\n    \"database\": \"mongodb\",\n    \"execution\": \"async\"\n  },\n  \"transactions\": \"repository\",\n  \"paging\": \"offset\",\n  \"types\": [\n    {\n      \"name\": \"Customer\",\n      \"module\": \"App.Entities\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"Id\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"cs\": \"string\",\n            \"length\": 24\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"Email\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"cs\": \"string\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"Level\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"cs\": \"string?\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"Since\",\n          \"type\": {\n            \"kind\": \"datetime\",\n            \"cs\": \"DateTime\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"Address\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"cs\": \"Customer.AddressDocument\",\n            \"fields\": [\n              {\n                \"name\": \"street\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"zip code\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"location\",\n                \"type\": {\n                  \"kind\": \"json\",\n                  \"fields\": [\n                    {\n                      \"name\": \"latitude\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    },\n                    {\n                      \"name\": \"longitude\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"Tags\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"cs\": \"List<string>?\"\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"CustomerChanges\",\n      \"module\": \"App.Services\",\n      \"kind\": \"update\",\n      \"updates\": \"patch\",\n      \"fields\": [\n        {\n          \"name\": \"Email\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"cs\": \"string\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"Level\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"cs\": \"string?\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"Since\",\n          \"type\": {\n            \"kind\": \"datetime\",\n            \"cs\": \"DateTime\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"Address\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"cs\": \"Customer.AddressDocument\",\n            \"fields\": [\n              {\n                \"name\": \"street\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"zip code\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"location\",\n                \"type\": {\n                  \"kind\": \"json\",\n                  \"fields\": [\n                    {\n                      \"name\": \"latitude\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    },\n                    {\n                      \"name\": \"longitude\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"Tags\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"cs\": \"List<string>?\"\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"Order\",\n      \"module\": \"App.Entities\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"Id\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"cs\": \"string\",\n            \"length\": 24\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"Code\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"cs\": \"string\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"Lines\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"cs\": \"List<Order.LineDocument>\",\n            \"fields\": [\n              {\n                \"name\": \"_id\",\n                \"type\": {\n                  \"kind\": \"text\",\n                  \"length\": 24\n                },\n                \"nullable\": true\n              },\n              {\n                \"name\": \"sku\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"quantity\",\n                \"type\": {\n                  \"kind\": \"integer\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"price\",\n                \"type\": {\n                  \"kind\": \"decimal\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"status\",\n                \"type\": {\n                  \"kind\": \"enum\"\n                },\n                \"nullable\": true\n              },\n              {\n                \"name\": \"discounts\",\n                \"type\": {\n                  \"kind\": \"array\",\n                  \"fields\": [\n                    {\n                      \"name\": \"reason\",\n                      \"type\": {\n                        \"kind\": \"text\"\n                      },\n                      \"nullable\": false\n                    },\n                    {\n                      \"name\": \"percent\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"Shipping\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"cs\": \"Order.ShippingDocument?\",\n            \"fields\": [\n              {\n                \"name\": \"carrier\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"sentOn\",\n                \"type\": {\n                  \"kind\": \"datetime\"\n                },\n                \"nullable\": false\n              }\n            ]\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"OrderChanges\",\n      \"module\": \"App.Services\",\n      \"kind\": \"update\",\n      \"updates\": \"patch\",\n      \"fields\": [\n        {\n          \"name\": \"Code\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"cs\": \"string\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"Lines\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"cs\": \"List<Order.LineDocument>\",\n            \"fields\": [\n              {\n                \"name\": \"_id\",\n                \"type\": {\n                  \"kind\": \"text\",\n                  \"length\": 24\n                },\n                \"nullable\": true\n              },\n              {\n                \"name\": \"sku\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"quantity\",\n                \"type\": {\n                  \"kind\": \"integer\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"price\",\n                \"type\": {\n                  \"kind\": \"decimal\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"status\",\n                \"type\": {\n                  \"kind\": \"enum\"\n                },\n                \"nullable\": true\n              },\n              {\n                \"name\": \"discounts\",\n                \"type\": {\n                  \"kind\": \"array\",\n                  \"fields\": [\n                    {\n                      \"name\": \"reason\",\n                      \"type\": {\n                        \"kind\": \"text\"\n                      },\n                      \"nullable\": false\n                    },\n                    {\n                      \"name\": \"percent\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"Shipping\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"cs\": \"Order.ShippingDocument?\",\n            \"fields\": [\n              {\n                \"name\": \"carrier\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"sentOn\",\n                \"type\": {\n                  \"kind\": \"datetime\"\n                },\n                \"nullable\": false\n              }\n            ]\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"Shipment\",\n      \"module\": \"App.Entities\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"Id\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"cs\": \"string\",\n            \"length\": 24\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"Parcel\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"cs\": \"Shipment.ParcelDocument\",\n            \"fields\": [\n              {\n                \"name\": \"weight\",\n                \"type\": {\n                  \"kind\": \"float\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"contents\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"size\",\n                \"type\": {\n                  \"kind\": \"json\",\n                  \"fields\": [\n                    {\n                      \"name\": \"height\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"Stops\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"cs\": \"List<Shipment.StopDocument>?\",\n            \"fields\": [\n              {\n                \"name\": \"city\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"ShipmentChanges\",\n      \"module\": \"App.Services\",\n      \"kind\": \"update\",\n      \"updates\": \"patch\",\n      \"fields\": [\n        {\n          \"name\": \"Parcel\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"cs\": \"Shipment.ParcelDocument\",\n            \"fields\": [\n              {\n                \"name\": \"weight\",\n                \"type\": {\n                  \"kind\": \"float\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"contents\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"size\",\n                \"type\": {\n                  \"kind\": \"json\",\n                  \"fields\": [\n                    {\n                      \"name\": \"height\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"Stops\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"cs\": \"List<Shipment.StopDocument>?\",\n            \"fields\": [\n              {\n                \"name\": \"city\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        }\n      ]\n    }\n  ],\n  \"errors\": [\n    {\n      \"kind\": \"notFound\",\n      \"name\": \"NotFoundException\",\n      \"module\": \"App.Errors\"\n    },\n    {\n      \"kind\": \"conflict\",\n      \"name\": \"ConflictException\",\n      \"module\": \"App.Errors\"\n    },\n    {\n      \"kind\": \"validation\",\n      \"name\": \"ValidationFailedException\",\n      \"module\": \"App.Errors\"\n    }\n  ],\n  \"common\": \"App.Common\",\n  \"services\": [\n    {\n      \"name\": \"CustomerService\",\n      \"module\": \"App.Services\",\n      \"operations\": [\n        {\n          \"name\": \"CreateCustomerAsync\",\n          \"kind\": \"create\",\n          \"errors\": [\n            \"validation\",\n            \"conflict\"\n          ]\n        },\n        {\n          \"name\": \"GetCustomerAsync\",\n          \"kind\": \"get\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"ListCustomersAsync\",\n          \"kind\": \"list\",\n          \"errors\": []\n        },\n        {\n          \"name\": \"UpdateCustomerAsync\",\n          \"kind\": \"update\",\n          \"errors\": [\n            \"notFound\",\n            \"validation\",\n            \"conflict\"\n          ]\n        },\n        {\n          \"name\": \"DeleteCustomerAsync\",\n          \"kind\": \"delete\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"FindCustomerByEmailAsync\",\n          \"kind\": \"find\",\n          \"by\": [\n            \"email\"\n          ],\n          \"errors\": []\n        },\n        {\n          \"name\": \"AddTagAsync\",\n          \"kind\": \"addItem\",\n          \"by\": [\n            \"tags\"\n          ],\n          \"errors\": [\n            \"notFound\",\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"RemoveTagAsync\",\n          \"kind\": \"removeItem\",\n          \"by\": [\n            \"tags\"\n          ],\n          \"errors\": [\n            \"notFound\",\n            \"conflict\"\n          ]\n        }\n      ]\n    },\n    {\n      \"name\": \"OrderService\",\n      \"module\": \"App.Services\",\n      \"operations\": [\n        {\n          \"name\": \"CreateOrderAsync\",\n          \"kind\": \"create\",\n          \"errors\": [\n            \"validation\",\n            \"conflict\"\n          ]\n        },\n        {\n          \"name\": \"GetOrderAsync\",\n          \"kind\": \"get\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"ListOrdersAsync\",\n          \"kind\": \"list\",\n          \"errors\": []\n        },\n        {\n          \"name\": \"UpdateOrderAsync\",\n          \"kind\": \"update\",\n          \"errors\": [\n            \"notFound\",\n            \"validation\",\n            \"conflict\"\n          ]\n        },\n        {\n          \"name\": \"DeleteOrderAsync\",\n          \"kind\": \"delete\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"FindOrderByCodeAsync\",\n          \"kind\": \"find\",\n          \"by\": [\n            \"code\"\n          ],\n          \"errors\": []\n        },\n        {\n          \"name\": \"AddLineAsync\",\n          \"kind\": \"addItem\",\n          \"by\": [\n            \"lines\"\n          ],\n          \"errors\": [\n            \"notFound\",\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"RemoveLineAsync\",\n          \"kind\": \"removeItem\",\n          \"by\": [\n            \"lines\"\n          ],\n          \"errors\": [\n            \"notFound\",\n            \"conflict\"\n          ]\n        }\n      ]\n    },\n    {\n      \"name\": \"ShipmentService\",\n      \"module\": \"App.Services\",\n      \"operations\": [\n        {\n          \"name\": \"CreateShipmentAsync\",\n          \"kind\": \"create\",\n          \"errors\": [\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"GetShipmentAsync\",\n          \"kind\": \"get\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"ListShipmentsAsync\",\n          \"kind\": \"list\",\n          \"errors\": []\n        },\n        {\n          \"name\": \"UpdateShipmentAsync\",\n          \"kind\": \"update\",\n          \"errors\": [\n            \"notFound\",\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"DeleteShipmentAsync\",\n          \"kind\": \"delete\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"AddStopAsync\",\n          \"kind\": \"addItem\",\n          \"by\": [\n            \"stops\"\n          ],\n          \"errors\": [\n            \"notFound\",\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"RemoveStopAsync\",\n          \"kind\": \"removeItem\",\n          \"by\": [\n            \"stops\"\n          ],\n          \"errors\": [\n            \"notFound\",\n            \"conflict\"\n          ]\n        }\n      ]\n    }\n  ]\n}\n",
+  "global.json": "{\n  \"test\": {\n    \"runner\": \"Microsoft.Testing.Platform\"\n  }\n}\n",
+  "src/App/App.csproj": "<Project Sdk=\"Microsoft.NET.Sdk\">\n  <PropertyGroup>\n    <TargetFramework>net10.0</TargetFramework>\n    <Nullable>enable</Nullable>\n    <ImplicitUsings>enable</ImplicitUsings>\n    <RootNamespace>App</RootNamespace>\n  </PropertyGroup>\n  <ItemGroup>\n    <PackageReference Include=\"MongoDB.Driver\" Version=\"3.14.1\" />\n  </ItemGroup>\n</Project>\n",
+  "src/App/ApplicationModels/Address.cs": "namespace App.ApplicationModels;\n\n/// <summary>Address, as the application has it.</summary>\npublic record Address(\n    string Street,\n    string ZipCode,\n    Location? Location\n);\n",
+  "src/App/ApplicationModels/Customer.cs": "namespace App.ApplicationModels;\n\n/// <summary>Customer, as the application has it.</summary>\npublic record Customer(\n    string Id,\n    string Email,\n    DateTimeOffset Since,\n    Address Address,\n    List<string> Tags\n);\n",
+  "src/App/ApplicationModels/Discount.cs": "namespace App.ApplicationModels;\n\n/// <summary>Discount, as the application has it.</summary>\npublic class Discount\n{\n    public string Reason { get; set; } = null!;\n    public double Percent { get; set; }\n}\n",
+  "src/App/ApplicationModels/Location.cs": "namespace App.ApplicationModels;\n\n/// <summary>Location, as the application has it.</summary>\npublic record Location(\n    double Latitude,\n    double Longitude\n);\n",
+  "src/App/ApplicationModels/Order.cs": "namespace App.ApplicationModels;\n\n/// <summary>Order, as the application has it.</summary>\npublic record Order(\n    string Id,\n    string Code,\n    List<OrderLine> Lines,\n    Shipping? Shipping\n);\n",
+  "src/App/ApplicationModels/OrderLine.cs": "namespace App.ApplicationModels;\n\n/// <summary>OrderLine, as the application has it.</summary>\npublic class OrderLine\n{\n    public string? Id { get; set; }\n    public string Sku { get; set; } = null!;\n    public int Quantity { get; set; }\n    public decimal Price { get; set; }\n    public string? Status { get; set; }\n    public Discount[] Discounts { get; set; } = null!;\n}\n",
+  "src/App/ApplicationModels/Parcel.cs": "namespace App.ApplicationModels;\n\n/// <summary>Parcel, as the application has it.</summary>\npublic record Parcel(\n    double Weight,\n    string Size,\n    bool Fragile\n);\n",
+  "src/App/ApplicationModels/Shipment.cs": "namespace App.ApplicationModels;\n\n/// <summary>Shipment, as the application has it.</summary>\npublic record Shipment(\n    string Id,\n    Parcel Parcel,\n    List<string> Stops\n);\n",
+  "src/App/ApplicationModels/Shipping.cs": "namespace App.ApplicationModels;\n\n/// <summary>Shipping, as the application has it.</summary>\npublic record Shipping(\n    string Carrier,\n    DateOnly SentOn\n);\n",
+  "src/App/Common/Page.cs": "namespace App.Common;\n\n/// <summary>A page of a list: the rows from an offset, and how many there are in all.</summary>\npublic record Page<T>(IReadOnlyList<T> Items, long Total, int Offset, int Limit)\n{\n    /// <summary>The same page with every row turned into something else.</summary>\n    public Page<TResult> Map<TResult>(Func<T, TResult> mapper) => new(Items.Select(mapper).ToList(), Total, Offset, Limit);\n}\n",
+  "src/App/Common/Patch.cs": "namespace App.Common;\n\n/// <summary>A field of an update: absent (it keeps its value), or present with a value, which may be null.</summary>\npublic sealed class Patch<T>\n{\n    private Patch(bool isPresent, T? value)\n    {\n        IsPresent = isPresent;\n        Value = value;\n    }\n\n    /// <summary>The field keeps its value.</summary>\n    public static Patch<T> Absent { get; } = new(false, default);\n\n    /// <summary>The field takes this value, which may be null.</summary>\n    public static Patch<T> Of(T? value) => new(true, value);\n\n    public bool IsPresent { get; }\n\n    /// <summary>The value to set; default when absent.</summary>\n    public T? Value { get; }\n\n    public override string ToString() => IsPresent ? $\"Patch[{Value}]\" : \"Patch.Absent\";\n}\n",
+  "src/App/Conversions/CustomerConversions.cs": "using App.ApplicationModels;\nusing App.Entities;\nusing Customer = App.Entities.Customer;\nusing CustomerModel = App.ApplicationModels.Customer;\n\nnamespace App.Conversions;\n\n/// <summary>Conversions between the application models and the \"customers\" table: what the service takes and returns.</summary>\npublic static class CustomerConversions\n{\n    /// <summary>A Location as the documents of the customers collection keep it.</summary>\n    private static Customer.AddressDocument.LocationDocument CustomerAddressLocationToDocument(Location value)\n    {\n        return new Customer.AddressDocument.LocationDocument\n        {\n            Latitude = value.Latitude,\n            Longitude = value.Longitude,\n        };\n    }\n\n    /// <summary>An Address as the documents of the customers collection keep it.</summary>\n    private static Customer.AddressDocument CustomerAddressToDocument(Address value)\n    {\n        return new Customer.AddressDocument\n        {\n            Street = value.Street,\n            ZipCode = value.ZipCode,\n            Location = value.Location is null ? null : CustomerAddressLocationToDocument(value.Location),\n        };\n    }\n\n    /// <summary>A Customer as the customers table takes it.</summary>\n    public static Customer CustomerModelToCustomer(CustomerModel model)\n    {\n        return new Customer\n        {\n            Email = model.Email,\n            Since = model.Since.UtcDateTime,\n            Address = CustomerAddressToDocument(model.Address),\n            Tags = model.Tags,\n        };\n    }\n\n    /// <summary>A document of the customers collection as a Location.</summary>\n    private static Location CustomerAddressLocationFromDocument(Customer.AddressDocument.LocationDocument value)\n    {\n        return new Location(\n            value.Latitude,\n            value.Longitude\n        );\n    }\n\n    /// <summary>A document of the customers collection as an Address.</summary>\n    private static Address CustomerAddressFromDocument(Customer.AddressDocument value)\n    {\n        return new Address(\n            value.Street,\n            value.ZipCode,\n            value.Location is null ? null : CustomerAddressLocationFromDocument(value.Location)\n        );\n    }\n\n    /// <summary>A row of the customers table as a Customer.</summary>\n    public static CustomerModel CustomerToCustomerModel(Customer row)\n    {\n        return new CustomerModel(\n            row.Id,\n            row.Email,\n            new DateTimeOffset(DateTime.SpecifyKind(row.Since, DateTimeKind.Utc)),\n            CustomerAddressFromDocument(row.Address),\n            row.Tags!\n        );\n    }\n}\n",
+  "src/App/Conversions/OrderConversions.cs": "using App.ApplicationModels;\nusing App.Entities;\nusing Order = App.Entities.Order;\nusing OrderModel = App.ApplicationModels.Order;\n\nnamespace App.Conversions;\n\n/// <summary>Conversions between the application models and the \"orders\" table: what the service takes and returns.</summary>\npublic static class OrderConversions\n{\n    /// <summary>A Discount as the documents of the orders collection keep it.</summary>\n    private static Order.LineDocument.DiscountDocument OrderLinesDiscountsToDocument(Discount value)\n    {\n        return new Order.LineDocument.DiscountDocument\n        {\n            Reason = value.Reason,\n            Percent = value.Percent,\n        };\n    }\n\n    /// <summary>An OrderLine as the documents of the orders collection keep it.</summary>\n    private static Order.LineDocument OrderLinesToDocument(OrderLine value)\n    {\n        return new Order.LineDocument\n        {\n            Id = value.Id,\n            Sku = value.Sku,\n            Quantity = value.Quantity,\n            Price = value.Price,\n            Status = value.Status,\n            Discounts = value.Discounts.Select(OrderLinesDiscountsToDocument).ToList(),\n        };\n    }\n\n    /// <summary>A Shipping as the documents of the orders collection keep it.</summary>\n    private static Order.ShippingDocument OrderShippingToDocument(Shipping value)\n    {\n        return new Order.ShippingDocument\n        {\n            Carrier = value.Carrier,\n            SentOn = value.SentOn.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc),\n        };\n    }\n\n    /// <summary>An Order as the orders table takes it.</summary>\n    public static Order OrderModelToOrder(OrderModel model)\n    {\n        return new Order\n        {\n            Code = model.Code,\n            Lines = model.Lines.Select(OrderLinesToDocument).ToList(),\n            Shipping = model.Shipping is null ? null : OrderShippingToDocument(model.Shipping),\n        };\n    }\n\n    /// <summary>A document of the orders collection as a Discount.</summary>\n    private static Discount OrderLinesDiscountsFromDocument(Order.LineDocument.DiscountDocument value)\n    {\n        return new Discount\n        {\n            Reason = value.Reason,\n            Percent = value.Percent,\n        };\n    }\n\n    /// <summary>A document of the orders collection as an OrderLine.</summary>\n    private static OrderLine OrderLinesFromDocument(Order.LineDocument value)\n    {\n        return new OrderLine\n        {\n            Id = value.Id,\n            Sku = value.Sku,\n            Quantity = value.Quantity,\n            Price = value.Price,\n            Status = value.Status,\n            Discounts = value.Discounts?.Select(OrderLinesDiscountsFromDocument).ToArray() ?? [],\n        };\n    }\n\n    /// <summary>A document of the orders collection as a Shipping.</summary>\n    private static Shipping OrderShippingFromDocument(Order.ShippingDocument value)\n    {\n        return new Shipping(\n            value.Carrier,\n            DateOnly.FromDateTime(value.SentOn)\n        );\n    }\n\n    /// <summary>A row of the orders table as an Order.</summary>\n    public static OrderModel OrderToOrderModel(Order row)\n    {\n        return new OrderModel(\n            row.Id,\n            row.Code,\n            row.Lines.Select(OrderLinesFromDocument).ToList(),\n            row.Shipping is null ? null : OrderShippingFromDocument(row.Shipping)\n        );\n    }\n}\n",
+  "src/App/Conversions/ShipmentConversions.cs": "using App.ApplicationModels;\nusing App.Entities;\nusing Shipment = App.Entities.Shipment;\nusing ShipmentModel = App.ApplicationModels.Shipment;\n\nnamespace App.Conversions;\n\n/// <summary>Conversions between the application models and the \"shipments\" table: what the service takes and returns.</summary>\npublic static class ShipmentConversions\n{\n    /// <summary>A Parcel as the documents of the shipments collection keep it.</summary>\n    private static Shipment.ParcelDocument ShipmentParcelToDocument(Parcel value)\n    {\n        // Not stored: Fragile\n        // TODO: Contents: no field of the model gives it (contents)\n        // TODO: Size: DB2CRUD does not write this conversion (Size)\n        return new Shipment.ParcelDocument\n        {\n            Weight = value.Weight,\n        };\n    }\n\n    /// <summary>A Shipment as the shipments table takes it.</summary>\n    public static Shipment ShipmentModelToShipment(ShipmentModel model)\n    {\n        return new Shipment\n        {\n            Parcel = ShipmentParcelToDocument(model.Parcel),\n            Stops = default!, // TODO: Stops: DB2CRUD does not write this conversion (Stops)\n        };\n    }\n\n    /// <summary>A document of the shipments collection as a Parcel.</summary>\n    private static Parcel ShipmentParcelFromDocument(Shipment.ParcelDocument value)\n    {\n        return new Parcel(\n            value.Weight,\n            default!, // TODO: Size: DB2CRUD does not write this conversion (Size)\n            default! // TODO: Fragile: no field of the model gives it (Fragile)\n        );\n    }\n\n    /// <summary>A row of the shipments table as a Shipment.</summary>\n    public static ShipmentModel ShipmentToShipmentModel(Shipment row)\n    {\n        return new ShipmentModel(\n            row.Id,\n            ShipmentParcelFromDocument(row.Parcel),\n            default! // TODO: Stops: DB2CRUD does not write this conversion (Stops)\n        );\n    }\n}\n",
+  "src/App/Database.cs": "using MongoDB.Driver;\n\nnamespace App;\n\n/// <summary>The MongoDB database DATABASE_CONNECTION names. It creates no collection and no index: the database already exists.</summary>\npublic static class Database\n{\n    public const string DefaultConnection = \"mongodb://localhost:27017/app\";\n\n    /// <summary>One client for the whole application: it keeps the connections.</summary>\n    private static readonly Lazy<IMongoDatabase> Shared = new(() => At(Connection));\n\n    /// <summary>The connection string of DATABASE_CONNECTION, or the default one.</summary>\n    public static string Connection => Environment.GetEnvironmentVariable(\"DATABASE_CONNECTION\") ?? DefaultConnection;\n\n    /// <summary>The database a connection string names, with a client of its own.</summary>\n    public static IMongoDatabase At(string connection)\n    {\n        var url = new MongoUrl(connection);\n        return new MongoClient(url).GetDatabase(url.DatabaseName);\n    }\n\n    /// <summary>A Db over DATABASE_CONNECTION, one per unit of work; dispose it when done.</summary>\n    public static Db Open() => new(Shared.Value);\n}\n",
+  "src/App/Db.cs": "using App.Errors;\nusing MongoDB.Bson;\nusing MongoDB.Driver;\n\nnamespace App;\n\n/// <summary>A database and the session of its transaction, when there is one (MongoDB has them on replica sets only). A refused write is a ConflictException.</summary>\npublic sealed class Db(IMongoDatabase database) : IAsyncDisposable\n{\n    private IClientSessionHandle? session;\n\n    public IMongoDatabase Database { get; } = database;\n\n    public bool InTransaction => session is not null;\n\n    public async Task BeginAsync()\n    {\n        session = await Database.Client.StartSessionAsync();\n        session.StartTransaction();\n    }\n\n    public async Task CommitAsync()\n    {\n        await session!.CommitTransactionAsync();\n        End();\n    }\n\n    public async Task RollbackAsync()\n    {\n        if (session is { IsInTransaction: true }) await session.AbortTransactionAsync();\n        End();\n    }\n\n    public async ValueTask DisposeAsync() => await RollbackAsync();\n\n    private void End()\n    {\n        session?.Dispose();\n        session = null;\n    }\n\n    public IFindFluent<T, T> Find<T>(string collection, FilterDefinition<T> filter) =>\n        session is null ? Database.GetCollection<T>(collection).Find(filter) : Database.GetCollection<T>(collection).Find(session, filter);\n\n    public Task<long> CountAsync<T>(string collection, FilterDefinition<T> filter) => Find(collection, filter).CountDocumentsAsync();\n\n    public Task InsertAsync<T>(string entity, string collection, T document) =>\n        RefusedAsync(entity, async () =>\n        {\n            if (session is null) await Database.GetCollection<T>(collection).InsertOneAsync(document);\n            else await Database.GetCollection<T>(collection).InsertOneAsync(session, document);\n            return true;\n        });\n\n    public Task UpdateAsync<T>(string entity, string collection, FilterDefinition<T> filter, UpdateDefinition<T> change) =>\n        RefusedAsync(entity, () => session is null\n            ? Database.GetCollection<T>(collection).UpdateOneAsync(filter, change)\n            : Database.GetCollection<T>(collection).UpdateOneAsync(session, filter, change));\n\n    public Task DeleteAsync<T>(string entity, string collection, FilterDefinition<T> filter) =>\n        RefusedAsync(entity, () => session is null\n            ? Database.GetCollection<T>(collection).DeleteOneAsync(filter)\n            : Database.GetCollection<T>(collection).DeleteOneAsync(session, filter));\n\n    /// <summary>Changes one document where it is, and gives it as it is then; null when there is none.</summary>\n    public Task<T?> ChangeAsync<T>(string entity, string collection, FilterDefinition<T> filter, UpdateDefinition<T> change) where T : class\n    {\n        var after = new FindOneAndUpdateOptions<T, T?> { ReturnDocument = ReturnDocument.After };\n        return RefusedAsync(entity, () => session is null\n            ? Database.GetCollection<T>(collection).FindOneAndUpdateAsync(filter, change, after)\n            : Database.GetCollection<T>(collection).FindOneAndUpdateAsync(session, filter, change, after));\n    }\n\n    /// <summary>The same, with the stages of a pipeline.</summary>\n    public Task<T?> ChangeAsync<T>(string entity, string collection, FilterDefinition<T> filter, BsonDocument[] stages) where T : class =>\n        ChangeAsync(entity, collection, filter, Builders<T>.Update.Pipeline(stages));\n\n    /// <summary>A repeated value, or one the validator of the collection does not take, as a domain error.</summary>\n    private static async Task<TResult> RefusedAsync<TResult>(string entity, Func<Task<TResult>> work)\n    {\n        try\n        {\n            return await work();\n        }\n        catch (MongoWriteException error) when (error.WriteError is { } refusal && (refusal.Category == ServerErrorCategory.DuplicateKey || refusal.Code == 121))\n        {\n            throw new ConflictException(entity, $\"the database refused the change: {error.Message}\");\n        }\n        catch (MongoCommandException error) when (error.Code is 11000 or 121)\n        {\n            throw new ConflictException(entity, $\"the database refused the change: {error.Message}\");\n        }\n    }\n}\n",
+  "src/App/Documents.cs": "using MongoDB.Bson;\n\nnamespace App;\n\n/// <summary>What changed in a document.</summary>\npublic static class Documents\n{\n    /// <summary>The update that takes a document from what it was to what it is: only the fields that differ, and inside a nested document only its own.</summary>\n    public static BsonDocument Changes(BsonDocument? before, BsonDocument now, IEnumerable<string> fields)\n    {\n        var set = new BsonDocument();\n        var unset = new BsonDocument();\n        foreach (var field in fields) Compare(\"\", field, before, now, set, unset);\n        var result = new BsonDocument();\n        if (set.ElementCount > 0) result[\"$set\"] = set;\n        if (unset.ElementCount > 0) result[\"$unset\"] = unset;\n        return result;\n    }\n\n    private static void Compare(string path, string field, BsonDocument? before, BsonDocument now, BsonDocument set, BsonDocument unset)\n    {\n        var old = before?.GetValue(field, null);\n        var current = now.GetValue(field, null);\n        if (Equals(old, current)) return;\n        var name = path + field;\n        if (current is null) unset[name] = \"\";\n        else if (old is BsonDocument was && current is BsonDocument document)\n            foreach (var item in was.Names.Union(document.Names).ToList()) Compare(name + \".\", item, was, document, set, unset);\n        else set[name] = current;\n    }\n}\n",
+  "src/App/Entities/Customer.cs": "using MongoDB.Bson;\nusing MongoDB.Bson.Serialization.Attributes;\n\nnamespace App.Entities;\n\n/// <summary>A document of the \"customers\" collection.</summary>\n[BsonIgnoreExtraElements]\npublic class Customer\n{\n    [BsonId]\n    [BsonRepresentation(BsonType.ObjectId)]\n    public string Id { get; set; } = null!;\n\n    [BsonElement(\"email\")]\n    public string Email { get; set; } = null!;\n\n    [BsonElement(\"level\")]\n    [BsonIgnoreIfNull]\n    public string? Level { get; set; }\n\n    [BsonElement(\"since\")]\n    public DateTime Since { get; set; }\n\n    [BsonElement(\"address\")]\n    public Customer.AddressDocument Address { get; set; } = null!;\n\n    [BsonElement(\"tags\")]\n    [BsonIgnoreIfNull]\n    public List<string>? Tags { get; set; }\n\n    /// <summary>A nested document: it is stored with the one that holds it.</summary>\n    [BsonIgnoreExtraElements]\n    public class AddressDocument\n    {\n        [BsonElement(\"street\")]\n        public string Street { get; set; } = null!;\n\n        [BsonElement(\"zip code\")]\n        public string ZipCode { get; set; } = null!;\n\n        [BsonElement(\"location\")]\n        [BsonIgnoreIfNull]\n        public Customer.AddressDocument.LocationDocument? Location { get; set; }\n\n        /// <summary>A nested document: it is stored with the one that holds it.</summary>\n        [BsonIgnoreExtraElements]\n        public class LocationDocument\n        {\n            [BsonElement(\"latitude\")]\n            public double Latitude { get; set; }\n\n            [BsonElement(\"longitude\")]\n            public double Longitude { get; set; }\n        }\n    }\n}\n",
+  "src/App/Entities/Order.cs": "using MongoDB.Bson;\nusing MongoDB.Bson.Serialization.Attributes;\n\nnamespace App.Entities;\n\n/// <summary>A document of the \"orders\" collection.</summary>\n[BsonIgnoreExtraElements]\npublic class Order\n{\n    [BsonId]\n    [BsonRepresentation(BsonType.ObjectId)]\n    public string Id { get; set; } = null!;\n\n    [BsonElement(\"code\")]\n    public string Code { get; set; } = null!;\n\n    [BsonElement(\"lines\")]\n    public List<Order.LineDocument> Lines { get; set; } = null!;\n\n    [BsonElement(\"shipping\")]\n    [BsonIgnoreIfNull]\n    public Order.ShippingDocument? Shipping { get; set; }\n\n    /// <summary>Gives an identifier to the documents of its lists that have none: MongoDB numbers only whole documents.</summary>\n    public void IdentifyItems()\n    {\n        foreach (var item in Lines ?? []) item.Id ??= ObjectId.GenerateNewId().ToString();\n    }\n\n    /// <summary>A nested document: it is stored with the one that holds it.</summary>\n    [BsonIgnoreExtraElements]\n    public class LineDocument\n    {\n        [BsonId]\n        [BsonRepresentation(BsonType.ObjectId)]\n        [BsonIgnoreIfNull]\n        public string? Id { get; set; }\n\n        [BsonElement(\"sku\")]\n        public string Sku { get; set; } = null!;\n\n        [BsonElement(\"quantity\")]\n        public int Quantity { get; set; }\n\n        [BsonElement(\"price\")]\n        [BsonRepresentation(BsonType.Decimal128)]\n        public decimal Price { get; set; }\n\n        [BsonElement(\"status\")]\n        [BsonIgnoreIfNull]\n        public string? Status { get; set; }\n\n        [BsonElement(\"discounts\")]\n        [BsonIgnoreIfNull]\n        public List<Order.LineDocument.DiscountDocument>? Discounts { get; set; }\n\n        /// <summary>A nested document: it is stored with the one that holds it.</summary>\n        [BsonIgnoreExtraElements]\n        public class DiscountDocument\n        {\n            [BsonElement(\"reason\")]\n            public string Reason { get; set; } = null!;\n\n            [BsonElement(\"percent\")]\n            public double Percent { get; set; }\n        }\n    }\n\n    /// <summary>A nested document: it is stored with the one that holds it.</summary>\n    [BsonIgnoreExtraElements]\n    public class ShippingDocument\n    {\n        [BsonElement(\"carrier\")]\n        public string Carrier { get; set; } = null!;\n\n        [BsonElement(\"sentOn\")]\n        public DateTime SentOn { get; set; }\n    }\n}\n",
+  "src/App/Entities/Shipment.cs": "using MongoDB.Bson;\nusing MongoDB.Bson.Serialization.Attributes;\n\nnamespace App.Entities;\n\n/// <summary>A document of the \"shipments\" collection.</summary>\n[BsonIgnoreExtraElements]\npublic class Shipment\n{\n    [BsonId]\n    [BsonRepresentation(BsonType.ObjectId)]\n    public string Id { get; set; } = null!;\n\n    [BsonElement(\"parcel\")]\n    public Shipment.ParcelDocument Parcel { get; set; } = null!;\n\n    [BsonElement(\"stops\")]\n    [BsonIgnoreIfNull]\n    public List<Shipment.StopDocument>? Stops { get; set; }\n\n    /// <summary>A nested document: it is stored with the one that holds it.</summary>\n    [BsonIgnoreExtraElements]\n    public class ParcelDocument\n    {\n        [BsonElement(\"weight\")]\n        public double Weight { get; set; }\n\n        [BsonElement(\"contents\")]\n        public string Contents { get; set; } = null!;\n\n        [BsonElement(\"size\")]\n        [BsonIgnoreIfNull]\n        public Shipment.ParcelDocument.SizeDocument? Size { get; set; }\n\n        /// <summary>A nested document: it is stored with the one that holds it.</summary>\n        [BsonIgnoreExtraElements]\n        public class SizeDocument\n        {\n            [BsonElement(\"height\")]\n            public double Height { get; set; }\n        }\n    }\n\n    /// <summary>A nested document: it is stored with the one that holds it.</summary>\n    [BsonIgnoreExtraElements]\n    public class StopDocument\n    {\n        [BsonElement(\"city\")]\n        [BsonIgnoreIfNull]\n        public string? City { get; set; }\n    }\n}\n",
+  "src/App/Errors/ConflictException.cs": "namespace App.Errors;\n\n/// <summary>The change clashes with what is stored: a unique value, a newer version, rows that depend on it.</summary>\npublic class ConflictException(string entity, string reason, IReadOnlyList<string>? fields = null) : DomainException($\"{entity}: {reason}\")\n{\n    public string Entity { get; } = entity;\n    public string Reason { get; } = reason;\n    public IReadOnlyList<string> Fields { get; } = fields ?? [];\n}\n",
+  "src/App/Errors/DomainException.cs": "namespace App.Errors;\n\n/// <summary>Base of every error a service throws on purpose. They carry no HTTP codes: whoever calls the services translates them.</summary>\npublic abstract class DomainException(string message) : Exception(message);\n",
+  "src/App/Errors/FieldError.cs": "namespace App.Errors;\n\n/// <summary>What is wrong with one field.</summary>\npublic record FieldError(string Field, string Message);\n",
+  "src/App/Errors/NotFoundException.cs": "namespace App.Errors;\n\n/// <summary>No row has this key.</summary>\npublic class NotFoundException(string entity, object key) : DomainException($\"No {entity} has the key {key}\")\n{\n    public string Entity { get; } = entity;\n    public object Key { get; } = key;\n}\n",
+  "src/App/Errors/ValidationFailedException.cs": "namespace App.Errors;\n\n/// <summary>The values break the rules of the table: missing, too long, out of range, pointing nowhere.</summary>\npublic class ValidationFailedException(string entity, IReadOnlyList<FieldError> errors)\n    : DomainException($\"{entity}: {string.Join(\"; \", errors.Select(error => $\"{error.Field}: {error.Message}\"))}\")\n{\n    public string Entity { get; } = entity;\n    public IReadOnlyList<FieldError> Errors { get; } = errors;\n}\n",
+  "src/App/IUnitOfWork.cs": "using App.Repositories;\n\nnamespace App;\n\n/// <summary>What services depend on: a repository per table and a transaction. Every repository write is committed at once; TransactionAsync only groups the code.</summary>\npublic interface IUnitOfWork\n{\n    ICustomerRepository Customers { get; }\n    IOrderRepository Orders { get; }\n    IShipmentRepository Shipments { get; }\n\n    /// <summary>Runs work with the repositories of the transaction; commits when it ends, rolls back when it throws.</summary>\n    Task<T> TransactionAsync<T>(Func<IUnitOfWork, Task<T>> work);\n\n    /// <summary>Runs work that returns nothing, in the same way.</summary>\n    Task TransactionAsync(Func<IUnitOfWork, Task> work);\n}\n",
+  "src/App/MemoryUnitOfWork.cs": "using App.Repositories;\n\nnamespace App;\n\n/// <summary>The in-memory repositories, for tests and for trying the services without a database.</summary>\npublic class MemoryUnitOfWork : IUnitOfWork\n{\n    public ICustomerRepository Customers { get; } = new MemoryCustomerRepository();\n    public IOrderRepository Orders { get; } = new MemoryOrderRepository();\n    public IShipmentRepository Shipments { get; } = new MemoryShipmentRepository();\n\n    /// <summary>Memory has no transactions: changes are kept as they are made.</summary>\n    public Task<T> TransactionAsync<T>(Func<IUnitOfWork, Task<T>> work) => work(this);\n\n    public Task TransactionAsync(Func<IUnitOfWork, Task> work) =>\n        TransactionAsync<bool>(async uow =>\n        {\n            await work(uow);\n            return true;\n        });\n}\n",
+  "src/App/MongoUnitOfWork.cs": "using App.Repositories;\n\nnamespace App;\n\n/// <summary>The repositories over one Db, and its transaction.</summary>\npublic class MongoUnitOfWork(Db db) : IUnitOfWork\n{\n    public Db Db { get; } = db;\n    public ICustomerRepository Customers { get; } = new MongoCustomerRepository(db);\n    public IOrderRepository Orders { get; } = new MongoOrderRepository(db);\n    public IShipmentRepository Shipments { get; } = new MongoShipmentRepository(db);\n\n    public async Task<T> TransactionAsync<T>(Func<IUnitOfWork, Task<T>> work)\n    {\n        return await work(this);\n    }\n\n    public Task TransactionAsync(Func<IUnitOfWork, Task> work) =>\n        TransactionAsync<bool>(async uow =>\n        {\n            await work(uow);\n            return true;\n        });\n}\n",
+  "src/App/Repositories/ICustomerRepository.cs": "using App.Common;\nusing App.Entities;\n\nnamespace App.Repositories;\n\n/// <summary>Where customers rows are kept. Services depend only on this interface.</summary>\npublic interface ICustomerRepository\n{\n    /// <summary>The row with this primary key, or null.</summary>\n    Task<Customer?> FindByIdAsync(string id);\n\n    /// <summary>At most limit rows from offset, by primary key, and how many there are.</summary>\n    Task<Page<Customer>> ListAsync(int offset, int limit);\n\n    /// <summary>The row with this email, or null.</summary>\n    Task<Customer?> FindByEmailAsync(string email);\n\n    /// <summary>Stores a new row; the values the database fills are read back.</summary>\n    Task<Customer> InsertAsync(Customer entity);\n\n    /// <summary>Stores the changes made to a row read from this repository.</summary>\n    Task<Customer> UpdateAsync(Customer entity);\n\n    /// <summary>Removes a row read from this repository.</summary>\n    Task DeleteAsync(Customer entity);\n\n    /// <summary>Adds an item to tags, and gives the row as it is then, if there is one.</summary>\n    Task<Customer?> AddTagAsync(string id, string tag);\n\n    /// <summary>Removes an item from tags, and gives the row as it is then, if there is one.</summary>\n    Task<Customer?> RemoveTagAsync(string id, string tag);\n}\n",
+  "src/App/Repositories/IOrderRepository.cs": "using App.Common;\nusing App.Entities;\n\nnamespace App.Repositories;\n\n/// <summary>Where orders rows are kept. Services depend only on this interface.</summary>\npublic interface IOrderRepository\n{\n    /// <summary>The row with this primary key, or null.</summary>\n    Task<Order?> FindByIdAsync(string id);\n\n    /// <summary>At most limit rows from offset, by primary key, and how many there are.</summary>\n    Task<Page<Order>> ListAsync(int offset, int limit);\n\n    /// <summary>The row with this code, or null.</summary>\n    Task<Order?> FindByCodeAsync(string code);\n\n    /// <summary>Stores a new row; the values the database fills are read back.</summary>\n    Task<Order> InsertAsync(Order entity);\n\n    /// <summary>Stores the changes made to a row read from this repository.</summary>\n    Task<Order> UpdateAsync(Order entity);\n\n    /// <summary>Removes a row read from this repository.</summary>\n    Task DeleteAsync(Order entity);\n\n    /// <summary>Adds an item to lines, and gives the row as it is then, if there is one.</summary>\n    Task<Order?> AddLineAsync(string id, Order.LineDocument line);\n\n    /// <summary>Removes an item from lines, and gives the row as it is then, if there is one.</summary>\n    Task<Order?> RemoveLineAsync(string id, string lineId);\n}\n",
+  "src/App/Repositories/IShipmentRepository.cs": "using App.Common;\nusing App.Entities;\n\nnamespace App.Repositories;\n\n/// <summary>Where shipments rows are kept. Services depend only on this interface.</summary>\npublic interface IShipmentRepository\n{\n    /// <summary>The row with this primary key, or null.</summary>\n    Task<Shipment?> FindByIdAsync(string id);\n\n    /// <summary>At most limit rows from offset, by primary key, and how many there are.</summary>\n    Task<Page<Shipment>> ListAsync(int offset, int limit);\n\n    /// <summary>Stores a new row; the values the database fills are read back.</summary>\n    Task<Shipment> InsertAsync(Shipment entity);\n\n    /// <summary>Stores the changes made to a row read from this repository.</summary>\n    Task<Shipment> UpdateAsync(Shipment entity);\n\n    /// <summary>Removes a row read from this repository.</summary>\n    Task DeleteAsync(Shipment entity);\n\n    /// <summary>Adds an item to stops, and gives the row as it is then, if there is one.</summary>\n    Task<Shipment?> AddStopAsync(string id, Shipment.StopDocument stop);\n\n    /// <summary>Removes an item from stops that has this size, and gives the row as it is then, if there is one.</summary>\n    Task<Shipment?> RemoveStopAsync(string id, int position, int size);\n}\n",
+  "src/App/Repositories/MemoryCustomerRepository.cs": "using App.Common;\nusing App.Entities;\n\nnamespace App.Repositories;\n\n/// <summary>Keeps customers rows in memory, for tests and for trying the services without a database.</summary>\npublic class MemoryCustomerRepository : ICustomerRepository\n{\n    private readonly Dictionary<string, Customer> rows = [];\n\n    /// <summary>The key of a row, as a list of its key values.</summary>\n    private static object[] KeyOf(Customer row) => [row.Id];\n\n    private static string KeyText(Customer row) => string.Join(\"|\", KeyOf(row));\n\n    /// <summary>Orders two keys value by value.</summary>\n    private static int Compare(IReadOnlyList<object> a, IReadOnlyList<object> b)\n    {\n        for (var index = 0; index < a.Count; index++)\n        {\n            var order = Comparer<object>.Default.Compare(a[index], b[index]);\n            if (order != 0) return order;\n        }\n        return 0;\n    }\n\n    private IEnumerable<Customer> Visible() =>\n        rows.Values.Where(row => true).OrderBy(KeyOf, Comparer<object[]>.Create((a, b) => Compare(a, b)));\n\n    public Task<Customer?> FindByIdAsync(string id)\n    {\n        return Task.FromResult(Visible().FirstOrDefault(row => Equals(row.Id, id)));\n    }\n\n    public Task<Page<Customer>> ListAsync(int offset, int limit)\n    {\n        var rows = Visible().ToList();\n        return Task.FromResult(new Page<Customer>(rows.Skip(offset).Take(limit).ToList(), rows.Count, offset, limit));\n    }\n\n    public Task<Customer?> FindByEmailAsync(string email)\n    {\n        return Task.FromResult(Visible().FirstOrDefault(row => Equals(row.Email, email)));\n    }\n\n    public Task<Customer> InsertAsync(Customer entity)\n    {\n        entity.Id ??= MongoDB.Bson.ObjectId.GenerateNewId().ToString();\n        rows[KeyText(entity)] = entity;\n        return Task.FromResult(entity);\n    }\n\n    public Task<Customer> UpdateAsync(Customer entity)\n    {\n        rows[KeyText(entity)] = entity;\n        return Task.FromResult(entity);\n    }\n\n    public Task DeleteAsync(Customer entity)\n    {\n        rows.Remove(KeyText(entity));\n        return Task.CompletedTask;\n    }\n\n    public Task<Customer?> AddTagAsync(string id, string tag)\n    {\n        var found = Visible().FirstOrDefault(row => Equals(row.Id, id));\n        if (found is null) return Task.FromResult<Customer?>(null);\n        found.Tags = [..found.Tags ?? [], tag];\n        return Task.FromResult<Customer?>(found);\n    }\n\n    public Task<Customer?> RemoveTagAsync(string id, string tag)\n    {\n        var found = Visible().FirstOrDefault(row => Equals(row.Id, id));\n        if (found is null) return Task.FromResult<Customer?>(null);\n        found.Tags = (found.Tags ?? []).Where(candidate => !Equals(candidate, tag)).ToList();\n        return Task.FromResult<Customer?>(found);\n    }\n}\n",
+  "src/App/Repositories/MemoryOrderRepository.cs": "using App.Common;\nusing App.Entities;\n\nnamespace App.Repositories;\n\n/// <summary>Keeps orders rows in memory, for tests and for trying the services without a database.</summary>\npublic class MemoryOrderRepository : IOrderRepository\n{\n    private readonly Dictionary<string, Order> rows = [];\n\n    /// <summary>The key of a row, as a list of its key values.</summary>\n    private static object[] KeyOf(Order row) => [row.Id];\n\n    private static string KeyText(Order row) => string.Join(\"|\", KeyOf(row));\n\n    /// <summary>Orders two keys value by value.</summary>\n    private static int Compare(IReadOnlyList<object> a, IReadOnlyList<object> b)\n    {\n        for (var index = 0; index < a.Count; index++)\n        {\n            var order = Comparer<object>.Default.Compare(a[index], b[index]);\n            if (order != 0) return order;\n        }\n        return 0;\n    }\n\n    private IEnumerable<Order> Visible() =>\n        rows.Values.Where(row => true).OrderBy(KeyOf, Comparer<object[]>.Create((a, b) => Compare(a, b)));\n\n    public Task<Order?> FindByIdAsync(string id)\n    {\n        return Task.FromResult(Visible().FirstOrDefault(row => Equals(row.Id, id)));\n    }\n\n    public Task<Page<Order>> ListAsync(int offset, int limit)\n    {\n        var rows = Visible().ToList();\n        return Task.FromResult(new Page<Order>(rows.Skip(offset).Take(limit).ToList(), rows.Count, offset, limit));\n    }\n\n    public Task<Order?> FindByCodeAsync(string code)\n    {\n        return Task.FromResult(Visible().FirstOrDefault(row => Equals(row.Code, code)));\n    }\n\n    public Task<Order> InsertAsync(Order entity)\n    {\n        entity.Id ??= MongoDB.Bson.ObjectId.GenerateNewId().ToString();\n        entity.IdentifyItems();\n        rows[KeyText(entity)] = entity;\n        return Task.FromResult(entity);\n    }\n\n    public Task<Order> UpdateAsync(Order entity)\n    {\n        entity.IdentifyItems();\n        rows[KeyText(entity)] = entity;\n        return Task.FromResult(entity);\n    }\n\n    public Task DeleteAsync(Order entity)\n    {\n        rows.Remove(KeyText(entity));\n        return Task.CompletedTask;\n    }\n\n    public Task<Order?> AddLineAsync(string id, Order.LineDocument line)\n    {\n        var found = Visible().FirstOrDefault(row => Equals(row.Id, id));\n        if (found is null) return Task.FromResult<Order?>(null);\n        line.Id ??= MongoDB.Bson.ObjectId.GenerateNewId().ToString();\n        found.Lines = [..found.Lines ?? [], line];\n        return Task.FromResult<Order?>(found);\n    }\n\n    public Task<Order?> RemoveLineAsync(string id, string lineId)\n    {\n        var found = Visible().FirstOrDefault(row => Equals(row.Id, id));\n        if (found is null) return Task.FromResult<Order?>(null);\n        found.Lines = (found.Lines ?? []).Where(candidate => !Equals(candidate.Id, lineId)).ToList();\n        return Task.FromResult<Order?>(found);\n    }\n}\n",
+  "src/App/Repositories/MemoryShipmentRepository.cs": "using App.Common;\nusing App.Entities;\n\nnamespace App.Repositories;\n\n/// <summary>Keeps shipments rows in memory, for tests and for trying the services without a database.</summary>\npublic class MemoryShipmentRepository : IShipmentRepository\n{\n    private readonly Dictionary<string, Shipment> rows = [];\n\n    /// <summary>The key of a row, as a list of its key values.</summary>\n    private static object[] KeyOf(Shipment row) => [row.Id];\n\n    private static string KeyText(Shipment row) => string.Join(\"|\", KeyOf(row));\n\n    /// <summary>Orders two keys value by value.</summary>\n    private static int Compare(IReadOnlyList<object> a, IReadOnlyList<object> b)\n    {\n        for (var index = 0; index < a.Count; index++)\n        {\n            var order = Comparer<object>.Default.Compare(a[index], b[index]);\n            if (order != 0) return order;\n        }\n        return 0;\n    }\n\n    private IEnumerable<Shipment> Visible() =>\n        rows.Values.Where(row => true).OrderBy(KeyOf, Comparer<object[]>.Create((a, b) => Compare(a, b)));\n\n    public Task<Shipment?> FindByIdAsync(string id)\n    {\n        return Task.FromResult(Visible().FirstOrDefault(row => Equals(row.Id, id)));\n    }\n\n    public Task<Page<Shipment>> ListAsync(int offset, int limit)\n    {\n        var rows = Visible().ToList();\n        return Task.FromResult(new Page<Shipment>(rows.Skip(offset).Take(limit).ToList(), rows.Count, offset, limit));\n    }\n\n    public Task<Shipment> InsertAsync(Shipment entity)\n    {\n        entity.Id ??= MongoDB.Bson.ObjectId.GenerateNewId().ToString();\n        rows[KeyText(entity)] = entity;\n        return Task.FromResult(entity);\n    }\n\n    public Task<Shipment> UpdateAsync(Shipment entity)\n    {\n        rows[KeyText(entity)] = entity;\n        return Task.FromResult(entity);\n    }\n\n    public Task DeleteAsync(Shipment entity)\n    {\n        rows.Remove(KeyText(entity));\n        return Task.CompletedTask;\n    }\n\n    public Task<Shipment?> AddStopAsync(string id, Shipment.StopDocument stop)\n    {\n        var found = Visible().FirstOrDefault(row => Equals(row.Id, id));\n        if (found is null) return Task.FromResult<Shipment?>(null);\n        found.Stops = [..found.Stops ?? [], stop];\n        return Task.FromResult<Shipment?>(found);\n    }\n\n    public Task<Shipment?> RemoveStopAsync(string id, int position, int size)\n    {\n        var found = Visible().FirstOrDefault(row => Equals(row.Id, id));\n        if (found is null || (found.Stops?.Count ?? 0) != size) return Task.FromResult<Shipment?>(null);\n        found.Stops = (found.Stops ?? []).Where((_, index) => index != position).ToList();\n        return Task.FromResult<Shipment?>(found);\n    }\n}\n",
+  "src/App/Repositories/MongoCustomerRepository.cs": "using System.Runtime.CompilerServices;\nusing App;\nusing App.Common;\nusing App.Entities;\nusing App.Errors;\nusing MongoDB.Bson;\nusing MongoDB.Driver;\n\nnamespace App.Repositories;\n\n/// <summary>Keeps customers documents in the database, through the MongoDB driver. Every write is stored at once.</summary>\npublic class MongoCustomerRepository(Db db) : ICustomerRepository\n{\n    private const string Collection = \"customers\";\n\n    /// <summary>The document each entity was read from: a change writes only the fields that differ</summary>\n    private static readonly ConditionalWeakTable<Customer, BsonDocument> Read = [];\n\n    /// <summary>The fields a change may write</summary>\n    private static readonly string[] Fields = [\"email\", \"level\", \"since\", \"address\", \"tags\"];\n\n    public async Task<Customer?> FindByIdAsync(string id)\n    {\n        if (!ObjectId.TryParse(id, out _)) return null;\n        var found = await db.Find(Collection, Builders<Customer>.Filter.Eq(row => row.Id, id)).FirstOrDefaultAsync();\n        return found is null ? null : Loaded(found);\n    }\n\n    public async Task<Page<Customer>> ListAsync(int offset, int limit)\n    {\n        var items = (await db.Find(Collection, Builders<Customer>.Filter.Empty).Sort(Builders<Customer>.Sort.Ascending(row => row.Id)).Skip(offset).Limit(limit).ToListAsync()).Select(Loaded).ToList();\n        return new Page<Customer>(items, await db.CountAsync(Collection, Builders<Customer>.Filter.Empty), offset, limit);\n    }\n\n    public async Task<Customer?> FindByEmailAsync(string email)\n    {\n        var found = await db.Find(Collection, Builders<Customer>.Filter.Eq(row => row.Email, email)).FirstOrDefaultAsync();\n        return found is null ? null : Loaded(found);\n    }\n\n    public async Task<Customer> InsertAsync(Customer entity)\n    {\n        entity.Id ??= MongoDB.Bson.ObjectId.GenerateNewId().ToString();\n        await db.InsertAsync(\"Customer\", Collection, entity);\n        return Loaded(entity);\n    }\n\n    public async Task<Customer> UpdateAsync(Customer entity)\n    {\n        var now = entity.ToBsonDocument();\n        var changes = Documents.Changes(Read.TryGetValue(entity, out var before) ? before : null, now, Fields);\n        if (changes.ElementCount > 0) await db.UpdateAsync<Customer>(\"Customer\", Collection, new BsonDocument(\"_id\", now[\"_id\"]), changes);\n        return Loaded(entity);\n    }\n\n    public async Task DeleteAsync(Customer entity)\n    {\n        await db.DeleteAsync(\"Customer\", Collection, Builders<Customer>.Filter.Eq(row => row.Id, entity.Id));\n    }\n\n    public async Task<Customer?> AddTagAsync(string id, string tag)\n    {\n        if (!ObjectId.TryParse(id, out _)) return null;\n        var change = new BsonDocument { [\"$push\"] = new BsonDocument(\"tags\", BsonValue.Create(tag)) };\n        var filter = new BsonDocument { [\"_id\"] = new ObjectId(id) };\n        var changed = await db.ChangeAsync<Customer>(\"Customer\", Collection, filter, change);\n        return changed is null ? null : Loaded(changed);\n    }\n\n    public async Task<Customer?> RemoveTagAsync(string id, string tag)\n    {\n        if (!ObjectId.TryParse(id, out _)) return null;\n        var change = new BsonDocument { [\"$pull\"] = new BsonDocument(\"tags\", BsonValue.Create(tag)) };\n        var filter = new BsonDocument { [\"_id\"] = new ObjectId(id) };\n        var changed = await db.ChangeAsync<Customer>(\"Customer\", Collection, filter, change);\n        return changed is null ? null : Loaded(changed);\n    }\n\n    /// <summary>The same entity, with what it is stored as kept to tell its changes.</summary>\n    private static Customer Loaded(Customer entity)\n    {\n        Read.AddOrUpdate(entity, entity.ToBsonDocument());\n        return entity;\n    }\n}\n",
+  "src/App/Repositories/MongoOrderRepository.cs": "using System.Runtime.CompilerServices;\nusing App;\nusing App.Common;\nusing App.Entities;\nusing App.Errors;\nusing MongoDB.Bson;\nusing MongoDB.Driver;\n\nnamespace App.Repositories;\n\n/// <summary>Keeps orders documents in the database, through the MongoDB driver. Every write is stored at once.</summary>\npublic class MongoOrderRepository(Db db) : IOrderRepository\n{\n    private const string Collection = \"orders\";\n\n    /// <summary>The document each entity was read from: a change writes only the fields that differ</summary>\n    private static readonly ConditionalWeakTable<Order, BsonDocument> Read = [];\n\n    /// <summary>The fields a change may write</summary>\n    private static readonly string[] Fields = [\"code\", \"lines\", \"shipping\"];\n\n    public async Task<Order?> FindByIdAsync(string id)\n    {\n        if (!ObjectId.TryParse(id, out _)) return null;\n        var found = await db.Find(Collection, Builders<Order>.Filter.Eq(row => row.Id, id)).FirstOrDefaultAsync();\n        return found is null ? null : Loaded(found);\n    }\n\n    public async Task<Page<Order>> ListAsync(int offset, int limit)\n    {\n        var items = (await db.Find(Collection, Builders<Order>.Filter.Empty).Sort(Builders<Order>.Sort.Ascending(row => row.Id)).Skip(offset).Limit(limit).ToListAsync()).Select(Loaded).ToList();\n        return new Page<Order>(items, await db.CountAsync(Collection, Builders<Order>.Filter.Empty), offset, limit);\n    }\n\n    public async Task<Order?> FindByCodeAsync(string code)\n    {\n        var found = await db.Find(Collection, Builders<Order>.Filter.Eq(row => row.Code, code)).FirstOrDefaultAsync();\n        return found is null ? null : Loaded(found);\n    }\n\n    public async Task<Order> InsertAsync(Order entity)\n    {\n        entity.Id ??= MongoDB.Bson.ObjectId.GenerateNewId().ToString();\n        entity.IdentifyItems();\n        await db.InsertAsync(\"Order\", Collection, entity);\n        return Loaded(entity);\n    }\n\n    public async Task<Order> UpdateAsync(Order entity)\n    {\n        entity.IdentifyItems();\n        var now = entity.ToBsonDocument();\n        var changes = Documents.Changes(Read.TryGetValue(entity, out var before) ? before : null, now, Fields);\n        if (changes.ElementCount > 0) await db.UpdateAsync<Order>(\"Order\", Collection, new BsonDocument(\"_id\", now[\"_id\"]), changes);\n        return Loaded(entity);\n    }\n\n    public async Task DeleteAsync(Order entity)\n    {\n        await db.DeleteAsync(\"Order\", Collection, Builders<Order>.Filter.Eq(row => row.Id, entity.Id));\n    }\n\n    public async Task<Order?> AddLineAsync(string id, Order.LineDocument line)\n    {\n        if (!ObjectId.TryParse(id, out _)) return null;\n        line.Id ??= ObjectId.GenerateNewId().ToString();\n        var change = new BsonDocument { [\"$push\"] = new BsonDocument(\"lines\", line.ToBsonDocument()) };\n        var filter = new BsonDocument { [\"_id\"] = new ObjectId(id) };\n        var changed = await db.ChangeAsync<Order>(\"Order\", Collection, filter, change);\n        return changed is null ? null : Loaded(changed);\n    }\n\n    public async Task<Order?> RemoveLineAsync(string id, string lineId)\n    {\n        if (!ObjectId.TryParse(id, out _)) return null;\n        if (!ObjectId.TryParse(lineId, out _)) return null;\n        var change = new BsonDocument { [\"$pull\"] = new BsonDocument(\"lines\", new BsonDocument(\"_id\", new ObjectId(lineId))) };\n        var filter = new BsonDocument { [\"_id\"] = new ObjectId(id) };\n        var changed = await db.ChangeAsync<Order>(\"Order\", Collection, filter, change);\n        return changed is null ? null : Loaded(changed);\n    }\n\n    /// <summary>The same entity, with what it is stored as kept to tell its changes.</summary>\n    private static Order Loaded(Order entity)\n    {\n        Read.AddOrUpdate(entity, entity.ToBsonDocument());\n        return entity;\n    }\n}\n",
+  "src/App/Repositories/MongoShipmentRepository.cs": "using System.Runtime.CompilerServices;\nusing App;\nusing App.Common;\nusing App.Entities;\nusing App.Errors;\nusing MongoDB.Bson;\nusing MongoDB.Driver;\n\nnamespace App.Repositories;\n\n/// <summary>Keeps shipments documents in the database, through the MongoDB driver. Every write is stored at once.</summary>\npublic class MongoShipmentRepository(Db db) : IShipmentRepository\n{\n    private const string Collection = \"shipments\";\n\n    /// <summary>The document each entity was read from: a change writes only the fields that differ</summary>\n    private static readonly ConditionalWeakTable<Shipment, BsonDocument> Read = [];\n\n    /// <summary>The fields a change may write</summary>\n    private static readonly string[] Fields = [\"parcel\", \"stops\"];\n\n    public async Task<Shipment?> FindByIdAsync(string id)\n    {\n        if (!ObjectId.TryParse(id, out _)) return null;\n        var found = await db.Find(Collection, Builders<Shipment>.Filter.Eq(row => row.Id, id)).FirstOrDefaultAsync();\n        return found is null ? null : Loaded(found);\n    }\n\n    public async Task<Page<Shipment>> ListAsync(int offset, int limit)\n    {\n        var items = (await db.Find(Collection, Builders<Shipment>.Filter.Empty).Sort(Builders<Shipment>.Sort.Ascending(row => row.Id)).Skip(offset).Limit(limit).ToListAsync()).Select(Loaded).ToList();\n        return new Page<Shipment>(items, await db.CountAsync(Collection, Builders<Shipment>.Filter.Empty), offset, limit);\n    }\n\n    public async Task<Shipment> InsertAsync(Shipment entity)\n    {\n        entity.Id ??= MongoDB.Bson.ObjectId.GenerateNewId().ToString();\n        await db.InsertAsync(\"Shipment\", Collection, entity);\n        return Loaded(entity);\n    }\n\n    public async Task<Shipment> UpdateAsync(Shipment entity)\n    {\n        var now = entity.ToBsonDocument();\n        var changes = Documents.Changes(Read.TryGetValue(entity, out var before) ? before : null, now, Fields);\n        if (changes.ElementCount > 0) await db.UpdateAsync<Shipment>(\"Shipment\", Collection, new BsonDocument(\"_id\", now[\"_id\"]), changes);\n        return Loaded(entity);\n    }\n\n    public async Task DeleteAsync(Shipment entity)\n    {\n        await db.DeleteAsync(\"Shipment\", Collection, Builders<Shipment>.Filter.Eq(row => row.Id, entity.Id));\n    }\n\n    public async Task<Shipment?> AddStopAsync(string id, Shipment.StopDocument stop)\n    {\n        if (!ObjectId.TryParse(id, out _)) return null;\n        var change = new BsonDocument { [\"$push\"] = new BsonDocument(\"stops\", stop.ToBsonDocument()) };\n        var filter = new BsonDocument { [\"_id\"] = new ObjectId(id) };\n        var changed = await db.ChangeAsync<Shipment>(\"Shipment\", Collection, filter, change);\n        return changed is null ? null : Loaded(changed);\n    }\n\n    public async Task<Shipment?> RemoveStopAsync(string id, int position, int size)\n    {\n        if (!ObjectId.TryParse(id, out _)) return null;\n        var head = new BsonDocument(\"$slice\", new BsonArray { \"$stops\", position });\n        var tail = new BsonDocument(\"$slice\", new BsonArray { \"$stops\", position + 1, Math.Max(size, 1) });\n        BsonDocument[] change = [new(\"$set\", new BsonDocument { [\"stops\"] = new BsonDocument(\"$concatArrays\", new BsonArray { head, tail }) })];\n        var filter = new BsonDocument { [\"_id\"] = new ObjectId(id), [\"stops\"] = new BsonDocument(\"$size\", size) };\n        var changed = await db.ChangeAsync<Shipment>(\"Shipment\", Collection, filter, change);\n        return changed is null ? null : Loaded(changed);\n    }\n\n    /// <summary>The same entity, with what it is stored as kept to tell its changes.</summary>\n    private static Shipment Loaded(Shipment entity)\n    {\n        Read.AddOrUpdate(entity, entity.ToBsonDocument());\n        return entity;\n    }\n}\n",
+  "src/App/Services/CustomerChanges.cs": "using App.Common;\nusing App.Entities;\n\nnamespace App.Services;\n\n/// <summary>The values of a Customer that change: fields left Patch.Absent keep their value; Patch.Of(null) empties one.</summary>\npublic record CustomerChanges(\n    Patch<string> Email,\n    Patch<string?> Level,\n    Patch<DateTime> Since,\n    Patch<Customer.AddressDocument> Address,\n    Patch<List<string>?> Tags\n);\n",
+  "src/App/Services/CustomerService.cs": "using System.Globalization;\nusing App;\nusing App.Common;\nusing App.Entities;\nusing App.Errors;\n\nnamespace App.Services;\n\n/// <summary>Operations on customers. Repositories commit every write.</summary>\npublic class CustomerService(IUnitOfWork unitOfWork)\n{\n    private readonly IUnitOfWork uow = unitOfWork;\n\n    /// <summary>Checks the values against the rules of the \"customers\" table, and the rows they point to; throws ValidationFailedException with every problem.</summary>\n    private static async Task ValidateAsync(IUnitOfWork uow, Dictionary<string, object?> values, Customer? current)\n    {\n        var creating = current is null;\n        var errors = new List<FieldError>();\n        {\n            var value = values.GetValueOrDefault(\"Email\");\n            if (value is null)\n                if (creating || values.ContainsKey(\"Email\")) errors.Add(new FieldError(\"email\", \"is required\"));\n        }\n        {\n            var value = values.GetValueOrDefault(\"Level\");\n            if (value is not null)\n            {\n                if (!new[] { \"basic\", \"gold\" }.Contains(Convert.ToString(value, CultureInfo.InvariantCulture))) errors.Add(new FieldError(\"level\", \"must be one of: basic, gold\"));\n            }\n        }\n        {\n            var value = values.GetValueOrDefault(\"Since\");\n            if (value is null)\n                if (creating || values.ContainsKey(\"Since\")) errors.Add(new FieldError(\"since\", \"is required\"));\n        }\n        {\n            var value = values.GetValueOrDefault(\"Address\");\n            if (value is null)\n            {\n                if (creating || values.ContainsKey(\"Address\")) errors.Add(new FieldError(\"address\", \"is required\"));\n            }\n            else\n            {\n                var document = (Customer.AddressDocument)value;\n                if (document is not null) CheckAddress(document, \"address\", errors);\n            }\n        }\n        if (errors.Count > 0) throw new ValidationFailedException(\"Customer\", errors);\n    }\n\n    /// <summary>Values that must be unique are not taken by another row.</summary>\n    private static async Task CheckUniqueAsync(IUnitOfWork uow, Dictionary<string, object?> values, Customer? current)\n    {\n        {\n            var email = values.TryGetValue(\"Email\", out var givenEmail) ? (string?)givenEmail : current?.Email;\n            if (email is not null)\n            {\n                var other = await uow.Customers.FindByEmailAsync(email);\n                if (other is not null && (current is null || !Equals(other.Id, current.Id)))\n                    throw new ConflictException(\"Customer\", \"email is already taken\", [\"Email\"]);\n            }\n        }\n    }\n\n    /// <summary>Every check before a write: the values, the rows they point to, the unique values.</summary>\n    private static async Task CheckAsync(IUnitOfWork uow, Dictionary<string, object?> values, Customer? current)\n    {\n        await ValidateAsync(uow, values, current);\n        await CheckUniqueAsync(uow, values, current);\n    }\n\n    /// <summary>Sets the given values on the entity.</summary>\n    private static void Apply(Customer entity, Dictionary<string, object?> values)\n    {\n        if (values.TryGetValue(\"Email\", out var email)) entity.Email = (string)email!;\n        if (values.TryGetValue(\"Level\", out var level)) entity.Level = (string?)level;\n        if (values.TryGetValue(\"Since\", out var since)) entity.Since = (DateTime)since!;\n        if (values.TryGetValue(\"Address\", out var address)) entity.Address = (Customer.AddressDocument)address!;\n        if (values.TryGetValue(\"Tags\", out var tags)) entity.Tags = (List<string>?)tags;\n    }\n\n    /// <summary>The Customer with this key; NotFoundException when there is none.</summary>\n    private static async Task<Customer> FindAsync(IUnitOfWork uow, string id) =>\n        await uow.Customers.FindByIdAsync(id) ?? throw new NotFoundException(\"Customer\", id);\n\n    /// <summary>The values an update gives, by field.</summary>\n    private static Dictionary<string, object?> Given(CustomerChanges changes)\n    {\n        var values = new Dictionary<string, object?>();\n        if (changes.Email is { IsPresent: true } email) values[\"Email\"] = email.Value;\n        if (changes.Level is { IsPresent: true } level) values[\"Level\"] = level.Value;\n        if (changes.Since is { IsPresent: true } since) values[\"Since\"] = since.Value;\n        if (changes.Address is { IsPresent: true } address) values[\"Address\"] = address.Value;\n        if (changes.Tags is { IsPresent: true } tags) values[\"Tags\"] = tags.Value;\n        return values;\n    }\n\n    /// <summary>What a Customer.AddressDocument does not follow of its rules, each with the path of its field.</summary>\n    private static void CheckAddress(Customer.AddressDocument value, string path, List<FieldError> errors)\n    {\n        if (value.Street is null) errors.Add(new FieldError(path + \".street\", \"is required\"));\n        if (value.ZipCode is null) errors.Add(new FieldError(path + \".zip code\", \"is required\"));\n        if (value.Location is not null) CheckAddressLocation(value.Location, path + \".location\", errors);\n    }\n\n    /// <summary>What a Customer.AddressDocument.LocationDocument does not follow of its rules, each with the path of its field.</summary>\n    private static void CheckAddressLocation(Customer.AddressDocument.LocationDocument value, string path, List<FieldError> errors)\n    {\n    }\n\n    /// <summary>Stores a new Customer after checking it.</summary>\n    public async Task<Customer> CreateCustomerAsync(Customer customer)\n    {\n        var values = new Dictionary<string, object?>();\n        if (customer.Email is not null) values[\"Email\"] = customer.Email;\n        if (customer.Level is not null) values[\"Level\"] = customer.Level;\n        values[\"Since\"] = customer.Since;\n        if (customer.Address is not null) values[\"Address\"] = customer.Address;\n        if (customer.Tags is not null) values[\"Tags\"] = customer.Tags;\n        return await this.uow.TransactionAsync(async uow =>\n        {\n            await CheckAsync(uow, values, null);\n            return await uow.Customers.InsertAsync(customer);\n        });\n    }\n\n    /// <summary>The Customer with this key; NotFoundException when there is none.</summary>\n    public async Task<Customer> GetCustomerAsync(string id) => await FindAsync(uow, id);\n\n    /// <summary>A page of customers, by primary key.</summary>\n    public async Task<Page<Customer>> ListCustomersAsync(int offset, int limit) => await uow.Customers.ListAsync(offset, limit);\n\n    /// <summary>Changes the given values of a Customer.</summary>\n    public async Task<Customer> UpdateCustomerAsync(string id, CustomerChanges changes)\n    {\n        var values = Given(changes);\n        return await this.uow.TransactionAsync(async uow =>\n        {\n            var current = await FindAsync(uow, id);\n            await CheckAsync(uow, values, current);\n            Apply(current, values);\n            return await uow.Customers.UpdateAsync(current);\n        });\n    }\n\n    /// <summary>Deletes a Customer.</summary>\n    public async Task DeleteCustomerAsync(string id)\n    {\n        await this.uow.TransactionAsync(async uow =>\n        {\n            var current = await FindAsync(uow, id);\n            await uow.Customers.DeleteAsync(current);\n        });\n    }\n\n    /// <summary>The Customer with this email, or null.</summary>\n    public async Task<Customer?> FindCustomerByEmailAsync(string email) => await uow.Customers.FindByEmailAsync(email);\n\n    /// <summary>Adds an item to tags.</summary>\n    public async Task<Customer> AddTagAsync(string id, string tag)\n    {\n        return await this.uow.TransactionAsync(async uow =>\n        {\n            await FindAsync(uow, id);\n            return await uow.Customers.AddTagAsync(id, tag) ?? throw new NotFoundException(\"Customer\", id);\n        });\n    }\n\n    /// <summary>Removes an item from tags, by its value.</summary>\n    public async Task<Customer> RemoveTagAsync(string id, string tag)\n    {\n        return await this.uow.TransactionAsync(async uow =>\n        {\n            var current = await FindAsync(uow, id);\n            if (current.Tags is null || !current.Tags.Contains(tag)) throw new NotFoundException(\"Tag\", tag);\n            return await uow.Customers.RemoveTagAsync(id, tag) ?? throw new NotFoundException(\"Customer\", id);\n        });\n    }\n}\n",
+  "src/App/Services/OrderChanges.cs": "using App.Common;\nusing App.Entities;\n\nnamespace App.Services;\n\n/// <summary>The values of a Order that change: fields left Patch.Absent keep their value; Patch.Of(null) empties one.</summary>\npublic record OrderChanges(\n    Patch<string> Code,\n    Patch<List<Order.LineDocument>> Lines,\n    Patch<Order.ShippingDocument?> Shipping\n);\n",
+  "src/App/Services/OrderService.cs": "using App;\nusing App.Common;\nusing App.Entities;\nusing App.Errors;\n\nnamespace App.Services;\n\n/// <summary>Operations on orders. Repositories commit every write.</summary>\npublic class OrderService(IUnitOfWork unitOfWork)\n{\n    private readonly IUnitOfWork uow = unitOfWork;\n\n    /// <summary>Checks the values against the rules of the \"orders\" table, and the rows they point to; throws ValidationFailedException with every problem.</summary>\n    private static async Task ValidateAsync(IUnitOfWork uow, Dictionary<string, object?> values, Order? current)\n    {\n        var creating = current is null;\n        var errors = new List<FieldError>();\n        {\n            var value = values.GetValueOrDefault(\"Code\");\n            if (value is null)\n                if (creating || values.ContainsKey(\"Code\")) errors.Add(new FieldError(\"code\", \"is required\"));\n        }\n        {\n            var value = values.GetValueOrDefault(\"Lines\");\n            if (value is null)\n            {\n                if (creating || values.ContainsKey(\"Lines\")) errors.Add(new FieldError(\"lines\", \"is required\"));\n            }\n            else\n            {\n                var document = (List<Order.LineDocument>)value;\n                if (document is not null)\n                {\n                    for (var i0 = 0; i0 < document.Count; i0++)\n                    {\n                        if (document[i0] is null) errors.Add(new FieldError(\"lines\" + \".\" + i0, \"is required\"));\n                        else CheckLine(document[i0], \"lines\" + \".\" + i0, errors);\n                    }\n                }\n            }\n        }\n        {\n            var value = values.GetValueOrDefault(\"Shipping\");\n            if (value is not null)\n            {\n                var document = (Order.ShippingDocument)value;\n                if (document is not null) CheckShipping(document, \"shipping\", errors);\n            }\n        }\n        if (errors.Count > 0) throw new ValidationFailedException(\"Order\", errors);\n    }\n\n    /// <summary>Values that must be unique are not taken by another row.</summary>\n    private static async Task CheckUniqueAsync(IUnitOfWork uow, Dictionary<string, object?> values, Order? current)\n    {\n        {\n            var code = values.TryGetValue(\"Code\", out var givenCode) ? (string?)givenCode : current?.Code;\n            if (code is not null)\n            {\n                var other = await uow.Orders.FindByCodeAsync(code);\n                if (other is not null && (current is null || !Equals(other.Id, current.Id)))\n                    throw new ConflictException(\"Order\", \"code is already taken\", [\"Code\"]);\n            }\n        }\n    }\n\n    /// <summary>Every check before a write: the values, the rows they point to, the unique values.</summary>\n    private static async Task CheckAsync(IUnitOfWork uow, Dictionary<string, object?> values, Order? current)\n    {\n        await ValidateAsync(uow, values, current);\n        await CheckUniqueAsync(uow, values, current);\n    }\n\n    /// <summary>Sets the given values on the entity.</summary>\n    private static void Apply(Order entity, Dictionary<string, object?> values)\n    {\n        if (values.TryGetValue(\"Code\", out var code)) entity.Code = (string)code!;\n        if (values.TryGetValue(\"Lines\", out var lines)) entity.Lines = (List<Order.LineDocument>)lines!;\n        if (values.TryGetValue(\"Shipping\", out var shipping)) entity.Shipping = (Order.ShippingDocument?)shipping;\n    }\n\n    /// <summary>The Order with this key; NotFoundException when there is none.</summary>\n    private static async Task<Order> FindAsync(IUnitOfWork uow, string id) =>\n        await uow.Orders.FindByIdAsync(id) ?? throw new NotFoundException(\"Order\", id);\n\n    /// <summary>The values an update gives, by field.</summary>\n    private static Dictionary<string, object?> Given(OrderChanges changes)\n    {\n        var values = new Dictionary<string, object?>();\n        if (changes.Code is { IsPresent: true } code) values[\"Code\"] = code.Value;\n        if (changes.Lines is { IsPresent: true } lines) values[\"Lines\"] = lines.Value;\n        if (changes.Shipping is { IsPresent: true } shipping) values[\"Shipping\"] = shipping.Value;\n        return values;\n    }\n\n    /// <summary>What a Order.LineDocument does not follow of its rules, each with the path of its field.</summary>\n    private static void CheckLine(Order.LineDocument value, string path, List<FieldError> errors)\n    {\n        if (value.Sku is null) errors.Add(new FieldError(path + \".sku\", \"is required\"));\n        if (value.Status is not null && !new[] { \"pending\", \"sent\" }.Contains(value.Status)) errors.Add(new FieldError(path + \".status\", \"must be one of: pending, sent\"));\n        if (value.Discounts is not null)\n        {\n            for (var i0 = 0; i0 < value.Discounts.Count; i0++)\n            {\n                if (value.Discounts[i0] is null) errors.Add(new FieldError(path + \".discounts\" + \".\" + i0, \"is required\"));\n                else CheckLineDiscount(value.Discounts[i0], path + \".discounts\" + \".\" + i0, errors);\n            }\n        }\n    }\n\n    /// <summary>What a Order.LineDocument.DiscountDocument does not follow of its rules, each with the path of its field.</summary>\n    private static void CheckLineDiscount(Order.LineDocument.DiscountDocument value, string path, List<FieldError> errors)\n    {\n        if (value.Reason is null) errors.Add(new FieldError(path + \".reason\", \"is required\"));\n    }\n\n    /// <summary>What a Order.ShippingDocument does not follow of its rules, each with the path of its field.</summary>\n    private static void CheckShipping(Order.ShippingDocument value, string path, List<FieldError> errors)\n    {\n        if (value.Carrier is null) errors.Add(new FieldError(path + \".carrier\", \"is required\"));\n    }\n\n    /// <summary>Stores a new Order after checking it.</summary>\n    public async Task<Order> CreateOrderAsync(Order order)\n    {\n        var values = new Dictionary<string, object?>();\n        if (order.Code is not null) values[\"Code\"] = order.Code;\n        if (order.Lines is not null) values[\"Lines\"] = order.Lines;\n        if (order.Shipping is not null) values[\"Shipping\"] = order.Shipping;\n        return await this.uow.TransactionAsync(async uow =>\n        {\n            await CheckAsync(uow, values, null);\n            return await uow.Orders.InsertAsync(order);\n        });\n    }\n\n    /// <summary>The Order with this key; NotFoundException when there is none.</summary>\n    public async Task<Order> GetOrderAsync(string id) => await FindAsync(uow, id);\n\n    /// <summary>A page of orders, by primary key.</summary>\n    public async Task<Page<Order>> ListOrdersAsync(int offset, int limit) => await uow.Orders.ListAsync(offset, limit);\n\n    /// <summary>Changes the given values of a Order.</summary>\n    public async Task<Order> UpdateOrderAsync(string id, OrderChanges changes)\n    {\n        var values = Given(changes);\n        return await this.uow.TransactionAsync(async uow =>\n        {\n            var current = await FindAsync(uow, id);\n            await CheckAsync(uow, values, current);\n            Apply(current, values);\n            return await uow.Orders.UpdateAsync(current);\n        });\n    }\n\n    /// <summary>Deletes a Order.</summary>\n    public async Task DeleteOrderAsync(string id)\n    {\n        await this.uow.TransactionAsync(async uow =>\n        {\n            var current = await FindAsync(uow, id);\n            await uow.Orders.DeleteAsync(current);\n        });\n    }\n\n    /// <summary>The Order with this code, or null.</summary>\n    public async Task<Order?> FindOrderByCodeAsync(string code) => await uow.Orders.FindByCodeAsync(code);\n\n    /// <summary>Adds an item to lines.</summary>\n    public async Task<Order> AddLineAsync(string id, Order.LineDocument line)\n    {\n        var errors = new List<FieldError>();\n        CheckLine(line, \"lines\", errors);\n        if (errors.Count > 0) throw new ValidationFailedException(\"Order\", errors);\n        return await this.uow.TransactionAsync(async uow =>\n        {\n            await FindAsync(uow, id);\n            return await uow.Orders.AddLineAsync(id, line) ?? throw new NotFoundException(\"Order\", id);\n        });\n    }\n\n    /// <summary>Removes an item from lines, by its identifier.</summary>\n    public async Task<Order> RemoveLineAsync(string id, string lineId)\n    {\n        return await this.uow.TransactionAsync(async uow =>\n        {\n            var current = await FindAsync(uow, id);\n            if (current.Lines is null || current.Lines.All(candidate => candidate.Id != lineId)) throw new NotFoundException(\"Line\", lineId);\n            return await uow.Orders.RemoveLineAsync(id, lineId) ?? throw new NotFoundException(\"Order\", id);\n        });\n    }\n}\n",
+  "src/App/Services/ShipmentChanges.cs": "using App.Common;\nusing App.Entities;\n\nnamespace App.Services;\n\n/// <summary>The values of a Shipment that change: fields left Patch.Absent keep their value; Patch.Of(null) empties one.</summary>\npublic record ShipmentChanges(\n    Patch<Shipment.ParcelDocument> Parcel,\n    Patch<List<Shipment.StopDocument>?> Stops\n);\n",
+  "src/App/Services/ShipmentService.cs": "using App;\nusing App.Common;\nusing App.Entities;\nusing App.Errors;\n\nnamespace App.Services;\n\n/// <summary>Operations on shipments. Repositories commit every write.</summary>\npublic class ShipmentService(IUnitOfWork unitOfWork)\n{\n    private readonly IUnitOfWork uow = unitOfWork;\n\n    /// <summary>Checks the values against the rules of the \"shipments\" table, and the rows they point to; throws ValidationFailedException with every problem.</summary>\n    private static async Task ValidateAsync(IUnitOfWork uow, Dictionary<string, object?> values, Shipment? current)\n    {\n        var creating = current is null;\n        var errors = new List<FieldError>();\n        {\n            var value = values.GetValueOrDefault(\"Parcel\");\n            if (value is null)\n            {\n                if (creating || values.ContainsKey(\"Parcel\")) errors.Add(new FieldError(\"parcel\", \"is required\"));\n            }\n            else\n            {\n                var document = (Shipment.ParcelDocument)value;\n                if (document is not null) CheckParcel(document, \"parcel\", errors);\n            }\n        }\n        {\n            var value = values.GetValueOrDefault(\"Stops\");\n            if (value is not null)\n            {\n                var document = (List<Shipment.StopDocument>)value;\n                if (document is not null)\n                {\n                    for (var i0 = 0; i0 < document.Count; i0++)\n                    {\n                        if (document[i0] is null) errors.Add(new FieldError(\"stops\" + \".\" + i0, \"is required\"));\n                        else CheckStop(document[i0], \"stops\" + \".\" + i0, errors);\n                    }\n                }\n            }\n        }\n        if (errors.Count > 0) throw new ValidationFailedException(\"Shipment\", errors);\n    }\n\n    /// <summary>Every check before a write: the values, the rows they point to, the unique values.</summary>\n    private static async Task CheckAsync(IUnitOfWork uow, Dictionary<string, object?> values, Shipment? current)\n    {\n        await ValidateAsync(uow, values, current);\n    }\n\n    /// <summary>Sets the given values on the entity.</summary>\n    private static void Apply(Shipment entity, Dictionary<string, object?> values)\n    {\n        if (values.TryGetValue(\"Parcel\", out var parcel)) entity.Parcel = (Shipment.ParcelDocument)parcel!;\n        if (values.TryGetValue(\"Stops\", out var stops)) entity.Stops = (List<Shipment.StopDocument>?)stops;\n    }\n\n    /// <summary>The Shipment with this key; NotFoundException when there is none.</summary>\n    private static async Task<Shipment> FindAsync(IUnitOfWork uow, string id) =>\n        await uow.Shipments.FindByIdAsync(id) ?? throw new NotFoundException(\"Shipment\", id);\n\n    /// <summary>The values an update gives, by field.</summary>\n    private static Dictionary<string, object?> Given(ShipmentChanges changes)\n    {\n        var values = new Dictionary<string, object?>();\n        if (changes.Parcel is { IsPresent: true } parcel) values[\"Parcel\"] = parcel.Value;\n        if (changes.Stops is { IsPresent: true } stops) values[\"Stops\"] = stops.Value;\n        return values;\n    }\n\n    /// <summary>What a Shipment.ParcelDocument does not follow of its rules, each with the path of its field.</summary>\n    private static void CheckParcel(Shipment.ParcelDocument value, string path, List<FieldError> errors)\n    {\n        if (value.Contents is null) errors.Add(new FieldError(path + \".contents\", \"is required\"));\n        if (value.Size is not null) CheckParcelSize(value.Size, path + \".size\", errors);\n    }\n\n    /// <summary>What a Shipment.ParcelDocument.SizeDocument does not follow of its rules, each with the path of its field.</summary>\n    private static void CheckParcelSize(Shipment.ParcelDocument.SizeDocument value, string path, List<FieldError> errors)\n    {\n    }\n\n    /// <summary>What a Shipment.StopDocument does not follow of its rules, each with the path of its field.</summary>\n    private static void CheckStop(Shipment.StopDocument value, string path, List<FieldError> errors)\n    {\n    }\n\n    /// <summary>Stores a new Shipment after checking it.</summary>\n    public async Task<Shipment> CreateShipmentAsync(Shipment shipment)\n    {\n        var values = new Dictionary<string, object?>();\n        if (shipment.Parcel is not null) values[\"Parcel\"] = shipment.Parcel;\n        if (shipment.Stops is not null) values[\"Stops\"] = shipment.Stops;\n        return await this.uow.TransactionAsync(async uow =>\n        {\n            await CheckAsync(uow, values, null);\n            return await uow.Shipments.InsertAsync(shipment);\n        });\n    }\n\n    /// <summary>The Shipment with this key; NotFoundException when there is none.</summary>\n    public async Task<Shipment> GetShipmentAsync(string id) => await FindAsync(uow, id);\n\n    /// <summary>A page of shipments, by primary key.</summary>\n    public async Task<Page<Shipment>> ListShipmentsAsync(int offset, int limit) => await uow.Shipments.ListAsync(offset, limit);\n\n    /// <summary>Changes the given values of a Shipment.</summary>\n    public async Task<Shipment> UpdateShipmentAsync(string id, ShipmentChanges changes)\n    {\n        var values = Given(changes);\n        return await this.uow.TransactionAsync(async uow =>\n        {\n            var current = await FindAsync(uow, id);\n            await CheckAsync(uow, values, current);\n            Apply(current, values);\n            return await uow.Shipments.UpdateAsync(current);\n        });\n    }\n\n    /// <summary>Deletes a Shipment.</summary>\n    public async Task DeleteShipmentAsync(string id)\n    {\n        await this.uow.TransactionAsync(async uow =>\n        {\n            var current = await FindAsync(uow, id);\n            await uow.Shipments.DeleteAsync(current);\n        });\n    }\n\n    /// <summary>Adds an item to stops.</summary>\n    public async Task<Shipment> AddStopAsync(string id, Shipment.StopDocument stop)\n    {\n        var errors = new List<FieldError>();\n        CheckStop(stop, \"stops\", errors);\n        if (errors.Count > 0) throw new ValidationFailedException(\"Shipment\", errors);\n        return await this.uow.TransactionAsync(async uow =>\n        {\n            await FindAsync(uow, id);\n            return await uow.Shipments.AddStopAsync(id, stop) ?? throw new NotFoundException(\"Shipment\", id);\n        });\n    }\n\n    /// <summary>Removes an item from stops, by its position.</summary>\n    public async Task<Shipment> RemoveStopAsync(string id, int position)\n    {\n        return await this.uow.TransactionAsync(async uow =>\n        {\n            var current = await FindAsync(uow, id);\n            if (current.Stops is null || position < 0 || position >= current.Stops.Count) throw new NotFoundException(\"Stop\", position);\n            return await uow.Shipments.RemoveStopAsync(id, position, current.Stops.Count) ?? throw new ConflictException(\"Shipment\", \"was changed by someone else since it was read\", [\"Stops\"]);\n        });\n    }\n}\n",
+  "tests/App.Tests/App.Tests.csproj": "<Project Sdk=\"Microsoft.NET.Sdk\">\n  <PropertyGroup>\n    <TargetFramework>net10.0</TargetFramework>\n    <Nullable>enable</Nullable>\n    <ImplicitUsings>enable</ImplicitUsings>\n    <OutputType>Exe</OutputType>\n    <IsPackable>false</IsPackable>\n    <RootNamespace>App.Tests</RootNamespace>\n    <!-- The tests share one database and run one after another: no cancellation to pass on -->\n    <NoWarn>$(NoWarn);xUnit1051</NoWarn>\n  </PropertyGroup>\n  <ItemGroup>\n    <PackageReference Include=\"xunit.v3\" Version=\"4.0.3\" />\n  </ItemGroup>\n  <ItemGroup>\n    <ProjectReference Include=\"../../src/App/App.csproj\" />\n  </ItemGroup>\n</Project>\n",
+  "tests/App.Tests/AssemblyInfo.cs": "using Xunit;\n\n// Every test empties the same database: they run one after another\n[assembly: CollectionBehavior(CollectionBehavior.CollectionPerAssembly)]\n",
+  "tests/App.Tests/ConversionTests.cs": "using App;\nusing App.Conversions;\nusing App.Entities;\nusing Xunit;\n\nnamespace App.Tests;\n\n/// <summary>Tests of the conversions between the application models and the tables.</summary>\npublic class ConversionTests\n{\n    private readonly MemoryUnitOfWork uow = new();\n\n    [Fact]\n    public async Task ReadsCustomerAndWritesItBack()\n    {\n        var row = await Factories.AddCustomerAsync(uow, 1);\n        var model = CustomerConversions.CustomerToCustomerModel(row);\n        var values = CustomerConversions.CustomerModelToCustomer(model);\n        Assert.Equal(row.Email, values.Email);\n        Assert.Equal(row.Since, values.Since);\n        Assert.Equivalent(row.Address, values.Address);\n        Assert.Equal(row.Tags, values.Tags);\n    }\n\n    [Fact]\n    public async Task ReadsOrderAndWritesItBack()\n    {\n        var row = await Factories.AddOrderAsync(uow, 1);\n        var model = OrderConversions.OrderToOrderModel(row);\n        var values = OrderConversions.OrderModelToOrder(model);\n        Assert.Equal(row.Code, values.Code);\n        Assert.Equivalent(row.Lines, values.Lines);\n    }\n}\n",
+  "tests/App.Tests/CustomerTests.cs": "using App;\nusing App.Common;\nusing App.Entities;\nusing App.Errors;\nusing App.Services;\nusing Xunit;\n\nnamespace App.Tests;\n\n/// <summary>The repository of the \"customers\" table, against the test database.</summary>\npublic class CustomerRepositoryTests : IAsyncLifetime\n{\n    private Db db = null!;\n\n    /// <summary>The repositories over the test database, opened empty for every test</summary>\n    private MongoUnitOfWork uow = null!;\n\n    public async ValueTask InitializeAsync()\n    {\n        db = await TestDatabase.OpenAsync();\n        uow = new MongoUnitOfWork(db);\n    }\n\n    public async ValueTask DisposeAsync() => await db.DisposeAsync();\n\n    [Fact]\n    public async Task IsStoredAndReadBack()\n    {\n        var stored = await Factories.AddCustomerAsync(uow, 1);\n        var found = await uow.Customers.FindByIdAsync(stored.Id);\n        Assert.NotNull(found);\n        Assert.Equal(stored.Id, found.Id);\n        Assert.NotNull(await uow.Customers.FindByEmailAsync(stored.Email));\n    }\n\n    [Fact]\n    public async Task ListsRowsByKey()\n    {\n        await Factories.AddCustomerAsync(uow, 1);\n        await Factories.AddCustomerAsync(uow, 2);\n        var page = await uow.Customers.ListAsync(0, 1);\n        Assert.Equal(2, page.Total);\n        Assert.Single(page.Items);\n    }\n\n    [Fact]\n    public async Task IsDeleted()\n    {\n        var stored = await Factories.AddCustomerAsync(uow, 1);\n        await uow.Customers.DeleteAsync(stored);\n        Assert.Null(await uow.Customers.FindByIdAsync(stored.Id));\n    }\n\n    [Fact]\n    public async Task AddsAndRemovesOneItemOfTags()\n    {\n        var stored = await Factories.AddCustomerAsync(uow, 1);\n        var before = stored.Tags?.Count ?? 0;\n        string item = $\"tags-{7}\";\n        var added = await uow.Customers.AddTagAsync(stored.Id, item);\n        Assert.Equal(before + 1, added!.Tags!.Count);\n        var removed = await uow.Customers.RemoveTagAsync(stored.Id, item);\n        Assert.Equal(before, removed!.Tags!.Count);\n    }\n}\n\n/// <summary>The service of the \"customers\" table, on the in-memory repositories.</summary>\npublic class CustomerServiceTests\n{\n    private readonly MemoryUnitOfWork uow = new();\n\n    [Fact]\n    public async Task CreatesAValidRow()\n    {\n        var service = new CustomerService(uow);\n        var n = 100;\n        var row = Factories.NewCustomer(1);\n        var created = await service.CreateCustomerAsync(row);\n        var found = await service.GetCustomerAsync(created.Id);\n        Assert.Equal(created.Id, found.Id);\n    }\n\n    [Fact]\n    public async Task RefusesAMissingValue()\n    {\n        var service = new CustomerService(uow);\n        var n = 100;\n        var row = Factories.NewCustomer(1);\n        row.Email = null!;\n        var error = await Assert.ThrowsAsync<ValidationFailedException>(() => service.CreateCustomerAsync(row));\n        Assert.Equal(new[] { \"email\" }, error.Errors.Select(item => item.Field));\n    }\n\n    [Fact]\n    public async Task RefusesARepeatedUniqueValue()\n    {\n        var service = new CustomerService(uow);\n        var n = 100;\n        var row = Factories.NewCustomer(1);\n        var first = await service.CreateCustomerAsync(row);\n        var again = Factories.NewCustomer(2);\n        again.Email = first.Email;\n        await Assert.ThrowsAsync<ConflictException>(() => service.CreateCustomerAsync(again));\n    }\n\n    [Fact]\n    public async Task KeepsItsOwnUniqueValue()\n    {\n        var service = new CustomerService(uow);\n        var n = 100;\n        var row = Factories.NewCustomer(1);\n        var created = await service.CreateCustomerAsync(row);\n        await service.UpdateCustomerAsync(created.Id, new CustomerChanges(Patch<string>.Of(created.Email), Patch<string?>.Absent, Patch<DateTime>.Absent, Patch<Customer.AddressDocument>.Absent, Patch<List<string>?>.Absent));\n    }\n\n    [Fact]\n    public async Task SaysWhenARowIsMissing()\n    {\n        var service = new CustomerService(uow);\n        await Assert.ThrowsAsync<NotFoundException>(() => service.GetCustomerAsync(\"ffffffffffffffffffffffff\"));\n    }\n\n    [Fact]\n    public async Task DeletesARow()\n    {\n        var service = new CustomerService(uow);\n        var n = 100;\n        var row = Factories.NewCustomer(1);\n        var created = await service.CreateCustomerAsync(row);\n        await service.DeleteCustomerAsync(created.Id);\n        await Assert.ThrowsAsync<NotFoundException>(() => service.GetCustomerAsync(created.Id));\n    }\n\n    [Fact]\n    public async Task AddsAndRemovesOneItemOfTags()\n    {\n        var service = new CustomerService(uow);\n        var n = 100;\n        var row = Factories.NewCustomer(1);\n        var created = await service.CreateCustomerAsync(row);\n        var before = created.Tags?.Count ?? 0;\n        string item = $\"tags-{7}\";\n        var added = await service.AddTagAsync(created.Id, item);\n        Assert.Equal(before + 1, added.Tags!.Count);\n        var removed = await service.RemoveTagAsync(created.Id, item);\n        Assert.Equal(before, removed.Tags!.Count);\n    }\n}\n",
+  "tests/App.Tests/DatabaseTests.cs": "using MongoDB.Driver;\nusing Xunit;\n\nnamespace App.Tests;\n\n/// <summary>The tests run on the database they were asked to.</summary>\npublic class DatabaseTests\n{\n    [Fact]\n    public async Task IsTheOneTestDatabaseConnectionNames()\n    {\n        await using var db = await TestDatabase.OpenAsync();\n        Assert.Equal(new MongoUrl(TestDatabase.Connection).DatabaseName, db.Database.DatabaseNamespace.DatabaseName);\n    }\n}\n",
+  "tests/App.Tests/Factories.cs": "using App;\nusing App.Entities;\n\nnamespace App.Tests;\n\n/// <summary>Rows for the tests: valid values for every column, and the rows they point to.</summary>\ninternal static class Factories\n{\n    /// <summary>A valid Customer that is not stored yet; n makes its unique values differ.</summary>\n    public static Customer NewCustomer(int n)\n    {\n        var entity = new Customer();\n        entity.Email = $\"email-{n}\";\n        entity.Level = \"basic\";\n        entity.Since = new DateTime(2026, 1, n % 28 + 1, 12, 0, 0, DateTimeKind.Utc);\n        entity.Address = NewCustomerAddress(n);\n        entity.Tags = [];\n        return entity;\n    }\n\n    /// <summary>A stored Customer.</summary>\n    public static async Task<Customer> AddCustomerAsync(IUnitOfWork uow, int n)\n    {\n        var entity = NewCustomer(n);\n        return await uow.Customers.InsertAsync(entity);\n    }\n\n    /// <summary>A valid Customer.AddressDocument.</summary>\n    public static Customer.AddressDocument NewCustomerAddress(int n) => new()\n    {\n        Street = $\"street-{n}\",\n        ZipCode = $\"zipcode-{n}\",\n        Location = NewCustomerAddressLocation(n),\n    };\n\n    /// <summary>A valid Customer.AddressDocument.LocationDocument.</summary>\n    public static Customer.AddressDocument.LocationDocument NewCustomerAddressLocation(int n) => new()\n    {\n        Latitude = n + 0.5,\n        Longitude = n + 0.5,\n    };\n\n    /// <summary>A valid Order that is not stored yet; n makes its unique values differ.</summary>\n    public static Order NewOrder(int n)\n    {\n        var entity = new Order();\n        entity.Code = $\"code-{n}\";\n        entity.Lines = [NewOrderLine(n)];\n        entity.Shipping = NewOrderShipping(n);\n        return entity;\n    }\n\n    /// <summary>A stored Order.</summary>\n    public static async Task<Order> AddOrderAsync(IUnitOfWork uow, int n)\n    {\n        var entity = NewOrder(n);\n        return await uow.Orders.InsertAsync(entity);\n    }\n\n    /// <summary>A valid Order.LineDocument.</summary>\n    public static Order.LineDocument NewOrderLine(int n) => new()\n    {\n        Sku = $\"sku-{n}\",\n        Quantity = (n),\n        Price = (n % 10000) + 0.50m,\n        Status = \"pending\",\n        Discounts = [NewOrderLineDiscount(n)],\n    };\n\n    /// <summary>A valid Order.LineDocument.DiscountDocument.</summary>\n    public static Order.LineDocument.DiscountDocument NewOrderLineDiscount(int n) => new()\n    {\n        Reason = $\"reason-{n}\",\n        Percent = n + 0.5,\n    };\n\n    /// <summary>A valid Order.ShippingDocument.</summary>\n    public static Order.ShippingDocument NewOrderShipping(int n) => new()\n    {\n        Carrier = $\"carrier-{n}\",\n        SentOn = new DateTime(2026, 1, n % 28 + 1, 12, 0, 0, DateTimeKind.Utc),\n    };\n\n    /// <summary>A valid Shipment that is not stored yet; n makes its unique values differ.</summary>\n    public static Shipment NewShipment(int n)\n    {\n        var entity = new Shipment();\n        entity.Parcel = NewShipmentParcel(n);\n        entity.Stops = [NewShipmentStop(n)];\n        return entity;\n    }\n\n    /// <summary>A stored Shipment.</summary>\n    public static async Task<Shipment> AddShipmentAsync(IUnitOfWork uow, int n)\n    {\n        var entity = NewShipment(n);\n        return await uow.Shipments.InsertAsync(entity);\n    }\n\n    /// <summary>A valid Shipment.ParcelDocument.</summary>\n    public static Shipment.ParcelDocument NewShipmentParcel(int n) => new()\n    {\n        Weight = n + 0.5,\n        Contents = $\"contents-{n}\",\n        Size = NewShipmentParcelSize(n),\n    };\n\n    /// <summary>A valid Shipment.ParcelDocument.SizeDocument.</summary>\n    public static Shipment.ParcelDocument.SizeDocument NewShipmentParcelSize(int n) => new()\n    {\n        Height = n + 0.5,\n    };\n\n    /// <summary>A valid Shipment.StopDocument.</summary>\n    public static Shipment.StopDocument NewShipmentStop(int n) => new()\n    {\n        City = $\"city-{n}\",\n    };\n}\n",
+  "tests/App.Tests/OrderTests.cs": "using App;\nusing App.Common;\nusing App.Entities;\nusing App.Errors;\nusing App.Services;\nusing Xunit;\n\nnamespace App.Tests;\n\n/// <summary>The repository of the \"orders\" table, against the test database.</summary>\npublic class OrderRepositoryTests : IAsyncLifetime\n{\n    private Db db = null!;\n\n    /// <summary>The repositories over the test database, opened empty for every test</summary>\n    private MongoUnitOfWork uow = null!;\n\n    public async ValueTask InitializeAsync()\n    {\n        db = await TestDatabase.OpenAsync();\n        uow = new MongoUnitOfWork(db);\n    }\n\n    public async ValueTask DisposeAsync() => await db.DisposeAsync();\n\n    [Fact]\n    public async Task IsStoredAndReadBack()\n    {\n        var stored = await Factories.AddOrderAsync(uow, 1);\n        var found = await uow.Orders.FindByIdAsync(stored.Id);\n        Assert.NotNull(found);\n        Assert.Equal(stored.Id, found.Id);\n        Assert.NotNull(await uow.Orders.FindByCodeAsync(stored.Code));\n    }\n\n    [Fact]\n    public async Task ListsRowsByKey()\n    {\n        await Factories.AddOrderAsync(uow, 1);\n        await Factories.AddOrderAsync(uow, 2);\n        var page = await uow.Orders.ListAsync(0, 1);\n        Assert.Equal(2, page.Total);\n        Assert.Single(page.Items);\n    }\n\n    [Fact]\n    public async Task IsDeleted()\n    {\n        var stored = await Factories.AddOrderAsync(uow, 1);\n        await uow.Orders.DeleteAsync(stored);\n        Assert.Null(await uow.Orders.FindByIdAsync(stored.Id));\n    }\n\n    [Fact]\n    public async Task AddsAndRemovesOneItemOfLines()\n    {\n        var stored = await Factories.AddOrderAsync(uow, 1);\n        var before = stored.Lines?.Count ?? 0;\n        Order.LineDocument item = Factories.NewOrderLine(7);\n        var added = await uow.Orders.AddLineAsync(stored.Id, item);\n        Assert.Equal(before + 1, added!.Lines!.Count);\n        var removed = await uow.Orders.RemoveLineAsync(stored.Id, added.Lines![before].Id!);\n        Assert.Equal(before, removed!.Lines!.Count);\n    }\n}\n\n/// <summary>The service of the \"orders\" table, on the in-memory repositories.</summary>\npublic class OrderServiceTests\n{\n    private readonly MemoryUnitOfWork uow = new();\n\n    [Fact]\n    public async Task CreatesAValidRow()\n    {\n        var service = new OrderService(uow);\n        var n = 100;\n        var row = Factories.NewOrder(1);\n        var created = await service.CreateOrderAsync(row);\n        var found = await service.GetOrderAsync(created.Id);\n        Assert.Equal(created.Id, found.Id);\n    }\n\n    [Fact]\n    public async Task RefusesAMissingValue()\n    {\n        var service = new OrderService(uow);\n        var n = 100;\n        var row = Factories.NewOrder(1);\n        row.Code = null!;\n        var error = await Assert.ThrowsAsync<ValidationFailedException>(() => service.CreateOrderAsync(row));\n        Assert.Equal(new[] { \"code\" }, error.Errors.Select(item => item.Field));\n    }\n\n    [Fact]\n    public async Task RefusesARepeatedUniqueValue()\n    {\n        var service = new OrderService(uow);\n        var n = 100;\n        var row = Factories.NewOrder(1);\n        var first = await service.CreateOrderAsync(row);\n        var again = Factories.NewOrder(2);\n        again.Code = first.Code;\n        await Assert.ThrowsAsync<ConflictException>(() => service.CreateOrderAsync(again));\n    }\n\n    [Fact]\n    public async Task KeepsItsOwnUniqueValue()\n    {\n        var service = new OrderService(uow);\n        var n = 100;\n        var row = Factories.NewOrder(1);\n        var created = await service.CreateOrderAsync(row);\n        await service.UpdateOrderAsync(created.Id, new OrderChanges(Patch<string>.Of(created.Code), Patch<List<Order.LineDocument>>.Absent, Patch<Order.ShippingDocument?>.Absent));\n    }\n\n    [Fact]\n    public async Task SaysWhenARowIsMissing()\n    {\n        var service = new OrderService(uow);\n        await Assert.ThrowsAsync<NotFoundException>(() => service.GetOrderAsync(\"ffffffffffffffffffffffff\"));\n    }\n\n    [Fact]\n    public async Task DeletesARow()\n    {\n        var service = new OrderService(uow);\n        var n = 100;\n        var row = Factories.NewOrder(1);\n        var created = await service.CreateOrderAsync(row);\n        await service.DeleteOrderAsync(created.Id);\n        await Assert.ThrowsAsync<NotFoundException>(() => service.GetOrderAsync(created.Id));\n    }\n\n    [Fact]\n    public async Task AddsAndRemovesOneItemOfLines()\n    {\n        var service = new OrderService(uow);\n        var n = 100;\n        var row = Factories.NewOrder(1);\n        var created = await service.CreateOrderAsync(row);\n        var before = created.Lines?.Count ?? 0;\n        Order.LineDocument item = Factories.NewOrderLine(7);\n        var added = await service.AddLineAsync(created.Id, item);\n        Assert.Equal(before + 1, added.Lines!.Count);\n        var removed = await service.RemoveLineAsync(created.Id, added.Lines![before].Id!);\n        Assert.Equal(before, removed.Lines!.Count);\n        await Assert.ThrowsAsync<NotFoundException>(() => service.RemoveLineAsync(created.Id, \"ffffffffffffffffffffffff\"));\n    }\n}\n",
+  "tests/App.Tests/ShipmentTests.cs": "using App;\nusing App.Entities;\nusing App.Errors;\nusing App.Services;\nusing Xunit;\n\nnamespace App.Tests;\n\n/// <summary>The repository of the \"shipments\" table, against the test database.</summary>\npublic class ShipmentRepositoryTests : IAsyncLifetime\n{\n    private Db db = null!;\n\n    /// <summary>The repositories over the test database, opened empty for every test</summary>\n    private MongoUnitOfWork uow = null!;\n\n    public async ValueTask InitializeAsync()\n    {\n        db = await TestDatabase.OpenAsync();\n        uow = new MongoUnitOfWork(db);\n    }\n\n    public async ValueTask DisposeAsync() => await db.DisposeAsync();\n\n    [Fact]\n    public async Task IsStoredAndReadBack()\n    {\n        var stored = await Factories.AddShipmentAsync(uow, 1);\n        var found = await uow.Shipments.FindByIdAsync(stored.Id);\n        Assert.NotNull(found);\n        Assert.Equal(stored.Id, found.Id);\n    }\n\n    [Fact]\n    public async Task ListsRowsByKey()\n    {\n        await Factories.AddShipmentAsync(uow, 1);\n        await Factories.AddShipmentAsync(uow, 2);\n        var page = await uow.Shipments.ListAsync(0, 1);\n        Assert.Equal(2, page.Total);\n        Assert.Single(page.Items);\n    }\n\n    [Fact]\n    public async Task IsDeleted()\n    {\n        var stored = await Factories.AddShipmentAsync(uow, 1);\n        await uow.Shipments.DeleteAsync(stored);\n        Assert.Null(await uow.Shipments.FindByIdAsync(stored.Id));\n    }\n\n    [Fact]\n    public async Task AddsAndRemovesOneItemOfStops()\n    {\n        var stored = await Factories.AddShipmentAsync(uow, 1);\n        var before = stored.Stops?.Count ?? 0;\n        Shipment.StopDocument item = Factories.NewShipmentStop(7);\n        var added = await uow.Shipments.AddStopAsync(stored.Id, item);\n        Assert.Equal(before + 1, added!.Stops!.Count);\n        var removed = await uow.Shipments.RemoveStopAsync(stored.Id, before, added.Stops!.Count);\n        Assert.Equal(before, removed!.Stops!.Count);\n        Assert.Null(await uow.Shipments.RemoveStopAsync(stored.Id, 0, before + 5));\n    }\n}\n\n/// <summary>The service of the \"shipments\" table, on the in-memory repositories.</summary>\npublic class ShipmentServiceTests\n{\n    private readonly MemoryUnitOfWork uow = new();\n\n    [Fact]\n    public async Task CreatesAValidRow()\n    {\n        var service = new ShipmentService(uow);\n        var n = 100;\n        var row = Factories.NewShipment(1);\n        var created = await service.CreateShipmentAsync(row);\n        var found = await service.GetShipmentAsync(created.Id);\n        Assert.Equal(created.Id, found.Id);\n    }\n\n    [Fact]\n    public async Task RefusesAMissingValue()\n    {\n        var service = new ShipmentService(uow);\n        var n = 100;\n        var row = Factories.NewShipment(1);\n        row.Parcel = null!;\n        var error = await Assert.ThrowsAsync<ValidationFailedException>(() => service.CreateShipmentAsync(row));\n        Assert.Equal(new[] { \"parcel\" }, error.Errors.Select(item => item.Field));\n    }\n\n    [Fact]\n    public async Task SaysWhenARowIsMissing()\n    {\n        var service = new ShipmentService(uow);\n        await Assert.ThrowsAsync<NotFoundException>(() => service.GetShipmentAsync(\"ffffffffffffffffffffffff\"));\n    }\n\n    [Fact]\n    public async Task DeletesARow()\n    {\n        var service = new ShipmentService(uow);\n        var n = 100;\n        var row = Factories.NewShipment(1);\n        var created = await service.CreateShipmentAsync(row);\n        await service.DeleteShipmentAsync(created.Id);\n        await Assert.ThrowsAsync<NotFoundException>(() => service.GetShipmentAsync(created.Id));\n    }\n\n    [Fact]\n    public async Task AddsAndRemovesOneItemOfStops()\n    {\n        var service = new ShipmentService(uow);\n        var n = 100;\n        var row = Factories.NewShipment(1);\n        var created = await service.CreateShipmentAsync(row);\n        var before = created.Stops?.Count ?? 0;\n        Shipment.StopDocument item = Factories.NewShipmentStop(7);\n        var added = await service.AddStopAsync(created.Id, item);\n        Assert.Equal(before + 1, added.Stops!.Count);\n        var removed = await service.RemoveStopAsync(created.Id, before);\n        Assert.Equal(before, removed.Stops!.Count);\n        await Assert.ThrowsAsync<NotFoundException>(() => service.RemoveStopAsync(created.Id, 99));\n    }\n}\n",
+  "tests/App.Tests/TestDatabase.cs": "using App;\nusing MongoDB.Bson;\nusing MongoDB.Driver;\n\nnamespace App.Tests;\n\n/// <summary>The test database: the MongoDB database TEST_DATABASE_CONNECTION names, with every collection created empty before every test.</summary>\ninternal static class TestDatabase\n{\n    public static readonly string? Connection = Environment.GetEnvironmentVariable(\"TEST_DATABASE_CONNECTION\");\n\n    private static IMongoDatabase? shared;\n\n    /// <summary>The test database, with its collections and their indexes created again.</summary>\n    public static async Task<Db> OpenAsync()\n    {\n        if (Connection is null)\n            throw new InvalidOperationException(\"The database tests need a disposable MongoDB database (a replica set, for its transactions): set TEST_DATABASE_CONNECTION (it is emptied)\");\n        var database = shared ??= Database.At(Connection);\n        await database.Client.DropDatabaseAsync(database.DatabaseNamespace.DatabaseName);\n        await database.CreateCollectionAsync(\"customers\");\n        await database.CreateCollectionAsync(\"orders\");\n        await database.CreateCollectionAsync(\"shipments\");\n        await database.GetCollection<BsonDocument>(\"customers\").Indexes.CreateOneAsync(new CreateIndexModel<BsonDocument>(new BsonDocument { [\"email\"] = 1 }, new CreateIndexOptions { Unique = true }));\n        await database.GetCollection<BsonDocument>(\"orders\").Indexes.CreateOneAsync(new CreateIndexModel<BsonDocument>(new BsonDocument { [\"code\"] = 1 }, new CreateIndexOptions { Unique = true }));\n        return new Db(database);\n    }\n}\n"
+ }
+}

@@ -504,3 +504,182 @@ export function withPythonRoundTrip(files, settings, code) {
     : PYTHON_CLINIC.replace('VALIDATORS_JSON', JSON.stringify(JSON.stringify(clinicValidators())))
   return [...files, { path: 'tests/test_round_trip.py', content }]
 }
+
+// C#: the same, in xUnit
+
+const CSHARP_SHOP = `using App;
+using App.Entities;
+using App.Errors;
+using MongoDB.Bson;
+using MongoDB.Driver;
+using Xunit;
+
+namespace App.Tests;
+
+public class RoundTripTests : IAsyncLifetime
+{
+    private Db db = null!;
+    private MongoUnitOfWork uow = null!;
+
+    public async ValueTask InitializeAsync()
+    {
+        db = await TestDatabase.OpenAsync();
+        uow = new MongoUnitOfWork(db);
+    }
+
+    public async ValueTask DisposeAsync() => await db.DisposeAsync();
+
+    private async Task<BsonDocument?> Stored(string collection) =>
+        await db.Database.GetCollection<BsonDocument>(collection).Find(new BsonDocument()).FirstOrDefaultAsync();
+
+    [Fact]
+    public async Task KeepsEveryValueAndItsType()
+    {
+        var product = await uow.Products.InsertAsync(Factories.NewProduct(1));
+        var found = (await uow.Products.READ_ID(product.Id))!;
+        Assert.Equal(product.Price, found.Price);
+        Assert.Equal(product.Reference, found.Reference);
+        Assert.Equal(product.Picture, found.Picture);
+        product.Related = ["0123456789abcdef01234567"];
+        await uow.Products.UpdateAsync(product);
+        Assert.Equal(product.Related, (await uow.Products.READ_ID(product.Id))!.Related);
+        var document = (await Stored("products"))!;
+        Assert.Equal("ObjectId Decimal128 Binary ObjectId", $"{document["_id"].BsonType} {document["price"].BsonType} {document["reference"].BsonType} {document["related"][0].BsonType}");
+        Assert.Equal(BsonBinarySubType.UuidStandard, document["reference"].AsBsonBinaryData.SubType);
+        Assert.False(document.Contains("_t"));
+        var order = await Factories.AddOrderAsync(uow, 2);
+        var read = (await uow.Orders.READ_ID(order.Id))!;
+        Assert.Equal(order.Lines[0].Id, read.Lines[0].Id);
+        Assert.Equal(order.Notes![0].At, read.Notes![0].At);
+        Assert.Equal(DateTimeKind.Utc, read.Notes[0].At!.Value.Kind);
+        var line = (await Stored("orders"))!["lines"][0];
+        Assert.Equal("ObjectId ObjectId Decimal128", $"{line["_id"].BsonType} {line["product"].BsonType} {line["price"].BsonType}");
+        var customer = await Factories.AddCustomerAsync(uow, 5);
+        var other = (await uow.Customers.READ_ID(customer.Id))!;
+        Assert.Equivalent(customer.Address, other.Address);
+        Assert.Equivalent(customer.Preferences, other.Preferences);
+        Assert.Equal(customer.Extra, other.Extra);
+    }
+
+    [Fact]
+    public async Task ChangesOnlyWhatIsDifferent()
+    {
+        var id = (await Factories.AddCustomerAsync(uow, 1)).Id;
+        await db.Database.GetCollection<BsonDocument>("customers").UpdateOneAsync(new BsonDocument(), new BsonDocument("$set", new BsonDocument { ["unknown"] = 1, ["address.unknown"] = 2 }));
+        var one = (await uow.Customers.READ_ID(id))!;
+        var other = (await uow.Customers.READ_ID(id))!;
+        one.Name = "one";
+        other.Level = "gold";
+        other.Address!.City = "Madrid";
+        other.PasswordHash = null;
+        await uow.Customers.UpdateAsync(one);
+        await uow.Customers.UpdateAsync(other);
+        var document = (await Stored("customers"))!;
+        Assert.Equal("one gold 1", $"{document["name"]} {document["level"]} {document["unknown"]}");
+        Assert.Equal("Madrid 2", $"{document["address"]["city"]} {document["address"]["unknown"]}");
+        Assert.False(document.Contains("passwordHash"));
+    }
+
+    [Fact]
+    public async Task DoesNotUndoWhatOthersChangeInAList()
+    {
+        var id = (await Factories.AddOrderAsync(uow, 1)).Id;
+        await Task.WhenAll(Enumerable.Range(0, 4).Select(n => uow.Orders.AddLineAsync(id, Factories.NewOrderLine(n))));
+        var found = (await uow.Orders.READ_ID(id))!;
+        Assert.Equal(5, found.Lines.Count);
+        await Task.WhenAll(found.Lines.Skip(1).Select(line => uow.Orders.RemoveLineAsync(id, line.Id!)));
+        Assert.Single((await uow.Orders.READ_ID(id))!.Lines);
+        Assert.Null(await uow.Orders.AddLineAsync(new string('f', 24), Factories.NewOrderLine(1)));
+        Assert.Null(await uow.Orders.READ_ID("nothing"));
+        Assert.Null(await uow.Orders.AddLineAsync("nothing", Factories.NewOrderLine(1)));
+        Assert.Null(await uow.Orders.RemoveLineAsync(id, "nothing"));
+    }
+
+    [Fact]
+    public async Task RefusesRepeatedValues()
+    {
+        await Factories.AddCustomerAsync(uow, 1);
+        await Assert.ThrowsAsync<ConflictException>(() => Factories.AddCustomerAsync(uow, 1));
+    }
+TRANSACTION
+    [Fact]
+    public async Task CreatesNothingInTheDatabase()
+    {
+        await db.Database.Client.DropDatabaseAsync(db.Database.DatabaseNamespace.DatabaseName);
+        var other = new MongoUnitOfWork(new Db(Database.At(TestDatabase.Connection!)));
+        Assert.Null(await other.Customers.READ_ID(new string('f', 24)));
+        Assert.Empty(await (await db.Database.ListCollectionNamesAsync()).ToListAsync());
+    }
+}
+`
+
+const CSHARP_TRANSACTION = `
+    [Fact]
+    public async Task UndoesATransactionThatFails()
+    {
+        await Assert.ThrowsAsync<InvalidOperationException>(() => uow.TransactionAsync(async inside =>
+        {
+            var customer = await Factories.AddCustomerAsync(inside, 1);
+            customer.Name = "changed";
+            await inside.Customers.UpdateAsync(customer);
+            throw new InvalidOperationException("stop");
+        }));
+        Assert.Null(await Stored("customers"));
+        await uow.TransactionAsync(async inside => { await Factories.AddCustomerAsync(inside, 1); });
+        Assert.NotNull(await Stored("customers"));
+    }
+`
+
+const CSHARP_CLINIC = `using App;
+using App.Entities;
+using App.Errors;
+using MongoDB.Bson;
+using Xunit;
+
+namespace App.Tests;
+
+public class RoundTripTests
+{
+    [Fact]
+    public async Task FitsTheValidatorsOfTheCollections()
+    {
+        await using var db = await TestDatabase.OpenAsync();
+        var uow = new MongoUnitOfWork(db);
+        // The collections with the validators of their own script, as JSON
+        foreach (var validator in BsonDocument.Parse(VALIDATORS))
+            await db.Database.RunCommandAsync<BsonDocument>(new BsonDocument { ["collMod"] = validator.Name, ["validator"] = validator.Value, ["validationAction"] = "error" });
+        var patient = await uow.Patients.InsertAsync(Factories.NewPatient(1));
+        var found = (await uow.Patients.FindByIdAsync(patient.Id))!;
+        Assert.Equal(patient.Birth, found.Birth);
+        Assert.Equal(patient.Balance, found.Balance);
+        var room = await Factories.AddRoomAsync(uow, 1);
+        found.Weight = 70;
+        found.Balance = null;
+        found.Visits = 3;
+        found.Contacts.Add(new Patient.ContactDocument { Kind = "email", Value = "a@b.c" });
+        room.Beds = 4;
+        await uow.Patients.UpdateAsync(found);
+        await uow.Rooms.UpdateAsync(room);
+        var changed = (await uow.Patients.FindByIdAsync(patient.Id))!;
+        Assert.Equal((70.0, null, 3, 2), (changed.Weight, changed.Balance, changed.Visits, changed.Contacts.Count));
+        Assert.Equal(4L, (await uow.Rooms.FindByIdAsync(room.Id))!.Beds);
+        await Assert.ThrowsAsync<ConflictException>(() => uow.Patients.InsertAsync(Factories.NewPatient(1)));
+        await Factories.AddPatientAsync(uow, 2);
+        // What only the validator of the collection knows is refused too
+        var wrong = Factories.NewPatient(3);
+        wrong.Blood = "Z";
+        await Assert.ThrowsAsync<ConflictException>(() => uow.Patients.InsertAsync(wrong));
+        await Assert.ThrowsAsync<ConflictException>(() => uow.Patients.AddContactAsync(patient.Id, new Patient.ContactDocument { Kind = "fax", Value = "" }));
+    }
+}
+`
+
+export function withCsharpRoundTrip(files, settings, code) {
+  if (settings.architecture === 'table') return files
+  const shop = code.endsWith('shop.ts')
+  const read = settings.verbs === 'get' ? 'GetByIdAsync' : 'FindByIdAsync'
+  const content = shop
+    ? CSHARP_SHOP.replace('TRANSACTION', settings.transactions === 'operation' ? CSHARP_TRANSACTION : '')
+    : CSHARP_CLINIC.replace('VALIDATORS', JSON.stringify(JSON.stringify(clinicValidators())))
+  return [...files, { path: 'tests/App.Tests/RoundTripTests.cs', content: content.replaceAll('READ_ID', read).replaceAll('FindByIdAsync', read) }]
+}
