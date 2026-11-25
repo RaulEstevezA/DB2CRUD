@@ -87,3 +87,25 @@ export function shopProject(
   )
   return JSON.stringify(project)
 }
+
+/** The same documents, identified by texts. */
+export const BLOG_TEXT_MODELS = BLOG_MODELS.replaceAll('id: UUID', 'id: str')
+
+/** The models of the projects of verification scenarios, by name. */
+const MODELS = {
+  shop: [SHOP_MODELS, 'typescript'],
+  blog: [BLOG_MODELS, 'python'],
+  blogTexts: [BLOG_TEXT_MODELS, 'python'],
+  notes: [NOTES_MODELS, 'prisma'],
+} as const
+
+export interface ScenarioProject {
+  models: keyof typeof MODELS
+  output: string
+}
+
+/** The project of a verification scenario (verification/scenarios/index.mjs). */
+export function scenarioProject({ models, output }: ScenarioProject): string {
+  const [text, format] = MODELS[models]
+  return shopProject(output, 'postgresql', text, format)
+}

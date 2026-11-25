@@ -4,7 +4,7 @@ import { nestedFields } from '../../../schema/documents.ts'
 import { findTable } from '../../../schema/types.ts'
 import { validateDbSchema } from '../../../schema/validate.ts'
 import { readModel2DBProject } from '../read.ts'
-import { BLOG_MODELS, NOTES_MODELS, shopProject } from './fixtures.ts'
+import { BLOG_MODELS, BLOG_TEXT_MODELS, NOTES_MODELS, shopProject } from './fixtures.ts'
 
 function read(output: string, engine?: Parameters<typeof shopProject>[1], text?: string, format?: Parameters<typeof shopProject>[3]) {
   const result = readModel2DBProject(shopProject(output, engine, text, format))
@@ -110,6 +110,12 @@ describe('readModel2DBProject', () => {
     expect(post('mongoengine')).toMatchObject({ key: 'text', author: 'text', references: 1, comment })
     expect(post('mongoose')).toMatchObject({ key: 'uuid', author: 'uuid', references: 1, comment, marks: { items: { kind: 'uuid' } } })
     expect(post('spring-data-mongodb')).toMatchObject({ key: 'uuid', author: 'uuid', references: 1, comment: ['_id', 'text', 'marks'] })
+    // Spring keeps a text that identifies a document as an ObjectId, which it makes
+    const spring = read('spring-data-mongodb', undefined, BLOG_TEXT_MODELS, 'python')
+    expect(findTable(spring, 'posts')).toMatchObject({
+      columns: [{ name: '_id', type: { objectId: true }, generated: 'uuid' }, {}, { name: 'author', type: { objectId: true } }, {}, {}],
+      foreignKeys: [{ columns: ['author'] }],
+    })
     expect(post('beanie')).toMatchObject({ key: 'uuid', author: 'json', references: 0, comment })
   })
 

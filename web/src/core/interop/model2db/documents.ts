@@ -6,7 +6,7 @@
 import { addIndex } from '../../importers/orm/mongoose.ts'
 import { collectionsOf, type Reading } from '../../importers/orm/mongodb.ts'
 import type { Expr } from '../../importers/orm/expressions.ts'
-import { isObjectId, nestedFields } from '../../schema/documents.ts'
+import { isObjectId, nestedFields, OBJECT_ID } from '../../schema/documents.ts'
 import type { DbColumn, DbNote, DbSchema, DbTable, DbType } from '../../schema/types.ts'
 import { findModelDesign, type Design } from './vendor/design/types.ts'
 import { buildDocumentView, type DocumentClass, type DocumentField, type DocumentView } from './vendor/generate/odm/documents.ts'
@@ -21,11 +21,11 @@ interface Library {
   uuid: boolean
   /** Stores a reference as a DBRef, a document with the identifier inside */
   dbRef: boolean
-  /** Stores the `id` of a nested document as `_id` */
-  nestedId: boolean
+  /** Stores the `id` of a nested document as `_id`, and one that is a text as an ObjectId, which it makes */
+  springIds: boolean
 }
 
-const library = (settings: Partial<Library> = {}): Library => ({ classes: true, uuid: true, dbRef: false, nestedId: false, ...settings })
+const library = (settings: Partial<Library> = {}): Library => ({ classes: true, uuid: true, dbRef: false, springIds: false, ...settings })
 
 /** The outputs of Model2DB for MongoDB (`generate/outputs.ts`). */
 export const DOCUMENT_OUTPUTS: Record<string, Library> = {
@@ -33,7 +33,7 @@ export const DOCUMENT_OUTPUTS: Record<string, Library> = {
   pymongo: library({ classes: false, uuid: false }),
   mongoose: library(),
   mongoengine: library({ uuid: false }),
-  'spring-data-mongodb': library({ nestedId: true }),
+  'spring-data-mongodb': library({ springIds: true }),
   beanie: library({ dbRef: true }),
 }
 
@@ -57,13 +57,13 @@ const replaced = (type: DbType, by: DbType): DbType =>
 
 const classOf = (view: DocumentView, name: string | undefined) => view.classes.find((item) => item.name === name)
 
-/** What a field holds: for a reference, the key of the model it points to. */
-function holdsUuid(field: DocumentField, view: DocumentView): boolean {
-  if (field.kind === 'reference') {
-    const key = classOf(view, field.target)?.fields.find((item) => item.id)
-    return key !== undefined && key.kind === 'value' && holdsUuid(key, view)
-  }
-  return (field.kind === 'value' || field.kind === 'values') && field.type.kind === 'primitive' && field.type.name === 'uuid'
+/** The field whose value a field keeps: for a reference, the key of the model it points to. */
+const keptField = (field: DocumentField, view: DocumentView) =>
+  field.kind === 'reference' ? classOf(view, field.target)?.fields.find((item) => item.id) : field
+
+function holds(field: DocumentField | undefined, primitive: 'uuid' | 'string'): boolean {
+  if (!field) return false
+  return (field.kind === 'value' || field.kind === 'values') && field.type.kind === 'primitive' && field.type.name === primitive
 }
 
 /** The fields of a class as the library stores them. */
@@ -71,12 +71,22 @@ function asStored(columns: DbColumn[], item: DocumentClass, view: DocumentView, 
   for (const field of item.fields) {
     const column = columns.find((candidate) => candidate.name === field.stored)
     if (!column) continue
+    const kept = keptField(field, view)
+    // The identifier of its document, or of the one a reference points to
+    const springId = stores.springIds && kept?.field.name === 'id' && (kept.id || !item.collection)
     if (field.kind === 'reference' && stores.dbRef) column.type = replaced(column.type, { sql: 'DBRef', kind: 'json' })
-    else if (stores.uuid && holdsUuid(field, view)) column.type = replaced(column.type, UUID)
+    else if (stores.uuid && holds(kept, 'uuid')) column.type = replaced(column.type, UUID)
+    else if (springId && holds(kept, 'string')) column.type = replaced(column.type, OBJECT_ID)
     const nested = field.kind === 'embedded' ? classOf(view, field.target) : undefined
     const fields = nestedFields(column.type)
     if (nested && fields) asStored(fields, nested, view, stores)
-    if (stores.nestedId && !item.collection && field.field.name === 'id' && field.stored === 'id') column.name = '_id'
+    if (springId && field === kept) {
+      column.name = '_id'
+      if (isObjectId(column.type)) {
+        column.generated = 'uuid'
+        column.nullable = !item.collection
+      }
+    }
   }
 }
 

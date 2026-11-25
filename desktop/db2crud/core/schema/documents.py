@@ -22,9 +22,10 @@ def nested_fields(column_type: dict) -> list[dict] | None:
 
 
 def item_key(items: dict) -> str:
-    """How an item of a list of documents is told from the others: by its identifier ("id"), by its value ("value") or,
-    a document without an identifier, by its "position"."""
+    """How an item of a list of documents is told from the others: by its ObjectId ("id"), by its value ("value") or, a
+    document without an ObjectId (one nothing here could give it), by its "position"."""
     if items["kind"] not in ("json", "array"):
         return "value"
     fields = nested_fields(items) or []
-    return "id" if items["kind"] == "json" and any(field["name"] == "_id" for field in fields) else "position"
+    identified = any(field["name"] == "_id" and is_object_id(field["type"]) for field in fields)
+    return "id" if items["kind"] == "json" and identified else "position"

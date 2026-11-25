@@ -18,10 +18,10 @@ export function nestedFields(type: DbType): DbColumn[] | undefined {
   return type.kind === 'json' ? type.fields : undefined
 }
 
-/** How an item of a list of documents is told from the others: by its identifier, by its value (a text, a number) or,
- * a document without an identifier, by its position. */
+/** How an item of a list of documents is told from the others: by its ObjectId, by its value (a text, a number) or, a
+ * document without an ObjectId (one nothing here could give it), by its position. */
 export function itemKey(items: DbType): 'id' | 'value' | 'position' {
   if (items.kind === 'json' || items.kind === 'array')
-    return nestedFields(items)?.some((field) => field.name === '_id') && items.kind === 'json' ? 'id' : 'position'
+    return nestedFields(items)?.some((field) => field.name === '_id' && isObjectId(field.type)) && items.kind === 'json' ? 'id' : 'position'
   return 'value'
 }

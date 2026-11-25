@@ -2924,5 +2924,177 @@
    "ok": false,
    "error": "unsupportedDatabase"
   }
+ },
+ {
+  "args": [
+   "{\"format\":\"model2db-project\",\"version\":1,\"savedAt\":\"2026-11-11T12:00:00.000Z\",\"input\":{\"format\":\"python\",\"text\":\"from dataclasses import dataclass\\nfrom datetime import datetime\\nfrom uuid import UUID\\n\\n@dataclass\\nclass Author:\\n    id: str\\n    email: str\\n    posts: list[\\\"Post\\\"]\\n\\n@dataclass\\nclass Post:\\n    id: str\\n    title: str\\n    author: Author\\n    published_at: datetime | None\\n    comments: list[\\\"Comment\\\"]\\n\\n@dataclass\\nclass Comment:\\n    id: str\\n    text: str\\n    marks: list[UUID]\\n\"},\"designs\":{\"relational\":null,\"document\":null,\"keyvalue\":null,\"widecolumn\":null},\"output\":{\"output\":\"spring-data-mongodb\",\"naming\":{\"relational\":{\"tables\":\"plural\",\"columns\":\"snake\"},\"document\":{\"tables\":\"plural\",\"columns\":\"field\"},\"keyvalue\":{\"tables\":\"singular\",\"columns\":\"snake\"},\"widecolumn\":{\"tables\":\"plural\",\"columns\":\"snake\"}},\"strings\":\"auto\",\"engine\":\"postgresql\",\"migrations\":false}}"
+  ],
+  "result": {
+   "ok": true,
+   "schema": {
+    "format": "db-schema",
+    "version": 1,
+    "dialect": "mongodb",
+    "source": {
+     "kind": "model2db",
+     "format": "spring-data-mongodb"
+    },
+    "tables": [
+     {
+      "name": "authors",
+      "columns": [
+       {
+        "name": "_id",
+        "type": {
+         "sql": "ObjectId",
+         "kind": "text",
+         "length": 24,
+         "fixed": true,
+         "objectId": true
+        },
+        "nullable": false,
+        "generated": "uuid"
+       },
+       {
+        "name": "email",
+        "type": {
+         "sql": "string",
+         "kind": "text"
+        },
+        "nullable": false
+       }
+      ],
+      "primaryKey": [
+       "_id"
+      ],
+      "foreignKeys": [],
+      "uniques": [],
+      "indexes": [],
+      "checks": [],
+      "entity": "Author"
+     },
+     {
+      "name": "posts",
+      "columns": [
+       {
+        "name": "_id",
+        "type": {
+         "sql": "ObjectId",
+         "kind": "text",
+         "length": 24,
+         "fixed": true,
+         "objectId": true
+        },
+        "nullable": false,
+        "generated": "uuid"
+       },
+       {
+        "name": "title",
+        "type": {
+         "sql": "string",
+         "kind": "text"
+        },
+        "nullable": false
+       },
+       {
+        "name": "author",
+        "type": {
+         "sql": "ObjectId",
+         "kind": "text",
+         "length": 24,
+         "fixed": true,
+         "objectId": true
+        },
+        "nullable": false
+       },
+       {
+        "name": "published_at",
+        "type": {
+         "sql": "date",
+         "kind": "datetime",
+         "timezone": true
+        },
+        "nullable": true
+       },
+       {
+        "name": "comments",
+        "type": {
+         "sql": "array<object>",
+         "kind": "array",
+         "items": {
+          "sql": "object",
+          "kind": "json",
+          "fields": [
+           {
+            "name": "_id",
+            "type": {
+             "sql": "ObjectId",
+             "kind": "text",
+             "length": 24,
+             "fixed": true,
+             "objectId": true
+            },
+            "nullable": true,
+            "generated": "uuid"
+           },
+           {
+            "name": "text",
+            "type": {
+             "sql": "string",
+             "kind": "text"
+            },
+            "nullable": false
+           },
+           {
+            "name": "marks",
+            "type": {
+             "sql": "array<UUID>",
+             "kind": "array",
+             "items": {
+              "sql": "UUID",
+              "kind": "uuid"
+             }
+            },
+            "nullable": false
+           }
+          ]
+         }
+        },
+        "nullable": false
+       }
+      ],
+      "primaryKey": [
+       "_id"
+      ],
+      "foreignKeys": [
+       {
+        "columns": [
+         "author"
+        ],
+        "references": {
+         "table": "authors",
+         "columns": [
+          "_id"
+         ]
+        }
+       }
+      ],
+      "uniques": [],
+      "indexes": [
+       {
+        "name": "ix_posts_author",
+        "columns": [
+         "author"
+        ]
+       }
+      ],
+      "checks": [],
+      "entity": "Post"
+     }
+    ],
+    "enums": [],
+    "notes": []
+   }
+  }
  }
 ]
