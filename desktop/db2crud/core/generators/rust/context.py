@@ -12,6 +12,7 @@ import re
 
 from ...crud.types import find_policy, find_repository, find_service
 from ...model.naming import to_snake_case
+from .documents import nested_structs, value_type
 from .rust import column_variant, snake_name, type_name
 
 BLOCKING = (None, "no action", "restrict")
@@ -57,10 +58,11 @@ def _included(items: list[dict]) -> list[dict]:
     return [item for item in items if item["include"]["value"]]
 
 
-def _column_info(column: dict) -> dict:
+def _column_info(column: dict, types: tuple[str, str | None, bool], own: bool) -> dict:
     generated = column.get("generated") is not None and column.get("generated") != "onUpdateNow"
-    field = snake_name(column["name"])
-    rs, crate, copy = rs_type(column["type"])
+    # MongoDB's `_id` is the `id` of the entity, unless the documents have one of their own
+    field = "document_id" if own else snake_name(column["name"])
+    rs, crate, copy = types
     return {
         "column": column,
         "field": field,
@@ -74,12 +76,33 @@ def _column_info(column: dict) -> dict:
     }
 
 
-def _table_info(schema: dict, design: dict, settings: dict, table: dict) -> dict:
+def _table_info(orm: dict, schema: dict, design: dict, settings: dict, table: dict) -> dict:
     policy = find_policy(design, table["name"])
     repository = find_repository(design, table["name"])
     service = find_service(design, table["name"]) if settings["services"] else None
     entity = type_name(repository["entity"])
-    columns = [_column_info(column) for column in table["columns"]]
+    delete_mode = policy["delete"]["value"]
+    concurrency = policy["concurrency"]["value"]
+    own_entities = (
+        not orm.get("documents") and not repository["entityMissing"] and schema["source"]["format"] == settings["orm"]
+    )
+    writes_entity = settings["entities"] == "all" or (settings["entities"] == "missing" and not own_entities)
+    module = snake_name(entity)
+    attr = snake_name(table["name"])
+    documents = bool(orm.get("documents"))
+    entity_module = _entity_module(settings, module, attr, writes_entity)
+    nested = nested_structs(table["columns"], entity, entity_module) if documents else {}
+    own_id = documents and any(column["name"] == "id" for column in table["columns"])
+
+    def types_of(column: dict) -> tuple[str, str | None, bool]:
+        if not documents:
+            return rs_type(column["type"])
+        struct = nested.get(column["name"])
+        return value_type(column["type"], struct["path"] if struct else None)
+
+    columns = [
+        _column_info(column, types_of(column), own_id and column["name"] == "_id") for column in table["columns"]
+    ]
 
     def by_name(name: str) -> dict:
         return next(info for info in columns if info["column"]["name"] == name)
@@ -88,17 +111,13 @@ def _table_info(schema: dict, design: dict, settings: dict, table: dict) -> dict
     key_names = (
         table["primaryKey"] if table["primaryKey"] is not None else [column["name"] for column in table["columns"]]
     )
-    delete_mode = policy["delete"]["value"]
-    concurrency = policy["concurrency"]["value"]
-    own_entities = not repository["entityMissing"] and schema["source"]["format"] == settings["orm"]
-    writes_entity = settings["entities"] == "all" or (settings["entities"] == "missing" and not own_entities)
     children = policy["children"]
     return {
         "table": table,
         "name": table["name"],
         "entity": entity,
-        "module": snake_name(entity),
-        "attr": snake_name(table["name"]),
+        "module": module,
+        "attr": attr,
         "columns": columns,
         "key": [by_name(name) for name in key_names],
         "role": policy["role"]["value"],
@@ -111,6 +130,7 @@ def _table_info(schema: dict, design: dict, settings: dict, table: dict) -> dict
         "repository": repository,
         "service": service,
         "writesEntity": writes_entity,
+        "nested": nested,
     }
 
 
@@ -120,9 +140,18 @@ def create_context(orm: dict, schema: dict, design: dict, settings: dict) -> dic
         "schema": schema,
         "design": design,
         "settings": settings,
-        "tables": [_table_info(schema, design, settings, table) for table in schema["tables"]],
+        "tables": [_table_info(orm, schema, design, settings, table) for table in schema["tables"]],
         "crate": settings["name"].replace("-", "_"),
     }
+
+
+def _entity_module(settings: dict, module: str, attr: str, written: bool) -> str:
+    """The module of an entity, before its table is known."""
+    if not written:
+        return f"{'::'.join(settings['entitiesModule'].split('.'))}::{module}"
+    if settings["architecture"] == "table":
+        return f"crate::{attr}::entity"
+    return f"crate::{LAYERS['entity']}::{module}"
 
 
 def writes_entities(context: dict) -> bool:

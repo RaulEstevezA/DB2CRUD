@@ -170,7 +170,7 @@ URLS = {
 
 
 def default_url(context: dict) -> str:
-    return URLS.get(context["settings"]["database"], URLS["postgresql"])
+    return context["orm"].get("url") or URLS.get(context["settings"]["database"], URLS["postgresql"])
 
 
 HOW = {
@@ -261,6 +261,7 @@ def unit_of_work_file(context: dict) -> dict:
         "/// The repositories over one database, and its transactions.",
         "pub struct SqlUnitOfWork {",
         "    db: Db,",
+        *transactions.get("fields", []),
         "}",
         "",
         "impl SqlUnitOfWork {",

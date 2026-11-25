@@ -279,7 +279,7 @@ SEAORM_ORM = {
     "emptyList": lambda context: (
         '"{}".to_string()' if context["settings"]["database"] == "postgresql" else '"[]".to_string()'
     ),
-    "databaseFile": _database_file,
+    "databaseFiles": lambda context: [_database_file(context)],
     "entityFiles": lambda context, info: [entity_file(context, info), table_file(context, info)],
     "repository": {
         "uses": lambda context, info: [f"{module_of(context, info, 'table')} as table"],

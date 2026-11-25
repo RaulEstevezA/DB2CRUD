@@ -5,8 +5,10 @@ CRUD2Controller. Mirrors web/src/core/generators/rust/project.ts."""
 import json
 import re
 
+from ...schema.documents import nested_fields
 from ..types import lines
 from .context import module_of, operation_name, service_type, stored_type, writes_entities
+from .documents import nested_crates
 from .dtos import create_columns, create_dto, read_columns, read_dto, update_columns, update_path, update_type
 from .support import default_url
 
@@ -25,7 +27,8 @@ def _tests(context: dict) -> bool:
 
 def _crates(context: dict) -> set[str]:
     """The crates the column types come from."""
-    return {column["crate"] for info in context["tables"] for column in info["columns"] if column["crate"]}
+    own = {column["crate"] for info in context["tables"] for column in info["columns"] if column["crate"]}
+    return own | {crate for info in context["tables"] for crate in nested_crates(info["nested"].values())}
 
 
 def cargo_file(context: dict, extra: list[str] | None = None) -> dict:
@@ -131,6 +134,7 @@ def readme_file(context: dict) -> dict:
             "",
             "```text",
             "src/database.rs          the connection of DATABASE_URL",
+            *context["orm"]["readme"].get("layout", []),
             "src/unit_of_work.rs      the repositories of every table, and the transactions",
             "src/errors.rs            DomainError: NotFound, Conflict, ValidationFailed, Database; no HTTP codes",
             [
@@ -158,17 +162,29 @@ def readme_file(context: dict) -> dict:
     }
 
 
-def _type_of(column: dict) -> dict:
-    column_type = column["column"]["type"]
-    result = {"kind": column_type["kind"], "rust": stored_type(column)}
+def _type_of(context: dict, column: dict) -> dict:
+    plain = _plain_type(column["column"]["type"])
+    rust = re.sub(r"\bcrate::", f"{context['crate']}::", stored_type(column))
+    return {"kind": plain["kind"], "rust": rust, **plain}
+
+
+def _plain_type(column_type: dict) -> dict:
+    result = {"kind": column_type["kind"]}
     if column_type["kind"] == "text" and column_type.get("length") is not None:
         result["length"] = column_type["length"]
+    # What a nested document, or each of a list of them, holds
+    fields = nested_fields(column_type)
+    if fields is not None:
+        result["fields"] = [
+            {"name": field["name"], "type": _plain_type(field["type"]), "nullable": field["nullable"]}
+            for field in fields
+        ]
     return result
 
 
-def _fields(columns: list[dict], optional: bool) -> list[dict]:
+def _fields(context: dict, columns: list[dict], optional: bool) -> list[dict]:
     return [
-        {"name": column["key"], "type": _type_of(column), "nullable": optional or column["column"]["nullable"]}
+        {"name": column["key"], "type": _type_of(context, column), "nullable": optional or column["column"]["nullable"]}
         for column in columns
     ]
 
@@ -190,7 +206,7 @@ def contract_file(context: dict) -> dict:
                 "name": info["entity"],
                 "module": _crate_module(context, module_of(context, info, "entity")),
                 "kind": "entity",
-                "fields": _fields(info["columns"], True),
+                "fields": _fields(context, info["columns"], True),
             }
         )
         writes = info["role"] == "entity" and info["service"]
@@ -200,7 +216,7 @@ def contract_file(context: dict) -> dict:
                     "name": create_dto(info),
                     "module": _crate_module(context, module_of(context, info, "dtos")),
                     "kind": "create",
-                    "fields": _fields(create_columns(info), True),
+                    "fields": _fields(context, create_columns(info), True),
                 }
             )
         if writes:
@@ -211,7 +227,7 @@ def contract_file(context: dict) -> dict:
                     "module": _crate_module(context, path[: path.rindex("::")]),
                     "kind": "update",
                     "updates": context["settings"]["updates"],
-                    "fields": _fields(update_columns(info), True),
+                    "fields": _fields(context, update_columns(info), True),
                 }
             )
         if dtos and info["service"]:
@@ -220,7 +236,7 @@ def contract_file(context: dict) -> dict:
                     "name": read_dto(info),
                     "module": _crate_module(context, module_of(context, info, "dtos")),
                     "kind": "read",
-                    "fields": _fields(read_columns(info), False),
+                    "fields": _fields(context, read_columns(info), False),
                 }
             )
     services = []

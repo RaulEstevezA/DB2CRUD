@@ -1,5 +1,5 @@
-"""The Rust generator: data access layers in asynchronous Rust with no web framework, over SeaORM or sqlx. Every file of the
-project, composed from the modules of this folder; each module writes one kind of file. src/lib.rs and the mod.rs of
+"""The Rust generator: data access layers in asynchronous Rust with no web framework, over SeaORM, sqlx or the MongoDB driver.
+Every file of the project, composed from the modules of this folder; each module writes one kind of file. src/lib.rs and the mod.rs of
 every folder are derived from the modules written, so each one is declared exactly once. Mirrors
 web/src/core/generators/rust/generator.ts."""
 
@@ -19,7 +19,7 @@ from .tests import can_make, test_files
 
 def _code(context: dict) -> list[dict]:
     files = [
-        context["orm"]["databaseFile"](context),
+        *context["orm"]["databaseFiles"](context),
         errors_file(context),
         common_file(context),
         unit_of_work_file(context),
@@ -91,9 +91,24 @@ def _crates_of(files: list[dict]) -> list[str]:
     return found
 
 
+def _named(orm: dict, files: list[dict]) -> list[dict]:
+    """The files with the database structs named as the strategy asks: `SqlUnitOfWork` is `MongoUnitOfWork` in a document
+    database."""
+    prefix = orm.get("prefix")
+    if not prefix:
+        return files
+
+    def rename(text: str) -> str:
+        return re.sub(r"\bSql(?=UnitOfWork\b|\w+Repository\b)", prefix, text)
+
+    return [{**item, "content": rename(item["content"])} for item in files]
+
+
 def _generate(orm: dict, schema: dict, design: dict, settings: dict, models: dict | None = None) -> list[dict]:
     context = create_context(orm, schema, design, settings)
-    plans = service_plans(context, plan_conversions(schema, design, models)) if models else []
+    plans = (
+        service_plans(context, plan_conversions(schema, design, models, bool(orm.get("documents")))) if models else []
+    )
     conversions = conversion_files(context, models["schema"], plans) if models else []
     files = [*_code(context), *conversions]
     # With imported models, lib.rs declares the copy while the project runs on its own
@@ -124,7 +139,7 @@ def _generate(orm: dict, schema: dict, design: dict, settings: dict, models: dic
             else file
             for file in tests
         ]
-    return [
+    written = [
         readme_file(context),
         cargo_file(context, _crates_of(conversions)),
         env_example_file(context),
@@ -135,6 +150,7 @@ def _generate(orm: dict, schema: dict, design: dict, settings: dict, models: dic
         *tests,
         *([conversion_tests] if conversion_tests else []),
     ]
+    return _named(orm, written)
 
 
 def rust_generator(orm: dict) -> dict:

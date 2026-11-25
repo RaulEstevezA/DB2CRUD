@@ -897,6 +897,30 @@ VERIFIED = [
         ],
         "date": "2026-11-25",
     },
+    {
+        "language": "rust",
+        "orm": "mongorust",
+        "database": "mongodb",
+        "execution": "async",
+        "scenarios": [
+            "mongorust-mongodb-defaults",
+            "mongorust-mongodb-operation",
+            "mongorust-mongodb-struct-dtos-patch-cursor-by-table",
+            "mongorust-mongodb-struct-dtos-full-caller",
+            "mongorust-mongodb-no-interfaces-services-tests",
+            "mongorust-mongodb-repositories-only",
+            "mongorust-mongodb-validators",
+            "mongorust-mongodb-validators-dtos",
+            "mongorust-mongodb-from-mongosh",
+            "mongorust-mongodb-from-documents",
+            "mongorust-mongodb-from-model2db",
+            "mongorust-mongodb-from-model2db-validators",
+            "mongorust-mongodb-conversions",
+            "mongorust-mongodb-conversions-dtos",
+            "mongorust-mongodb-conversions-import",
+        ],
+        "date": "2026-11-25",
+    },
 ]
 
 

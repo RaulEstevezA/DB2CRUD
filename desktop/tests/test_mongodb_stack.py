@@ -22,6 +22,7 @@ def test_stack_follows_the_database():
         "mongodriver",
         "mongophp",
         "mongokotlin",
+        "mongorust",
     ]
     assert settings_for("mongodb", settings)["database"] == "mongodb"
     assert settings_for("postgresql", settings) == settings

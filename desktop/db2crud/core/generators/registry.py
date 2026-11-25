@@ -25,6 +25,7 @@ from .python.django.index import DJANGO_ORM
 from .python.sql.index import SQL_ORM as PYTHON_SQL_ORM
 from .python.sqlalchemy.index import SQLALCHEMY_ORM
 from .rust.generator import rust_generator
+from .rust.mongodb.index import MONGODB_ORM as RUST_MONGODB_ORM
 from .rust.seaorm.index import SEAORM_ORM
 from .rust.sql.index import SQL_ORM as RUST_SQL_ORM
 from .swift.fluent.index import FLUENT_ORM
@@ -64,6 +65,7 @@ GENERATORS = [
     kotlin_generator(KOTLIN_MONGODB_ORM),
     rust_generator(SEAORM_ORM),
     rust_generator(RUST_SQL_ORM),
+    rust_generator(RUST_MONGODB_ORM),
     swift_generator(FLUENT_ORM),
     swift_generator(SWIFT_SQL_ORM),
 ]

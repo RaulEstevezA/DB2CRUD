@@ -202,7 +202,7 @@ SQL_ORM = {
     "emptyList": lambda context: (
         '"{}".to_string()' if context["settings"]["database"] == "postgresql" else '"[]".to_string()'
     ),
-    "databaseFile": database_file,
+    "databaseFiles": lambda context: [database_file(context)],
     "entityFiles": lambda context, info: [entity_file(context, info)],
     "repository": {"uses": lambda *_: [], "body": sql_body, "helpers": sql_helpers},
     "unitOfWork": lambda *_: _UNIT,

@@ -25,6 +25,7 @@ def rs_literal(column: dict, value) -> str:
 
 
 NOW = {
+    "chrono::DateTime<chrono::Utc>": "chrono::Utc::now()",
     "chrono::DateTime<chrono::FixedOffset>": "chrono::Utc::now().fixed_offset()",
     "chrono::NaiveDateTime": "chrono::Utc::now().naive_utc()",
     "chrono::NaiveDate": "chrono::Utc::now().date_naive()",

@@ -18,6 +18,7 @@ from .context import (
     service_type,
     writes_entities,
 )
+from .documents import list_of
 from .dtos import create_columns, create_dto, update_columns, update_path, update_type
 from .rust import RsUses, owned, rs_string, snake_name
 from .samples import missing_value, sample_value
@@ -114,7 +115,10 @@ def _factories_file(context: dict, makeable: list[dict]) -> dict:
             # No sample is sure to fit a type that is not known
             if column["column"]["nullable"] and (is_key or column["column"]["type"]["kind"] == "unknown"):
                 continue
-            if column["column"]["type"]["kind"] == "array":
+            nested = info["nested"].get(column["column"]["name"])
+            if nested:
+                sample = _nested_value(column["column"]["type"], nested)
+            elif column["column"]["type"]["kind"] == "array":
                 sample = context["orm"]["emptyList"](context)
             else:
                 sample = sample_value(column, info["table"]["checks"], context["schema"]["enums"])
@@ -138,6 +142,7 @@ def _factories_file(context: dict, makeable: list[dict]) -> dict:
                 *from_parents,
                 f"    uow.{info['attr']}().{query_name(context, insert)}(entity).await.expect({rs_string('a stored ' + info['entity'])})",
                 "}",
+                *(line for item in info["nested"].values() for line in _nested_factories(context, item)),
             ]
         )
     return {
@@ -158,6 +163,87 @@ def _factories_file(context: dict, makeable: list[dict]) -> dict:
 
 
 # The test database
+
+
+# Nested documents
+
+
+def _factory_of(item: dict) -> str:
+    return f"new_{re.sub(r'^r#', '', snake_name(item['name']))}"
+
+
+def _nested_value(column_type: dict, nested: dict) -> str:
+    if column_type["kind"] == "array":
+        return f"vec![{_nested_value(column_type['items'], nested)}]"
+    return f"{_factory_of(nested)}(n)"
+
+
+def _names_n(text: str) -> bool:
+    """Whether the lines of a factory name `n`, also inside a format string."""
+    return re.search(r"\bn\b", text) is not None
+
+
+def _nested_factories(context: dict, item: dict) -> list[str]:
+    """A factory per struct of nested document, without the identifier it is given when it is stored."""
+    values = []
+    for field in item["fields"]:
+        column = field["column"]
+        if column["name"] == "_id" or column["type"]["kind"] == "unknown":
+            continue
+        if field["nested"]:
+            value = _nested_value(column["type"], field["nested"])
+        elif column["type"]["kind"] == "array":
+            value = context["orm"]["emptyList"](context)
+        else:
+            sample = {"column": column, "rs": field["rs"]}
+            value = sample_value(sample, column.get("checks") or [], context["schema"]["enums"])
+        values.append(f"        {field['field']}: Some({value}),")
+    path = external(context, item["path"])
+    return [
+        "",
+        f"/// A valid {item['name']}; n makes its values differ.",
+        f"pub fn {_factory_of(item)}({'n' if any(_names_n(line) for line in values) else '_n'}: i32) -> {path} {{",
+        f"    {path} {{",
+        *values,
+        "        ..Default::default()",
+        "    }",
+        "}",
+        *(line for inner in item["structs"] for line in _nested_factories(context, inner)),
+    ]
+
+
+def _item_sample(context: dict, items: dict) -> str:
+    """A value for an item of a list, as a Rust expression of n."""
+    if items["nested"] and items["type"]["kind"] == "json":
+        return f"factories::{_factory_of(items['nested'])}(n)"
+    if items["type"]["kind"] == "array":
+        return context["orm"]["emptyList"](context)
+    column = {**items["column"], "column": {**items["column"]["column"], "type": items["type"]}, "rs": items["rs"]}
+    return sample_value(column, [], context["schema"]["enums"])
+
+
+def _item_lines(context: dict, items: dict) -> list[str]:
+    """The lines that make an item of a list."""
+    value = _item_sample(context, items)
+    rs = re.sub(r"\bcrate::", f"{context['crate']}::", items["rs"])
+    return [*(["let n = 7;"] if _names_n(value) else []), f"let item: {rs} = {value};"]
+
+
+def _item_test(items: dict) -> str:
+    return f"adds_and_removes_one_item_of_{items['column']['key']}"
+
+
+def _size_of(variable: str, items: dict, sure: bool = False) -> str:
+    field = f"{variable}.{items['column']['field']}"
+    return f"{field}.len()" if sure else f"{field}.as_ref().map_or(0, Vec::len)"
+
+
+def _identifier_of(items: dict, sure: bool = False) -> str:
+    there = "" if sure else f".as_ref().expect({rs_string(items['column']['key'])})"
+    return f'added.{items["column"]["field"]}{there}[before].id.clone().expect("an identifier")'
+
+
+# Tests of each table
 
 
 def _changeable_text(info: dict) -> dict | None:
@@ -311,6 +397,36 @@ def _repository_tests(context: dict, info: dict) -> list[list[str]]:
                     f"let stored = factories::{_add_name(info)}(&uow, 1).await;",
                     f'{repo}.{query_name(context, remove)}(&stored).await.expect("a delete");',
                     f'assert!({repo}.{query_name(context, get_by_key)}({key_of("stored")}).await.expect("a read").is_none());',
+                ],
+            )
+        )
+    for adding in (item for item in info["queries"] if item["kind"] == "addItem"):
+        items = list_of(info, adding)
+        removing = query(info, "removeItem", adding["columns"])
+        if not removing or not get_by_key:
+            continue
+        which = {
+            "id": _identifier_of(items),
+            "value": "item",
+            "position": f"before, {_size_of('added', items)}",
+        }[items["by"]]
+        given = "item.clone()" if items["by"] == "value" and not items["copy"] else "item"
+        remove_item = f"{repo}.{query_name(context, removing)}({key_of('stored')}"
+        row = '.await.expect("a write").expect("the row");'
+        tests.append(
+            _test(
+                _item_test(items),
+                [
+                    opened,
+                    f"let stored = factories::{_add_name(info)}(&uow, 1).await;",
+                    f"let before = {_size_of('stored', items)};",
+                    *_item_lines(context, items),
+                    f"let added = {repo}.{query_name(context, adding)}({key_of('stored')}, {given}){row}",
+                    f"assert_eq!(before + 1, {_size_of('added', items)});",
+                    f"let removed = {remove_item}, {which}){row}",
+                    f"assert_eq!(before, {_size_of('removed', items)});",
+                    items["by"] == "position"
+                    and f'assert!({remove_item}, 0, before + 5).await.expect("a write").is_none());',
                 ],
             )
         )
@@ -586,6 +702,39 @@ def _service_tests(context: dict, info: dict, uses: RsUses) -> list[list[str]]:
                     f'let created = service.{operation_name(context, create)}({input_of("row")}).await.expect("a create");',
                     f'service.{operation_name(context, deletes)}({key_of("created")}{version("created")}).await.expect("a delete");',
                     f"assert!(matches!(service.{operation_name(context, get)}({key_of('created')}).await, Err(DomainError::NotFound {{ .. }})));",
+                ],
+            )
+        )
+    for operation in (item for item in info["operations"] if item["kind"] == "addItem"):
+        items = list_of(info, operation)
+        without = op("removeItem", operation["columns"])
+        hidden = items["column"]["column"]["name"] in info["hidden"]
+        if not create or not without or hidden or not query(info, "getByKey"):
+            continue
+        errors()
+        # A DTO says when the list is never missing
+        sure = dtos and not items["column"]["column"]["nullable"]
+        which = {"id": _identifier_of(items, sure), "value": "item", "position": "before"}[items["by"]]
+        missing = {"id": f'"{"f" * 24}".to_string()', "value": None, "position": "99"}[items["by"]]
+        given = "item.clone()" if items["by"] == "value" and not items["copy"] else "item"
+        remove_item = f"service.{operation_name(context, without)}({key_of('created')}"
+        add_item = f"service.{operation_name(context, operation)}({key_of('created')}, {given}{version('created')})"
+        tests.append(
+            _test(
+                _item_test(items),
+                [
+                    *opened,
+                    *parents_first,
+                    *row("row", 1),
+                    f'let created = service.{operation_name(context, create)}({input_of("row")}).await.expect("a create");',
+                    f"let before = {_size_of('created', items, sure)};",
+                    *_item_lines(context, items),
+                    f'let added = {add_item}.await.expect("a write");',
+                    f"assert_eq!(before + 1, {_size_of('added', items, sure)});",
+                    f'let removed = {remove_item}, {which}{version("added")}).await.expect("a write");',
+                    f"assert_eq!(before, {_size_of('removed', items, sure)});",
+                    missing is not None
+                    and f"assert!(matches!({remove_item}, {missing}{version('removed')}).await, Err(DomainError::NotFound {{ .. }})));",
                 ],
             )
         )

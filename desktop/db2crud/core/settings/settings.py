@@ -282,6 +282,17 @@ STACKS = [
         "updates": ["patch", "optional", "full"],
     },
     {
+        "language": "rust",
+        "orm": "mongorust",
+        "label": "MongoDB Rust driver 3",
+        "databases": ["mongodb"],
+        "transactions": "repository",
+        "execution": ["async"],
+        "errors": ["results"],
+        "dtoKinds": ["struct"],
+        "updates": ["patch", "optional", "full"],
+    },
+    {
         "language": "swift",
         "orm": "fluent",
         "label": "Fluent 1 (FluentKit)",

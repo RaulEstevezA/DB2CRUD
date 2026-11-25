@@ -6,6 +6,7 @@ import re
 
 from ...js import is_number, js_string
 from ..samples import bounded_number
+from .documents import FREE
 from .rust import owned
 from .values import rs_literal
 
@@ -58,6 +59,8 @@ def sample_value(column: dict, checks: list[dict], enums: list[dict]) -> str:
         whole = _whole({**column, "rs": "i32"}, checks)
         return f"({whole}) as f32 + 0.5" if column["rs"] == "f32" else f"f64::from({whole}) + 0.5"
     if kind == "text":
+        if column_type.get("objectId"):
+            return 'format!("{n:024x}")'
         length = column_type.get("length")
         length = 40 if length is None else length
         if column_type.get("fixed"):
@@ -72,10 +75,16 @@ def sample_value(column: dict, checks: list[dict], enums: list[dict]) -> str:
     if kind == "boolean":
         return "true"
     if kind == "date":
+        if column["rs"] == "String":
+            return 'format!("2026-01-{:02}", n % 28 + 1)'
         return DATE
     if kind == "time":
+        if column["rs"] == "String":
+            return 'format!("12:{:02}:00", n % 60)'
         return 'chrono::NaiveTime::from_hms_opt(12, (n % 60) as u32, 0).expect("a time")'
     if kind == "datetime":
+        if column["rs"] == "chrono::DateTime<chrono::Utc>":
+            return f'{DATE}.and_hms_opt(12, 0, 0).expect("a time").and_utc()'
         if column["rs"] == "chrono::NaiveDateTime":
             return f'{DATE}.and_hms_opt(12, 0, 0).expect("a time")'
         return f'{DATE}.and_hms_opt(12, 0, 0).expect("a time").and_utc().fixed_offset()'
@@ -86,6 +95,8 @@ def sample_value(column: dict, checks: list[dict], enums: list[dict]) -> str:
         length = column_type.get("length")
         return f"vec![n as u8; {length}]" if length is not None and length <= 64 else "vec![n as u8]"
     if kind == "json":
+        if column["rs"] == FREE:
+            return 'mongodb::bson::bson!({ "n": n })'
         return 'format!("{{\\"n\\": {n}}}")'
     if kind == "array":
         return '"[]".to_string()'
@@ -111,4 +122,6 @@ MISSING = {
 
 def missing_value(column: dict) -> str:
     """A key no row has, as a Rust expression, for the tests of missing rows."""
+    if column["column"]["type"].get("objectId"):
+        return f'"{"f" * 24}".to_string()'
     return MISSING.get(column["rs"], '"missing".to_string()')

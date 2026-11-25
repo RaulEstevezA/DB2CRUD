@@ -15,6 +15,7 @@ from .context import (
     sql_repository,
     stored,
 )
+from .documents import identified_lists, list_of
 from .rust import RsUses
 from .support import COMMON, DOMAIN_ERROR
 from .values import now_of, rs_literal
@@ -69,6 +70,24 @@ def repository_methods(context: dict, info: dict, uses: RsUses) -> list[dict]:
             )
         elif kind == "update":
             add([{"name": "entity", "type": entity}], entity, "Stores the changes made to a row.")
+        elif kind in ("addItem", "removeItem"):
+            items = list_of(info, query_design)
+            adds = kind == "addItem"
+            # Told apart by its position, it is only removed from a list of the size it was seen in
+            size = [{"name": "size", "type": "usize"}] if not adds and items["by"] == "position" else []
+            given = (
+                [{"name": items["item"], "type": items["rs"]}]
+                if adds
+                else [{"name": item["name"], "type": item["type"]} for item in items["params"]]
+            )
+            kept = query_design["columns"][0]
+            add(
+                [*({"name": column["field"], "type": column["rs"]} for column in info["key"]), *given, *size],
+                f"Option<{entity}>",
+                f"Adds an item to {kept}, and gives the row as it is then, if there is one."
+                if adds
+                else f"Removes an item from {kept}{' that has this size' if size else ''}, and gives the row as it is then, if there is one.",
+            )
         elif kind == "delete":
             add([{"name": "entity", "type": f"&{entity}"}], "()", "Removes a row.")
     return methods
@@ -88,7 +107,7 @@ def key_value(info: dict, variable: str) -> str:
 # In memory
 
 
-def _memory_fill(column: dict) -> str | None:
+def memory_fill(column: dict) -> str | None:
     db = column["column"]
     target = f"entity.{column['field']}"
     generated = db.get("generated")
@@ -96,6 +115,8 @@ def _memory_fill(column: dict) -> str | None:
     if generated == "identity":
         value = "*next" if column["rs"] == "i64" else f"*next as {column['rs']}"
         return f"{target} = {target}.or_else(|| {{\n    let mut next = self.next_id.lock().unwrap();\n    *next += 1;\n    Some({value})\n}});"
+    if generated == "uuid" and db["type"].get("objectId"):
+        return f"{target} = {target}.or_else(|| Some(mongodb::bson::oid::ObjectId::new().to_hex()));"
     if generated == "uuid":
         return f"{target} = {target}.or_else(|| Some(uuid::Uuid::new_v4()));"
     if generated in ("now", "onUpdateNow"):
@@ -151,10 +172,53 @@ def _memory_body(context: dict, info: dict, method: dict) -> list[str]:
             ]
         return ["Ok(self.visible())"]
     if kind in ("insert", "update"):
-        return ["self.store(&entity);", "Ok(entity)"]
+        identified = ["let mut entity = entity;", "entity.identify_items();"] if identified_lists(info) else []
+        return [*identified, "self.store(&entity);", "Ok(entity)"]
+    if kind in ("addItem", "removeItem"):
+        return _memory_item(info, method)
     if kind == "delete":
         return ["self.rows.lock().unwrap().retain(|row| key_of(row) != key_of(entity));", "Ok(())"]
     return ["unimplemented!()"]
+
+
+def _memory_item(info: dict, method: dict) -> list[str]:
+    """One item of a list added or removed in memory."""
+    items = list_of(info, method["query"])
+    name = items["params"][0]["name"]
+    held = f"found.{items['column']['field']}"
+    item = items["item"]
+    keys = " && ".join(f"row.{column['field']}.as_ref() == Some(&{column['field']})" for column in info["key"])
+    touched = [column for column in info["columns"] if column["column"].get("generated") == "onUpdateNow"]
+    change = []
+    if method["query"]["kind"] == "addItem":
+        if items["by"] == "id":
+            change += [
+                f"let mut {item} = {item};",
+                f"{item}.id = {item}.id.or_else(|| Some(mongodb::bson::oid::ObjectId::new().to_hex()));",
+            ]
+        change.append(f"{held}.get_or_insert_default().push({item});")
+    elif items["by"] == "position":
+        change += [
+            f"let items = {held}.get_or_insert_default();",
+            "if items.len() != size || position >= size {",
+            "    return Ok(None);",
+            "}",
+            "items.remove(position);",
+        ]
+    else:
+        other = f"item.id.as_ref() != Some(&{name})" if items["by"] == "id" else f"*item != {name}"
+        change.append(f"{held}.get_or_insert_default().retain(|item| {other});")
+    version = info["version"]["field"] if info["version"] else None
+    return [
+        f"let Some(mut found) = self.visible().into_iter().find(|row| {keys}) else {{",
+        "    return Ok(None);",
+        "};",
+        *change,
+        *([f"found.{version} = Some(found.{version}.unwrap_or(0) + 1);"] if version else []),
+        *(f"found.{column['field']} = Some(chrono::Utc::now());" for column in touched),
+        "self.store(&found);",
+        "Ok(Some(found))",
+    ]
 
 
 def _block(method: dict, body: list[str], prefix: str, doc: bool) -> list[str]:
@@ -223,10 +287,11 @@ def repository_file(context: dict, info: dict) -> dict:
     ]
     if context["settings"]["memoryRepositories"]:
         uses.add("std::sync::Arc", "std::sync::Mutex")
-        fills = [line for line in (_memory_fill(column) for column in info["columns"]) if line is not None]
+        fills = [line for line in (memory_fill(column) for column in info["columns"]) if line is not None]
         kinds = {method["query"]["kind"] for method in methods}
-        reads = any(kind in kinds for kind in ("getByKey", "findByUnique", "listByParent", "findAllBy", "list"))
-        stores = "insert" in kinds or "update" in kinds
+        items = {"addItem", "removeItem"}
+        reads = bool(kinds & {"getByKey", "findByUnique", "listByParent", "findAllBy", "list", *items})
+        stores = bool(kinds & {"insert", "update", *items})
         cursor = "list" in kinds and context["settings"]["paging"] == "cursor"
         if reads or cursor:
             uses.add("std::cmp::Ordering")
@@ -235,7 +300,8 @@ def repository_file(context: dict, info: dict) -> dict:
         for item in methods:
             lines = _memory_body(context, info, item)
             if item["query"]["kind"] == "insert" and fills:
-                lines = ["let mut entity = entity;", *fills, *lines]
+                taken = "let mut entity = entity;"
+                lines = [taken, *fills, *(line for line in lines if line != taken)]
             memory_bodies += _block(item, lines, "", False)
         key_types = [f"Option<{column['rs']}>" for column in info["key"]]
         single = "," if len(key_types) == 1 else ""

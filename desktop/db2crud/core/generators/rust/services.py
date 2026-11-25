@@ -24,6 +24,7 @@ from .context import (
     service_type,
     stored,
 )
+from .documents import check_call, document_check_functions, document_rules, list_of
 from .dtos import (
     create_columns,
     create_dto,
@@ -34,7 +35,7 @@ from .dtos import (
     update_struct,
     update_type,
 )
-from .rust import RsUses, rs_string, snake_name
+from .rust import RsUses, rs_string, snake_name, type_name
 from .support import COMMON, DOMAIN_ERROR, ERRORS, UNIT_OF_WORK
 from .values import now_of
 
@@ -125,7 +126,7 @@ def _value_rules(column: dict, checks: list[dict]) -> list[str]:
             "}",
         ]
 
-    if column_type["kind"] == "text" and column_type.get("length") is not None:
+    if column_type["kind"] == "text" and column_type.get("length") is not None and not column_type.get("objectId"):
         length = js_string(column_type["length"])
         rules += rule(f"value.chars().count() > {length}", f"is longer than {length} characters")
     for check in checks:
@@ -180,7 +181,7 @@ def _validate_blocks(writer: dict) -> tuple[list[list[str]], bool, bool, bool]:
             missing = {"condition": f"!creating && values.{field}.is_some()", "message": "cannot be empty"}
         else:
             missing = None
-        rules = _value_rules(column, info["table"]["checks"])
+        rules = [*_value_rules(column, info["table"]["checks"]), *document_rules(context, info, column)]
         if not missing and not rules:
             continue
         value = f"values.{field}.as_ref().and_then(|value| value.as_ref())"
@@ -664,9 +665,77 @@ def _operation_lines(writer: dict, operation: dict) -> list[str]:
                 [f"{rows}.map(|rows| rows.into_iter().map({mapper}).collect())" if dtos else rows],
             ),
         ]
+    if kind in ("addItem", "removeItem"):
+        return _item_lines(writer, operation, name)
     if kind in ("link", "unlink"):
         return _link_lines(writer, operation, name)
     return []
+
+
+def _item_lines(writer: dict, operation: dict, name: str) -> list[str]:
+    """Adds or removes one item of a list, so two people changing the same list do not undo each other."""
+    context, info = writer["context"], writer["info"]
+    adds = operation["kind"] == "addItem"
+    change = query(info, operation["kind"], operation["columns"])
+    if not change or not query(info, "getByKey"):
+        return []
+    writer["used"].add("find")
+    items = list_of(info, change)
+    kept = items["column"]["column"]["name"]
+    params = [{"name": items["item"], "type": items["rs"]}] if adds else items["params"]
+    given = params[0]["name"]
+    version = info["version"]
+    read_at = ", read at version" if version else ""
+    held = f"current.{items['column']['field']}.as_deref().unwrap_or_default()"
+    if items["by"] == "id":
+        present = f"{held}.iter().any(|item| item.id.as_ref() == Some(&{given}))"
+    elif items["by"] == "value":
+        present = f"{held}.contains(&{given})"
+    else:
+        present = f"{given} < {held}.len()"
+    position = not adds and items["by"] == "position"
+    checked = adds and items["nested"] and items["type"]["kind"] == "json"
+    if checked:
+        writer["checkedLists"].add(kept)
+        writer["uses"].add(f"{ERRORS}::FieldError")
+    entity = rs_string(info["entity"])
+    if position:
+        key = rs_string(items["column"]["key"])
+        gone = f'DomainError::conflict({entity}, "was changed by someone else since it was read", &[{key}])'
+    else:
+        gone = f"DomainError::not_found({entity}, {_key_value(info)})"
+    keys = ", ".join(_pass(column) for column in info["key"])
+    args = ", ".join([keys, *(item["name"] for item in params), *(["size"] if position else [])])
+    by = "identifier" if items["by"] == "id" else items["by"]
+    item_name = rs_string(type_name(re.sub(r"^r#", "", items["item"])))
+    signature = ", ".join(f"{item['name']}: {item['type']}" for item in params)
+    version_param = f", version: {version['rs']}" if version else ""
+    body = [
+        f"{'' if adds and not version else 'let current = '}find(uow, {keys}).await?;",
+        *_version_check(writer),
+    ]
+    if not adds:
+        body += [f"if !({present}) {{", f"    return Err(DomainError::not_found({item_name}, {given}));", "}"]
+    if position:
+        body.append(f"let size = {held}.len();")
+    body.append(f"let changed = {_repo(info)}.{query_name(context, change)}({args}).await?.ok_or_else(|| {gone})?;")
+    lines = []
+    if checked:
+        lines += [
+            "let mut errors: Vec<FieldError> = Vec::new();",
+            check_call(items["nested"], items["item"], kept),
+            "if !errors.is_empty() {",
+            f"    return Err(DomainError::ValidationFailed {{ entity: {entity}.to_string(), errors }});",
+            "}",
+        ]
+    lines += _in_transaction(writer, body, f"Ok({_out(writer, 'changed')})")
+    result = _result_type(writer)
+    return [
+        f"/// Adds an item to {kept}{read_at}." if adds else f"/// Removes an item from {kept}, by its {by}{read_at}.",
+        f"pub async fn {name}(&self, {_key_params(info)}, {signature}{version_param}) -> Result<{result}, DomainError> {{",
+        *_ind(lines),
+        "}",
+    ]
 
 
 def _link_lines(writer: dict, operation: dict, name: str) -> list[str]:
@@ -698,7 +767,8 @@ def _link_lines(writer: dict, operation: dict, name: str) -> list[str]:
             return []
         uses.add(path_in(module_of(context, join, "entity"), join["entity"]))
         values = ", ".join(f"{column['field']}: Some({column['field']})" for column in every)
-        rest = "" if len(every) == len(join["columns"]) else ", ..Default::default()"
+        whole = len(every) == len(join["columns"]) and not context["orm"].get("documents")
+        rest = "" if whole else ", ..Default::default()"
         fields = ", ".join(rs_string(column["key"]) for column in far_cols)
         return [
             f"/// Links a {info['entity']} and a {far_info['entity']} ({join['name']}).",
@@ -754,7 +824,7 @@ def service_file(context: dict, info: dict) -> dict | None:
     module = module_of(context, info, "service")
     uses = RsUses().add("std::sync::Arc", UNIT_OF_WORK, DOMAIN_ERROR)
     dtos = context["settings"]["serviceTypes"] == "dtos"
-    writer = {"context": context, "info": info, "uses": uses, "dtos": dtos, "used": set()}
+    writer = {"context": context, "info": info, "uses": uses, "dtos": dtos, "used": set(), "checkedLists": set()}
     operations = [block for block in (_operation_lines(writer, operation) for operation in info["operations"]) if block]
     if operations:
         uses.add(path_in(module_of(context, info, "entity"), info["entity"]))
@@ -768,6 +838,13 @@ def service_file(context: dict, info: dict) -> dict | None:
         helpers.append(_check_functions(writer))
     if "apply" in used:
         helpers.append(_apply_function(info))
+    checked = [
+        column["column"]["name"]
+        for column in info["columns"]
+        if ("checkValues" in used and is_in(column, create_columns(info)))
+        or column["column"]["name"] in writer["checkedLists"]
+    ]
+    helpers += document_check_functions(context, info, checked)
     if "given" in used:
         helpers.append(_given_function(writer))
     if "find" in used:
