@@ -903,6 +903,16 @@ export const SCENARIOS = [
   { id: 'beanie-mongodb-validators', code: 'mongodb/clinic.js', settings: { language: 'python', orm: 'beanie', database: 'mongodb', execution: 'async' }, service: 'mongodb' },
   { id: 'beanie-mongodb-validators-dtos', code: 'mongodb/clinic.js', settings: { language: 'python', orm: 'beanie', database: 'mongodb', execution: 'async', serviceTypes: 'dtos' }, service: 'mongodb' },
   { id: 'beanie-mongodb-own-documents', code: '../shared/test-cases/orm/hand/beanie/blog/documents.py', settings: { language: 'python', orm: 'beanie', database: 'mongodb', execution: 'async', serviceTypes: 'dtos' }, service: 'mongodb' },
+  // Conversions to application models with documents inside: entities, DTOs, imported models and repositories alone
+  { id: 'beanie-mongodb-conversions', case: 'documents-python', settings: { language: 'python', orm: 'beanie', database: 'mongodb', execution: 'async' }, service: 'mongodb' },
+  { id: 'beanie-mongodb-conversions-dtos', case: 'documents-python', settings: { language: 'python', orm: 'beanie', database: 'mongodb', execution: 'async', serviceTypes: 'dtos' }, service: 'mongodb' },
+  { id: 'beanie-mongodb-conversions-import', case: 'documents-python', settings: { language: 'python', orm: 'beanie', database: 'mongodb', execution: 'async', modelsSource: 'import', modelsModule: 'shop.models', architecture: 'table', memoryRepositories: false }, service: 'mongodb' },
+  { id: 'springdata-mongodb-conversions', case: 'documents-java', settings: { language: 'java', orm: 'springdata', database: 'mongodb' }, service: 'mongodb' },
+  { id: 'springdata-mongodb-conversions-dtos', case: 'documents-java', settings: { language: 'java', orm: 'springdata', database: 'mongodb', serviceTypes: 'dtos' }, service: 'mongodb' },
+  { id: 'springdata-mongodb-conversions-import', case: 'documents-java', settings: { language: 'java', orm: 'springdata', database: 'mongodb', modelsSource: 'import', modelsModule: 'com.example.shop.models', architecture: 'table', memoryRepositories: false }, service: 'mongodb' },
+  { id: 'mongoose-mongodb-conversions', case: 'documents-typescript', settings: { language: 'typescript', orm: 'mongoose', database: 'mongodb' }, service: 'mongodb' },
+  { id: 'mongoose-mongodb-conversions-dtos', case: 'documents-typescript', settings: { language: 'typescript', orm: 'mongoose', database: 'mongodb', serviceTypes: 'dtos' }, service: 'mongodb' },
+  { id: 'mongoose-mongodb-conversions-import', case: 'documents-typescript', settings: { language: 'typescript', orm: 'mongoose', database: 'mongodb', modelsSource: 'import', modelsModule: 'shop/models', architecture: 'table', memoryRepositories: false }, service: 'mongodb' },
   // Model2DB projects for MongoDB: UUIDs, references and lists as each library stores them, and references of validators
   { id: 'beanie-mongodb-from-model2db', model2db: { models: 'blog', output: 'beanie' }, settings: { language: 'python', orm: 'beanie', database: 'mongodb', execution: 'async' }, service: 'mongodb' },
   { id: 'beanie-mongodb-from-model2db-validators', model2db: { models: 'notes', output: 'mongodb' }, settings: { language: 'python', orm: 'beanie', database: 'mongodb', execution: 'async', serviceTypes: 'dtos' }, service: 'mongodb' },

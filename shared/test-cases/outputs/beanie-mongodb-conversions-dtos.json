@@ -1,0 +1,951 @@
+{
+ "schema": {
+  "format": "db-schema",
+  "version": 1,
+  "dialect": "mongodb",
+  "source": {
+   "kind": "orm",
+   "format": "mongodb"
+  },
+  "tables": [
+   {
+    "name": "customers",
+    "columns": [
+     {
+      "name": "_id",
+      "type": {
+       "sql": "ObjectId",
+       "kind": "text",
+       "length": 24,
+       "fixed": true,
+       "objectId": true
+      },
+      "nullable": false,
+      "generated": "uuid"
+     },
+     {
+      "name": "email",
+      "type": {
+       "sql": "string",
+       "kind": "text"
+      },
+      "nullable": false
+     },
+     {
+      "name": "level",
+      "type": {
+       "sql": "string",
+       "kind": "text"
+      },
+      "nullable": true
+     },
+     {
+      "name": "since",
+      "type": {
+       "sql": "date",
+       "kind": "datetime",
+       "timezone": true
+      },
+      "nullable": false
+     },
+     {
+      "name": "address",
+      "type": {
+       "sql": "object",
+       "kind": "json",
+       "fields": [
+        {
+         "name": "street",
+         "type": {
+          "sql": "string",
+          "kind": "text"
+         },
+         "nullable": false
+        },
+        {
+         "name": "zip code",
+         "type": {
+          "sql": "string",
+          "kind": "text"
+         },
+         "nullable": false
+        },
+        {
+         "name": "location",
+         "type": {
+          "sql": "object",
+          "kind": "json",
+          "fields": [
+           {
+            "name": "latitude",
+            "type": {
+             "sql": "double",
+             "kind": "float",
+             "bits": 64
+            },
+            "nullable": false
+           },
+           {
+            "name": "longitude",
+            "type": {
+             "sql": "double",
+             "kind": "float",
+             "bits": 64
+            },
+            "nullable": false
+           }
+          ]
+         },
+         "nullable": true
+        }
+       ]
+      },
+      "nullable": false
+     },
+     {
+      "name": "tags",
+      "type": {
+       "sql": "array<string>",
+       "kind": "array",
+       "items": {
+        "sql": "string",
+        "kind": "text"
+       }
+      },
+      "nullable": true
+     }
+    ],
+    "primaryKey": [
+     "_id"
+    ],
+    "foreignKeys": [],
+    "uniques": [
+     {
+      "columns": [
+       "email"
+      ]
+     }
+    ],
+    "indexes": [],
+    "checks": [
+     {
+      "sql": "level IN ('basic', 'gold')",
+      "parsed": {
+       "kind": "in",
+       "column": "level",
+       "values": [
+        "basic",
+        "gold"
+       ]
+      }
+     }
+    ],
+    "origin": {
+     "line": 2,
+     "column": 1
+    }
+   },
+   {
+    "name": "orders",
+    "columns": [
+     {
+      "name": "_id",
+      "type": {
+       "sql": "ObjectId",
+       "kind": "text",
+       "length": 24,
+       "fixed": true,
+       "objectId": true
+      },
+      "nullable": false,
+      "generated": "uuid"
+     },
+     {
+      "name": "code",
+      "type": {
+       "sql": "string",
+       "kind": "text"
+      },
+      "nullable": false
+     },
+     {
+      "name": "lines",
+      "type": {
+       "sql": "array<object>",
+       "kind": "array",
+       "items": {
+        "sql": "object",
+        "kind": "json",
+        "fields": [
+         {
+          "name": "_id",
+          "type": {
+           "sql": "ObjectId",
+           "kind": "text",
+           "length": 24,
+           "fixed": true,
+           "objectId": true
+          },
+          "nullable": true
+         },
+         {
+          "name": "sku",
+          "type": {
+           "sql": "string",
+           "kind": "text"
+          },
+          "nullable": false
+         },
+         {
+          "name": "quantity",
+          "type": {
+           "sql": "int",
+           "kind": "integer",
+           "bits": 32
+          },
+          "nullable": false
+         },
+         {
+          "name": "price",
+          "type": {
+           "sql": "decimal",
+           "kind": "decimal"
+          },
+          "nullable": false
+         },
+         {
+          "name": "status",
+          "type": {
+           "sql": "string",
+           "kind": "enum",
+           "name": "orders_lines_status"
+          },
+          "nullable": true
+         },
+         {
+          "name": "discounts",
+          "type": {
+           "sql": "array<object>",
+           "kind": "array",
+           "items": {
+            "sql": "object",
+            "kind": "json",
+            "fields": [
+             {
+              "name": "reason",
+              "type": {
+               "sql": "string",
+               "kind": "text"
+              },
+              "nullable": false
+             },
+             {
+              "name": "percent",
+              "type": {
+               "sql": "double",
+               "kind": "float",
+               "bits": 64
+              },
+              "nullable": false
+             }
+            ]
+           }
+          },
+          "nullable": true
+         }
+        ]
+       }
+      },
+      "nullable": false
+     },
+     {
+      "name": "shipping",
+      "type": {
+       "sql": "object",
+       "kind": "json",
+       "fields": [
+        {
+         "name": "carrier",
+         "type": {
+          "sql": "string",
+          "kind": "text"
+         },
+         "nullable": false
+        },
+        {
+         "name": "sentOn",
+         "type": {
+          "sql": "date",
+          "kind": "datetime",
+          "timezone": true
+         },
+         "nullable": false
+        }
+       ]
+      },
+      "nullable": true
+     }
+    ],
+    "primaryKey": [
+     "_id"
+    ],
+    "foreignKeys": [],
+    "uniques": [
+     {
+      "columns": [
+       "code"
+      ]
+     }
+    ],
+    "indexes": [],
+    "checks": [],
+    "origin": {
+     "line": 30,
+     "column": 1
+    }
+   },
+   {
+    "name": "shipments",
+    "columns": [
+     {
+      "name": "_id",
+      "type": {
+       "sql": "ObjectId",
+       "kind": "text",
+       "length": 24,
+       "fixed": true,
+       "objectId": true
+      },
+      "nullable": false,
+      "generated": "uuid"
+     },
+     {
+      "name": "parcel",
+      "type": {
+       "sql": "object",
+       "kind": "json",
+       "fields": [
+        {
+         "name": "weight",
+         "type": {
+          "sql": "double",
+          "kind": "float",
+          "bits": 64
+         },
+         "nullable": false
+        },
+        {
+         "name": "contents",
+         "type": {
+          "sql": "string",
+          "kind": "text"
+         },
+         "nullable": false
+        },
+        {
+         "name": "size",
+         "type": {
+          "sql": "object",
+          "kind": "json",
+          "fields": [
+           {
+            "name": "height",
+            "type": {
+             "sql": "double",
+             "kind": "float",
+             "bits": 64
+            },
+            "nullable": false
+           }
+          ]
+         },
+         "nullable": true
+        }
+       ]
+      },
+      "nullable": false
+     },
+     {
+      "name": "stops",
+      "type": {
+       "sql": "array<object>",
+       "kind": "array",
+       "items": {
+        "sql": "object",
+        "kind": "json",
+        "fields": [
+         {
+          "name": "city",
+          "type": {
+           "sql": "string",
+           "kind": "text"
+          },
+          "nullable": true
+         }
+        ]
+       }
+      },
+      "nullable": true
+     }
+    ],
+    "primaryKey": [
+     "_id"
+    ],
+    "foreignKeys": [],
+    "uniques": [],
+    "indexes": [],
+    "checks": [],
+    "origin": {
+     "line": 70,
+     "column": 1
+    }
+   }
+  ],
+  "enums": [
+   {
+    "name": "orders_lines_status",
+    "values": [
+     "pending",
+     "sent"
+    ],
+    "storage": "check"
+   }
+  ],
+  "notes": []
+ },
+ "decisions": [],
+ "settings": {
+  "name": "beanie-mongodb-conversions-dtos",
+  "language": "python",
+  "orm": "beanie",
+  "database": "mongodb",
+  "execution": "async",
+  "serviceTypes": "dtos"
+ },
+ "models": {
+  "schema": {
+   "format": "model-schema",
+   "version": 1,
+   "origin": {
+    "format": "python",
+    "language": "python",
+    "framework": "dataclass"
+   },
+   "models": [
+    {
+     "name": "Location",
+     "kind": "class",
+     "fields": [
+      {
+       "name": "latitude",
+       "type": {
+        "kind": "primitive",
+        "name": "float"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "float"
+      },
+      {
+       "name": "longitude",
+       "type": {
+        "kind": "primitive",
+        "name": "float"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "float"
+      }
+     ],
+     "framework": "dataclass",
+     "construction": "named",
+     "annotations": [
+      {
+       "name": "dataclass"
+      }
+     ]
+    },
+    {
+     "name": "Address",
+     "kind": "class",
+     "fields": [
+      {
+       "name": "street",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "str"
+      },
+      {
+       "name": "zip_code",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "str"
+      },
+      {
+       "name": "location",
+       "type": {
+        "kind": "model",
+        "name": "Location"
+       },
+       "nullable": true,
+       "optional": false,
+       "originalType": "Location | None"
+      }
+     ],
+     "framework": "dataclass",
+     "construction": "named",
+     "annotations": [
+      {
+       "name": "dataclass"
+      }
+     ]
+    },
+    {
+     "name": "Customer",
+     "kind": "class",
+     "fields": [
+      {
+       "name": "id",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "str"
+      },
+      {
+       "name": "email",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "str"
+      },
+      {
+       "name": "level",
+       "type": {
+        "kind": "enum",
+        "name": "Level"
+       },
+       "nullable": true,
+       "optional": false,
+       "originalType": "Level | None"
+      },
+      {
+       "name": "since",
+       "type": {
+        "kind": "primitive",
+        "name": "datetime"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "datetime"
+      },
+      {
+       "name": "address",
+       "type": {
+        "kind": "model",
+        "name": "Address"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "Address"
+      },
+      {
+       "name": "tags",
+       "type": {
+        "kind": "array",
+        "items": {
+         "kind": "primitive",
+         "name": "string"
+        }
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "list[str]"
+      }
+     ],
+     "framework": "dataclass",
+     "construction": "named",
+     "annotations": [
+      {
+       "name": "dataclass"
+      }
+     ]
+    },
+    {
+     "name": "Discount",
+     "kind": "class",
+     "fields": [
+      {
+       "name": "reason",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "str"
+      },
+      {
+       "name": "percent",
+       "type": {
+        "kind": "primitive",
+        "name": "float"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "float"
+      }
+     ],
+     "framework": "dataclass",
+     "construction": "named",
+     "annotations": [
+      {
+       "name": "dataclass"
+      }
+     ]
+    },
+    {
+     "name": "OrderLine",
+     "kind": "class",
+     "fields": [
+      {
+       "name": "id",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": true,
+       "optional": false,
+       "originalType": "str | None"
+      },
+      {
+       "name": "sku",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "str"
+      },
+      {
+       "name": "quantity",
+       "type": {
+        "kind": "primitive",
+        "name": "integer"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "int"
+      },
+      {
+       "name": "price",
+       "type": {
+        "kind": "primitive",
+        "name": "decimal"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "Decimal"
+      },
+      {
+       "name": "status",
+       "type": {
+        "kind": "enum",
+        "name": "LineStatus"
+       },
+       "nullable": true,
+       "optional": false,
+       "originalType": "LineStatus | None"
+      },
+      {
+       "name": "discounts",
+       "type": {
+        "kind": "array",
+        "items": {
+         "kind": "model",
+         "name": "Discount"
+        }
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "list[Discount]"
+      }
+     ],
+     "framework": "dataclass",
+     "construction": "named",
+     "annotations": [
+      {
+       "name": "dataclass"
+      }
+     ]
+    },
+    {
+     "name": "Shipping",
+     "kind": "class",
+     "fields": [
+      {
+       "name": "carrier",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "str"
+      },
+      {
+       "name": "sent_on",
+       "type": {
+        "kind": "primitive",
+        "name": "date"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "date"
+      }
+     ],
+     "framework": "dataclass",
+     "construction": "named",
+     "annotations": [
+      {
+       "name": "dataclass"
+      }
+     ]
+    },
+    {
+     "name": "Order",
+     "kind": "class",
+     "fields": [
+      {
+       "name": "id",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "str"
+      },
+      {
+       "name": "code",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "str"
+      },
+      {
+       "name": "lines",
+       "type": {
+        "kind": "array",
+        "items": {
+         "kind": "model",
+         "name": "OrderLine"
+        }
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "list[OrderLine]"
+      },
+      {
+       "name": "shipping",
+       "type": {
+        "kind": "model",
+        "name": "Shipping"
+       },
+       "nullable": true,
+       "optional": false,
+       "originalType": "Shipping | None"
+      }
+     ],
+     "framework": "dataclass",
+     "construction": "named",
+     "annotations": [
+      {
+       "name": "dataclass"
+      }
+     ]
+    },
+    {
+     "name": "Parcel",
+     "kind": "class",
+     "fields": [
+      {
+       "name": "weight",
+       "type": {
+        "kind": "primitive",
+        "name": "float"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "float"
+      },
+      {
+       "name": "size",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "str"
+      },
+      {
+       "name": "fragile",
+       "type": {
+        "kind": "primitive",
+        "name": "boolean"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "bool"
+      }
+     ],
+     "framework": "dataclass",
+     "construction": "named",
+     "annotations": [
+      {
+       "name": "dataclass"
+      }
+     ]
+    },
+    {
+     "name": "Shipment",
+     "kind": "class",
+     "fields": [
+      {
+       "name": "id",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "str"
+      },
+      {
+       "name": "parcel",
+       "type": {
+        "kind": "model",
+        "name": "Parcel"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "Parcel"
+      },
+      {
+       "name": "stops",
+       "type": {
+        "kind": "array",
+        "items": {
+         "kind": "primitive",
+         "name": "string"
+        }
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "list[str]"
+      }
+     ],
+     "framework": "dataclass",
+     "construction": "named",
+     "annotations": [
+      {
+       "name": "dataclass"
+      }
+     ]
+    }
+   ],
+   "enums": [
+    {
+     "name": "Level",
+     "values": [
+      {
+       "name": "BASIC",
+       "value": "basic"
+      },
+      {
+       "name": "GOLD",
+       "value": "gold"
+      }
+     ]
+    },
+    {
+     "name": "LineStatus",
+     "values": [
+      {
+       "name": "PENDING",
+       "value": "pending"
+      },
+      {
+       "name": "SENT",
+       "value": "sent"
+      }
+     ]
+    }
+   ]
+  },
+  "project": null
+ },
+ "files": {
+  ".env.example": "# Where the database is\nDATABASE_URL=mongodb://localhost:27017/app\n# The database the tests use (it is emptied by the tests)\n# TEST_DATABASE_URL=\n",
+  ".gitignore": "__pycache__/\n*.py[cod]\n.venv/\n.pytest_cache/\n.env\n*.db\n",
+  "README.md": "# beanie-mongodb-conversions-dtos\n\nData access layer generated by [DB2CRUD](https://github.com/RaulEstevezA/DB2CRUD) for a database that already exists: entities, repositories and services with Beanie 2. It does not create or migrate the database.\n\n## Settings\n\n- Database: mongodb; code: asynchronous.\n- Entities: written for the tables the input had no class for.\n- Services: take and return DTOs (pydantic).\n- Transactions: every repository write is committed at once.\n- Lists: lists return pages by offset and limit.\n\n## Layout\n\n```text\napp/db.py              the database, how values and errors are read, and what changed in a document\napp/models.py          the Beanie documents, as the database has them\napp/documents.py       the rules of the documents inside others\napp/errors.py          NotFoundError, ConflictError, ValidationFailedError: no HTTP codes\napp/unit_of_work.py    the repositories of every table, and the transaction of each operation\napp/entities/          one entity per table\napp/repositories/      one repository per table\napp/services/          one service per table\ntests/                 repositories against a database, services on the in-memory repositories\ncrud-contract.json     what was written, for CRUD2Controller\n```\n\n## Running the tests\n\n```bash\npython -m venv .venv && source .venv/bin/activate\npip install -r requirements-dev.txt\nTEST_DATABASE_URL=mongodb://localhost:27017/app python -m pytest   # a real, disposable database: it is emptied\n```\n\nLook for `TODO` in the code: each one marks a decision the input did not settle.\n",
+  "app/__init__.py": "",
+  "app/application_models.py": "\"\"\"The application models the conversions use: a copy of the classes DB2CRUD read.\"\"\"\n\nfrom __future__ import annotations\n\nfrom dataclasses import dataclass\nfrom datetime import date, datetime\nfrom decimal import Decimal\nfrom enum import Enum\n\n\nclass Level(str, Enum):\n    BASIC = \"basic\"\n    GOLD = \"gold\"\n\n\nclass LineStatus(str, Enum):\n    PENDING = \"pending\"\n    SENT = \"sent\"\n\n\n@dataclass(kw_only=True)\nclass Location:\n    \"\"\"Location, as the application has it.\"\"\"\n\n    latitude: float\n    longitude: float\n\n\n@dataclass(kw_only=True)\nclass Address:\n    \"\"\"Address, as the application has it.\"\"\"\n\n    street: str\n    zip_code: str\n    location: Location | None = None\n\n\n@dataclass(kw_only=True)\nclass Customer:\n    \"\"\"Customer, as the application has it.\"\"\"\n\n    id: str\n    email: str\n    since: datetime\n    address: Address\n    tags: list[str]\n    level: Level | None = None\n\n\n@dataclass(kw_only=True)\nclass Discount:\n    \"\"\"Discount, as the application has it.\"\"\"\n\n    reason: str\n    percent: float\n\n\n@dataclass(kw_only=True)\nclass OrderLine:\n    \"\"\"OrderLine, as the application has it.\"\"\"\n\n    sku: str\n    quantity: int\n    price: Decimal\n    discounts: list[Discount]\n    id: str | None = None\n    status: LineStatus | None = None\n\n\n@dataclass(kw_only=True)\nclass Shipping:\n    \"\"\"Shipping, as the application has it.\"\"\"\n\n    carrier: str\n    sent_on: date\n\n\n@dataclass(kw_only=True)\nclass Order:\n    \"\"\"Order, as the application has it.\"\"\"\n\n    id: str\n    code: str\n    lines: list[OrderLine]\n    shipping: Shipping | None = None\n\n\n@dataclass(kw_only=True)\nclass Parcel:\n    \"\"\"Parcel, as the application has it.\"\"\"\n\n    weight: float\n    size: str\n    fragile: bool\n\n\n@dataclass(kw_only=True)\nclass Shipment:\n    \"\"\"Shipment, as the application has it.\"\"\"\n\n    id: str\n    parcel: Parcel\n    stops: list[str]\n",
+  "app/conversions/__init__.py": "",
+  "app/conversions/customer.py": "\"\"\"Conversions between the application models and the \"customers\" table: what the service takes and returns.\"\"\"\n\nfrom __future__ import annotations\n\nfrom typing import Any\n\nfrom app.application_models import Address, Customer as CustomerModel, Level, Location\nfrom app.dtos.customer import CustomerCreate, CustomerRead\n\n\ndef _plain(value: Any) -> Any:\n    \"\"\"The value of an enum member, or the value itself.\"\"\"\n    return getattr(value, \"value\", value)\n\n\ndef _customer_address_location_to_document(value: Location) -> Any:\n    \"\"\"A Location as the customers collection keeps it; what is missing is left out.\"\"\"\n    document = {\n        \"latitude\": value.latitude,\n        \"longitude\": value.longitude,\n    }\n    return {key: item for key, item in document.items() if item is not None}\n\n\ndef _customer_address_to_document(value: Address) -> Any:\n    \"\"\"An Address as the customers collection keeps it; what is missing is left out.\"\"\"\n    document = {\n        \"street\": value.street,\n        \"zip code\": value.zip_code,\n        \"location\": _customer_address_location_to_document(value.location) if value.location is not None else None,\n    }\n    return {key: item for key, item in document.items() if item is not None}\n\n\ndef customer_model_to_customer_create(model: CustomerModel) -> CustomerCreate:\n    \"\"\"A Customer as the customers table takes it.\"\"\"\n    return CustomerCreate(\n        email=model.email,\n        level=_plain(model.level) if model.level is not None else None,\n        since=model.since,\n        address=_customer_address_to_document(model.address),\n        tags=model.tags,\n    )\n\n\ndef _customer_address_location_from_document(value: Any) -> Location:\n    \"\"\"A document of the customers collection as a Location.\"\"\"\n    return Location(\n        latitude=value[\"latitude\"],\n        longitude=value[\"longitude\"],\n    )\n\n\ndef _customer_address_from_document(value: Any) -> Address:\n    \"\"\"A document of the customers collection as an Address.\"\"\"\n    return Address(\n        street=value[\"street\"],\n        zip_code=value[\"zip code\"],\n        location=_customer_address_location_from_document(value.get(\"location\")) if value.get(\"location\") is not None else None,\n    )\n\n\ndef customer_read_to_customer_model(row: CustomerRead) -> CustomerModel:\n    \"\"\"A row of the customers table as a Customer.\"\"\"\n    return CustomerModel(\n        id=row.id,\n        email=row.email,\n        level=Level(row.level) if row.level is not None else None,\n        since=row.since,\n        address=_customer_address_from_document(row.address),\n        tags=row.tags if row.tags is not None else [],\n    )\n",
+  "app/conversions/order.py": "\"\"\"Conversions between the application models and the \"orders\" table: what the service takes and returns.\"\"\"\n\nfrom __future__ import annotations\n\nfrom datetime import datetime, timezone\nfrom typing import Any\n\nfrom app.application_models import Discount, LineStatus, Order as OrderModel, OrderLine, Shipping\nfrom app.dtos.order import OrderCreate, OrderRead\n\n\ndef _plain(value: Any) -> Any:\n    \"\"\"The value of an enum member, or the value itself.\"\"\"\n    return getattr(value, \"value\", value)\n\n\ndef _order_lines_discounts_to_document(value: Discount) -> Any:\n    \"\"\"A Discount as the orders collection keeps it; what is missing is left out.\"\"\"\n    document = {\n        \"reason\": value.reason,\n        \"percent\": value.percent,\n    }\n    return {key: item for key, item in document.items() if item is not None}\n\n\ndef _order_lines_to_document(value: OrderLine) -> Any:\n    \"\"\"An OrderLine as the orders collection keeps it; what is missing is left out.\"\"\"\n    document = {\n        \"_id\": value.id,\n        \"sku\": value.sku,\n        \"quantity\": value.quantity,\n        \"price\": value.price,\n        \"status\": _plain(value.status) if value.status is not None else None,\n        \"discounts\": [_order_lines_discounts_to_document(item) for item in value.discounts],\n    }\n    return {key: item for key, item in document.items() if item is not None}\n\n\ndef _order_shipping_to_document(value: Shipping) -> Any:\n    \"\"\"A Shipping as the orders collection keeps it; what is missing is left out.\"\"\"\n    document = {\n        \"carrier\": value.carrier,\n        \"sentOn\": datetime(value.sent_on.year, value.sent_on.month, value.sent_on.day, tzinfo=timezone.utc),\n    }\n    return {key: item for key, item in document.items() if item is not None}\n\n\ndef order_model_to_order_create(model: OrderModel) -> OrderCreate:\n    \"\"\"An Order as the orders table takes it.\"\"\"\n    return OrderCreate(\n        code=model.code,\n        lines=[_order_lines_to_document(item) for item in model.lines],\n        shipping=_order_shipping_to_document(model.shipping) if model.shipping is not None else None,\n    )\n\n\ndef _order_lines_discounts_from_document(value: Any) -> Discount:\n    \"\"\"A document of the orders collection as a Discount.\"\"\"\n    return Discount(\n        reason=value[\"reason\"],\n        percent=value[\"percent\"],\n    )\n\n\ndef _order_lines_from_document(value: Any) -> OrderLine:\n    \"\"\"A document of the orders collection as an OrderLine.\"\"\"\n    return OrderLine(\n        id=value.get(\"_id\"),\n        sku=value[\"sku\"],\n        quantity=value[\"quantity\"],\n        price=value[\"price\"],\n        status=LineStatus(value.get(\"status\")) if value.get(\"status\") is not None else None,\n        discounts=[_order_lines_discounts_from_document(item) for item in value.get(\"discounts\")] if value.get(\"discounts\") is not None else [],\n    )\n\n\ndef _order_shipping_from_document(value: Any) -> Shipping:\n    \"\"\"A document of the orders collection as a Shipping.\"\"\"\n    return Shipping(\n        carrier=value[\"carrier\"],\n        sent_on=value[\"sentOn\"].date(),\n    )\n\n\ndef order_read_to_order_model(row: OrderRead) -> OrderModel:\n    \"\"\"A row of the orders table as an Order.\"\"\"\n    return OrderModel(\n        id=row.id,\n        code=row.code,\n        lines=[_order_lines_from_document(item) for item in row.lines],\n        shipping=_order_shipping_from_document(row.shipping) if row.shipping is not None else None,\n    )\n",
+  "app/conversions/shipment.py": "\"\"\"Conversions between the application models and the \"shipments\" table: what the service takes and returns.\"\"\"\n\nfrom __future__ import annotations\n\nfrom typing import Any\n\nfrom app.application_models import Parcel, Shipment as ShipmentModel\nfrom app.dtos.shipment import ShipmentCreate, ShipmentRead\n\n\ndef _shipment_parcel_to_document(value: Parcel) -> Any:\n    \"\"\"A Parcel as the shipments collection keeps it; what is missing is left out.\"\"\"\n    # Not stored: fragile\n    document = {\n        \"weight\": value.weight,\n        # TODO: contents: no field of the model gives it (contents)\n        # TODO: size: DB2CRUD does not write this conversion (size)\n    }\n    return {key: item for key, item in document.items() if item is not None}\n\n\ndef shipment_model_to_shipment_create(model: ShipmentModel) -> ShipmentCreate:\n    \"\"\"A Shipment as the shipments table takes it.\"\"\"\n    return ShipmentCreate(\n        parcel=_shipment_parcel_to_document(model.parcel),\n        # TODO: stops: DB2CRUD does not write this conversion (stops)\n    )\n\n\ndef _shipment_parcel_from_document(value: Any) -> Parcel:\n    \"\"\"A document of the shipments collection as a Parcel.\"\"\"\n    return Parcel(\n        weight=value[\"weight\"],\n        # TODO: size: DB2CRUD does not write this conversion (size)\n        size=None,\n        # TODO: fragile: no field of the model gives it (fragile)\n        fragile=None,\n    )\n\n\ndef shipment_read_to_shipment_model(row: ShipmentRead) -> ShipmentModel:\n    \"\"\"A row of the shipments table as a Shipment.\"\"\"\n    return ShipmentModel(\n        id=row.id,\n        parcel=_shipment_parcel_from_document(row.parcel),\n        # TODO: stops: DB2CRUD does not write this conversion (stops)\n        stops=None,\n    )\n",
+  "app/db.py": "\"\"\"The MongoDB database DATABASE_URL names (see .env.example), through Beanie, and how values and errors are read.\"\"\"\n\nfrom collections.abc import Iterable\nfrom dataclasses import dataclass\nimport os\nfrom typing import Any\n\nfrom beanie import PydanticObjectId, init_beanie\nfrom beanie.odm.utils.encoder import Encoder\nfrom pydantic import BaseModel, ValidationError\nfrom pymongo import AsyncMongoClient\nfrom pymongo.asynchronous.client_session import AsyncClientSession\nfrom pymongo.errors import OperationFailure\n\nfrom app.errors import ConflictError, FieldError, ValidationFailedError\nfrom app.models import DOCUMENTS\n\nDATABASE_URL = os.environ.get(\"DATABASE_URL\", \"mongodb://localhost:27017/app\")\n\n\n@dataclass\nclass Db:\n    \"\"\"The client of the database and, when there is one, the session whose transaction every query runs in.\"\"\"\n\n    client: AsyncMongoClient[dict[str, Any]]\n    session: AsyncClientSession | None = None\n\n\nasync def open_database(url: str = DATABASE_URL, create_indexes: bool = False) -> AsyncMongoClient[dict[str, Any]]:\n    \"\"\"Opens the database at `url` for the documents; close the client when the application ends. It creates no collection and no index unless it is asked to: the database already exists.\"\"\"\n    client: AsyncMongoClient[dict[str, Any]] = AsyncMongoClient(url, uuidRepresentation=\"standard\", tz_aware=True)\n    await init_beanie(database=client.get_default_database(), document_models=DOCUMENTS, skip_indexes=not create_indexes)\n    return client\n\n\ndef plain(value: Any) -> Any:\n    \"\"\"A value of a document as the entities keep it: identifiers as text, documents as dictionaries with their stored names.\"\"\"\n    if isinstance(value, BaseModel):\n        fields = type(value).model_fields\n        return {\n            (fields[name].alias if name in fields else None) or name: plain(item)\n            for name, item in BaseModel.__iter__(value)\n            if item is not None\n        }\n    if isinstance(value, list):\n        return [plain(item) for item in value]\n    return str(value) if isinstance(value, PydanticObjectId) else value\n\n\ndef stored(document: BaseModel) -> dict[str, Any]:\n    \"\"\"A document as the database keeps it: fields without a value are not there.\"\"\"\n    values: dict[str, Any] = Encoder(to_db=True, keep_nulls=False).encode(document)\n    return values\n\n\ndef changes(before: dict[str, Any], now: dict[str, Any], fields: Iterable[str]) -> dict[str, Any]:\n    \"\"\"The update that takes a document from what it was to what it is: only the fields that differ, and inside a nested document only its own.\"\"\"\n    values: dict[str, Any] = {}\n    removed: dict[str, Any] = {}\n\n    def compare(path: str, old: Any, new: Any) -> None:\n        if old == new and type(old) is type(new):\n            return\n        if new is None:\n            removed[path] = \"\"\n        elif isinstance(old, dict) and isinstance(new, dict):\n            for name in {**old, **new}:\n                compare(f\"{path}.{name}\", old.get(name), new.get(name))\n        else:\n            values[path] = new\n\n    for field in fields:\n        compare(field, before.get(field), now.get(field))\n    return ({\"$set\": values} if values else {}) | ({\"$unset\": removed} if removed else {})\n\n\nREFUSALS = (OperationFailure, ValidationError)\n\"\"\"What a write fails with when the database, or the model of a document, does not take its values.\"\"\"\n\n\ndef refusal(entity: str, error: Exception) -> Exception:\n    \"\"\"The domain error of a refused write: a repeated value, or values the model or the validator of the collection do not take.\"\"\"\n    if isinstance(error, ValidationError):\n        problems = [FieldError(\".\".join(str(part) for part in item[\"loc\"]), item[\"msg\"]) for item in error.errors()]\n        return ValidationFailedError(entity, problems)\n    if isinstance(error, OperationFailure) and error.code in (11000, 121):\n        return ConflictError(entity, f\"the database refused the change: {error}\")\n    return error\n",
+  "app/documents.py": "\"\"\"The documents inside others: their rules, what does not follow them, and the identifiers of those in lists.\"\"\"\n\nfrom typing import Any\n\nfrom bson import ObjectId\n\nfrom app.errors import FieldError\n\ntype Rule = dict[str, Any]\n\"\"\"What a value must be: the fields of a document, the items of a list, the values or limits of anything else.\"\"\"\n\n\ndef problems(value: Any, rule: Rule, path: str) -> list[FieldError]:\n    \"\"\"What a value does not follow of its rule, each with the path of its field (`lines.0.quantity`). Fields the rules do not name are left alone.\"\"\"\n    if value is None:\n        return [FieldError(path, \"is required\")] if rule.get(\"required\") else []\n    errors: list[FieldError] = []\n    if \"items\" in rule:\n        if not isinstance(value, list):\n            return [FieldError(path, \"must be a list\")]\n        for index, item in enumerate(value):\n            errors += problems(item, rule[\"items\"] | {\"required\": True}, f\"{path}.{index}\")\n    if \"fields\" in rule:\n        if not isinstance(value, dict):\n            return [FieldError(path, \"must be a document\")]\n        for name, field in rule[\"fields\"].items():\n            errors += problems(value.get(name), field, f\"{path}.{name}\")\n    if \"values\" in rule and value not in rule[\"values\"]:\n        errors.append(FieldError(path, \"must be one of: \" + \", \".join(str(item) for item in rule[\"values\"])))\n    if \"min\" in rule and value < rule[\"min\"]:\n        errors.append(FieldError(path, f\"must be >= {rule['min']}\"))\n    if \"above\" in rule and value <= rule[\"above\"]:\n        errors.append(FieldError(path, f\"must be > {rule['above']}\"))\n    if \"max\" in rule and value > rule[\"max\"]:\n        errors.append(FieldError(path, f\"must be <= {rule['max']}\"))\n    if \"below\" in rule and value >= rule[\"below\"]:\n        errors.append(FieldError(path, f\"must be < {rule['below']}\"))\n    if \"min_length\" in rule and len(value) < rule[\"min_length\"]:\n        errors.append(FieldError(path, f\"must have >= {rule['min_length']} characters\"))\n    if \"max_length\" in rule and len(value) > rule[\"max_length\"]:\n        errors.append(FieldError(path, f\"is longer than {rule['max_length']} characters\"))\n    return errors\n\n\ndef identify(items: list[Any] | None) -> None:\n    \"\"\"Gives an identifier to the documents of a list that have none: MongoDB numbers only whole documents.\"\"\"\n    for item in items or []:\n        if item.get(\"_id\") is None:\n            item[\"_id\"] = str(ObjectId())\n",
+  "app/dtos/__init__.py": "",
+  "app/dtos/customer.py": "\"\"\"What services take and return for the \"customers\" table.\"\"\"\n\nfrom datetime import datetime\n\nfrom pydantic import BaseModel, ConfigDict\n\nfrom app.entities.customer import CustomerAddress\n\n\nclass CustomerCreate(BaseModel):\n    \"\"\"The values of a new Customer. Optional fields left out take the database's default.\"\"\"\n\n    email: str\n    level: str | None = None\n    since: datetime\n    address: CustomerAddress\n    tags: list[str] | None = None\n\n\nclass CustomerUpdate(BaseModel):\n    \"\"\"The values of a Customer that change; fields left out keep their value.\"\"\"\n\n    email: str | None = None\n    level: str | None = None\n    since: datetime | None = None\n    address: CustomerAddress | None = None\n    tags: list[str] | None = None\n\n\nclass CustomerRead(BaseModel):\n    \"\"\"A Customer as services return it.\"\"\"\n\n    model_config = ConfigDict(from_attributes=True)\n\n    id: str\n    email: str\n    level: str | None = None\n    since: datetime\n    address: CustomerAddress\n    tags: list[str] | None = None\n",
+  "app/dtos/order.py": "\"\"\"What services take and return for the \"orders\" table.\"\"\"\n\nfrom pydantic import BaseModel, ConfigDict\n\nfrom app.entities.order import OrderLine, OrderShipping\n\n\nclass OrderCreate(BaseModel):\n    \"\"\"The values of a new Order. Optional fields left out take the database's default.\"\"\"\n\n    code: str\n    lines: list[OrderLine]\n    shipping: OrderShipping | None = None\n\n\nclass OrderUpdate(BaseModel):\n    \"\"\"The values of a Order that change; fields left out keep their value.\"\"\"\n\n    code: str | None = None\n    lines: list[OrderLine] | None = None\n    shipping: OrderShipping | None = None\n\n\nclass OrderRead(BaseModel):\n    \"\"\"A Order as services return it.\"\"\"\n\n    model_config = ConfigDict(from_attributes=True)\n\n    id: str\n    code: str\n    lines: list[OrderLine]\n    shipping: OrderShipping | None = None\n",
+  "app/dtos/shipment.py": "\"\"\"What services take and return for the \"shipments\" table.\"\"\"\n\nfrom pydantic import BaseModel, ConfigDict\n\nfrom app.entities.shipment import ShipmentParcel, ShipmentStop\n\n\nclass ShipmentCreate(BaseModel):\n    \"\"\"The values of a new Shipment. Optional fields left out take the database's default.\"\"\"\n\n    parcel: ShipmentParcel\n    stops: list[ShipmentStop] | None = None\n\n\nclass ShipmentUpdate(BaseModel):\n    \"\"\"The values of a Shipment that change; fields left out keep their value.\"\"\"\n\n    parcel: ShipmentParcel | None = None\n    stops: list[ShipmentStop] | None = None\n\n\nclass ShipmentRead(BaseModel):\n    \"\"\"A Shipment as services return it.\"\"\"\n\n    model_config = ConfigDict(from_attributes=True)\n\n    id: str\n    parcel: ShipmentParcel\n    stops: list[ShipmentStop] | None = None\n",
+  "app/entities/__init__.py": "",
+  "app/entities/customer.py": "\"\"\"Entity of the \"customers\" collection.\"\"\"\n\nfrom __future__ import annotations\n\nfrom dataclasses import dataclass\nfrom datetime import datetime\nfrom typing import NotRequired, TypedDict\n\n\nCustomerAddressLocation = TypedDict(\n    \"CustomerAddressLocation\",\n    {\n        \"latitude\": float,\n        \"longitude\": float,\n    },\n)\n\"\"\"A document inside another, by the stored names of its fields.\"\"\"\n\n\nCustomerAddress = TypedDict(\n    \"CustomerAddress\",\n    {\n        \"street\": str,\n        \"zip code\": str,\n        \"location\": NotRequired[CustomerAddressLocation | None],\n    },\n)\n\"\"\"A document inside another, by the stored names of its fields.\"\"\"\n\n\n@dataclass(kw_only=True, eq=False)\nclass Customer:\n    \"\"\"A document of the \"customers\" collection. An attribute stays None until it is set or read.\"\"\"\n\n    id: str | None = None\n    email: str | None = None\n    level: str | None = None\n    since: datetime | None = None\n    address: CustomerAddress | None = None\n    tags: list[str] | None = None\n",
+  "app/entities/order.py": "\"\"\"Entity of the \"orders\" collection.\"\"\"\n\nfrom __future__ import annotations\n\nfrom dataclasses import dataclass\nfrom datetime import datetime\nfrom decimal import Decimal\nfrom typing import NotRequired, TypedDict\n\n\nOrderLineDiscount = TypedDict(\n    \"OrderLineDiscount\",\n    {\n        \"reason\": str,\n        \"percent\": float,\n    },\n)\n\"\"\"A document inside another, by the stored names of its fields.\"\"\"\n\n\nOrderLine = TypedDict(\n    \"OrderLine\",\n    {\n        \"_id\": NotRequired[str | None],\n        \"sku\": str,\n        \"quantity\": int,\n        \"price\": Decimal,\n        \"status\": NotRequired[str | None],\n        \"discounts\": NotRequired[list[OrderLineDiscount] | None],\n    },\n)\n\"\"\"A document inside another, by the stored names of its fields.\"\"\"\n\n\nOrderShipping = TypedDict(\n    \"OrderShipping\",\n    {\n        \"carrier\": str,\n        \"sentOn\": datetime,\n    },\n)\n\"\"\"A document inside another, by the stored names of its fields.\"\"\"\n\n\n@dataclass(kw_only=True, eq=False)\nclass Order:\n    \"\"\"A document of the \"orders\" collection. An attribute stays None until it is set or read.\"\"\"\n\n    id: str | None = None\n    code: str | None = None\n    lines: list[OrderLine] | None = None\n    shipping: OrderShipping | None = None\n",
+  "app/entities/shipment.py": "\"\"\"Entity of the \"shipments\" collection.\"\"\"\n\nfrom __future__ import annotations\n\nfrom dataclasses import dataclass\nfrom typing import NotRequired, TypedDict\n\n\nShipmentParcelSize = TypedDict(\n    \"ShipmentParcelSize\",\n    {\n        \"height\": float,\n    },\n)\n\"\"\"A document inside another, by the stored names of its fields.\"\"\"\n\n\nShipmentParcel = TypedDict(\n    \"ShipmentParcel\",\n    {\n        \"weight\": float,\n        \"contents\": str,\n        \"size\": NotRequired[ShipmentParcelSize | None],\n    },\n)\n\"\"\"A document inside another, by the stored names of its fields.\"\"\"\n\n\nShipmentStop = TypedDict(\n    \"ShipmentStop\",\n    {\n        \"city\": NotRequired[str | None],\n    },\n)\n\"\"\"A document inside another, by the stored names of its fields.\"\"\"\n\n\n@dataclass(kw_only=True, eq=False)\nclass Shipment:\n    \"\"\"A document of the \"shipments\" collection. An attribute stays None until it is set or read.\"\"\"\n\n    id: str | None = None\n    parcel: ShipmentParcel | None = None\n    stops: list[ShipmentStop] | None = None\n",
+  "app/errors.py": "\"\"\"Errors of the data access layer. They carry no HTTP codes: whoever calls the services translates them.\"\"\"\n\nfrom dataclasses import dataclass, field\n\n\nclass DomainError(Exception):\n    \"\"\"Base of every error a service raises on purpose.\"\"\"\n\n\nclass NotFoundError(DomainError):\n    \"\"\"No row has this key.\"\"\"\n\n    def __init__(self, entity: str, key: object) -> None:\n        super().__init__(f\"No {entity} has the key {key!r}\")\n        self.entity = entity\n        self.key = key\n\n\nclass ConflictError(DomainError):\n    \"\"\"The change clashes with what is stored: a unique value, a newer version, rows that depend on it.\"\"\"\n\n    def __init__(self, entity: str, reason: str, fields: tuple[str, ...] = ()) -> None:\n        super().__init__(f\"{entity}: {reason}\")\n        self.entity = entity\n        self.reason = reason\n        self.fields = fields\n\n\n@dataclass(frozen=True)\nclass FieldError:\n    \"\"\"What is wrong with one field.\"\"\"\n\n    field: str\n    message: str\n\n\n@dataclass\nclass ValidationFailedError(DomainError):\n    \"\"\"The values break the rules of the table: missing, too long, out of range, pointing nowhere.\"\"\"\n\n    entity: str\n    errors: list[FieldError] = field(default_factory=list)\n\n    def __post_init__(self) -> None:\n        super().__init__(f\"{self.entity}: \" + \"; \".join(f\"{error.field}: {error.message}\" for error in self.errors))\n",
+  "app/models.py": "\"\"\"The Beanie document of every collection, as the database has them.\"\"\"\n\nfrom datetime import datetime\nfrom typing import Annotated\n\nfrom beanie import DecimalAnnotation, Document, PydanticObjectId\nfrom bson.int64 import Int64\nfrom pydantic import BaseModel, ConfigDict, Field, PlainValidator\nfrom pymongo import IndexModel\n\nLong = Annotated[int, PlainValidator(Int64)]\n\"\"\"A whole number of 64 bits, stored as one whatever its value.\"\"\"\n\n\nclass CustomerAddressLocationModel(BaseModel):\n    \"\"\"A document inside another. Fields it does not name are kept.\"\"\"\n\n    model_config = ConfigDict(extra=\"allow\", protected_namespaces=())\n\n    latitude: float | None = None\n    longitude: float | None = None\n\n\nclass CustomerAddressModel(BaseModel):\n    \"\"\"A document inside another. Fields it does not name are kept.\"\"\"\n\n    model_config = ConfigDict(extra=\"allow\", protected_namespaces=())\n\n    street: str | None = None\n    zip_code: str | None = Field(default=None, alias=\"zip code\")\n    location: CustomerAddressLocationModel | None = None\n\n\nclass CustomerDocument(Document):\n    \"\"\"A document of the \"customers\" collection.\"\"\"\n\n    model_config = ConfigDict(populate_by_name=False, protected_namespaces=())\n\n    id: PydanticObjectId | None = Field(default=None, alias=\"_id\")\n    email: str | None = None\n    level: str | None = None\n    since: datetime | None = None\n    address: CustomerAddressModel | None = None\n    tags: list[str] | None = None\n\n    class Settings:\n        name = \"customers\"\n        keep_nulls = False\n        # Only the tests create them: in the application the database already has its own\n        indexes = [\n            IndexModel([(\"email\", 1)], unique=True),\n        ]\n\n\nclass OrderLineDiscountModel(BaseModel):\n    \"\"\"A document inside another. Fields it does not name are kept.\"\"\"\n\n    model_config = ConfigDict(extra=\"allow\", protected_namespaces=())\n\n    reason: str | None = None\n    percent: float | None = None\n\n\nclass OrderLineModel(BaseModel):\n    \"\"\"A document inside another. Fields it does not name are kept.\"\"\"\n\n    model_config = ConfigDict(extra=\"allow\", protected_namespaces=())\n\n    id_: PydanticObjectId | None = Field(default=None, alias=\"_id\")\n    sku: str | None = None\n    quantity: int | None = None\n    price: DecimalAnnotation | None = None\n    status: str | None = None\n    discounts: list[OrderLineDiscountModel] | None = None\n\n\nclass OrderShippingModel(BaseModel):\n    \"\"\"A document inside another. Fields it does not name are kept.\"\"\"\n\n    model_config = ConfigDict(extra=\"allow\", protected_namespaces=())\n\n    carrier: str | None = None\n    sent_on: datetime | None = Field(default=None, alias=\"sentOn\")\n\n\nclass OrderDocument(Document):\n    \"\"\"A document of the \"orders\" collection.\"\"\"\n\n    model_config = ConfigDict(populate_by_name=False, protected_namespaces=())\n\n    id: PydanticObjectId | None = Field(default=None, alias=\"_id\")\n    code: str | None = None\n    lines: list[OrderLineModel] | None = None\n    shipping: OrderShippingModel | None = None\n\n    class Settings:\n        name = \"orders\"\n        keep_nulls = False\n        # Only the tests create them: in the application the database already has its own\n        indexes = [\n            IndexModel([(\"code\", 1)], unique=True),\n        ]\n\n\nclass ShipmentParcelSizeModel(BaseModel):\n    \"\"\"A document inside another. Fields it does not name are kept.\"\"\"\n\n    model_config = ConfigDict(extra=\"allow\", protected_namespaces=())\n\n    height: float | None = None\n\n\nclass ShipmentParcelModel(BaseModel):\n    \"\"\"A document inside another. Fields it does not name are kept.\"\"\"\n\n    model_config = ConfigDict(extra=\"allow\", protected_namespaces=())\n\n    weight: float | None = None\n    contents: str | None = None\n    size: ShipmentParcelSizeModel | None = None\n\n\nclass ShipmentStopModel(BaseModel):\n    \"\"\"A document inside another. Fields it does not name are kept.\"\"\"\n\n    model_config = ConfigDict(extra=\"allow\", protected_namespaces=())\n\n    city: str | None = None\n\n\nclass ShipmentDocument(Document):\n    \"\"\"A document of the \"shipments\" collection.\"\"\"\n\n    model_config = ConfigDict(populate_by_name=False, protected_namespaces=())\n\n    id: PydanticObjectId | None = Field(default=None, alias=\"_id\")\n    parcel: ShipmentParcelModel | None = None\n    stops: list[ShipmentStopModel] | None = None\n\n    class Settings:\n        name = \"shipments\"\n        keep_nulls = False\n\n\nDOCUMENTS: list[type[Document]] = [CustomerDocument, OrderDocument, ShipmentDocument]\n\"\"\"Every document, for `init_beanie`.\"\"\"\n",
+  "app/paging.py": "\"\"\"A page of a list: the rows from an offset, and how many there are in all.\"\"\"\n\nfrom dataclasses import dataclass\n\n\n@dataclass(frozen=True)\nclass Page[T]:\n    items: list[T]\n    total: int\n    offset: int\n    limit: int\n",
+  "app/repositories/__init__.py": "",
+  "app/repositories/customer.py": "\"\"\"Repository of the \"customers\" table: reads and writes rows, and decides nothing.\"\"\"\n\nfrom __future__ import annotations\n\nfrom typing import Any, Protocol\nfrom weakref import WeakKeyDictionary\n\nfrom beanie import UpdateResponse\nfrom bson import ObjectId\n\nfrom app.db import Db, REFUSALS, changes, plain, refusal, stored\nfrom app.entities.customer import Customer\nfrom app.models import CustomerDocument\nfrom app.paging import Page\n\n\nclass CustomerRepository(Protocol):\n    \"\"\"Where customers rows are kept. Services depend only on this interface.\"\"\"\n\n    async def find_by_id(self, id: str) -> Customer | None:\n        \"\"\"The row with this primary key, or None.\"\"\"\n        ...\n\n    async def list(self, offset: int = 0, limit: int = 50) -> Page[Customer]:\n        \"\"\"At most `limit` rows from `offset`, by primary key, and how many there are.\"\"\"\n        ...\n\n    async def find_by_email(self, email: str) -> Customer | None:\n        \"\"\"The row with this email, or None.\"\"\"\n        ...\n\n    async def insert(self, entity: Customer) -> Customer:\n        \"\"\"Stores a new row; the values the database fills are read back.\"\"\"\n        ...\n\n    async def update(self, entity: Customer) -> Customer:\n        \"\"\"Stores the changes made to a row read from this repository.\"\"\"\n        ...\n\n    async def delete(self, entity: Customer) -> None:\n        \"\"\"Removes a row read from this repository.\"\"\"\n        ...\n\n    async def add_tag(self, id: str, tag: str) -> Customer | None:\n        \"\"\"Adds an item to tags, and gives the row as it is then, or None when there is none.\"\"\"\n        ...\n\n    async def remove_tag(self, id: str, tag: str) -> Customer | None:\n        \"\"\"Removes an item from tags, and gives the row as it is then, or None when there is none.\"\"\"\n        ...\n\n\nclass MongoCustomerRepository:\n    \"\"\"Keeps customers documents in the database, through Beanie. Every write is stored at once.\"\"\"\n\n    def __init__(self, db: Db) -> None:\n        self._db = db\n\n    async def find_by_id(self, id: str) -> Customer | None:\n        \"\"\"The row with this primary key, or None.\"\"\"\n        if not ObjectId.is_valid(id):\n            return None\n        document = await CustomerDocument.find_one({\"_id\": ObjectId(id)}, session=self._db.session)\n        return None if document is None else _entity(document)\n\n    async def list(self, offset: int = 0, limit: int = 50) -> Page[Customer]:\n        \"\"\"At most `limit` rows from `offset`, by primary key, and how many there are.\"\"\"\n        documents = await CustomerDocument.find({}, session=self._db.session).sort([(\"_id\", 1)]).skip(offset).limit(limit).to_list()\n        total = await CustomerDocument.find({}, session=self._db.session).count()\n        return Page(items=[_entity(document) for document in documents], total=total, offset=offset, limit=limit)\n\n    async def find_by_email(self, email: str) -> Customer | None:\n        \"\"\"The row with this email, or None.\"\"\"\n        document = await CustomerDocument.find_one({\"email\": email}, session=self._db.session)\n        return None if document is None else _entity(document)\n\n    async def insert(self, entity: Customer) -> Customer:\n        \"\"\"Stores a new row; the values the database fills are read back.\"\"\"\n        try:\n            document = _document(entity)\n            await document.insert(session=self._db.session)\n        except REFUSALS as error:\n            raise refusal(\"Customer\", error) from error\n        entity.id = str(document.id)\n        return _loaded(entity)\n\n    async def update(self, entity: Customer) -> Customer:\n        \"\"\"Stores the changes made to a row read from this repository.\"\"\"\n        try:\n            change = changes(_LOADED.get(entity, {}), stored(_document(entity)), _FIELDS)\n            if change:\n                await CustomerDocument.find_one({\"_id\": ObjectId(entity.id)}).update(change, session=self._db.session)\n        except REFUSALS as error:\n            raise refusal(\"Customer\", error) from error\n        return _loaded(entity)\n\n    async def delete(self, entity: Customer) -> None:\n        \"\"\"Removes a row read from this repository.\"\"\"\n        try:\n            await CustomerDocument.find_one({\"_id\": ObjectId(entity.id)}).delete(session=self._db.session)\n        except REFUSALS as error:\n            raise refusal(\"Customer\", error) from error\n\n    async def add_tag(self, id: str, tag: str) -> Customer | None:\n        \"\"\"Adds an item to tags, and gives the row as it is then, or None when there is none.\"\"\"\n        if not ObjectId.is_valid(id):\n            return None\n        try:\n            document = await CustomerDocument.find_one({\"_id\": ObjectId(id)}).update(\n                {\"$push\": {\"tags\": tag}},\n                session=self._db.session,\n                response_type=UpdateResponse.NEW_DOCUMENT,\n            )\n        except REFUSALS as error:\n            raise refusal(\"Customer\", error) from error\n        return None if document is None else _entity(document)\n\n    async def remove_tag(self, id: str, tag: str) -> Customer | None:\n        \"\"\"Removes an item from tags, and gives the row as it is then, or None when there is none.\"\"\"\n        if not ObjectId.is_valid(id):\n            return None\n        try:\n            document = await CustomerDocument.find_one({\"_id\": ObjectId(id)}).update(\n                {\"$pull\": {\"tags\": tag}},\n                session=self._db.session,\n                response_type=UpdateResponse.NEW_DOCUMENT,\n            )\n        except REFUSALS as error:\n            raise refusal(\"Customer\", error) from error\n        return None if document is None else _entity(document)\n\n\n_LOADED: WeakKeyDictionary[Customer, dict[str, Any]] = WeakKeyDictionary()\n\"\"\"What each entity was read as: a change writes only the fields that differ.\"\"\"\n\n_FIELDS = (\"email\", \"level\", \"since\", \"address\", \"tags\",)\n\"\"\"The fields a change may write.\"\"\"\n\n\ndef _document(entity: Customer) -> CustomerDocument:\n    \"\"\"The document of a Customer.\"\"\"\n    return CustomerDocument.model_validate(\n        {\n            \"_id\": entity.id,\n            \"email\": entity.email,\n            \"level\": entity.level,\n            \"since\": entity.since,\n            \"address\": entity.address,\n            \"tags\": entity.tags,\n        }\n    )\n\n\ndef _entity(document: CustomerDocument) -> Customer:\n    \"\"\"The Customer of a document; a field it does not have is None.\"\"\"\n    values = plain(document)\n    entity = Customer(\n        id=values.get(\"_id\"),\n        email=values.get(\"email\"),\n        level=values.get(\"level\"),\n        since=values.get(\"since\"),\n        address=values.get(\"address\"),\n        tags=values.get(\"tags\"),\n    )\n    return _loaded(entity)\n\n\ndef _loaded(entity: Customer) -> Customer:\n    \"\"\"The same entity, with what it is stored as kept to tell its changes.\"\"\"\n    _LOADED[entity] = stored(_document(entity))\n    return entity\n\n\nclass MemoryCustomerRepository:\n    \"\"\"Keeps customers rows in memory, for tests and for trying the services without a database.\"\"\"\n\n    def __init__(self) -> None:\n        self._rows: dict[tuple[Any, ...], Customer] = {}\n\n    @staticmethod\n    def _key(row: Customer) -> tuple[Any, ...]:\n        return (row.id,)\n\n    async def find_by_id(self, id: str) -> Customer | None:\n        \"\"\"The row with this primary key, or None.\"\"\"\n        return next((row for row in [row for row in sorted(self._rows.values(), key=self._key) if True] if row.id == id), None)\n\n    async def list(self, offset: int = 0, limit: int = 50) -> Page[Customer]:\n        \"\"\"At most `limit` rows from `offset`, by primary key, and how many there are.\"\"\"\n        rows = [row for row in sorted(self._rows.values(), key=self._key) if True]\n        return Page(items=rows[offset : offset + limit], total=len(rows), offset=offset, limit=limit)\n\n    async def find_by_email(self, email: str) -> Customer | None:\n        \"\"\"The row with this email, or None.\"\"\"\n        return next((row for row in [row for row in sorted(self._rows.values(), key=self._key) if True] if row.email == email), None)\n\n    async def insert(self, entity: Customer) -> Customer:\n        \"\"\"Stores a new row; the values the database fills are read back.\"\"\"\n        if entity.id is None:\n            entity.id = str(ObjectId())\n        self._rows[(entity.id,)] = entity\n        return entity\n\n    async def update(self, entity: Customer) -> Customer:\n        \"\"\"Stores the changes made to a row read from this repository.\"\"\"\n        self._rows[(entity.id,)] = entity\n        return entity\n\n    async def delete(self, entity: Customer) -> None:\n        \"\"\"Removes a row read from this repository.\"\"\"\n        self._rows.pop((entity.id,), None)\n\n    async def add_tag(self, id: str, tag: str) -> Customer | None:\n        \"\"\"Adds an item to tags, and gives the row as it is then, or None when there is none.\"\"\"\n        row = next((row for row in self._rows.values() if self._key(row) == (id,) and True), None)\n        if row is None:\n            return None\n        row.tags = [*(row.tags or []), tag]\n        return row\n\n    async def remove_tag(self, id: str, tag: str) -> Customer | None:\n        \"\"\"Removes an item from tags, and gives the row as it is then, or None when there is none.\"\"\"\n        row = next((row for row in self._rows.values() if self._key(row) == (id,) and True), None)\n        if row is None:\n            return None\n        row.tags = [item for item in row.tags or [] if item != tag]\n        return row\n",
+  "app/repositories/order.py": "\"\"\"Repository of the \"orders\" table: reads and writes rows, and decides nothing.\"\"\"\n\nfrom __future__ import annotations\n\nfrom typing import Any, Protocol\nfrom weakref import WeakKeyDictionary\n\nfrom beanie import UpdateResponse\nfrom bson import ObjectId\n\nfrom app.db import Db, REFUSALS, changes, plain, refusal, stored\nfrom app.documents import identify\nfrom app.entities.order import Order, OrderLine\nfrom app.models import OrderDocument, OrderLineModel\nfrom app.paging import Page\n\n\nclass OrderRepository(Protocol):\n    \"\"\"Where orders rows are kept. Services depend only on this interface.\"\"\"\n\n    async def find_by_id(self, id: str) -> Order | None:\n        \"\"\"The row with this primary key, or None.\"\"\"\n        ...\n\n    async def list(self, offset: int = 0, limit: int = 50) -> Page[Order]:\n        \"\"\"At most `limit` rows from `offset`, by primary key, and how many there are.\"\"\"\n        ...\n\n    async def find_by_code(self, code: str) -> Order | None:\n        \"\"\"The row with this code, or None.\"\"\"\n        ...\n\n    async def insert(self, entity: Order) -> Order:\n        \"\"\"Stores a new row; the values the database fills are read back.\"\"\"\n        ...\n\n    async def update(self, entity: Order) -> Order:\n        \"\"\"Stores the changes made to a row read from this repository.\"\"\"\n        ...\n\n    async def delete(self, entity: Order) -> None:\n        \"\"\"Removes a row read from this repository.\"\"\"\n        ...\n\n    async def add_line(self, id: str, line: OrderLine) -> Order | None:\n        \"\"\"Adds an item to lines, and gives the row as it is then, or None when there is none.\"\"\"\n        ...\n\n    async def remove_line(self, id: str, line_id: str) -> Order | None:\n        \"\"\"Removes an item from lines, and gives the row as it is then, or None when there is none.\"\"\"\n        ...\n\n\nclass MongoOrderRepository:\n    \"\"\"Keeps orders documents in the database, through Beanie. Every write is stored at once.\"\"\"\n\n    def __init__(self, db: Db) -> None:\n        self._db = db\n\n    async def find_by_id(self, id: str) -> Order | None:\n        \"\"\"The row with this primary key, or None.\"\"\"\n        if not ObjectId.is_valid(id):\n            return None\n        document = await OrderDocument.find_one({\"_id\": ObjectId(id)}, session=self._db.session)\n        return None if document is None else _entity(document)\n\n    async def list(self, offset: int = 0, limit: int = 50) -> Page[Order]:\n        \"\"\"At most `limit` rows from `offset`, by primary key, and how many there are.\"\"\"\n        documents = await OrderDocument.find({}, session=self._db.session).sort([(\"_id\", 1)]).skip(offset).limit(limit).to_list()\n        total = await OrderDocument.find({}, session=self._db.session).count()\n        return Page(items=[_entity(document) for document in documents], total=total, offset=offset, limit=limit)\n\n    async def find_by_code(self, code: str) -> Order | None:\n        \"\"\"The row with this code, or None.\"\"\"\n        document = await OrderDocument.find_one({\"code\": code}, session=self._db.session)\n        return None if document is None else _entity(document)\n\n    async def insert(self, entity: Order) -> Order:\n        \"\"\"Stores a new row; the values the database fills are read back.\"\"\"\n        identify(entity.lines)\n        try:\n            document = _document(entity)\n            await document.insert(session=self._db.session)\n        except REFUSALS as error:\n            raise refusal(\"Order\", error) from error\n        entity.id = str(document.id)\n        return _loaded(entity)\n\n    async def update(self, entity: Order) -> Order:\n        \"\"\"Stores the changes made to a row read from this repository.\"\"\"\n        identify(entity.lines)\n        try:\n            change = changes(_LOADED.get(entity, {}), stored(_document(entity)), _FIELDS)\n            if change:\n                await OrderDocument.find_one({\"_id\": ObjectId(entity.id)}).update(change, session=self._db.session)\n        except REFUSALS as error:\n            raise refusal(\"Order\", error) from error\n        return _loaded(entity)\n\n    async def delete(self, entity: Order) -> None:\n        \"\"\"Removes a row read from this repository.\"\"\"\n        try:\n            await OrderDocument.find_one({\"_id\": ObjectId(entity.id)}).delete(session=self._db.session)\n        except REFUSALS as error:\n            raise refusal(\"Order\", error) from error\n\n    async def add_line(self, id: str, line: OrderLine) -> Order | None:\n        \"\"\"Adds an item to lines, and gives the row as it is then, or None when there is none.\"\"\"\n        if not ObjectId.is_valid(id):\n            return None\n        identify([line])\n        try:\n            document = await OrderDocument.find_one({\"_id\": ObjectId(id)}).update(\n                {\"$push\": {\"lines\": stored(OrderLineModel.model_validate(line))}},\n                session=self._db.session,\n                response_type=UpdateResponse.NEW_DOCUMENT,\n            )\n        except REFUSALS as error:\n            raise refusal(\"Order\", error) from error\n        return None if document is None else _entity(document)\n\n    async def remove_line(self, id: str, line_id: str) -> Order | None:\n        \"\"\"Removes an item from lines, and gives the row as it is then, or None when there is none.\"\"\"\n        if not ObjectId.is_valid(id):\n            return None\n        if not ObjectId.is_valid(line_id):\n            return None\n        try:\n            document = await OrderDocument.find_one({\"_id\": ObjectId(id)}).update(\n                {\"$pull\": {\"lines\": {\"_id\": ObjectId(line_id)}}},\n                session=self._db.session,\n                response_type=UpdateResponse.NEW_DOCUMENT,\n            )\n        except REFUSALS as error:\n            raise refusal(\"Order\", error) from error\n        return None if document is None else _entity(document)\n\n\n_LOADED: WeakKeyDictionary[Order, dict[str, Any]] = WeakKeyDictionary()\n\"\"\"What each entity was read as: a change writes only the fields that differ.\"\"\"\n\n_FIELDS = (\"code\", \"lines\", \"shipping\",)\n\"\"\"The fields a change may write.\"\"\"\n\n\ndef _document(entity: Order) -> OrderDocument:\n    \"\"\"The document of a Order.\"\"\"\n    return OrderDocument.model_validate(\n        {\n            \"_id\": entity.id,\n            \"code\": entity.code,\n            \"lines\": entity.lines,\n            \"shipping\": entity.shipping,\n        }\n    )\n\n\ndef _entity(document: OrderDocument) -> Order:\n    \"\"\"The Order of a document; a field it does not have is None.\"\"\"\n    values = plain(document)\n    entity = Order(\n        id=values.get(\"_id\"),\n        code=values.get(\"code\"),\n        lines=values.get(\"lines\"),\n        shipping=values.get(\"shipping\"),\n    )\n    return _loaded(entity)\n\n\ndef _loaded(entity: Order) -> Order:\n    \"\"\"The same entity, with what it is stored as kept to tell its changes.\"\"\"\n    _LOADED[entity] = stored(_document(entity))\n    return entity\n\n\nclass MemoryOrderRepository:\n    \"\"\"Keeps orders rows in memory, for tests and for trying the services without a database.\"\"\"\n\n    def __init__(self) -> None:\n        self._rows: dict[tuple[Any, ...], Order] = {}\n\n    @staticmethod\n    def _key(row: Order) -> tuple[Any, ...]:\n        return (row.id,)\n\n    async def find_by_id(self, id: str) -> Order | None:\n        \"\"\"The row with this primary key, or None.\"\"\"\n        return next((row for row in [row for row in sorted(self._rows.values(), key=self._key) if True] if row.id == id), None)\n\n    async def list(self, offset: int = 0, limit: int = 50) -> Page[Order]:\n        \"\"\"At most `limit` rows from `offset`, by primary key, and how many there are.\"\"\"\n        rows = [row for row in sorted(self._rows.values(), key=self._key) if True]\n        return Page(items=rows[offset : offset + limit], total=len(rows), offset=offset, limit=limit)\n\n    async def find_by_code(self, code: str) -> Order | None:\n        \"\"\"The row with this code, or None.\"\"\"\n        return next((row for row in [row for row in sorted(self._rows.values(), key=self._key) if True] if row.code == code), None)\n\n    async def insert(self, entity: Order) -> Order:\n        \"\"\"Stores a new row; the values the database fills are read back.\"\"\"\n        if entity.id is None:\n            entity.id = str(ObjectId())\n        identify(entity.lines)\n        self._rows[(entity.id,)] = entity\n        return entity\n\n    async def update(self, entity: Order) -> Order:\n        \"\"\"Stores the changes made to a row read from this repository.\"\"\"\n        identify(entity.lines)\n        self._rows[(entity.id,)] = entity\n        return entity\n\n    async def delete(self, entity: Order) -> None:\n        \"\"\"Removes a row read from this repository.\"\"\"\n        self._rows.pop((entity.id,), None)\n\n    async def add_line(self, id: str, line: OrderLine) -> Order | None:\n        \"\"\"Adds an item to lines, and gives the row as it is then, or None when there is none.\"\"\"\n        row = next((row for row in self._rows.values() if self._key(row) == (id,) and True), None)\n        if row is None:\n            return None\n        identify([line])\n        row.lines = [*(row.lines or []), line]\n        return row\n\n    async def remove_line(self, id: str, line_id: str) -> Order | None:\n        \"\"\"Removes an item from lines, and gives the row as it is then, or None when there is none.\"\"\"\n        row = next((row for row in self._rows.values() if self._key(row) == (id,) and True), None)\n        if row is None:\n            return None\n        row.lines = [item for item in row.lines or [] if item[\"_id\"] != line_id]\n        return row\n",
+  "app/repositories/shipment.py": "\"\"\"Repository of the \"shipments\" table: reads and writes rows, and decides nothing.\"\"\"\n\nfrom __future__ import annotations\n\nfrom typing import Any, Protocol\nfrom weakref import WeakKeyDictionary\n\nfrom beanie import UpdateResponse\nfrom bson import ObjectId\n\nfrom app.db import Db, REFUSALS, changes, plain, refusal, stored\nfrom app.entities.shipment import Shipment, ShipmentStop\nfrom app.models import ShipmentDocument, ShipmentStopModel\nfrom app.paging import Page\n\n\nclass ShipmentRepository(Protocol):\n    \"\"\"Where shipments rows are kept. Services depend only on this interface.\"\"\"\n\n    async def find_by_id(self, id: str) -> Shipment | None:\n        \"\"\"The row with this primary key, or None.\"\"\"\n        ...\n\n    async def list(self, offset: int = 0, limit: int = 50) -> Page[Shipment]:\n        \"\"\"At most `limit` rows from `offset`, by primary key, and how many there are.\"\"\"\n        ...\n\n    async def insert(self, entity: Shipment) -> Shipment:\n        \"\"\"Stores a new row; the values the database fills are read back.\"\"\"\n        ...\n\n    async def update(self, entity: Shipment) -> Shipment:\n        \"\"\"Stores the changes made to a row read from this repository.\"\"\"\n        ...\n\n    async def delete(self, entity: Shipment) -> None:\n        \"\"\"Removes a row read from this repository.\"\"\"\n        ...\n\n    async def add_stop(self, id: str, stop: ShipmentStop) -> Shipment | None:\n        \"\"\"Adds an item to stops, and gives the row as it is then, or None when there is none.\"\"\"\n        ...\n\n    async def remove_stop(self, id: str, position: int, size: int) -> Shipment | None:\n        \"\"\"Removes an item from stops that has this size, and gives the row as it is then, or None when there is none.\"\"\"\n        ...\n\n\nclass MongoShipmentRepository:\n    \"\"\"Keeps shipments documents in the database, through Beanie. Every write is stored at once.\"\"\"\n\n    def __init__(self, db: Db) -> None:\n        self._db = db\n\n    async def find_by_id(self, id: str) -> Shipment | None:\n        \"\"\"The row with this primary key, or None.\"\"\"\n        if not ObjectId.is_valid(id):\n            return None\n        document = await ShipmentDocument.find_one({\"_id\": ObjectId(id)}, session=self._db.session)\n        return None if document is None else _entity(document)\n\n    async def list(self, offset: int = 0, limit: int = 50) -> Page[Shipment]:\n        \"\"\"At most `limit` rows from `offset`, by primary key, and how many there are.\"\"\"\n        documents = await ShipmentDocument.find({}, session=self._db.session).sort([(\"_id\", 1)]).skip(offset).limit(limit).to_list()\n        total = await ShipmentDocument.find({}, session=self._db.session).count()\n        return Page(items=[_entity(document) for document in documents], total=total, offset=offset, limit=limit)\n\n    async def insert(self, entity: Shipment) -> Shipment:\n        \"\"\"Stores a new row; the values the database fills are read back.\"\"\"\n        try:\n            document = _document(entity)\n            await document.insert(session=self._db.session)\n        except REFUSALS as error:\n            raise refusal(\"Shipment\", error) from error\n        entity.id = str(document.id)\n        return _loaded(entity)\n\n    async def update(self, entity: Shipment) -> Shipment:\n        \"\"\"Stores the changes made to a row read from this repository.\"\"\"\n        try:\n            change = changes(_LOADED.get(entity, {}), stored(_document(entity)), _FIELDS)\n            if change:\n                await ShipmentDocument.find_one({\"_id\": ObjectId(entity.id)}).update(change, session=self._db.session)\n        except REFUSALS as error:\n            raise refusal(\"Shipment\", error) from error\n        return _loaded(entity)\n\n    async def delete(self, entity: Shipment) -> None:\n        \"\"\"Removes a row read from this repository.\"\"\"\n        try:\n            await ShipmentDocument.find_one({\"_id\": ObjectId(entity.id)}).delete(session=self._db.session)\n        except REFUSALS as error:\n            raise refusal(\"Shipment\", error) from error\n\n    async def add_stop(self, id: str, stop: ShipmentStop) -> Shipment | None:\n        \"\"\"Adds an item to stops, and gives the row as it is then, or None when there is none.\"\"\"\n        if not ObjectId.is_valid(id):\n            return None\n        try:\n            document = await ShipmentDocument.find_one({\"_id\": ObjectId(id)}).update(\n                {\"$push\": {\"stops\": stored(ShipmentStopModel.model_validate(stop))}},\n                session=self._db.session,\n                response_type=UpdateResponse.NEW_DOCUMENT,\n            )\n        except REFUSALS as error:\n            raise refusal(\"Shipment\", error) from error\n        return None if document is None else _entity(document)\n\n    async def remove_stop(self, id: str, position: int, size: int) -> Shipment | None:\n        \"\"\"Removes an item from stops that has this size, and gives the row as it is then, or None when there is none.\"\"\"\n        if not ObjectId.is_valid(id):\n            return None\n        try:\n            document = await ShipmentDocument.find_one({\"_id\": ObjectId(id), \"stops\": {\"$size\": size}}).update(\n                [{\"$set\": {\"stops\": {\"$concatArrays\": [{\"$slice\": [\"$stops\", position]}, {\"$slice\": [\"$stops\", position + 1, size]}]}}}],\n                session=self._db.session,\n                response_type=UpdateResponse.NEW_DOCUMENT,\n            )\n        except REFUSALS as error:\n            raise refusal(\"Shipment\", error) from error\n        return None if document is None else _entity(document)\n\n\n_LOADED: WeakKeyDictionary[Shipment, dict[str, Any]] = WeakKeyDictionary()\n\"\"\"What each entity was read as: a change writes only the fields that differ.\"\"\"\n\n_FIELDS = (\"parcel\", \"stops\",)\n\"\"\"The fields a change may write.\"\"\"\n\n\ndef _document(entity: Shipment) -> ShipmentDocument:\n    \"\"\"The document of a Shipment.\"\"\"\n    return ShipmentDocument.model_validate(\n        {\n            \"_id\": entity.id,\n            \"parcel\": entity.parcel,\n            \"stops\": entity.stops,\n        }\n    )\n\n\ndef _entity(document: ShipmentDocument) -> Shipment:\n    \"\"\"The Shipment of a document; a field it does not have is None.\"\"\"\n    values = plain(document)\n    entity = Shipment(\n        id=values.get(\"_id\"),\n        parcel=values.get(\"parcel\"),\n        stops=values.get(\"stops\"),\n    )\n    return _loaded(entity)\n\n\ndef _loaded(entity: Shipment) -> Shipment:\n    \"\"\"The same entity, with what it is stored as kept to tell its changes.\"\"\"\n    _LOADED[entity] = stored(_document(entity))\n    return entity\n\n\nclass MemoryShipmentRepository:\n    \"\"\"Keeps shipments rows in memory, for tests and for trying the services without a database.\"\"\"\n\n    def __init__(self) -> None:\n        self._rows: dict[tuple[Any, ...], Shipment] = {}\n\n    @staticmethod\n    def _key(row: Shipment) -> tuple[Any, ...]:\n        return (row.id,)\n\n    async def find_by_id(self, id: str) -> Shipment | None:\n        \"\"\"The row with this primary key, or None.\"\"\"\n        return next((row for row in [row for row in sorted(self._rows.values(), key=self._key) if True] if row.id == id), None)\n\n    async def list(self, offset: int = 0, limit: int = 50) -> Page[Shipment]:\n        \"\"\"At most `limit` rows from `offset`, by primary key, and how many there are.\"\"\"\n        rows = [row for row in sorted(self._rows.values(), key=self._key) if True]\n        return Page(items=rows[offset : offset + limit], total=len(rows), offset=offset, limit=limit)\n\n    async def insert(self, entity: Shipment) -> Shipment:\n        \"\"\"Stores a new row; the values the database fills are read back.\"\"\"\n        if entity.id is None:\n            entity.id = str(ObjectId())\n        self._rows[(entity.id,)] = entity\n        return entity\n\n    async def update(self, entity: Shipment) -> Shipment:\n        \"\"\"Stores the changes made to a row read from this repository.\"\"\"\n        self._rows[(entity.id,)] = entity\n        return entity\n\n    async def delete(self, entity: Shipment) -> None:\n        \"\"\"Removes a row read from this repository.\"\"\"\n        self._rows.pop((entity.id,), None)\n\n    async def add_stop(self, id: str, stop: ShipmentStop) -> Shipment | None:\n        \"\"\"Adds an item to stops, and gives the row as it is then, or None when there is none.\"\"\"\n        row = next((row for row in self._rows.values() if self._key(row) == (id,) and True), None)\n        if row is None:\n            return None\n        row.stops = [*(row.stops or []), stop]\n        return row\n\n    async def remove_stop(self, id: str, position: int, size: int) -> Shipment | None:\n        \"\"\"Removes an item from stops that has this size, and gives the row as it is then, or None when there is none.\"\"\"\n        row = next((row for row in self._rows.values() if self._key(row) == (id,) and True), None)\n        if row is None:\n            return None\n        if len(row.stops or []) != size:\n            return None\n        row.stops = [*row.stops[:position], *row.stops[position + 1 :]]\n        return row\n",
+  "app/services/__init__.py": "",
+  "app/services/customer.py": "\"\"\"Operations on customers: what each one checks before it writes.\"\"\"\n\nfrom typing import Any\n\nfrom app.documents import problems\nfrom app.dtos.customer import CustomerCreate, CustomerRead, CustomerUpdate\nfrom app.entities.customer import Customer\nfrom app.errors import ConflictError, FieldError, NotFoundError, ValidationFailedError\nfrom app.paging import Page\nfrom app.unit_of_work import UnitOfWork\n\n# Columns a client may send: the database fills the others\n_FIELDS = frozenset({\"email\", \"level\", \"since\", \"address\", \"tags\"})\n\n# What the documents inside each field must be\n_RULES: dict[str, dict[str, Any]] = {\n    \"address\": {\"fields\": {\"street\": {\"required\": True}, \"zip code\": {\"required\": True}, \"location\": {\"fields\": {\"latitude\": {\"required\": True}, \"longitude\": {\"required\": True}}}}},\n    \"tags\": {\"items\": {}},\n}\n\n\nclass CustomerService:\n    \"\"\"Operations on customers. Repositories commit every write.\"\"\"\n\n    def __init__(self, uow: UnitOfWork) -> None:\n        self._uow = uow\n\n    async def _validate_all(self, values: dict[str, Any], current: Customer | None) -> None:\n        \"\"\"Checks the values against the rules of the \"customers\" table; raises ValidationFailedError with every problem.\"\"\"\n        creating = current is None\n        errors: list[FieldError] = []\n        for name in values.keys() - _FIELDS:\n            errors.append(FieldError(name, \"is not a field of Customer\"))\n        if not creating:\n            for name in values.keys() & {\"id\"}:\n                errors.append(FieldError(name, \"cannot be changed\"))\n        value = values.get(\"email\")\n        if value is None:\n            if creating or \"email\" in values:\n                errors.append(FieldError(\"email\", \"is required\"))\n        value = values.get(\"level\")\n        if value is not None:\n            if value not in (\"basic\", \"gold\",):\n                errors.append(FieldError(\"level\", \"must be one of: basic, gold\"))\n        value = values.get(\"since\")\n        if value is None:\n            if creating or \"since\" in values:\n                errors.append(FieldError(\"since\", \"is required\"))\n        value = values.get(\"address\")\n        if value is None:\n            if creating or \"address\" in values:\n                errors.append(FieldError(\"address\", \"is required\"))\n        else:\n            errors += problems(value, _RULES[\"address\"], \"address\")\n        value = values.get(\"tags\")\n        if value is not None:\n            errors += problems(value, _RULES[\"tags\"], \"tags\")\n        if errors:\n            raise ValidationFailedError(\"Customer\", errors)\n\n    async def _check_unique(self, values: dict[str, Any], current: Customer | None) -> None:\n        \"\"\"Values that must be unique are not taken by another row.\"\"\"\n        email = values[\"email\"] if \"email\" in values else (current.email if current is not None else None)\n        if email is not None:\n            other = await self._uow.customers.find_by_email(email)\n            if other is not None and (current is None or other.id != current.id):\n                raise ConflictError(\"Customer\", \"email is already taken\", (\"email\",))\n\n    async def _check(self, values: dict[str, Any], current: Customer | None) -> None:\n        \"\"\"Every check before a write: the values, the rows they point to, the unique values.\"\"\"\n        await self._validate_all(values, current)\n        await self._check_unique(values, current)\n\n    async def _find(self, id: str) -> Customer:\n        \"\"\"The Customer with this key; NotFoundError when there is none.\"\"\"\n        entity = await self._uow.customers.find_by_id(id)\n        if entity is None:\n            raise NotFoundError(\"Customer\", id)\n        return entity\n\n    @staticmethod\n    def _read(entity: Customer) -> CustomerRead:\n        \"\"\"The Customer as services return it.\"\"\"\n        return CustomerRead.model_validate(entity)\n\n    async def create_customer(self, data: CustomerCreate) -> CustomerRead:\n        \"\"\"Stores a new Customer after checking it.\"\"\"\n        values = data.model_dump(exclude_unset=True)\n        await self._check(values, None)\n        created = await self._uow.customers.insert(Customer(**values))\n        return self._read(created)\n\n    async def get_customer(self, id: str) -> CustomerRead:\n        \"\"\"The Customer with this key; NotFoundError when there is none.\"\"\"\n        return self._read(await self._find(id))\n\n    async def list_customers(self, offset: int = 0, limit: int = 50) -> Page[CustomerRead]:\n        \"\"\"A page of customers, by primary key.\"\"\"\n        page = await self._uow.customers.list(offset, limit)\n        return Page(items=[self._read(entity) for entity in page.items], total=page.total, offset=page.offset, limit=page.limit)\n\n    async def update_customer(self, id: str, data: CustomerUpdate) -> CustomerRead:\n        \"\"\"Changes the given values of a Customer.\"\"\"\n        values = data.model_dump(exclude_unset=True)\n        current = await self._find(id)\n        await self._check(values, current)\n        for name, value in values.items():\n            setattr(current, name, value)\n        updated = await self._uow.customers.update(current)\n        return self._read(updated)\n\n    async def delete_customer(self, id: str) -> None:\n        \"\"\"Deletes a Customer.\"\"\"\n        current = await self._find(id)\n        await self._uow.customers.delete(current)\n\n    async def find_customer_by_email(self, email: str) -> CustomerRead | None:\n        \"\"\"The Customer with this email, or None.\"\"\"\n        entity = await self._uow.customers.find_by_email(email)\n        return self._read(entity) if entity is not None else None\n\n    async def add_tag(self, id: str, tag: str) -> CustomerRead:\n        \"\"\"Adds an item to tags.\"\"\"\n        errors = problems([tag], _RULES[\"tags\"], \"tags\")\n        if errors:\n            raise ValidationFailedError(\"Customer\", errors)\n        await self._find(id)\n        changed = await self._uow.customers.add_tag(id, tag)\n        if changed is None:\n            raise NotFoundError(\"Customer\", id)\n        return self._read(changed)\n\n    async def remove_tag(self, id: str, tag: str) -> CustomerRead:\n        \"\"\"Removes an item from tags, by its value.\"\"\"\n        current = await self._find(id)\n        if not (tag in (current.tags or [])):\n            raise NotFoundError(\"Tag\", tag)\n        changed = await self._uow.customers.remove_tag(id, tag)\n        if changed is None:\n            raise NotFoundError(\"Customer\", id)\n        return self._read(changed)\n",
+  "app/services/order.py": "\"\"\"Operations on orders: what each one checks before it writes.\"\"\"\n\nfrom typing import Any\n\nfrom app.documents import problems\nfrom app.dtos.order import OrderCreate, OrderRead, OrderUpdate\nfrom app.entities.order import Order, OrderLine\nfrom app.errors import ConflictError, FieldError, NotFoundError, ValidationFailedError\nfrom app.paging import Page\nfrom app.unit_of_work import UnitOfWork\n\n# Columns a client may send: the database fills the others\n_FIELDS = frozenset({\"code\", \"lines\", \"shipping\"})\n\n# What the documents inside each field must be\n_RULES: dict[str, dict[str, Any]] = {\n    \"lines\": {\"items\": {\"fields\": {\"sku\": {\"required\": True}, \"quantity\": {\"required\": True}, \"price\": {\"required\": True}, \"status\": {\"values\": [\"pending\", \"sent\"]}, \"discounts\": {\"items\": {\"fields\": {\"reason\": {\"required\": True}, \"percent\": {\"required\": True}}}}}}},\n    \"shipping\": {\"fields\": {\"carrier\": {\"required\": True}, \"sentOn\": {\"required\": True}}},\n}\n\n\nclass OrderService:\n    \"\"\"Operations on orders. Repositories commit every write.\"\"\"\n\n    def __init__(self, uow: UnitOfWork) -> None:\n        self._uow = uow\n\n    async def _validate_all(self, values: dict[str, Any], current: Order | None) -> None:\n        \"\"\"Checks the values against the rules of the \"orders\" table; raises ValidationFailedError with every problem.\"\"\"\n        creating = current is None\n        errors: list[FieldError] = []\n        for name in values.keys() - _FIELDS:\n            errors.append(FieldError(name, \"is not a field of Order\"))\n        if not creating:\n            for name in values.keys() & {\"id\"}:\n                errors.append(FieldError(name, \"cannot be changed\"))\n        value = values.get(\"code\")\n        if value is None:\n            if creating or \"code\" in values:\n                errors.append(FieldError(\"code\", \"is required\"))\n        value = values.get(\"lines\")\n        if value is None:\n            if creating or \"lines\" in values:\n                errors.append(FieldError(\"lines\", \"is required\"))\n        else:\n            errors += problems(value, _RULES[\"lines\"], \"lines\")\n        value = values.get(\"shipping\")\n        if value is not None:\n            errors += problems(value, _RULES[\"shipping\"], \"shipping\")\n        if errors:\n            raise ValidationFailedError(\"Order\", errors)\n\n    async def _check_unique(self, values: dict[str, Any], current: Order | None) -> None:\n        \"\"\"Values that must be unique are not taken by another row.\"\"\"\n        code = values[\"code\"] if \"code\" in values else (current.code if current is not None else None)\n        if code is not None:\n            other = await self._uow.orders.find_by_code(code)\n            if other is not None and (current is None or other.id != current.id):\n                raise ConflictError(\"Order\", \"code is already taken\", (\"code\",))\n\n    async def _check(self, values: dict[str, Any], current: Order | None) -> None:\n        \"\"\"Every check before a write: the values, the rows they point to, the unique values.\"\"\"\n        await self._validate_all(values, current)\n        await self._check_unique(values, current)\n\n    async def _find(self, id: str) -> Order:\n        \"\"\"The Order with this key; NotFoundError when there is none.\"\"\"\n        entity = await self._uow.orders.find_by_id(id)\n        if entity is None:\n            raise NotFoundError(\"Order\", id)\n        return entity\n\n    @staticmethod\n    def _read(entity: Order) -> OrderRead:\n        \"\"\"The Order as services return it.\"\"\"\n        return OrderRead.model_validate(entity)\n\n    async def create_order(self, data: OrderCreate) -> OrderRead:\n        \"\"\"Stores a new Order after checking it.\"\"\"\n        values = data.model_dump(exclude_unset=True)\n        await self._check(values, None)\n        created = await self._uow.orders.insert(Order(**values))\n        return self._read(created)\n\n    async def get_order(self, id: str) -> OrderRead:\n        \"\"\"The Order with this key; NotFoundError when there is none.\"\"\"\n        return self._read(await self._find(id))\n\n    async def list_orders(self, offset: int = 0, limit: int = 50) -> Page[OrderRead]:\n        \"\"\"A page of orders, by primary key.\"\"\"\n        page = await self._uow.orders.list(offset, limit)\n        return Page(items=[self._read(entity) for entity in page.items], total=page.total, offset=page.offset, limit=page.limit)\n\n    async def update_order(self, id: str, data: OrderUpdate) -> OrderRead:\n        \"\"\"Changes the given values of a Order.\"\"\"\n        values = data.model_dump(exclude_unset=True)\n        current = await self._find(id)\n        await self._check(values, current)\n        for name, value in values.items():\n            setattr(current, name, value)\n        updated = await self._uow.orders.update(current)\n        return self._read(updated)\n\n    async def delete_order(self, id: str) -> None:\n        \"\"\"Deletes a Order.\"\"\"\n        current = await self._find(id)\n        await self._uow.orders.delete(current)\n\n    async def find_order_by_code(self, code: str) -> OrderRead | None:\n        \"\"\"The Order with this code, or None.\"\"\"\n        entity = await self._uow.orders.find_by_code(code)\n        return self._read(entity) if entity is not None else None\n\n    async def add_line(self, id: str, line: OrderLine) -> OrderRead:\n        \"\"\"Adds an item to lines.\"\"\"\n        errors = problems([line], _RULES[\"lines\"], \"lines\")\n        if errors:\n            raise ValidationFailedError(\"Order\", errors)\n        await self._find(id)\n        changed = await self._uow.orders.add_line(id, line)\n        if changed is None:\n            raise NotFoundError(\"Order\", id)\n        return self._read(changed)\n\n    async def remove_line(self, id: str, line_id: str) -> OrderRead:\n        \"\"\"Removes an item from lines, by its identifier.\"\"\"\n        current = await self._find(id)\n        if not any(item[\"_id\"] == line_id for item in current.lines or []):\n            raise NotFoundError(\"Line\", line_id)\n        changed = await self._uow.orders.remove_line(id, line_id)\n        if changed is None:\n            raise NotFoundError(\"Order\", id)\n        return self._read(changed)\n",
+  "app/services/shipment.py": "\"\"\"Operations on shipments: what each one checks before it writes.\"\"\"\n\nfrom typing import Any\n\nfrom app.documents import problems\nfrom app.dtos.shipment import ShipmentCreate, ShipmentRead, ShipmentUpdate\nfrom app.entities.shipment import Shipment, ShipmentStop\nfrom app.errors import ConflictError, FieldError, NotFoundError, ValidationFailedError\nfrom app.paging import Page\nfrom app.unit_of_work import UnitOfWork\n\n# Columns a client may send: the database fills the others\n_FIELDS = frozenset({\"parcel\", \"stops\"})\n\n# What the documents inside each field must be\n_RULES: dict[str, dict[str, Any]] = {\n    \"parcel\": {\"fields\": {\"weight\": {\"required\": True}, \"contents\": {\"required\": True}, \"size\": {\"fields\": {\"height\": {\"required\": True}}}}},\n    \"stops\": {\"items\": {\"fields\": {\"city\": {}}}},\n}\n\n\nclass ShipmentService:\n    \"\"\"Operations on shipments. Repositories commit every write.\"\"\"\n\n    def __init__(self, uow: UnitOfWork) -> None:\n        self._uow = uow\n\n    async def _validate_all(self, values: dict[str, Any], current: Shipment | None) -> None:\n        \"\"\"Checks the values against the rules of the \"shipments\" table; raises ValidationFailedError with every problem.\"\"\"\n        creating = current is None\n        errors: list[FieldError] = []\n        for name in values.keys() - _FIELDS:\n            errors.append(FieldError(name, \"is not a field of Shipment\"))\n        if not creating:\n            for name in values.keys() & {\"id\"}:\n                errors.append(FieldError(name, \"cannot be changed\"))\n        value = values.get(\"parcel\")\n        if value is None:\n            if creating or \"parcel\" in values:\n                errors.append(FieldError(\"parcel\", \"is required\"))\n        else:\n            errors += problems(value, _RULES[\"parcel\"], \"parcel\")\n        value = values.get(\"stops\")\n        if value is not None:\n            errors += problems(value, _RULES[\"stops\"], \"stops\")\n        if errors:\n            raise ValidationFailedError(\"Shipment\", errors)\n\n    async def _check(self, values: dict[str, Any], current: Shipment | None) -> None:\n        \"\"\"Every check before a write: the values, the rows they point to, the unique values.\"\"\"\n        await self._validate_all(values, current)\n\n    async def _find(self, id: str) -> Shipment:\n        \"\"\"The Shipment with this key; NotFoundError when there is none.\"\"\"\n        entity = await self._uow.shipments.find_by_id(id)\n        if entity is None:\n            raise NotFoundError(\"Shipment\", id)\n        return entity\n\n    @staticmethod\n    def _read(entity: Shipment) -> ShipmentRead:\n        \"\"\"The Shipment as services return it.\"\"\"\n        return ShipmentRead.model_validate(entity)\n\n    async def create_shipment(self, data: ShipmentCreate) -> ShipmentRead:\n        \"\"\"Stores a new Shipment after checking it.\"\"\"\n        values = data.model_dump(exclude_unset=True)\n        await self._check(values, None)\n        created = await self._uow.shipments.insert(Shipment(**values))\n        return self._read(created)\n\n    async def get_shipment(self, id: str) -> ShipmentRead:\n        \"\"\"The Shipment with this key; NotFoundError when there is none.\"\"\"\n        return self._read(await self._find(id))\n\n    async def list_shipments(self, offset: int = 0, limit: int = 50) -> Page[ShipmentRead]:\n        \"\"\"A page of shipments, by primary key.\"\"\"\n        page = await self._uow.shipments.list(offset, limit)\n        return Page(items=[self._read(entity) for entity in page.items], total=page.total, offset=page.offset, limit=page.limit)\n\n    async def update_shipment(self, id: str, data: ShipmentUpdate) -> ShipmentRead:\n        \"\"\"Changes the given values of a Shipment.\"\"\"\n        values = data.model_dump(exclude_unset=True)\n        current = await self._find(id)\n        await self._check(values, current)\n        for name, value in values.items():\n            setattr(current, name, value)\n        updated = await self._uow.shipments.update(current)\n        return self._read(updated)\n\n    async def delete_shipment(self, id: str) -> None:\n        \"\"\"Deletes a Shipment.\"\"\"\n        current = await self._find(id)\n        await self._uow.shipments.delete(current)\n\n    async def add_stop(self, id: str, stop: ShipmentStop) -> ShipmentRead:\n        \"\"\"Adds an item to stops.\"\"\"\n        errors = problems([stop], _RULES[\"stops\"], \"stops\")\n        if errors:\n            raise ValidationFailedError(\"Shipment\", errors)\n        await self._find(id)\n        changed = await self._uow.shipments.add_stop(id, stop)\n        if changed is None:\n            raise NotFoundError(\"Shipment\", id)\n        return self._read(changed)\n\n    async def remove_stop(self, id: str, position: int) -> ShipmentRead:\n        \"\"\"Removes an item from stops, by its position.\"\"\"\n        current = await self._find(id)\n        if not (0 <= position < len(current.stops or [])):\n            raise NotFoundError(\"Stop\", position)\n        changed = await self._uow.shipments.remove_stop(id, position, len(current.stops))\n        if changed is None:\n            raise ConflictError(\"Shipment\", \"was changed by someone else since it was read\", (\"stops\",))\n        return self._read(changed)\n",
+  "app/unit_of_work.py": "\"\"\"The repositories of every table, and the transaction of each service operation. Every repository write is committed at once; `transaction()` only groups the code.\"\"\"\n\nfrom collections.abc import AsyncIterator\nfrom contextlib import AbstractAsyncContextManager, asynccontextmanager\nfrom typing import Any, Protocol\n\nfrom pymongo import AsyncMongoClient\nfrom pymongo.asynchronous.client_session import AsyncClientSession\n\nfrom app.db import Db\nfrom app.repositories.customer import CustomerRepository, MemoryCustomerRepository, MongoCustomerRepository\nfrom app.repositories.order import MemoryOrderRepository, OrderRepository, MongoOrderRepository\nfrom app.repositories.shipment import MemoryShipmentRepository, ShipmentRepository, MongoShipmentRepository\n\n\nclass UnitOfWork(Protocol):\n    \"\"\"What services depend on: a repository per table and a transaction.\"\"\"\n\n    customers: CustomerRepository\n    orders: OrderRepository\n    shipments: ShipmentRepository\n\n    def transaction(self) -> AbstractAsyncContextManager[None]:\n        \"\"\"Commits what runs inside it, or rolls it back if it fails.\"\"\"\n        ...\n\n\nclass MongoUnitOfWork:\n    \"\"\"The repositories over one client and, when there is one, the session whose transaction every query runs in. Make one per request.\"\"\"\n\n    def __init__(self, client: AsyncMongoClient[dict[str, Any]], session: AsyncClientSession | None = None) -> None:\n        self.db = Db(client, session)\n        self.customers = MongoCustomerRepository(self.db)\n        self.orders = MongoOrderRepository(self.db)\n        self.shipments = MongoShipmentRepository(self.db)\n\n    @asynccontextmanager\n    async def transaction(self) -> AsyncIterator[None]:\n        \"\"\"Every write is stored at once: this only groups the code.\"\"\"\n        yield\n\n\nclass MemoryUnitOfWork:\n    \"\"\"The in-memory repositories, for tests and for trying the services without a database.\"\"\"\n\n    def __init__(self) -> None:\n        self.customers = MemoryCustomerRepository()\n        self.orders = MemoryOrderRepository()\n        self.shipments = MemoryShipmentRepository()\n\n    @asynccontextmanager\n    async def transaction(self) -> AsyncIterator[None]:\n        \"\"\"Memory has no transactions: changes are kept as they are made.\"\"\"\n        yield\n",
+  "crud-contract.json": "{\n  \"format\": \"crud-contract\",\n  \"version\": 1,\n  \"stack\": {\n    \"language\": \"python\",\n    \"orm\": \"beanie\",\n    \"database\": \"mongodb\",\n    \"execution\": \"async\"\n  },\n  \"transactions\": \"repository\",\n  \"paging\": \"offset\",\n  \"types\": [\n    {\n      \"name\": \"Customer\",\n      \"module\": \"app.entities.customer\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"length\": 24\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"email\",\n          \"type\": {\n            \"kind\": \"text\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"level\",\n          \"type\": {\n            \"kind\": \"text\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"since\",\n          \"type\": {\n            \"kind\": \"datetime\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"address\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"fields\": [\n              {\n                \"name\": \"street\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"zip code\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"location\",\n                \"type\": {\n                  \"kind\": \"json\",\n                  \"fields\": [\n                    {\n                      \"name\": \"latitude\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    },\n                    {\n                      \"name\": \"longitude\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"tags\",\n          \"type\": {\n            \"kind\": \"array\"\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"CustomerCreate\",\n      \"module\": \"app.dtos.customer\",\n      \"kind\": \"create\",\n      \"fields\": [\n        {\n          \"name\": \"email\",\n          \"type\": {\n            \"kind\": \"text\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"level\",\n          \"type\": {\n            \"kind\": \"text\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"since\",\n          \"type\": {\n            \"kind\": \"datetime\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"address\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"fields\": [\n              {\n                \"name\": \"street\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"zip code\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"location\",\n                \"type\": {\n                  \"kind\": \"json\",\n                  \"fields\": [\n                    {\n                      \"name\": \"latitude\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    },\n                    {\n                      \"name\": \"longitude\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"tags\",\n          \"type\": {\n            \"kind\": \"array\"\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"CustomerUpdate\",\n      \"module\": \"app.dtos.customer\",\n      \"kind\": \"update\",\n      \"fields\": [\n        {\n          \"name\": \"email\",\n          \"type\": {\n            \"kind\": \"text\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"level\",\n          \"type\": {\n            \"kind\": \"text\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"since\",\n          \"type\": {\n            \"kind\": \"datetime\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"address\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"fields\": [\n              {\n                \"name\": \"street\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"zip code\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"location\",\n                \"type\": {\n                  \"kind\": \"json\",\n                  \"fields\": [\n                    {\n                      \"name\": \"latitude\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    },\n                    {\n                      \"name\": \"longitude\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"tags\",\n          \"type\": {\n            \"kind\": \"array\"\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"CustomerRead\",\n      \"module\": \"app.dtos.customer\",\n      \"kind\": \"read\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"length\": 24\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"email\",\n          \"type\": {\n            \"kind\": \"text\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"level\",\n          \"type\": {\n            \"kind\": \"text\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"since\",\n          \"type\": {\n            \"kind\": \"datetime\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"address\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"fields\": [\n              {\n                \"name\": \"street\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"zip code\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"location\",\n                \"type\": {\n                  \"kind\": \"json\",\n                  \"fields\": [\n                    {\n                      \"name\": \"latitude\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    },\n                    {\n                      \"name\": \"longitude\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"tags\",\n          \"type\": {\n            \"kind\": \"array\"\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"Order\",\n      \"module\": \"app.entities.order\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"length\": 24\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"code\",\n          \"type\": {\n            \"kind\": \"text\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"lines\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"fields\": [\n              {\n                \"name\": \"_id\",\n                \"type\": {\n                  \"kind\": \"text\",\n                  \"length\": 24\n                },\n                \"nullable\": true\n              },\n              {\n                \"name\": \"sku\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"quantity\",\n                \"type\": {\n                  \"kind\": \"integer\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"price\",\n                \"type\": {\n                  \"kind\": \"decimal\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"status\",\n                \"type\": {\n                  \"kind\": \"enum\"\n                },\n                \"nullable\": true\n              },\n              {\n                \"name\": \"discounts\",\n                \"type\": {\n                  \"kind\": \"array\",\n                  \"fields\": [\n                    {\n                      \"name\": \"reason\",\n                      \"type\": {\n                        \"kind\": \"text\"\n                      },\n                      \"nullable\": false\n                    },\n                    {\n                      \"name\": \"percent\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"shipping\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"fields\": [\n              {\n                \"name\": \"carrier\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"sentOn\",\n                \"type\": {\n                  \"kind\": \"datetime\"\n                },\n                \"nullable\": false\n              }\n            ]\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"OrderCreate\",\n      \"module\": \"app.dtos.order\",\n      \"kind\": \"create\",\n      \"fields\": [\n        {\n          \"name\": \"code\",\n          \"type\": {\n            \"kind\": \"text\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"lines\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"fields\": [\n              {\n                \"name\": \"_id\",\n                \"type\": {\n                  \"kind\": \"text\",\n                  \"length\": 24\n                },\n                \"nullable\": true\n              },\n              {\n                \"name\": \"sku\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"quantity\",\n                \"type\": {\n                  \"kind\": \"integer\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"price\",\n                \"type\": {\n                  \"kind\": \"decimal\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"status\",\n                \"type\": {\n                  \"kind\": \"enum\"\n                },\n                \"nullable\": true\n              },\n              {\n                \"name\": \"discounts\",\n                \"type\": {\n                  \"kind\": \"array\",\n                  \"fields\": [\n                    {\n                      \"name\": \"reason\",\n                      \"type\": {\n                        \"kind\": \"text\"\n                      },\n                      \"nullable\": false\n                    },\n                    {\n                      \"name\": \"percent\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"shipping\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"fields\": [\n              {\n                \"name\": \"carrier\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"sentOn\",\n                \"type\": {\n                  \"kind\": \"datetime\"\n                },\n                \"nullable\": false\n              }\n            ]\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"OrderUpdate\",\n      \"module\": \"app.dtos.order\",\n      \"kind\": \"update\",\n      \"fields\": [\n        {\n          \"name\": \"code\",\n          \"type\": {\n            \"kind\": \"text\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"lines\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"fields\": [\n              {\n                \"name\": \"_id\",\n                \"type\": {\n                  \"kind\": \"text\",\n                  \"length\": 24\n                },\n                \"nullable\": true\n              },\n              {\n                \"name\": \"sku\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"quantity\",\n                \"type\": {\n                  \"kind\": \"integer\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"price\",\n                \"type\": {\n                  \"kind\": \"decimal\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"status\",\n                \"type\": {\n                  \"kind\": \"enum\"\n                },\n                \"nullable\": true\n              },\n              {\n                \"name\": \"discounts\",\n                \"type\": {\n                  \"kind\": \"array\",\n                  \"fields\": [\n                    {\n                      \"name\": \"reason\",\n                      \"type\": {\n                        \"kind\": \"text\"\n                      },\n                      \"nullable\": false\n                    },\n                    {\n                      \"name\": \"percent\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"shipping\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"fields\": [\n              {\n                \"name\": \"carrier\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"sentOn\",\n                \"type\": {\n                  \"kind\": \"datetime\"\n                },\n                \"nullable\": false\n              }\n            ]\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"OrderRead\",\n      \"module\": \"app.dtos.order\",\n      \"kind\": \"read\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"length\": 24\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"code\",\n          \"type\": {\n            \"kind\": \"text\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"lines\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"fields\": [\n              {\n                \"name\": \"_id\",\n                \"type\": {\n                  \"kind\": \"text\",\n                  \"length\": 24\n                },\n                \"nullable\": true\n              },\n              {\n                \"name\": \"sku\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"quantity\",\n                \"type\": {\n                  \"kind\": \"integer\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"price\",\n                \"type\": {\n                  \"kind\": \"decimal\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"status\",\n                \"type\": {\n                  \"kind\": \"enum\"\n                },\n                \"nullable\": true\n              },\n              {\n                \"name\": \"discounts\",\n                \"type\": {\n                  \"kind\": \"array\",\n                  \"fields\": [\n                    {\n                      \"name\": \"reason\",\n                      \"type\": {\n                        \"kind\": \"text\"\n                      },\n                      \"nullable\": false\n                    },\n                    {\n                      \"name\": \"percent\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"shipping\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"fields\": [\n              {\n                \"name\": \"carrier\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"sentOn\",\n                \"type\": {\n                  \"kind\": \"datetime\"\n                },\n                \"nullable\": false\n              }\n            ]\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"Shipment\",\n      \"module\": \"app.entities.shipment\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"length\": 24\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"parcel\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"fields\": [\n              {\n                \"name\": \"weight\",\n                \"type\": {\n                  \"kind\": \"float\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"contents\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"size\",\n                \"type\": {\n                  \"kind\": \"json\",\n                  \"fields\": [\n                    {\n                      \"name\": \"height\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"stops\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"fields\": [\n              {\n                \"name\": \"city\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"ShipmentCreate\",\n      \"module\": \"app.dtos.shipment\",\n      \"kind\": \"create\",\n      \"fields\": [\n        {\n          \"name\": \"parcel\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"fields\": [\n              {\n                \"name\": \"weight\",\n                \"type\": {\n                  \"kind\": \"float\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"contents\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"size\",\n                \"type\": {\n                  \"kind\": \"json\",\n                  \"fields\": [\n                    {\n                      \"name\": \"height\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"stops\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"fields\": [\n              {\n                \"name\": \"city\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"ShipmentUpdate\",\n      \"module\": \"app.dtos.shipment\",\n      \"kind\": \"update\",\n      \"fields\": [\n        {\n          \"name\": \"parcel\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"fields\": [\n              {\n                \"name\": \"weight\",\n                \"type\": {\n                  \"kind\": \"float\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"contents\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"size\",\n                \"type\": {\n                  \"kind\": \"json\",\n                  \"fields\": [\n                    {\n                      \"name\": \"height\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"stops\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"fields\": [\n              {\n                \"name\": \"city\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"ShipmentRead\",\n      \"module\": \"app.dtos.shipment\",\n      \"kind\": \"read\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"length\": 24\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"parcel\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"fields\": [\n              {\n                \"name\": \"weight\",\n                \"type\": {\n                  \"kind\": \"float\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"contents\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"size\",\n                \"type\": {\n                  \"kind\": \"json\",\n                  \"fields\": [\n                    {\n                      \"name\": \"height\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"stops\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"fields\": [\n              {\n                \"name\": \"city\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        }\n      ]\n    }\n  ],\n  \"errors\": [\n    {\n      \"kind\": \"notFound\",\n      \"name\": \"NotFoundError\",\n      \"module\": \"app.errors\"\n    },\n    {\n      \"kind\": \"conflict\",\n      \"name\": \"ConflictError\",\n      \"module\": \"app.errors\"\n    },\n    {\n      \"kind\": \"validation\",\n      \"name\": \"ValidationFailedError\",\n      \"module\": \"app.errors\"\n    }\n  ],\n  \"services\": [\n    {\n      \"name\": \"CustomerService\",\n      \"module\": \"app.services.customer\",\n      \"operations\": [\n        {\n          \"name\": \"create_customer\",\n          \"kind\": \"create\",\n          \"errors\": [\n            \"validation\",\n            \"conflict\"\n          ]\n        },\n        {\n          \"name\": \"get_customer\",\n          \"kind\": \"get\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"list_customers\",\n          \"kind\": \"list\",\n          \"errors\": []\n        },\n        {\n          \"name\": \"update_customer\",\n          \"kind\": \"update\",\n          \"errors\": [\n            \"notFound\",\n            \"validation\",\n            \"conflict\"\n          ]\n        },\n        {\n          \"name\": \"delete_customer\",\n          \"kind\": \"delete\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"find_customer_by_email\",\n          \"kind\": \"find\",\n          \"by\": [\n            \"email\"\n          ],\n          \"errors\": []\n        },\n        {\n          \"name\": \"add_tag\",\n          \"kind\": \"addItem\",\n          \"by\": [\n            \"tags\"\n          ],\n          \"errors\": [\n            \"notFound\",\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"remove_tag\",\n          \"kind\": \"removeItem\",\n          \"by\": [\n            \"tags\"\n          ],\n          \"errors\": [\n            \"notFound\",\n            \"conflict\"\n          ]\n        }\n      ]\n    },\n    {\n      \"name\": \"OrderService\",\n      \"module\": \"app.services.order\",\n      \"operations\": [\n        {\n          \"name\": \"create_order\",\n          \"kind\": \"create\",\n          \"errors\": [\n            \"validation\",\n            \"conflict\"\n          ]\n        },\n        {\n          \"name\": \"get_order\",\n          \"kind\": \"get\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"list_orders\",\n          \"kind\": \"list\",\n          \"errors\": []\n        },\n        {\n          \"name\": \"update_order\",\n          \"kind\": \"update\",\n          \"errors\": [\n            \"notFound\",\n            \"validation\",\n            \"conflict\"\n          ]\n        },\n        {\n          \"name\": \"delete_order\",\n          \"kind\": \"delete\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"find_order_by_code\",\n          \"kind\": \"find\",\n          \"by\": [\n            \"code\"\n          ],\n          \"errors\": []\n        },\n        {\n          \"name\": \"add_line\",\n          \"kind\": \"addItem\",\n          \"by\": [\n            \"lines\"\n          ],\n          \"errors\": [\n            \"notFound\",\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"remove_line\",\n          \"kind\": \"removeItem\",\n          \"by\": [\n            \"lines\"\n          ],\n          \"errors\": [\n            \"notFound\",\n            \"conflict\"\n          ]\n        }\n      ]\n    },\n    {\n      \"name\": \"ShipmentService\",\n      \"module\": \"app.services.shipment\",\n      \"operations\": [\n        {\n          \"name\": \"create_shipment\",\n          \"kind\": \"create\",\n          \"errors\": [\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"get_shipment\",\n          \"kind\": \"get\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"list_shipments\",\n          \"kind\": \"list\",\n          \"errors\": []\n        },\n        {\n          \"name\": \"update_shipment\",\n          \"kind\": \"update\",\n          \"errors\": [\n            \"notFound\",\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"delete_shipment\",\n          \"kind\": \"delete\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"add_stop\",\n          \"kind\": \"addItem\",\n          \"by\": [\n            \"stops\"\n          ],\n          \"errors\": [\n            \"notFound\",\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"remove_stop\",\n          \"kind\": \"removeItem\",\n          \"by\": [\n            \"stops\"\n          ],\n          \"errors\": [\n            \"notFound\",\n            \"conflict\"\n          ]\n        }\n      ]\n    }\n  ]\n}\n",
+  "pyproject.toml": "[project]\nname = \"beanie-mongodb-conversions-dtos\"\nversion = \"0.1.0\"\ndescription = \"Data access layer (entities, repositories and services) generated by DB2CRUD.\"\nrequires-python = \">=3.12\"\ndependencies = [\n    \"beanie>=2.2,<3\",\n    \"pydantic>=2.9,<3\",\n]\n\n[project.optional-dependencies]\ndev = [\n    \"pytest>=8.3,<9\",\n    \"pytest-asyncio>=0.24,<2\",\n]\n\n[tool.pytest.ini_options]\ntestpaths = [\"tests\"]\npythonpath = [\".\"]\nasyncio_mode = \"auto\"\n",
+  "requirements-dev.txt": "-r requirements.txt\npytest>=8.3,<9\npytest-asyncio>=0.24,<2\n",
+  "requirements.txt": "beanie>=2.2,<3\npydantic>=2.9,<3\n",
+  "tests/__init__.py": "",
+  "tests/conftest.py": "\"\"\"Fixtures of the tests: a database with its collections empty, and the units of work.\"\"\"\n\nfrom collections.abc import AsyncIterator\nimport os\n\nimport pytest\nimport pytest_asyncio\n\nfrom app.db import open_database\nfrom app.unit_of_work import MemoryUnitOfWork, MongoUnitOfWork\n\n\n@pytest_asyncio.fixture\nasync def mongo_uow() -> AsyncIterator[MongoUnitOfWork]:\n    \"\"\"The repositories over the MongoDB database TEST_DATABASE_URL names, empty and with the indexes of its documents.\"\"\"\n    url = os.environ.get(\"TEST_DATABASE_URL\")\n    if not url:\n        pytest.fail(\"The database tests need a disposable MongoDB database (a replica set, for its transactions): set TEST_DATABASE_URL (it is emptied)\")\n    client = await open_database(url)\n    await client.drop_database(client.get_default_database().name)\n    await client.close()\n    client = await open_database(url, create_indexes=True)\n    yield MongoUnitOfWork(client)\n    await client.close()\n\n\n@pytest.fixture\ndef memory_uow() -> MemoryUnitOfWork:\n    \"\"\"The in-memory repositories.\"\"\"\n    return MemoryUnitOfWork()\n",
+  "tests/factories.py": "\"\"\"Rows for the tests: valid values for every column, and the rows they point to.\"\"\"\n\nfrom datetime import UTC, datetime\nfrom decimal import Decimal\nfrom typing import Any\n\nfrom app.entities.customer import Customer\nfrom app.entities.order import Order\nfrom app.entities.shipment import Shipment\nfrom app.unit_of_work import UnitOfWork\n\n\ndef new_customer(n: int = 1, **values: Any) -> Customer:\n    \"\"\"A valid Customer that is not stored yet; `n` makes its unique values differ, `values` replace any of them.\"\"\"\n    defaults: dict[str, Any] = {\"email\": f\"email-{n}\", \"level\": \"basic\", \"since\": datetime(2026, 1, n % 28 + 1, 12, 0, 0, tzinfo=UTC), \"address\": {\"street\": f\"street-{n}\", \"zip code\": f\"zipcode-{n}\", \"location\": {\"latitude\": n + 0.5, \"longitude\": n + 0.5}}, \"tags\": []}\n    return Customer(**(defaults | values))\n\n\nasync def add_customer(uow: UnitOfWork, n: int = 1) -> Customer:\n    \"\"\"A stored Customer.\"\"\"\n    return await uow.customers.insert(new_customer(n))\n\n\ndef new_order(n: int = 1, **values: Any) -> Order:\n    \"\"\"A valid Order that is not stored yet; `n` makes its unique values differ, `values` replace any of them.\"\"\"\n    defaults: dict[str, Any] = {\"code\": f\"code-{n}\", \"lines\": [{\"sku\": f\"sku-{n}\", \"quantity\": n, \"price\": Decimal(f\"{n % 10000}.50\"), \"status\": \"pending\", \"discounts\": [{\"reason\": f\"reason-{n}\", \"percent\": n + 0.5}]}], \"shipping\": {\"carrier\": f\"carrier-{n}\", \"sentOn\": datetime(2026, 1, n % 28 + 1, 12, 0, 0, tzinfo=UTC)}}\n    return Order(**(defaults | values))\n\n\nasync def add_order(uow: UnitOfWork, n: int = 1) -> Order:\n    \"\"\"A stored Order.\"\"\"\n    return await uow.orders.insert(new_order(n))\n\n\ndef new_shipment(n: int = 1, **values: Any) -> Shipment:\n    \"\"\"A valid Shipment that is not stored yet; `n` makes its unique values differ, `values` replace any of them.\"\"\"\n    defaults: dict[str, Any] = {\"parcel\": {\"weight\": n + 0.5, \"contents\": f\"contents-{n}\", \"size\": {\"height\": n + 0.5}}, \"stops\": [{\"city\": f\"city-{n}\"}]}\n    return Shipment(**(defaults | values))\n\n\nasync def add_shipment(uow: UnitOfWork, n: int = 1) -> Shipment:\n    \"\"\"A stored Shipment.\"\"\"\n    return await uow.shipments.insert(new_shipment(n))\n",
+  "tests/test_conversions.py": "\"\"\"Tests of the conversions between the application models and the tables (asynchronous: pytest-asyncio runs every test function).\"\"\"\n\nfrom tests.factories import add_customer, add_order\n\nfrom app.conversions.customer import customer_model_to_customer_create, customer_read_to_customer_model\nfrom app.conversions.order import order_model_to_order_create, order_read_to_order_model\nfrom app.unit_of_work import MemoryUnitOfWork\n\n\nasync def test_customer_goes_both_ways(memory_uow: MemoryUnitOfWork) -> None:\n    \"\"\"A row read as a Customer and written back gives the same values.\"\"\"\n    row = await add_customer(memory_uow)\n    model = customer_read_to_customer_model(row)\n    assert model.id == row.id\n    assert model.email == row.email\n    assert model.since == row.since\n    assert model.tags == row.tags\n    values = customer_model_to_customer_create(model)\n    assert values.email == row.email\n    assert values.level == row.level\n    assert values.since == row.since\n    assert values.address == row.address\n    assert values.tags == row.tags\n\n\nasync def test_order_goes_both_ways(memory_uow: MemoryUnitOfWork) -> None:\n    \"\"\"A row read as an Order and written back gives the same values.\"\"\"\n    row = await add_order(memory_uow)\n    model = order_read_to_order_model(row)\n    assert model.id == row.id\n    assert model.code == row.code\n    values = order_model_to_order_create(model)\n    assert values.code == row.code\n    assert values.lines == row.lines\n",
+  "tests/test_customer.py": "\"\"\"Tests of the \"customers\" table (asynchronous: pytest-asyncio runs every test function).\"\"\"\n\nfrom dataclasses import fields\n\nimport pytest\nfrom tests.factories import add_customer, new_customer\n\nfrom app.dtos.customer import CustomerCreate, CustomerUpdate\nfrom app.errors import ConflictError, NotFoundError, ValidationFailedError\nfrom app.services.customer import CustomerService\nfrom app.unit_of_work import MemoryUnitOfWork, MongoUnitOfWork\n\n\nasync def test_customer_is_stored_and_read_back(mongo_uow: MongoUnitOfWork) -> None:\n    stored = await add_customer(mongo_uow, 1)\n    found = await mongo_uow.customers.find_by_id(stored.id)\n    assert found is not None\n    assert found.id == stored.id\n    assert await mongo_uow.customers.find_by_email(stored.email) is not None\n\n\nasync def test_customer_lists_rows_by_key(mongo_uow: MongoUnitOfWork) -> None:\n    await add_customer(mongo_uow, 1)\n    await add_customer(mongo_uow, 2)\n    page = await mongo_uow.customers.list(0, 1)\n    assert page.total == 2\n    assert len(page.items) == 1\n\n\nasync def test_customer_adds_and_removes_one_item_of_tags(mongo_uow: MongoUnitOfWork) -> None:\n    stored = await add_customer(mongo_uow, 1)\n    before = len(stored.tags or [])\n    item = f\"tags-{7}\"\n    added = await mongo_uow.customers.add_tag(stored.id, item)\n    assert added is not None and len(added.tags) == before + 1\n    removed = await mongo_uow.customers.remove_tag(stored.id, item)\n    assert removed is not None and len(removed.tags) == before\n\n\nasync def test_customer_is_deleted(mongo_uow: MongoUnitOfWork) -> None:\n    stored = await add_customer(mongo_uow, 1)\n    await mongo_uow.customers.delete(stored)\n    assert await mongo_uow.customers.find_by_id(stored.id) is None\n\n\nasync def test_customer_service_creates_a_valid_row(memory_uow: MemoryUnitOfWork) -> None:\n    service = CustomerService(memory_uow)\n    n = 100\n    created = await service.create_customer(CustomerCreate(**_values(new_customer(1), CustomerCreate)))\n    found = await service.get_customer(created.id)\n    assert found.id == created.id\n\n\nasync def test_customer_service_refuses_a_missing_value(memory_uow: MemoryUnitOfWork) -> None:\n    service = CustomerService(memory_uow)\n    n = 100\n    with pytest.raises(ValidationFailedError) as raised:\n        await service.create_customer(CustomerCreate.model_construct(**(_values(new_customer(1), CustomerCreate) | {\"email\": None})))\n    assert [error.field for error in raised.value.errors] == [\"email\"]\n\n\nasync def test_customer_service_refuses_a_repeated_unique_value(memory_uow: MemoryUnitOfWork) -> None:\n    service = CustomerService(memory_uow)\n    n = 100\n    first = await service.create_customer(CustomerCreate(**_values(new_customer(1), CustomerCreate)))\n    with pytest.raises(ConflictError):\n        await service.create_customer(CustomerCreate(**_values(new_customer(2, email=first.email), CustomerCreate)))\n\n\nasync def test_customer_service_keeps_its_own_unique_value(memory_uow: MemoryUnitOfWork) -> None:\n    service = CustomerService(memory_uow)\n    n = 100\n    created = await service.create_customer(CustomerCreate(**_values(new_customer(1), CustomerCreate)))\n    await service.update_customer(created.id, CustomerUpdate(email=created.email))\n\n\nasync def test_customer_service_says_when_a_row_is_missing(memory_uow: MemoryUnitOfWork) -> None:\n    service = CustomerService(memory_uow)\n    with pytest.raises(NotFoundError):\n        await service.get_customer(\"ffffffffffffffffffffffff\")\n\n\nasync def test_customer_service_adds_and_removes_one_item_of_tags(memory_uow: MemoryUnitOfWork) -> None:\n    service = CustomerService(memory_uow)\n    n = 100\n    created = await service.create_customer(CustomerCreate(**_values(new_customer(1), CustomerCreate)))\n    before = len(created.tags or [])\n    item = f\"tags-{7}\"\n    added = await service.add_tag(created.id, item)\n    assert len(added.tags) == before + 1\n    removed = await service.remove_tag(created.id, item)\n    assert len(removed.tags) == before\n\n\nasync def test_customer_service_deletes_a_row(memory_uow: MemoryUnitOfWork) -> None:\n    service = CustomerService(memory_uow)\n    n = 100\n    created = await service.create_customer(CustomerCreate(**_values(new_customer(1), CustomerCreate)))\n    await service.delete_customer(created.id)\n    with pytest.raises(NotFoundError):\n        await service.get_customer(created.id)\n\n\ndef _values(entity: object, dto: type) -> dict[str, object]:\n    \"\"\"The values a DTO takes, from an entity that is not stored, for building the DTO from a factory row.\"\"\"\n    names = dto.model_fields if hasattr(dto, \"model_fields\") else {field.name for field in fields(dto)}\n    return {name: value for name, value in vars(entity).items() if name in names}\n",
+  "tests/test_database.py": "\"\"\"The tests run on the database they were asked to.\"\"\"\n\nimport os\nfrom urllib.parse import urlparse\n\nfrom app.models import DOCUMENTS\nfrom app.unit_of_work import MongoUnitOfWork\n\n\nasync def test_runs_on_the_database_asked(mongo_uow: MongoUnitOfWork) -> None:\n    name = urlparse(os.environ[\"TEST_DATABASE_URL\"]).path.removeprefix(\"/\")\n    assert {document.get_pymongo_collection().database.name for document in DOCUMENTS} == {name}\n",
+  "tests/test_order.py": "\"\"\"Tests of the \"orders\" table (asynchronous: pytest-asyncio runs every test function).\"\"\"\n\nfrom dataclasses import fields\nfrom decimal import Decimal\n\nimport pytest\nfrom tests.factories import add_order, new_order\n\nfrom app.dtos.order import OrderCreate, OrderUpdate\nfrom app.errors import ConflictError, NotFoundError, ValidationFailedError\nfrom app.services.order import OrderService\nfrom app.unit_of_work import MemoryUnitOfWork, MongoUnitOfWork\n\n\nasync def test_order_is_stored_and_read_back(mongo_uow: MongoUnitOfWork) -> None:\n    stored = await add_order(mongo_uow, 1)\n    found = await mongo_uow.orders.find_by_id(stored.id)\n    assert found is not None\n    assert found.id == stored.id\n    assert await mongo_uow.orders.find_by_code(stored.code) is not None\n\n\nasync def test_order_lists_rows_by_key(mongo_uow: MongoUnitOfWork) -> None:\n    await add_order(mongo_uow, 1)\n    await add_order(mongo_uow, 2)\n    page = await mongo_uow.orders.list(0, 1)\n    assert page.total == 2\n    assert len(page.items) == 1\n\n\nasync def test_order_adds_and_removes_one_item_of_lines(mongo_uow: MongoUnitOfWork) -> None:\n    stored = await add_order(mongo_uow, 1)\n    before = len(stored.lines or [])\n    item = {\"sku\": f\"sku-{7}\", \"quantity\": 7, \"price\": Decimal(f\"{7 % 10000}.50\"), \"status\": \"pending\", \"discounts\": [{\"reason\": f\"reason-{7}\", \"percent\": 7 + 0.5}]}\n    added = await mongo_uow.orders.add_line(stored.id, item)\n    assert added is not None and len(added.lines) == before + 1\n    removed = await mongo_uow.orders.remove_line(stored.id, added.lines[-1][\"_id\"])\n    assert removed is not None and len(removed.lines) == before\n\n\nasync def test_order_is_deleted(mongo_uow: MongoUnitOfWork) -> None:\n    stored = await add_order(mongo_uow, 1)\n    await mongo_uow.orders.delete(stored)\n    assert await mongo_uow.orders.find_by_id(stored.id) is None\n\n\nasync def test_order_service_creates_a_valid_row(memory_uow: MemoryUnitOfWork) -> None:\n    service = OrderService(memory_uow)\n    n = 100\n    created = await service.create_order(OrderCreate(**_values(new_order(1), OrderCreate)))\n    found = await service.get_order(created.id)\n    assert found.id == created.id\n\n\nasync def test_order_service_refuses_a_missing_value(memory_uow: MemoryUnitOfWork) -> None:\n    service = OrderService(memory_uow)\n    n = 100\n    with pytest.raises(ValidationFailedError) as raised:\n        await service.create_order(OrderCreate.model_construct(**(_values(new_order(1), OrderCreate) | {\"code\": None})))\n    assert [error.field for error in raised.value.errors] == [\"code\"]\n\n\nasync def test_order_service_refuses_a_repeated_unique_value(memory_uow: MemoryUnitOfWork) -> None:\n    service = OrderService(memory_uow)\n    n = 100\n    first = await service.create_order(OrderCreate(**_values(new_order(1), OrderCreate)))\n    with pytest.raises(ConflictError):\n        await service.create_order(OrderCreate(**_values(new_order(2, code=first.code), OrderCreate)))\n\n\nasync def test_order_service_keeps_its_own_unique_value(memory_uow: MemoryUnitOfWork) -> None:\n    service = OrderService(memory_uow)\n    n = 100\n    created = await service.create_order(OrderCreate(**_values(new_order(1), OrderCreate)))\n    await service.update_order(created.id, OrderUpdate(code=created.code))\n\n\nasync def test_order_service_says_when_a_row_is_missing(memory_uow: MemoryUnitOfWork) -> None:\n    service = OrderService(memory_uow)\n    with pytest.raises(NotFoundError):\n        await service.get_order(\"ffffffffffffffffffffffff\")\n\n\nasync def test_order_service_adds_and_removes_one_item_of_lines(memory_uow: MemoryUnitOfWork) -> None:\n    service = OrderService(memory_uow)\n    n = 100\n    created = await service.create_order(OrderCreate(**_values(new_order(1), OrderCreate)))\n    before = len(created.lines or [])\n    item = {\"sku\": f\"sku-{7}\", \"quantity\": 7, \"price\": Decimal(f\"{7 % 10000}.50\"), \"status\": \"pending\", \"discounts\": [{\"reason\": f\"reason-{7}\", \"percent\": 7 + 0.5}]}\n    added = await service.add_line(created.id, item)\n    assert len(added.lines) == before + 1\n    removed = await service.remove_line(created.id, added.lines[-1][\"_id\"])\n    assert len(removed.lines) == before\n    with pytest.raises(NotFoundError):\n        await service.remove_line(created.id, \"ffffffffffffffffffffffff\")\n\n\nasync def test_order_service_deletes_a_row(memory_uow: MemoryUnitOfWork) -> None:\n    service = OrderService(memory_uow)\n    n = 100\n    created = await service.create_order(OrderCreate(**_values(new_order(1), OrderCreate)))\n    await service.delete_order(created.id)\n    with pytest.raises(NotFoundError):\n        await service.get_order(created.id)\n\n\ndef _values(entity: object, dto: type) -> dict[str, object]:\n    \"\"\"The values a DTO takes, from an entity that is not stored, for building the DTO from a factory row.\"\"\"\n    names = dto.model_fields if hasattr(dto, \"model_fields\") else {field.name for field in fields(dto)}\n    return {name: value for name, value in vars(entity).items() if name in names}\n",
+  "tests/test_shipment.py": "\"\"\"Tests of the \"shipments\" table (asynchronous: pytest-asyncio runs every test function).\"\"\"\n\nfrom dataclasses import fields\n\nimport pytest\nfrom tests.factories import add_shipment, new_shipment\n\nfrom app.dtos.shipment import ShipmentCreate\nfrom app.errors import NotFoundError, ValidationFailedError\nfrom app.services.shipment import ShipmentService\nfrom app.unit_of_work import MemoryUnitOfWork, MongoUnitOfWork\n\n\nasync def test_shipment_is_stored_and_read_back(mongo_uow: MongoUnitOfWork) -> None:\n    stored = await add_shipment(mongo_uow, 1)\n    found = await mongo_uow.shipments.find_by_id(stored.id)\n    assert found is not None\n    assert found.id == stored.id\n\n\nasync def test_shipment_lists_rows_by_key(mongo_uow: MongoUnitOfWork) -> None:\n    await add_shipment(mongo_uow, 1)\n    await add_shipment(mongo_uow, 2)\n    page = await mongo_uow.shipments.list(0, 1)\n    assert page.total == 2\n    assert len(page.items) == 1\n\n\nasync def test_shipment_adds_and_removes_one_item_of_stops(mongo_uow: MongoUnitOfWork) -> None:\n    stored = await add_shipment(mongo_uow, 1)\n    before = len(stored.stops or [])\n    item = {\"city\": f\"city-{7}\"}\n    added = await mongo_uow.shipments.add_stop(stored.id, item)\n    assert added is not None and len(added.stops) == before + 1\n    removed = await mongo_uow.shipments.remove_stop(stored.id, before, len(added.stops))\n    assert removed is not None and len(removed.stops) == before\n    assert await mongo_uow.shipments.remove_stop(stored.id, 0, before + 5) is None\n\n\nasync def test_shipment_is_deleted(mongo_uow: MongoUnitOfWork) -> None:\n    stored = await add_shipment(mongo_uow, 1)\n    await mongo_uow.shipments.delete(stored)\n    assert await mongo_uow.shipments.find_by_id(stored.id) is None\n\n\nasync def test_shipment_service_creates_a_valid_row(memory_uow: MemoryUnitOfWork) -> None:\n    service = ShipmentService(memory_uow)\n    n = 100\n    created = await service.create_shipment(ShipmentCreate(**_values(new_shipment(1), ShipmentCreate)))\n    found = await service.get_shipment(created.id)\n    assert found.id == created.id\n\n\nasync def test_shipment_service_refuses_a_missing_value(memory_uow: MemoryUnitOfWork) -> None:\n    service = ShipmentService(memory_uow)\n    n = 100\n    with pytest.raises(ValidationFailedError) as raised:\n        await service.create_shipment(ShipmentCreate.model_construct(**(_values(new_shipment(1), ShipmentCreate) | {\"parcel\": None})))\n    assert [error.field for error in raised.value.errors] == [\"parcel\"]\n\n\nasync def test_shipment_service_says_when_a_row_is_missing(memory_uow: MemoryUnitOfWork) -> None:\n    service = ShipmentService(memory_uow)\n    with pytest.raises(NotFoundError):\n        await service.get_shipment(\"ffffffffffffffffffffffff\")\n\n\nasync def test_shipment_service_adds_and_removes_one_item_of_stops(memory_uow: MemoryUnitOfWork) -> None:\n    service = ShipmentService(memory_uow)\n    n = 100\n    created = await service.create_shipment(ShipmentCreate(**_values(new_shipment(1), ShipmentCreate)))\n    before = len(created.stops or [])\n    item = {\"city\": f\"city-{7}\"}\n    added = await service.add_stop(created.id, item)\n    assert len(added.stops) == before + 1\n    removed = await service.remove_stop(created.id, before)\n    assert len(removed.stops) == before\n    with pytest.raises(NotFoundError):\n        await service.remove_stop(created.id, 99)\n\n\nasync def test_shipment_service_deletes_a_row(memory_uow: MemoryUnitOfWork) -> None:\n    service = ShipmentService(memory_uow)\n    n = 100\n    created = await service.create_shipment(ShipmentCreate(**_values(new_shipment(1), ShipmentCreate)))\n    await service.delete_shipment(created.id)\n    with pytest.raises(NotFoundError):\n        await service.get_shipment(created.id)\n\n\ndef _values(entity: object, dto: type) -> dict[str, object]:\n    \"\"\"The values a DTO takes, from an entity that is not stored, for building the DTO from a factory row.\"\"\"\n    names = dto.model_fields if hasattr(dto, \"model_fields\") else {field.name for field in fields(dto)}\n    return {name: value for name, value in vars(entity).items() if name in names}\n"
+ }
+}

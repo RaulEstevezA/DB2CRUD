@@ -1,0 +1,935 @@
+{
+ "schema": {
+  "format": "db-schema",
+  "version": 1,
+  "dialect": "mongodb",
+  "source": {
+   "kind": "orm",
+   "format": "mongodb"
+  },
+  "tables": [
+   {
+    "name": "customers",
+    "columns": [
+     {
+      "name": "_id",
+      "type": {
+       "sql": "ObjectId",
+       "kind": "text",
+       "length": 24,
+       "fixed": true,
+       "objectId": true
+      },
+      "nullable": false,
+      "generated": "uuid"
+     },
+     {
+      "name": "email",
+      "type": {
+       "sql": "string",
+       "kind": "text"
+      },
+      "nullable": false
+     },
+     {
+      "name": "level",
+      "type": {
+       "sql": "string",
+       "kind": "text"
+      },
+      "nullable": true
+     },
+     {
+      "name": "since",
+      "type": {
+       "sql": "date",
+       "kind": "datetime",
+       "timezone": true
+      },
+      "nullable": false
+     },
+     {
+      "name": "address",
+      "type": {
+       "sql": "object",
+       "kind": "json",
+       "fields": [
+        {
+         "name": "street",
+         "type": {
+          "sql": "string",
+          "kind": "text"
+         },
+         "nullable": false
+        },
+        {
+         "name": "zip code",
+         "type": {
+          "sql": "string",
+          "kind": "text"
+         },
+         "nullable": false
+        },
+        {
+         "name": "location",
+         "type": {
+          "sql": "object",
+          "kind": "json",
+          "fields": [
+           {
+            "name": "latitude",
+            "type": {
+             "sql": "double",
+             "kind": "float",
+             "bits": 64
+            },
+            "nullable": false
+           },
+           {
+            "name": "longitude",
+            "type": {
+             "sql": "double",
+             "kind": "float",
+             "bits": 64
+            },
+            "nullable": false
+           }
+          ]
+         },
+         "nullable": true
+        }
+       ]
+      },
+      "nullable": false
+     },
+     {
+      "name": "tags",
+      "type": {
+       "sql": "array<string>",
+       "kind": "array",
+       "items": {
+        "sql": "string",
+        "kind": "text"
+       }
+      },
+      "nullable": true
+     }
+    ],
+    "primaryKey": [
+     "_id"
+    ],
+    "foreignKeys": [],
+    "uniques": [
+     {
+      "columns": [
+       "email"
+      ]
+     }
+    ],
+    "indexes": [],
+    "checks": [
+     {
+      "sql": "level IN ('basic', 'gold')",
+      "parsed": {
+       "kind": "in",
+       "column": "level",
+       "values": [
+        "basic",
+        "gold"
+       ]
+      }
+     }
+    ],
+    "origin": {
+     "line": 2,
+     "column": 1
+    }
+   },
+   {
+    "name": "orders",
+    "columns": [
+     {
+      "name": "_id",
+      "type": {
+       "sql": "ObjectId",
+       "kind": "text",
+       "length": 24,
+       "fixed": true,
+       "objectId": true
+      },
+      "nullable": false,
+      "generated": "uuid"
+     },
+     {
+      "name": "code",
+      "type": {
+       "sql": "string",
+       "kind": "text"
+      },
+      "nullable": false
+     },
+     {
+      "name": "lines",
+      "type": {
+       "sql": "array<object>",
+       "kind": "array",
+       "items": {
+        "sql": "object",
+        "kind": "json",
+        "fields": [
+         {
+          "name": "_id",
+          "type": {
+           "sql": "ObjectId",
+           "kind": "text",
+           "length": 24,
+           "fixed": true,
+           "objectId": true
+          },
+          "nullable": true
+         },
+         {
+          "name": "sku",
+          "type": {
+           "sql": "string",
+           "kind": "text"
+          },
+          "nullable": false
+         },
+         {
+          "name": "quantity",
+          "type": {
+           "sql": "int",
+           "kind": "integer",
+           "bits": 32
+          },
+          "nullable": false
+         },
+         {
+          "name": "price",
+          "type": {
+           "sql": "decimal",
+           "kind": "decimal"
+          },
+          "nullable": false
+         },
+         {
+          "name": "status",
+          "type": {
+           "sql": "string",
+           "kind": "enum",
+           "name": "orders_lines_status"
+          },
+          "nullable": true
+         },
+         {
+          "name": "discounts",
+          "type": {
+           "sql": "array<object>",
+           "kind": "array",
+           "items": {
+            "sql": "object",
+            "kind": "json",
+            "fields": [
+             {
+              "name": "reason",
+              "type": {
+               "sql": "string",
+               "kind": "text"
+              },
+              "nullable": false
+             },
+             {
+              "name": "percent",
+              "type": {
+               "sql": "double",
+               "kind": "float",
+               "bits": 64
+              },
+              "nullable": false
+             }
+            ]
+           }
+          },
+          "nullable": true
+         }
+        ]
+       }
+      },
+      "nullable": false
+     },
+     {
+      "name": "shipping",
+      "type": {
+       "sql": "object",
+       "kind": "json",
+       "fields": [
+        {
+         "name": "carrier",
+         "type": {
+          "sql": "string",
+          "kind": "text"
+         },
+         "nullable": false
+        },
+        {
+         "name": "sentOn",
+         "type": {
+          "sql": "date",
+          "kind": "datetime",
+          "timezone": true
+         },
+         "nullable": false
+        }
+       ]
+      },
+      "nullable": true
+     }
+    ],
+    "primaryKey": [
+     "_id"
+    ],
+    "foreignKeys": [],
+    "uniques": [
+     {
+      "columns": [
+       "code"
+      ]
+     }
+    ],
+    "indexes": [],
+    "checks": [],
+    "origin": {
+     "line": 30,
+     "column": 1
+    }
+   },
+   {
+    "name": "shipments",
+    "columns": [
+     {
+      "name": "_id",
+      "type": {
+       "sql": "ObjectId",
+       "kind": "text",
+       "length": 24,
+       "fixed": true,
+       "objectId": true
+      },
+      "nullable": false,
+      "generated": "uuid"
+     },
+     {
+      "name": "parcel",
+      "type": {
+       "sql": "object",
+       "kind": "json",
+       "fields": [
+        {
+         "name": "weight",
+         "type": {
+          "sql": "double",
+          "kind": "float",
+          "bits": 64
+         },
+         "nullable": false
+        },
+        {
+         "name": "contents",
+         "type": {
+          "sql": "string",
+          "kind": "text"
+         },
+         "nullable": false
+        },
+        {
+         "name": "size",
+         "type": {
+          "sql": "object",
+          "kind": "json",
+          "fields": [
+           {
+            "name": "height",
+            "type": {
+             "sql": "double",
+             "kind": "float",
+             "bits": 64
+            },
+            "nullable": false
+           }
+          ]
+         },
+         "nullable": true
+        }
+       ]
+      },
+      "nullable": false
+     },
+     {
+      "name": "stops",
+      "type": {
+       "sql": "array<object>",
+       "kind": "array",
+       "items": {
+        "sql": "object",
+        "kind": "json",
+        "fields": [
+         {
+          "name": "city",
+          "type": {
+           "sql": "string",
+           "kind": "text"
+          },
+          "nullable": true
+         }
+        ]
+       }
+      },
+      "nullable": true
+     }
+    ],
+    "primaryKey": [
+     "_id"
+    ],
+    "foreignKeys": [],
+    "uniques": [],
+    "indexes": [],
+    "checks": [],
+    "origin": {
+     "line": 70,
+     "column": 1
+    }
+   }
+  ],
+  "enums": [
+   {
+    "name": "orders_lines_status",
+    "values": [
+     "pending",
+     "sent"
+    ],
+    "storage": "check"
+   }
+  ],
+  "notes": []
+ },
+ "decisions": [],
+ "settings": {
+  "name": "springdata-mongodb-conversions",
+  "language": "java",
+  "orm": "springdata",
+  "database": "mongodb"
+ },
+ "models": {
+  "schema": {
+   "format": "model-schema",
+   "version": 1,
+   "origin": {
+    "format": "java",
+    "language": "java"
+   },
+   "models": [
+    {
+     "name": "Location",
+     "kind": "record",
+     "fields": [
+      {
+       "name": "latitude",
+       "type": {
+        "kind": "primitive",
+        "name": "float",
+        "bits": 64
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "double"
+      },
+      {
+       "name": "longitude",
+       "type": {
+        "kind": "primitive",
+        "name": "float",
+        "bits": 64
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "double"
+      }
+     ],
+     "construction": "positional",
+     "metadata": {
+      "accessors": "record"
+     }
+    },
+    {
+     "name": "Address",
+     "kind": "record",
+     "fields": [
+      {
+       "name": "street",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String"
+      },
+      {
+       "name": "zipCode",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String"
+      },
+      {
+       "name": "location",
+       "type": {
+        "kind": "model",
+        "name": "Location"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "Location"
+      }
+     ],
+     "construction": "positional",
+     "metadata": {
+      "accessors": "record"
+     }
+    },
+    {
+     "name": "Customer",
+     "kind": "record",
+     "fields": [
+      {
+       "name": "id",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String"
+      },
+      {
+       "name": "email",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String"
+      },
+      {
+       "name": "level",
+       "type": {
+        "kind": "enum",
+        "name": "Level"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "Level"
+      },
+      {
+       "name": "since",
+       "type": {
+        "kind": "primitive",
+        "name": "datetime"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "Instant"
+      },
+      {
+       "name": "address",
+       "type": {
+        "kind": "model",
+        "name": "Address"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "Address"
+      },
+      {
+       "name": "tags",
+       "type": {
+        "kind": "array",
+        "items": {
+         "kind": "primitive",
+         "name": "string"
+        }
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "List<String>"
+      }
+     ],
+     "construction": "positional",
+     "metadata": {
+      "accessors": "record"
+     }
+    },
+    {
+     "name": "Discount",
+     "kind": "class",
+     "fields": [
+      {
+       "name": "reason",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String"
+      },
+      {
+       "name": "percent",
+       "type": {
+        "kind": "primitive",
+        "name": "float",
+        "bits": 64
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "double"
+      }
+     ],
+     "construction": "properties",
+     "metadata": {
+      "accessors": "getters"
+     }
+    },
+    {
+     "name": "OrderLine",
+     "kind": "class",
+     "fields": [
+      {
+       "name": "id",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String"
+      },
+      {
+       "name": "sku",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String"
+      },
+      {
+       "name": "quantity",
+       "type": {
+        "kind": "primitive",
+        "name": "integer",
+        "bits": 32
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "int"
+      },
+      {
+       "name": "price",
+       "type": {
+        "kind": "primitive",
+        "name": "decimal"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "BigDecimal"
+      },
+      {
+       "name": "status",
+       "type": {
+        "kind": "enum",
+        "name": "LineStatus"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "LineStatus"
+      },
+      {
+       "name": "discounts",
+       "type": {
+        "kind": "array",
+        "items": {
+         "kind": "model",
+         "name": "Discount"
+        }
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "List<Discount>"
+      }
+     ],
+     "construction": "properties",
+     "metadata": {
+      "accessors": "getters"
+     }
+    },
+    {
+     "name": "Shipping",
+     "kind": "record",
+     "fields": [
+      {
+       "name": "carrier",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String"
+      },
+      {
+       "name": "sentOn",
+       "type": {
+        "kind": "primitive",
+        "name": "date"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "LocalDate"
+      }
+     ],
+     "construction": "positional",
+     "metadata": {
+      "accessors": "record"
+     }
+    },
+    {
+     "name": "Order",
+     "kind": "record",
+     "fields": [
+      {
+       "name": "id",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String"
+      },
+      {
+       "name": "code",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String"
+      },
+      {
+       "name": "lines",
+       "type": {
+        "kind": "array",
+        "items": {
+         "kind": "model",
+         "name": "OrderLine"
+        }
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "List<OrderLine>"
+      },
+      {
+       "name": "shipping",
+       "type": {
+        "kind": "model",
+        "name": "Shipping"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "Shipping"
+      }
+     ],
+     "construction": "positional",
+     "metadata": {
+      "accessors": "record"
+     }
+    },
+    {
+     "name": "Parcel",
+     "kind": "record",
+     "fields": [
+      {
+       "name": "weight",
+       "type": {
+        "kind": "primitive",
+        "name": "float",
+        "bits": 64
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "double"
+      },
+      {
+       "name": "size",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String"
+      },
+      {
+       "name": "fragile",
+       "type": {
+        "kind": "primitive",
+        "name": "boolean"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "boolean"
+      }
+     ],
+     "construction": "positional",
+     "metadata": {
+      "accessors": "record"
+     }
+    },
+    {
+     "name": "Shipment",
+     "kind": "record",
+     "fields": [
+      {
+       "name": "id",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String"
+      },
+      {
+       "name": "parcel",
+       "type": {
+        "kind": "model",
+        "name": "Parcel"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "Parcel"
+      },
+      {
+       "name": "stops",
+       "type": {
+        "kind": "array",
+        "items": {
+         "kind": "primitive",
+         "name": "string"
+        }
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "List<String>"
+      }
+     ],
+     "construction": "positional",
+     "metadata": {
+      "accessors": "record"
+     }
+    }
+   ],
+   "enums": [
+    {
+     "name": "Level",
+     "values": [
+      {
+       "name": "basic"
+      },
+      {
+       "name": "gold"
+      }
+     ]
+    },
+    {
+     "name": "LineStatus",
+     "values": [
+      {
+       "name": "pending"
+      },
+      {
+       "name": "sent"
+      }
+     ]
+    }
+   ]
+  },
+  "project": null
+ },
+ "files": {
+  ".env.example": "# Where the database is\nDATABASE_URL=mongodb://localhost:27017/app\n# The database the tests use (it is emptied by the tests): one of the same kind as DATABASE_URL\n# TEST_DATABASE_URL=\n",
+  ".gitignore": "target/\n.env\n*.db\n",
+  "README.md": "# springdata-mongodb-conversions\n\nData access layer generated by [DB2CRUD](https://github.com/RaulEstevezA/DB2CRUD) for a database that already exists: entities, repositories and services with Spring Data MongoDB, in Java 21. It does not create or migrate the database, and it depends on no framework.\n\n## Settings\n\n- Database: mongodb.\n- Entities: written for the tables the input had no class for.\n- Services: take and return the entities; updates take a Patch<T> per field: absent, null or a value.\n- Transactions: every repository write is committed at once.\n- Lists: lists return pages by offset and limit.\n\n## Layout\n\n```text\nsrc/main/java/app/Database.java        the MongoTemplate of DATABASE_URL\nsrc/main/java/app/Documents.java       entities as documents, and what changed in them\nsrc/main/java/app/UnitOfWork.java      the repositories of every table, and the transaction of each operation\nsrc/main/java/app/errors/              NotFoundException, ConflictException, ValidationFailedException: no HTTP codes\nsrc/main/java/app/entities/            one entity per table\nsrc/main/java/app/repositories/        the repositories of each table\nsrc/main/java/app/services/            one service per table\nsrc/test/java/                       repositories against a database, services on the in-memory repositories\ncrud-contract.json                   what was written, for CRUD2Controller\n```\n\n## Running the tests\n\n```bash\nTEST_DATABASE_URL=mongodb://localhost:27017/app mvn test   # a real, disposable database: it is emptied\n```\n\n`Database.open()` makes one client for the application. In a Spring application, inject its own `MongoTemplate` into `MongoUnitOfWork` instead; transactions need a replica set.\n\nLook for `TODO` in the code: each one marks a decision the input did not settle.\n",
+  "crud-contract.json": "{\n  \"format\": \"crud-contract\",\n  \"version\": 1,\n  \"stack\": {\n    \"language\": \"java\",\n    \"orm\": \"springdata\",\n    \"database\": \"mongodb\",\n    \"execution\": \"sync\"\n  },\n  \"transactions\": \"repository\",\n  \"paging\": \"offset\",\n  \"types\": [\n    {\n      \"name\": \"Customer\",\n      \"module\": \"app.entities\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"java\": \"String\",\n            \"length\": 24\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"email\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"java\": \"String\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"level\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"java\": \"String\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"since\",\n          \"type\": {\n            \"kind\": \"datetime\",\n            \"java\": \"Instant\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"address\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"java\": \"Customer.Address\",\n            \"fields\": [\n              {\n                \"name\": \"street\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"zip code\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"location\",\n                \"type\": {\n                  \"kind\": \"json\",\n                  \"fields\": [\n                    {\n                      \"name\": \"latitude\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    },\n                    {\n                      \"name\": \"longitude\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"tags\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"java\": \"List<String>\"\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"CustomerChanges\",\n      \"module\": \"app.services\",\n      \"kind\": \"update\",\n      \"updates\": \"patch\",\n      \"fields\": [\n        {\n          \"name\": \"email\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"java\": \"String\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"level\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"java\": \"String\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"since\",\n          \"type\": {\n            \"kind\": \"datetime\",\n            \"java\": \"Instant\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"address\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"java\": \"Customer.Address\",\n            \"fields\": [\n              {\n                \"name\": \"street\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"zip code\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"location\",\n                \"type\": {\n                  \"kind\": \"json\",\n                  \"fields\": [\n                    {\n                      \"name\": \"latitude\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    },\n                    {\n                      \"name\": \"longitude\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"tags\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"java\": \"List<String>\"\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"Order\",\n      \"module\": \"app.entities\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"java\": \"String\",\n            \"length\": 24\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"code\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"java\": \"String\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"lines\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"java\": \"List<Order.Line>\",\n            \"fields\": [\n              {\n                \"name\": \"_id\",\n                \"type\": {\n                  \"kind\": \"text\",\n                  \"length\": 24\n                },\n                \"nullable\": true\n              },\n              {\n                \"name\": \"sku\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"quantity\",\n                \"type\": {\n                  \"kind\": \"integer\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"price\",\n                \"type\": {\n                  \"kind\": \"decimal\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"status\",\n                \"type\": {\n                  \"kind\": \"enum\"\n                },\n                \"nullable\": true\n              },\n              {\n                \"name\": \"discounts\",\n                \"type\": {\n                  \"kind\": \"array\",\n                  \"fields\": [\n                    {\n                      \"name\": \"reason\",\n                      \"type\": {\n                        \"kind\": \"text\"\n                      },\n                      \"nullable\": false\n                    },\n                    {\n                      \"name\": \"percent\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"shipping\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"java\": \"Order.Shipping\",\n            \"fields\": [\n              {\n                \"name\": \"carrier\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"sentOn\",\n                \"type\": {\n                  \"kind\": \"datetime\"\n                },\n                \"nullable\": false\n              }\n            ]\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"OrderChanges\",\n      \"module\": \"app.services\",\n      \"kind\": \"update\",\n      \"updates\": \"patch\",\n      \"fields\": [\n        {\n          \"name\": \"code\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"java\": \"String\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"lines\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"java\": \"List<Order.Line>\",\n            \"fields\": [\n              {\n                \"name\": \"_id\",\n                \"type\": {\n                  \"kind\": \"text\",\n                  \"length\": 24\n                },\n                \"nullable\": true\n              },\n              {\n                \"name\": \"sku\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"quantity\",\n                \"type\": {\n                  \"kind\": \"integer\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"price\",\n                \"type\": {\n                  \"kind\": \"decimal\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"status\",\n                \"type\": {\n                  \"kind\": \"enum\"\n                },\n                \"nullable\": true\n              },\n              {\n                \"name\": \"discounts\",\n                \"type\": {\n                  \"kind\": \"array\",\n                  \"fields\": [\n                    {\n                      \"name\": \"reason\",\n                      \"type\": {\n                        \"kind\": \"text\"\n                      },\n                      \"nullable\": false\n                    },\n                    {\n                      \"name\": \"percent\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"shipping\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"java\": \"Order.Shipping\",\n            \"fields\": [\n              {\n                \"name\": \"carrier\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"sentOn\",\n                \"type\": {\n                  \"kind\": \"datetime\"\n                },\n                \"nullable\": false\n              }\n            ]\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"Shipment\",\n      \"module\": \"app.entities\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"java\": \"String\",\n            \"length\": 24\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"parcel\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"java\": \"Shipment.Parcel\",\n            \"fields\": [\n              {\n                \"name\": \"weight\",\n                \"type\": {\n                  \"kind\": \"float\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"contents\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"size\",\n                \"type\": {\n                  \"kind\": \"json\",\n                  \"fields\": [\n                    {\n                      \"name\": \"height\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"stops\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"java\": \"List<Shipment.Stop>\",\n            \"fields\": [\n              {\n                \"name\": \"city\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"ShipmentChanges\",\n      \"module\": \"app.services\",\n      \"kind\": \"update\",\n      \"updates\": \"patch\",\n      \"fields\": [\n        {\n          \"name\": \"parcel\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"java\": \"Shipment.Parcel\",\n            \"fields\": [\n              {\n                \"name\": \"weight\",\n                \"type\": {\n                  \"kind\": \"float\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"contents\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"size\",\n                \"type\": {\n                  \"kind\": \"json\",\n                  \"fields\": [\n                    {\n                      \"name\": \"height\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"stops\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"java\": \"List<Shipment.Stop>\",\n            \"fields\": [\n              {\n                \"name\": \"city\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        }\n      ]\n    }\n  ],\n  \"errors\": [\n    {\n      \"kind\": \"notFound\",\n      \"name\": \"NotFoundException\",\n      \"module\": \"app.errors\"\n    },\n    {\n      \"kind\": \"conflict\",\n      \"name\": \"ConflictException\",\n      \"module\": \"app.errors\"\n    },\n    {\n      \"kind\": \"validation\",\n      \"name\": \"ValidationFailedException\",\n      \"module\": \"app.errors\"\n    }\n  ],\n  \"common\": \"app.common\",\n  \"services\": [\n    {\n      \"name\": \"CustomerService\",\n      \"module\": \"app.services\",\n      \"operations\": [\n        {\n          \"name\": \"createCustomer\",\n          \"kind\": \"create\",\n          \"errors\": [\n            \"validation\",\n            \"conflict\"\n          ]\n        },\n        {\n          \"name\": \"getCustomer\",\n          \"kind\": \"get\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"listCustomers\",\n          \"kind\": \"list\",\n          \"errors\": []\n        },\n        {\n          \"name\": \"updateCustomer\",\n          \"kind\": \"update\",\n          \"errors\": [\n            \"notFound\",\n            \"validation\",\n            \"conflict\"\n          ]\n        },\n        {\n          \"name\": \"deleteCustomer\",\n          \"kind\": \"delete\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"findCustomerByEmail\",\n          \"kind\": \"find\",\n          \"by\": [\n            \"email\"\n          ],\n          \"errors\": []\n        },\n        {\n          \"name\": \"addTag\",\n          \"kind\": \"addItem\",\n          \"by\": [\n            \"tags\"\n          ],\n          \"errors\": [\n            \"notFound\",\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"removeTag\",\n          \"kind\": \"removeItem\",\n          \"by\": [\n            \"tags\"\n          ],\n          \"errors\": [\n            \"notFound\",\n            \"conflict\"\n          ]\n        }\n      ]\n    },\n    {\n      \"name\": \"OrderService\",\n      \"module\": \"app.services\",\n      \"operations\": [\n        {\n          \"name\": \"createOrder\",\n          \"kind\": \"create\",\n          \"errors\": [\n            \"validation\",\n            \"conflict\"\n          ]\n        },\n        {\n          \"name\": \"getOrder\",\n          \"kind\": \"get\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"listOrders\",\n          \"kind\": \"list\",\n          \"errors\": []\n        },\n        {\n          \"name\": \"updateOrder\",\n          \"kind\": \"update\",\n          \"errors\": [\n            \"notFound\",\n            \"validation\",\n            \"conflict\"\n          ]\n        },\n        {\n          \"name\": \"deleteOrder\",\n          \"kind\": \"delete\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"findOrderByCode\",\n          \"kind\": \"find\",\n          \"by\": [\n            \"code\"\n          ],\n          \"errors\": []\n        },\n        {\n          \"name\": \"addLine\",\n          \"kind\": \"addItem\",\n          \"by\": [\n            \"lines\"\n          ],\n          \"errors\": [\n            \"notFound\",\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"removeLine\",\n          \"kind\": \"removeItem\",\n          \"by\": [\n            \"lines\"\n          ],\n          \"errors\": [\n            \"notFound\",\n            \"conflict\"\n          ]\n        }\n      ]\n    },\n    {\n      \"name\": \"ShipmentService\",\n      \"module\": \"app.services\",\n      \"operations\": [\n        {\n          \"name\": \"createShipment\",\n          \"kind\": \"create\",\n          \"errors\": [\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"getShipment\",\n          \"kind\": \"get\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"listShipments\",\n          \"kind\": \"list\",\n          \"errors\": []\n        },\n        {\n          \"name\": \"updateShipment\",\n          \"kind\": \"update\",\n          \"errors\": [\n            \"notFound\",\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"deleteShipment\",\n          \"kind\": \"delete\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"addStop\",\n          \"kind\": \"addItem\",\n          \"by\": [\n            \"stops\"\n          ],\n          \"errors\": [\n            \"notFound\",\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"removeStop\",\n          \"kind\": \"removeItem\",\n          \"by\": [\n            \"stops\"\n          ],\n          \"errors\": [\n            \"notFound\",\n            \"conflict\"\n          ]\n        }\n      ]\n    }\n  ]\n}\n",
+  "pom.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd\">\n  <modelVersion>4.0.0</modelVersion>\n\n  <groupId>app</groupId>\n  <artifactId>springdata-mongodb-conversions</artifactId>\n  <version>0.1.0</version>\n  <description>Data access layer (entities, repositories and services) generated by DB2CRUD.</description>\n\n  <properties>\n    <maven.compiler.release>21</maven.compiler.release>\n    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>\n  </properties>\n\n  <dependencies>\n    <dependency>\n      <groupId>org.springframework.data</groupId>\n      <artifactId>spring-data-mongodb</artifactId>\n      <version>5.1.3</version>\n    </dependency>\n    <dependency>\n      <groupId>org.mongodb</groupId>\n      <artifactId>mongodb-driver-sync</artifactId>\n      <version>5.8.1</version>\n    </dependency>\n    <dependency>\n      <groupId>org.junit.jupiter</groupId>\n      <artifactId>junit-jupiter</artifactId>\n      <version>6.1.3</version>\n      <scope>test</scope>\n    </dependency>\n  </dependencies>\n\n  <build>\n    <plugins>\n      <plugin>\n        <groupId>org.apache.maven.plugins</groupId>\n        <artifactId>maven-surefire-plugin</artifactId>\n        <version>3.5.4</version>\n      </plugin>\n    </plugins>\n  </build>\n</project>\n",
+  "src/main/java/app/Database.java": "package app;\n\nimport app.entities.Customer;\nimport app.entities.Order;\nimport app.entities.Shipment;\nimport com.mongodb.ConnectionString;\nimport com.mongodb.MongoClientSettings;\nimport com.mongodb.client.MongoClient;\nimport com.mongodb.client.MongoClients;\nimport java.util.List;\nimport org.bson.UuidRepresentation;\nimport org.springframework.data.mongodb.core.MongoTemplate;\nimport org.springframework.data.mongodb.core.SimpleMongoClientDatabaseFactory;\nimport org.springframework.data.mongodb.core.convert.DefaultMongoTypeMapper;\nimport org.springframework.data.mongodb.core.convert.MappingMongoConverter;\nimport org.springframework.data.mongodb.core.convert.MongoCustomConversions;\nimport org.springframework.data.mongodb.core.convert.NoOpDbRefResolver;\nimport org.springframework.data.mongodb.core.mapping.MongoMappingContext;\n\n/** The MongoDB database DATABASE_URL names, through Spring Data. It creates no collection and no index: the database already exists. */\npublic final class Database {\n    public static final String DEFAULT_URL = \"mongodb://localhost:27017/app\";\n\n    /** Every entity, one per collection */\n    public static final List<Class<?>> ENTITIES = List.of(Customer.class, Order.class, Shipment.class);\n\n    private Database() {}\n\n    /** A client for the server at url, which keeps UUIDs as the standard says; close it when the application ends. */\n    public static MongoClient client(String url) {\n        return MongoClients.create(MongoClientSettings.builder()\n                .applyConnectionString(new ConnectionString(url))\n                .uuidRepresentation(UuidRepresentation.STANDARD)\n                .build());\n    }\n\n    /** The template of a database of the client. */\n    public static MongoTemplate template(MongoClient client, String database) {\n        MongoCustomConversions conversions = MongoCustomConversions.create((adapter) -> adapter\n                .bigDecimal(MongoCustomConversions.BigDecimalRepresentation.DECIMAL128));\n        MongoMappingContext mapping = new MongoMappingContext();\n        mapping.setSimpleTypeHolder(conversions.getSimpleTypeHolder());\n        mapping.afterPropertiesSet();\n        MappingMongoConverter converter = new MappingMongoConverter(NoOpDbRefResolver.INSTANCE, mapping);\n        converter.setCustomConversions(conversions);\n        // Documents hold no name of a Java class\n        converter.setTypeMapper(new DefaultMongoTypeMapper(null));\n        converter.afterPropertiesSet();\n        return new MongoTemplate(new SimpleMongoClientDatabaseFactory(client, database), converter);\n    }\n\n    /** The template of the database DATABASE_URL names. */\n    public static MongoTemplate open() {\n        String url = System.getenv().getOrDefault(\"DATABASE_URL\", DEFAULT_URL);\n        return template(client(url), new ConnectionString(url).getDatabase());\n    }\n}\n",
+  "src/main/java/app/Documents.java": "package app;\n\nimport app.errors.ConflictException;\nimport com.mongodb.MongoException;\nimport java.util.LinkedHashSet;\nimport java.util.List;\nimport java.util.Objects;\nimport java.util.Set;\nimport org.bson.Document;\nimport org.springframework.dao.DataAccessException;\nimport org.springframework.dao.DataIntegrityViolationException;\nimport org.springframework.data.mongodb.core.MongoTemplate;\n\n/** Entities as the documents they are stored as, and what changed in them. */\npublic final class Documents {\n    private Documents() {}\n\n    /** The document of an entity, or of a nested one. */\n    public static Document of(MongoTemplate mongo, Object entity) {\n        Document document = new Document();\n        mongo.getConverter().write(entity, document);\n        return document;\n    }\n\n    /** The update that takes a document from what it was to what it is: only the fields that differ, and inside a nested document only its own. */\n    public static Document changes(Document before, Document now, List<String> fields) {\n        Document set = new Document();\n        Document unset = new Document();\n        for (String field : fields) compare(\"\", field, before == null ? null : before.get(field), now.get(field), set, unset);\n        Document result = new Document();\n        if (!set.isEmpty()) result.append(\"$set\", set);\n        if (!unset.isEmpty()) result.append(\"$unset\", unset);\n        return result;\n    }\n\n    /** The domain error of a refused write: a repeated value, or one the validator of the collection does not take. */\n    public static RuntimeException refusal(String entity, DataAccessException error) {\n        boolean refused = error instanceof DataIntegrityViolationException\n                || error.getCause() instanceof MongoException cause && cause.getCode() == 121;\n        return refused ? new ConflictException(entity, \"the database refused the change: \" + error.getMessage()) : error;\n    }\n\n    private static void compare(String path, String field, Object before, Object now, Document set, Document unset) {\n        String name = path + field;\n        if (Objects.deepEquals(before, now)) return;\n        if (now == null) unset.append(name, \"\");\n        else if (before instanceof Document old && now instanceof Document current) {\n            Set<String> names = new LinkedHashSet<>(old.keySet());\n            names.addAll(current.keySet());\n            for (String item : names) compare(name + \".\", item, old.get(item), current.get(item), set, unset);\n        } else set.append(name, now);\n    }\n}\n",
+  "src/main/java/app/MemoryUnitOfWork.java": "package app;\n\nimport app.repositories.CustomerRepository;\nimport app.repositories.MemoryCustomerRepository;\nimport app.repositories.MemoryOrderRepository;\nimport app.repositories.MemoryShipmentRepository;\nimport app.repositories.OrderRepository;\nimport app.repositories.ShipmentRepository;\nimport java.util.function.Function;\n\n/** The in-memory repositories, for tests and for trying the services without a database. */\npublic class MemoryUnitOfWork implements UnitOfWork {\n    private final CustomerRepository customers = new MemoryCustomerRepository();\n    private final OrderRepository orders = new MemoryOrderRepository();\n    private final ShipmentRepository shipments = new MemoryShipmentRepository();\n\n    @Override\n    public CustomerRepository customers() {\n        return customers;\n    }\n\n    @Override\n    public OrderRepository orders() {\n        return orders;\n    }\n\n    @Override\n    public ShipmentRepository shipments() {\n        return shipments;\n    }\n\n    /** Memory has no transactions: changes are kept as they are made. */\n    @Override\n    public <T> T transaction(Function<UnitOfWork, T> work) {\n        return work.apply(this);\n    }\n}\n",
+  "src/main/java/app/MongoUnitOfWork.java": "package app;\n\nimport app.repositories.CustomerRepository;\nimport app.repositories.OrderRepository;\nimport app.repositories.ShipmentRepository;\nimport app.repositories.MongoCustomerRepository;\nimport app.repositories.MongoOrderRepository;\nimport app.repositories.MongoShipmentRepository;\nimport java.util.function.Function;\nimport org.springframework.data.mongodb.core.MongoTemplate;\n\n/** The repositories over one MongoTemplate. */\npublic class MongoUnitOfWork implements UnitOfWork {\n    private final MongoTemplate mongo;\n    private final CustomerRepository customers;\n    private final OrderRepository orders;\n    private final ShipmentRepository shipments;\n\n    public MongoUnitOfWork(MongoTemplate mongo) {\n        this.mongo = mongo;\n        this.customers = new MongoCustomerRepository(mongo);\n        this.orders = new MongoOrderRepository(mongo);\n        this.shipments = new MongoShipmentRepository(mongo);\n    }\n\n    public MongoTemplate mongo() {\n        return mongo;\n    }\n\n    @Override\n    public CustomerRepository customers() {\n        return customers;\n    }\n\n    @Override\n    public OrderRepository orders() {\n        return orders;\n    }\n\n    @Override\n    public ShipmentRepository shipments() {\n        return shipments;\n    }\n\n    @Override\n    public <T> T transaction(Function<UnitOfWork, T> work) {\n        return work.apply(this);\n    }\n}\n",
+  "src/main/java/app/UnitOfWork.java": "package app;\n\nimport app.repositories.CustomerRepository;\nimport app.repositories.OrderRepository;\nimport app.repositories.ShipmentRepository;\nimport java.util.function.Function;\n\n/** What services depend on: a repository per table and a transaction. Every repository write is committed at once; transaction() only groups the code. */\npublic interface UnitOfWork {\n    CustomerRepository customers();\n    OrderRepository orders();\n    ShipmentRepository shipments();\n\n    /** Runs work with the repositories of the transaction; commits when it ends, rolls back when it throws. */\n    <T> T transaction(Function<UnitOfWork, T> work);\n}\n",
+  "src/main/java/app/application_models/Address.java": "package app.application_models;\n\n/** Address, as the application has it. */\npublic record Address(\n        String street,\n        String zipCode,\n        Location location\n) {}\n",
+  "src/main/java/app/application_models/Customer.java": "package app.application_models;\n\nimport java.time.Instant;\nimport java.util.List;\n\n/** Customer, as the application has it. */\npublic record Customer(\n        String id,\n        String email,\n        Level level,\n        Instant since,\n        Address address,\n        List<String> tags\n) {}\n",
+  "src/main/java/app/application_models/Discount.java": "package app.application_models;\n\n/** Discount, as the application has it. */\npublic class Discount {\n    private String reason;\n    private double percent;\n\n    public String getReason() {\n        return reason;\n    }\n\n    public void setReason(String reason) {\n        this.reason = reason;\n    }\n\n    public double getPercent() {\n        return percent;\n    }\n\n    public void setPercent(double percent) {\n        this.percent = percent;\n    }\n}\n",
+  "src/main/java/app/application_models/Level.java": "package app.application_models;\n\n/** Level, as the application has it. */\npublic enum Level {\n    basic, gold\n}\n",
+  "src/main/java/app/application_models/LineStatus.java": "package app.application_models;\n\n/** LineStatus, as the application has it. */\npublic enum LineStatus {\n    pending, sent\n}\n",
+  "src/main/java/app/application_models/Location.java": "package app.application_models;\n\n/** Location, as the application has it. */\npublic record Location(\n        double latitude,\n        double longitude\n) {}\n",
+  "src/main/java/app/application_models/Order.java": "package app.application_models;\n\nimport java.util.List;\n\n/** Order, as the application has it. */\npublic record Order(\n        String id,\n        String code,\n        List<OrderLine> lines,\n        Shipping shipping\n) {}\n",
+  "src/main/java/app/application_models/OrderLine.java": "package app.application_models;\n\nimport java.math.BigDecimal;\nimport java.util.List;\n\n/** OrderLine, as the application has it. */\npublic class OrderLine {\n    private String id;\n    private String sku;\n    private int quantity;\n    private BigDecimal price;\n    private LineStatus status;\n    private List<Discount> discounts;\n\n    public String getId() {\n        return id;\n    }\n\n    public void setId(String id) {\n        this.id = id;\n    }\n\n    public String getSku() {\n        return sku;\n    }\n\n    public void setSku(String sku) {\n        this.sku = sku;\n    }\n\n    public int getQuantity() {\n        return quantity;\n    }\n\n    public void setQuantity(int quantity) {\n        this.quantity = quantity;\n    }\n\n    public BigDecimal getPrice() {\n        return price;\n    }\n\n    public void setPrice(BigDecimal price) {\n        this.price = price;\n    }\n\n    public LineStatus getStatus() {\n        return status;\n    }\n\n    public void setStatus(LineStatus status) {\n        this.status = status;\n    }\n\n    public List<Discount> getDiscounts() {\n        return discounts;\n    }\n\n    public void setDiscounts(List<Discount> discounts) {\n        this.discounts = discounts;\n    }\n}\n",
+  "src/main/java/app/application_models/Parcel.java": "package app.application_models;\n\n/** Parcel, as the application has it. */\npublic record Parcel(\n        double weight,\n        String size,\n        boolean fragile\n) {}\n",
+  "src/main/java/app/application_models/Shipment.java": "package app.application_models;\n\nimport java.util.List;\n\n/** Shipment, as the application has it. */\npublic record Shipment(\n        String id,\n        Parcel parcel,\n        List<String> stops\n) {}\n",
+  "src/main/java/app/application_models/Shipping.java": "package app.application_models;\n\nimport java.time.LocalDate;\n\n/** Shipping, as the application has it. */\npublic record Shipping(\n        String carrier,\n        LocalDate sentOn\n) {}\n",
+  "src/main/java/app/common/Page.java": "package app.common;\n\nimport java.util.List;\nimport java.util.function.Function;\n\n/** A page of a list: the rows from an offset, and how many there are in all. */\npublic record Page<T>(List<T> items, long total, int offset, int limit) {\n    /** The same page with every row turned into something else. */\n    public <R> Page<R> map(Function<T, R> mapper) {\n        return new Page<>(items.stream().map(mapper).toList(), total, offset, limit);\n    }\n}\n",
+  "src/main/java/app/common/Patch.java": "package app.common;\n\n/**\n * A field of an update: absent (it keeps its value), or present with a value, which may be null.\n *\n * @param <T> the type of the value\n */\npublic final class Patch<T> {\n    private static final Patch<?> ABSENT = new Patch<>(false, null);\n\n    private final boolean present;\n    private final T value;\n\n    private Patch(boolean present, T value) {\n        this.present = present;\n        this.value = value;\n    }\n\n    /** The field keeps its value. */\n    @SuppressWarnings(\"unchecked\")\n    public static <T> Patch<T> absent() {\n        return (Patch<T>) ABSENT;\n    }\n\n    /** The field takes this value, which may be null. */\n    public static <T> Patch<T> of(T value) {\n        return new Patch<>(true, value);\n    }\n\n    public boolean isPresent() {\n        return present;\n    }\n\n    /** The value to set; null when absent or set to null. */\n    public T value() {\n        return value;\n    }\n\n    @Override\n    public String toString() {\n        return present ? \"Patch[\" + value + \"]\" : \"Patch.absent\";\n    }\n}\n",
+  "src/main/java/app/conversions/CustomerConversions.java": "package app.conversions;\n\nimport app.application_models.Address;\nimport app.application_models.Level;\nimport app.application_models.Location;\nimport app.entities.Customer;\n\n/** Conversions between the application models and the \"customers\" table: what the service takes and returns. */\npublic final class CustomerConversions {\n    private CustomerConversions() {}\n\n    /** A Location as the documents of the customers collection keep it. */\n    private static Customer.Address.Location customerAddressLocationToDocument(Location value) {\n        Customer.Address.Location document = new Customer.Address.Location();\n        document.setLatitude(value.latitude());\n        document.setLongitude(value.longitude());\n        return document;\n    }\n\n    /** An Address as the documents of the customers collection keep it. */\n    private static Customer.Address customerAddressToDocument(Address value) {\n        Customer.Address document = new Customer.Address();\n        document.setStreet(value.street());\n        document.setZipCode(value.zipCode());\n        document.setLocation(value.location() == null ? null : customerAddressLocationToDocument(value.location()));\n        return document;\n    }\n\n    /** A Customer as the customers table takes it. */\n    public static Customer customerModelToCustomer(app.application_models.Customer model) {\n        Customer entity = new Customer();\n        entity.setEmail(model.email());\n        entity.setLevel(model.level() == null ? null : switch (model.level()) { case basic -> \"basic\"; case gold -> \"gold\"; });\n        entity.setSince(model.since());\n        entity.setAddress(model.address() == null ? null : customerAddressToDocument(model.address()));\n        entity.setTags(model.tags());\n        return entity;\n    }\n\n    /** A document of the customers collection as a Location. */\n    private static Location customerAddressLocationFromDocument(Customer.Address.Location value) {\n        return new Location(\n                value.getLatitude(),\n                value.getLongitude()\n        );\n    }\n\n    /** A document of the customers collection as an Address. */\n    private static Address customerAddressFromDocument(Customer.Address value) {\n        return new Address(\n                value.getStreet(),\n                value.getZipCode(),\n                value.getLocation() == null ? null : customerAddressLocationFromDocument(value.getLocation())\n        );\n    }\n\n    /** A row of the customers table as a Customer. */\n    public static app.application_models.Customer customerToCustomerModel(Customer row) {\n        return new app.application_models.Customer(\n                row.getId(),\n                row.getEmail(),\n                row.getLevel() == null ? null : switch (row.getLevel()) { case \"basic\" -> Level.basic; case \"gold\" -> Level.gold; default -> throw new IllegalArgumentException(\"No Level for \" + row.getLevel()); },\n                row.getSince(),\n                row.getAddress() == null ? null : customerAddressFromDocument(row.getAddress()),\n                row.getTags()\n        );\n    }\n}\n",
+  "src/main/java/app/conversions/OrderConversions.java": "package app.conversions;\n\nimport app.application_models.Discount;\nimport app.application_models.LineStatus;\nimport app.application_models.OrderLine;\nimport app.application_models.Shipping;\nimport app.entities.Order;\nimport java.time.Instant;\nimport java.time.LocalDate;\nimport java.time.ZoneOffset;\n\n/** Conversions between the application models and the \"orders\" table: what the service takes and returns. */\npublic final class OrderConversions {\n    private OrderConversions() {}\n\n    /** A Discount as the documents of the orders collection keep it. */\n    private static Order.Line.Discount orderLinesDiscountsToDocument(Discount value) {\n        Order.Line.Discount document = new Order.Line.Discount();\n        document.setReason(value.getReason());\n        document.setPercent(value.getPercent());\n        return document;\n    }\n\n    /** An OrderLine as the documents of the orders collection keep it. */\n    private static Order.Line orderLinesToDocument(OrderLine value) {\n        Order.Line document = new Order.Line();\n        document.setId(value.getId());\n        document.setSku(value.getSku());\n        document.setQuantity(value.getQuantity());\n        document.setPrice(value.getPrice());\n        document.setStatus(value.getStatus() == null ? null : switch (value.getStatus()) { case pending -> \"pending\"; case sent -> \"sent\"; });\n        document.setDiscounts(value.getDiscounts() == null ? null : value.getDiscounts().stream().map(OrderConversions::orderLinesDiscountsToDocument).toList());\n        return document;\n    }\n\n    /** A Shipping as the documents of the orders collection keep it. */\n    private static Order.Shipping orderShippingToDocument(Shipping value) {\n        Order.Shipping document = new Order.Shipping();\n        document.setCarrier(value.carrier());\n        document.setSentOn(value.sentOn() == null ? null : value.sentOn().atStartOfDay().toInstant(ZoneOffset.UTC));\n        return document;\n    }\n\n    /** An Order as the orders table takes it. */\n    public static Order orderModelToOrder(app.application_models.Order model) {\n        Order entity = new Order();\n        entity.setCode(model.code());\n        entity.setLines(model.lines() == null ? null : model.lines().stream().map(OrderConversions::orderLinesToDocument).toList());\n        entity.setShipping(model.shipping() == null ? null : orderShippingToDocument(model.shipping()));\n        return entity;\n    }\n\n    /** A document of the orders collection as a Discount. */\n    private static Discount orderLinesDiscountsFromDocument(Order.Line.Discount value) {\n        Discount model = new Discount();\n        model.setReason(value.getReason());\n        model.setPercent(value.getPercent());\n        return model;\n    }\n\n    /** A document of the orders collection as an OrderLine. */\n    private static OrderLine orderLinesFromDocument(Order.Line value) {\n        OrderLine model = new OrderLine();\n        model.setId(value.getId());\n        model.setSku(value.getSku());\n        model.setQuantity(value.getQuantity());\n        model.setPrice(value.getPrice());\n        model.setStatus(value.getStatus() == null ? null : switch (value.getStatus()) { case \"pending\" -> LineStatus.pending; case \"sent\" -> LineStatus.sent; default -> throw new IllegalArgumentException(\"No LineStatus for \" + value.getStatus()); });\n        model.setDiscounts(value.getDiscounts() == null ? null : value.getDiscounts().stream().map(OrderConversions::orderLinesDiscountsFromDocument).toList());\n        return model;\n    }\n\n    /** A document of the orders collection as a Shipping. */\n    private static Shipping orderShippingFromDocument(Order.Shipping value) {\n        return new Shipping(\n                value.getCarrier(),\n                value.getSentOn() == null ? null : LocalDate.ofInstant(value.getSentOn(), ZoneOffset.UTC)\n        );\n    }\n\n    /** A row of the orders table as an Order. */\n    public static app.application_models.Order orderToOrderModel(Order row) {\n        return new app.application_models.Order(\n                row.getId(),\n                row.getCode(),\n                row.getLines() == null ? null : row.getLines().stream().map(OrderConversions::orderLinesFromDocument).toList(),\n                row.getShipping() == null ? null : orderShippingFromDocument(row.getShipping())\n        );\n    }\n}\n",
+  "src/main/java/app/conversions/ShipmentConversions.java": "package app.conversions;\n\nimport app.application_models.Parcel;\nimport app.entities.Shipment;\n\n/** Conversions between the application models and the \"shipments\" table: what the service takes and returns. */\npublic final class ShipmentConversions {\n    private ShipmentConversions() {}\n\n    /** A Parcel as the documents of the shipments collection keep it. */\n    private static Shipment.Parcel shipmentParcelToDocument(Parcel value) {\n        // Not stored: fragile\n        Shipment.Parcel document = new Shipment.Parcel();\n        document.setWeight(value.weight());\n        // TODO: contents: no field of the model gives it (contents)\n        // TODO: size: DB2CRUD does not write this conversion (size)\n        return document;\n    }\n\n    /** A Shipment as the shipments table takes it. */\n    public static Shipment shipmentModelToShipment(app.application_models.Shipment model) {\n        Shipment entity = new Shipment();\n        entity.setParcel(model.parcel() == null ? null : shipmentParcelToDocument(model.parcel()));\n        entity.setStops(null); // TODO: stops: DB2CRUD does not write this conversion (stops)\n        return entity;\n    }\n\n    /** A document of the shipments collection as a Parcel. */\n    private static Parcel shipmentParcelFromDocument(Shipment.Parcel value) {\n        return new Parcel(\n                value.getWeight(),\n                null, // TODO: size: DB2CRUD does not write this conversion (size)\n                false // TODO: fragile: no field of the model gives it (fragile)\n        );\n    }\n\n    /** A row of the shipments table as a Shipment. */\n    public static app.application_models.Shipment shipmentToShipmentModel(Shipment row) {\n        return new app.application_models.Shipment(\n                row.getId(),\n                row.getParcel() == null ? null : shipmentParcelFromDocument(row.getParcel()),\n                null // TODO: stops: DB2CRUD does not write this conversion (stops)\n        );\n    }\n}\n",
+  "src/main/java/app/entities/Customer.java": "package app.entities;\n\nimport java.time.Instant;\nimport java.util.List;\nimport org.springframework.data.annotation.Id;\nimport org.springframework.data.mongodb.core.index.CompoundIndex;\nimport org.springframework.data.mongodb.core.mapping.Document;\nimport org.springframework.data.mongodb.core.mapping.Field;\n\n/** A document of the \"customers\" collection. Its indexes are for the tests: in the application's database they are not touched. */\n@Document(collection = \"customers\")\n@CompoundIndex(def = \"{'email': 1}\", unique = true)\npublic class Customer {\n    @Id\n    private String id;\n\n    private String email;\n\n    private String level;\n\n    private Instant since;\n\n    private Customer.Address address;\n\n    private List<String> tags;\n\n    public String getId() {\n        return id;\n    }\n\n    public void setId(String id) {\n        this.id = id;\n    }\n\n    public String getEmail() {\n        return email;\n    }\n\n    public void setEmail(String email) {\n        this.email = email;\n    }\n\n    public String getLevel() {\n        return level;\n    }\n\n    public void setLevel(String level) {\n        this.level = level;\n    }\n\n    public Instant getSince() {\n        return since;\n    }\n\n    public void setSince(Instant since) {\n        this.since = since;\n    }\n\n    public Customer.Address getAddress() {\n        return address;\n    }\n\n    public void setAddress(Customer.Address address) {\n        this.address = address;\n    }\n\n    public List<String> getTags() {\n        return tags;\n    }\n\n    public void setTags(List<String> tags) {\n        this.tags = tags;\n    }\n\n    /** A nested document: it is stored with the one that holds it. */\n    public static class Address {\n        private String street;\n\n        @Field(\"zip code\")\n        private String zipCode;\n\n        private Customer.Address.Location location;\n\n        public String getStreet() {\n            return street;\n        }\n\n        public void setStreet(String street) {\n            this.street = street;\n        }\n\n        public String getZipCode() {\n            return zipCode;\n        }\n\n        public void setZipCode(String zipCode) {\n            this.zipCode = zipCode;\n        }\n\n        public Customer.Address.Location getLocation() {\n            return location;\n        }\n\n        public void setLocation(Customer.Address.Location location) {\n            this.location = location;\n        }\n\n        /** A nested document: it is stored with the one that holds it. */\n        public static class Location {\n            private Double latitude;\n\n            private Double longitude;\n\n            public Double getLatitude() {\n                return latitude;\n            }\n\n            public void setLatitude(Double latitude) {\n                this.latitude = latitude;\n            }\n\n            public Double getLongitude() {\n                return longitude;\n            }\n\n            public void setLongitude(Double longitude) {\n                this.longitude = longitude;\n            }\n        }\n    }\n}\n",
+  "src/main/java/app/entities/Order.java": "package app.entities;\n\nimport java.math.BigDecimal;\nimport java.time.Instant;\nimport java.util.List;\nimport org.bson.types.ObjectId;\nimport org.springframework.data.annotation.Id;\nimport org.springframework.data.mongodb.core.index.CompoundIndex;\nimport org.springframework.data.mongodb.core.mapping.Document;\nimport org.springframework.data.mongodb.core.mapping.Field;\nimport org.springframework.data.mongodb.core.mapping.FieldType;\n\n/** A document of the \"orders\" collection. Its indexes are for the tests: in the application's database they are not touched. */\n@Document(collection = \"orders\")\n@CompoundIndex(def = \"{'code': 1}\", unique = true)\npublic class Order {\n    @Id\n    private String id;\n\n    private String code;\n\n    private List<Order.Line> lines;\n\n    private Order.Shipping shipping;\n\n    public String getId() {\n        return id;\n    }\n\n    public void setId(String id) {\n        this.id = id;\n    }\n\n    public String getCode() {\n        return code;\n    }\n\n    public void setCode(String code) {\n        this.code = code;\n    }\n\n    public List<Order.Line> getLines() {\n        return lines;\n    }\n\n    public void setLines(List<Order.Line> lines) {\n        this.lines = lines;\n    }\n\n    public Order.Shipping getShipping() {\n        return shipping;\n    }\n\n    public void setShipping(Order.Shipping shipping) {\n        this.shipping = shipping;\n    }\n\n    /** Gives an identifier to the documents of its lists that have none: MongoDB numbers only whole documents. */\n    public void identifyItems() {\n        if (lines != null) {\n            lines.forEach((item) -> {\n                if (item.getId() == null) item.setId(new ObjectId().toHexString());\n            });\n        }\n    }\n\n    /** A nested document: it is stored with the one that holds it. */\n    public static class Line {\n        private String id;\n\n        private String sku;\n\n        private Integer quantity;\n\n        @Field(targetType = FieldType.DECIMAL128)\n        private BigDecimal price;\n\n        private String status;\n\n        private List<Order.Line.Discount> discounts;\n\n        public String getId() {\n            return id;\n        }\n\n        public void setId(String id) {\n            this.id = id;\n        }\n\n        public String getSku() {\n            return sku;\n        }\n\n        public void setSku(String sku) {\n            this.sku = sku;\n        }\n\n        public Integer getQuantity() {\n            return quantity;\n        }\n\n        public void setQuantity(Integer quantity) {\n            this.quantity = quantity;\n        }\n\n        public BigDecimal getPrice() {\n            return price;\n        }\n\n        public void setPrice(BigDecimal price) {\n            this.price = price;\n        }\n\n        public String getStatus() {\n            return status;\n        }\n\n        public void setStatus(String status) {\n            this.status = status;\n        }\n\n        public List<Order.Line.Discount> getDiscounts() {\n            return discounts;\n        }\n\n        public void setDiscounts(List<Order.Line.Discount> discounts) {\n            this.discounts = discounts;\n        }\n\n        /** A nested document: it is stored with the one that holds it. */\n        public static class Discount {\n            private String reason;\n\n            private Double percent;\n\n            public String getReason() {\n                return reason;\n            }\n\n            public void setReason(String reason) {\n                this.reason = reason;\n            }\n\n            public Double getPercent() {\n                return percent;\n            }\n\n            public void setPercent(Double percent) {\n                this.percent = percent;\n            }\n        }\n    }\n\n    /** A nested document: it is stored with the one that holds it. */\n    public static class Shipping {\n        private String carrier;\n\n        private Instant sentOn;\n\n        public String getCarrier() {\n            return carrier;\n        }\n\n        public void setCarrier(String carrier) {\n            this.carrier = carrier;\n        }\n\n        public Instant getSentOn() {\n            return sentOn;\n        }\n\n        public void setSentOn(Instant sentOn) {\n            this.sentOn = sentOn;\n        }\n    }\n}\n",
+  "src/main/java/app/entities/Shipment.java": "package app.entities;\n\nimport java.util.List;\nimport org.springframework.data.annotation.Id;\nimport org.springframework.data.mongodb.core.mapping.Document;\n\n/** A document of the \"shipments\" collection. Its indexes are for the tests: in the application's database they are not touched. */\n@Document(collection = \"shipments\")\npublic class Shipment {\n    @Id\n    private String id;\n\n    private Shipment.Parcel parcel;\n\n    private List<Shipment.Stop> stops;\n\n    public String getId() {\n        return id;\n    }\n\n    public void setId(String id) {\n        this.id = id;\n    }\n\n    public Shipment.Parcel getParcel() {\n        return parcel;\n    }\n\n    public void setParcel(Shipment.Parcel parcel) {\n        this.parcel = parcel;\n    }\n\n    public List<Shipment.Stop> getStops() {\n        return stops;\n    }\n\n    public void setStops(List<Shipment.Stop> stops) {\n        this.stops = stops;\n    }\n\n    /** A nested document: it is stored with the one that holds it. */\n    public static class Parcel {\n        private Double weight;\n\n        private String contents;\n\n        private Shipment.Parcel.Size size;\n\n        public Double getWeight() {\n            return weight;\n        }\n\n        public void setWeight(Double weight) {\n            this.weight = weight;\n        }\n\n        public String getContents() {\n            return contents;\n        }\n\n        public void setContents(String contents) {\n            this.contents = contents;\n        }\n\n        public Shipment.Parcel.Size getSize() {\n            return size;\n        }\n\n        public void setSize(Shipment.Parcel.Size size) {\n            this.size = size;\n        }\n\n        /** A nested document: it is stored with the one that holds it. */\n        public static class Size {\n            private Double height;\n\n            public Double getHeight() {\n                return height;\n            }\n\n            public void setHeight(Double height) {\n                this.height = height;\n            }\n        }\n    }\n\n    /** A nested document: it is stored with the one that holds it. */\n    public static class Stop {\n        private String city;\n\n        public String getCity() {\n            return city;\n        }\n\n        public void setCity(String city) {\n            this.city = city;\n        }\n    }\n}\n",
+  "src/main/java/app/errors/ConflictException.java": "package app.errors;\n\nimport java.util.List;\n\n/** The change clashes with what is stored: a unique value, a newer version, rows that depend on it. */\npublic class ConflictException extends DomainException {\n    private final String entity;\n    private final String reason;\n    private final List<String> fields;\n\n    public ConflictException(String entity, String reason, List<String> fields) {\n        super(entity + \": \" + reason);\n        this.entity = entity;\n        this.reason = reason;\n        this.fields = List.copyOf(fields);\n    }\n\n    public ConflictException(String entity, String reason) {\n        this(entity, reason, List.of());\n    }\n\n    public String getEntity() {\n        return entity;\n    }\n\n    public String getReason() {\n        return reason;\n    }\n\n    public List<String> getFields() {\n        return fields;\n    }\n}\n",
+  "src/main/java/app/errors/DomainException.java": "package app.errors;\n\n/** Base of every error a service throws on purpose. They carry no HTTP codes: whoever calls the services translates them. */\npublic abstract class DomainException extends RuntimeException {\n    protected DomainException(String message) {\n        super(message);\n    }\n}\n",
+  "src/main/java/app/errors/FieldError.java": "package app.errors;\n\n/** What is wrong with one field. */\npublic record FieldError(String field, String message) {}\n",
+  "src/main/java/app/errors/NotFoundException.java": "package app.errors;\n\n/** No row has this key. */\npublic class NotFoundException extends DomainException {\n    private final String entity;\n    private final Object key;\n\n    public NotFoundException(String entity, Object key) {\n        super(\"No \" + entity + \" has the key \" + key);\n        this.entity = entity;\n        this.key = key;\n    }\n\n    public String getEntity() {\n        return entity;\n    }\n\n    public Object getKey() {\n        return key;\n    }\n}\n",
+  "src/main/java/app/errors/ValidationFailedException.java": "package app.errors;\n\nimport java.util.List;\nimport java.util.stream.Collectors;\n\n/** The values break the rules of the table: missing, too long, out of range, pointing nowhere. */\npublic class ValidationFailedException extends DomainException {\n    private final String entity;\n    private final List<FieldError> errors;\n\n    public ValidationFailedException(String entity, List<FieldError> errors) {\n        super(entity + \": \" + errors.stream().map((error) -> error.field() + \": \" + error.message()).collect(Collectors.joining(\"; \")));\n        this.entity = entity;\n        this.errors = List.copyOf(errors);\n    }\n\n    public String getEntity() {\n        return entity;\n    }\n\n    public List<FieldError> getErrors() {\n        return errors;\n    }\n}\n",
+  "src/main/java/app/repositories/CustomerRepository.java": "package app.repositories;\n\nimport app.common.Page;\nimport app.entities.Customer;\nimport java.util.List;\nimport java.util.Optional;\n\n/** Where customers rows are kept. Services depend only on this interface. */\npublic interface CustomerRepository {\n    /** The row with this primary key, if there is one. */\n    Optional<Customer> findById(String id);\n\n    /** At most limit rows from offset, by primary key, and how many there are. */\n    Page<Customer> list(int offset, int limit);\n\n    /** The row with this email, if there is one. */\n    Optional<Customer> findByEmail(String email);\n\n    /** Stores a new row; the values the database fills are read back. */\n    Customer insert(Customer entity);\n\n    /** Stores the changes made to a row read from this repository. */\n    Customer update(Customer entity);\n\n    /** Removes a row read from this repository. */\n    void delete(Customer entity);\n\n    /** Adds an item to tags, and gives the row as it is then, if there is one. */\n    Optional<Customer> addTag(String id, String tag);\n\n    /** Removes an item from tags, and gives the row as it is then, if there is one. */\n    Optional<Customer> removeTag(String id, String tag);\n}\n",
+  "src/main/java/app/repositories/MemoryCustomerRepository.java": "package app.repositories;\n\nimport app.common.Page;\nimport app.entities.Customer;\nimport java.time.Instant;\nimport java.util.ArrayList;\nimport java.util.Comparator;\nimport java.util.LinkedHashMap;\nimport java.util.List;\nimport java.util.Map;\nimport java.util.Objects;\nimport java.util.Optional;\nimport java.util.stream.Stream;\nimport org.bson.types.ObjectId;\n\n/** Keeps customers rows in memory, for tests and for trying the services without a database. */\npublic class MemoryCustomerRepository implements CustomerRepository {\n    private final Map<List<Object>, Customer> rows = new LinkedHashMap<>();\n\n    /** The key of a row, as a list of its key values. */\n    private static List<Object> keyOf(Customer row) {\n        List<Object> key = new ArrayList<>();\n        key.add(row.getId());\n        return key;\n    }\n\n    /** Orders two keys value by value. */\n    @SuppressWarnings({\"unchecked\", \"rawtypes\"})\n    private static int compareKeys(List<Object> a, List<Object> b) {\n        for (int index = 0; index < a.size(); index++) {\n            int order = ((Comparable) a.get(index)).compareTo(b.get(index));\n            if (order != 0) return order;\n        }\n        return 0;\n    }\n\n    private Stream<Customer> visible() {\n        return rows.values().stream().filter((row) -> true).sorted(Comparator.comparing(MemoryCustomerRepository::keyOf, MemoryCustomerRepository::compareKeys));\n    }\n\n    @Override\n    public Optional<Customer> findById(String id) {\n        return visible().filter((row) -> Objects.equals(row.getId(), id)).findFirst();\n    }\n\n    @Override\n    public Page<Customer> list(int offset, int limit) {\n        List<Customer> rows = visible().toList();\n        return new Page<>(rows.stream().skip(offset).limit(limit).toList(), rows.size(), offset, limit);\n    }\n\n    @Override\n    public Optional<Customer> findByEmail(String email) {\n        return visible().filter((row) -> Objects.equals(row.getEmail(), email)).findFirst();\n    }\n\n    @Override\n    public Customer insert(Customer entity) {\n        if (entity.getId() == null) entity.setId(new ObjectId().toHexString());\n        rows.put(keyOf(entity), entity);\n        return entity;\n    }\n\n    @Override\n    public Customer update(Customer entity) {\n        rows.put(keyOf(entity), entity);\n        return entity;\n    }\n\n    @Override\n    public void delete(Customer entity) {\n        rows.remove(keyOf(entity));\n    }\n\n    @Override\n    public Optional<Customer> addTag(String id, String tag) {\n        Optional<Customer> found = visible().filter((row) -> Objects.equals(row.getId(), id)).findFirst();\n        found.ifPresent((row) -> {\n            List<String> items = row.getTags() == null ? new ArrayList<>() : new ArrayList<>(row.getTags());\n            items.add(tag);\n            row.setTags(items);\n        });\n        return found;\n    }\n\n    @Override\n    public Optional<Customer> removeTag(String id, String tag) {\n        Optional<Customer> found = visible().filter((row) -> Objects.equals(row.getId(), id)).findFirst();\n        found.ifPresent((row) -> {\n            List<String> items = row.getTags() == null ? new ArrayList<>() : new ArrayList<>(row.getTags());\n            items.removeIf((item) -> Objects.equals(item, tag));\n            row.setTags(items);\n        });\n        return found;\n    }\n}\n",
+  "src/main/java/app/repositories/MemoryOrderRepository.java": "package app.repositories;\n\nimport app.common.Page;\nimport app.entities.Order;\nimport java.util.ArrayList;\nimport java.util.Comparator;\nimport java.util.LinkedHashMap;\nimport java.util.List;\nimport java.util.Map;\nimport java.util.Objects;\nimport java.util.Optional;\nimport java.util.stream.Stream;\nimport org.bson.types.ObjectId;\n\n/** Keeps orders rows in memory, for tests and for trying the services without a database. */\npublic class MemoryOrderRepository implements OrderRepository {\n    private final Map<List<Object>, Order> rows = new LinkedHashMap<>();\n\n    /** The key of a row, as a list of its key values. */\n    private static List<Object> keyOf(Order row) {\n        List<Object> key = new ArrayList<>();\n        key.add(row.getId());\n        return key;\n    }\n\n    /** Orders two keys value by value. */\n    @SuppressWarnings({\"unchecked\", \"rawtypes\"})\n    private static int compareKeys(List<Object> a, List<Object> b) {\n        for (int index = 0; index < a.size(); index++) {\n            int order = ((Comparable) a.get(index)).compareTo(b.get(index));\n            if (order != 0) return order;\n        }\n        return 0;\n    }\n\n    private Stream<Order> visible() {\n        return rows.values().stream().filter((row) -> true).sorted(Comparator.comparing(MemoryOrderRepository::keyOf, MemoryOrderRepository::compareKeys));\n    }\n\n    @Override\n    public Optional<Order> findById(String id) {\n        return visible().filter((row) -> Objects.equals(row.getId(), id)).findFirst();\n    }\n\n    @Override\n    public Page<Order> list(int offset, int limit) {\n        List<Order> rows = visible().toList();\n        return new Page<>(rows.stream().skip(offset).limit(limit).toList(), rows.size(), offset, limit);\n    }\n\n    @Override\n    public Optional<Order> findByCode(String code) {\n        return visible().filter((row) -> Objects.equals(row.getCode(), code)).findFirst();\n    }\n\n    @Override\n    public Order insert(Order entity) {\n        if (entity.getId() == null) entity.setId(new ObjectId().toHexString());\n        entity.identifyItems();\n        rows.put(keyOf(entity), entity);\n        return entity;\n    }\n\n    @Override\n    public Order update(Order entity) {\n        entity.identifyItems();\n        rows.put(keyOf(entity), entity);\n        return entity;\n    }\n\n    @Override\n    public void delete(Order entity) {\n        rows.remove(keyOf(entity));\n    }\n\n    @Override\n    public Optional<Order> addLine(String id, Order.Line line) {\n        Optional<Order> found = visible().filter((row) -> Objects.equals(row.getId(), id)).findFirst();\n        found.ifPresent((row) -> {\n            List<Order.Line> items = row.getLines() == null ? new ArrayList<>() : new ArrayList<>(row.getLines());\n            if (line.getId() == null) line.setId(new ObjectId().toHexString());\n            items.add(line);\n            row.setLines(items);\n        });\n        return found;\n    }\n\n    @Override\n    public Optional<Order> removeLine(String id, String lineId) {\n        Optional<Order> found = visible().filter((row) -> Objects.equals(row.getId(), id)).findFirst();\n        found.ifPresent((row) -> {\n            List<Order.Line> items = row.getLines() == null ? new ArrayList<>() : new ArrayList<>(row.getLines());\n            items.removeIf((item) -> Objects.equals(item.getId(), lineId));\n            row.setLines(items);\n        });\n        return found;\n    }\n}\n",
+  "src/main/java/app/repositories/MemoryShipmentRepository.java": "package app.repositories;\n\nimport app.common.Page;\nimport app.entities.Shipment;\nimport java.util.ArrayList;\nimport java.util.Comparator;\nimport java.util.LinkedHashMap;\nimport java.util.List;\nimport java.util.Map;\nimport java.util.Objects;\nimport java.util.Optional;\nimport java.util.stream.Stream;\nimport org.bson.types.ObjectId;\n\n/** Keeps shipments rows in memory, for tests and for trying the services without a database. */\npublic class MemoryShipmentRepository implements ShipmentRepository {\n    private final Map<List<Object>, Shipment> rows = new LinkedHashMap<>();\n\n    /** The key of a row, as a list of its key values. */\n    private static List<Object> keyOf(Shipment row) {\n        List<Object> key = new ArrayList<>();\n        key.add(row.getId());\n        return key;\n    }\n\n    /** Orders two keys value by value. */\n    @SuppressWarnings({\"unchecked\", \"rawtypes\"})\n    private static int compareKeys(List<Object> a, List<Object> b) {\n        for (int index = 0; index < a.size(); index++) {\n            int order = ((Comparable) a.get(index)).compareTo(b.get(index));\n            if (order != 0) return order;\n        }\n        return 0;\n    }\n\n    private Stream<Shipment> visible() {\n        return rows.values().stream().filter((row) -> true).sorted(Comparator.comparing(MemoryShipmentRepository::keyOf, MemoryShipmentRepository::compareKeys));\n    }\n\n    @Override\n    public Optional<Shipment> findById(String id) {\n        return visible().filter((row) -> Objects.equals(row.getId(), id)).findFirst();\n    }\n\n    @Override\n    public Page<Shipment> list(int offset, int limit) {\n        List<Shipment> rows = visible().toList();\n        return new Page<>(rows.stream().skip(offset).limit(limit).toList(), rows.size(), offset, limit);\n    }\n\n    @Override\n    public Shipment insert(Shipment entity) {\n        if (entity.getId() == null) entity.setId(new ObjectId().toHexString());\n        rows.put(keyOf(entity), entity);\n        return entity;\n    }\n\n    @Override\n    public Shipment update(Shipment entity) {\n        rows.put(keyOf(entity), entity);\n        return entity;\n    }\n\n    @Override\n    public void delete(Shipment entity) {\n        rows.remove(keyOf(entity));\n    }\n\n    @Override\n    public Optional<Shipment> addStop(String id, Shipment.Stop stop) {\n        Optional<Shipment> found = visible().filter((row) -> Objects.equals(row.getId(), id)).findFirst();\n        found.ifPresent((row) -> {\n            List<Shipment.Stop> items = row.getStops() == null ? new ArrayList<>() : new ArrayList<>(row.getStops());\n            items.add(stop);\n            row.setStops(items);\n        });\n        return found;\n    }\n\n    @Override\n    public Optional<Shipment> removeStop(String id, int position, int size) {\n        Optional<Shipment> found = visible().filter((row) -> Objects.equals(row.getId(), id)).findFirst();\n        if (found.isPresent() && (found.get().getStops() == null ? 0 : found.get().getStops().size()) != size) return Optional.empty();\n        found.ifPresent((row) -> {\n            List<Shipment.Stop> items = row.getStops() == null ? new ArrayList<>() : new ArrayList<>(row.getStops());\n            items.remove(position);\n            row.setStops(items);\n        });\n        return found;\n    }\n}\n",
+  "src/main/java/app/repositories/MongoCustomerRepository.java": "package app.repositories;\n\nimport app.Documents;\nimport app.common.Page;\nimport app.entities.Customer;\nimport com.mongodb.client.model.Filters;\nimport com.mongodb.client.model.FindOneAndUpdateOptions;\nimport com.mongodb.client.model.ReturnDocument;\nimport java.util.Collections;\nimport java.util.List;\nimport java.util.Map;\nimport java.util.Optional;\nimport java.util.WeakHashMap;\nimport org.bson.Document;\nimport org.bson.types.ObjectId;\nimport org.springframework.dao.DataAccessException;\nimport org.springframework.data.domain.Sort;\nimport org.springframework.data.mongodb.core.MongoTemplate;\nimport org.springframework.data.mongodb.core.query.Criteria;\nimport org.springframework.data.mongodb.core.query.Query;\n\n/** Keeps customers documents in the database, through a MongoTemplate. Every write is stored at once. */\npublic class MongoCustomerRepository implements CustomerRepository {\n    /** The document each entity was read from: a change writes only the fields that differ */\n    private static final Map<Customer, Document> LOADED = Collections.synchronizedMap(new WeakHashMap<>());\n\n    /** The fields a change may write */\n    private static final List<String> FIELDS = List.of(\"email\", \"level\", \"since\", \"address\", \"tags\");\n\n    private final MongoTemplate mongo;\n\n    public MongoCustomerRepository(MongoTemplate mongo) {\n        this.mongo = mongo;\n    }\n\n    @Override\n    public Optional<Customer> findById(String id) {\n        Customer found = mongo.findOne(Query.query(Criteria.where(\"id\").is(id)), Customer.class);\n        return Optional.ofNullable(found == null ? null : loaded(found));\n    }\n\n    @Override\n    public Page<Customer> list(int offset, int limit) {\n        List<Customer> items = mongo.find(new Query().with(Sort.by(\"id\")).skip(offset).limit(limit), Customer.class).stream().map(this::loaded).toList();\n        return new Page<>(items, mongo.count(new Query(), Customer.class), offset, limit);\n    }\n\n    @Override\n    public Optional<Customer> findByEmail(String email) {\n        Customer found = mongo.findOne(Query.query(Criteria.where(\"email\").is(email)), Customer.class);\n        return Optional.ofNullable(found == null ? null : loaded(found));\n    }\n\n    @Override\n    public Customer insert(Customer entity) {\n        try {\n            mongo.insert(entity);\n        } catch (DataAccessException error) {\n            throw Documents.refusal(\"Customer\", error);\n        }\n        return loaded(entity);\n    }\n\n    @Override\n    public Customer update(Customer entity) {\n        Document now = Documents.of(mongo, entity);\n        Document changes = Documents.changes(LOADED.get(entity), now, FIELDS);\n        try {\n            if (!changes.isEmpty()) mongo.execute(Customer.class, (collection) -> collection.updateOne(Filters.eq(\"_id\", now.get(\"_id\")), changes));\n        } catch (DataAccessException error) {\n            throw Documents.refusal(\"Customer\", error);\n        }\n        return loaded(entity);\n    }\n\n    @Override\n    public void delete(Customer entity) {\n        try {\n            mongo.remove(Query.query(Criteria.where(\"id\").is(entity.getId())), Customer.class);\n        } catch (DataAccessException error) {\n            throw Documents.refusal(\"Customer\", error);\n        }\n    }\n\n    @Override\n    public Optional<Customer> addTag(String id, String tag) {\n        if (!ObjectId.isValid(id)) return Optional.empty();\n        Document change = new Document(\"$push\", new Document(\"tags\", mongo.getConverter().convertToMongoType(tag)));\n        Document filter = new Document(\"_id\", new ObjectId(id));\n        FindOneAndUpdateOptions after = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);\n        Document changed;\n        try {\n            changed = mongo.execute(Customer.class, (collection) -> collection.findOneAndUpdate(filter, change, after));\n        } catch (DataAccessException error) {\n            throw Documents.refusal(\"Customer\", error);\n        }\n        return Optional.ofNullable(changed).map((document) -> loaded(mongo.getConverter().read(Customer.class, document)));\n    }\n\n    @Override\n    public Optional<Customer> removeTag(String id, String tag) {\n        if (!ObjectId.isValid(id)) return Optional.empty();\n        Document change = new Document(\"$pull\", new Document(\"tags\", mongo.getConverter().convertToMongoType(tag)));\n        Document filter = new Document(\"_id\", new ObjectId(id));\n        FindOneAndUpdateOptions after = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);\n        Document changed;\n        try {\n            changed = mongo.execute(Customer.class, (collection) -> collection.findOneAndUpdate(filter, change, after));\n        } catch (DataAccessException error) {\n            throw Documents.refusal(\"Customer\", error);\n        }\n        return Optional.ofNullable(changed).map((document) -> loaded(mongo.getConverter().read(Customer.class, document)));\n    }\n\n    /** The same entity, with what it is stored as kept to tell its changes. */\n    private Customer loaded(Customer entity) {\n        LOADED.put(entity, Documents.of(mongo, entity));\n        return entity;\n    }\n}\n",
+  "src/main/java/app/repositories/MongoOrderRepository.java": "package app.repositories;\n\nimport app.Documents;\nimport app.common.Page;\nimport app.entities.Order;\nimport com.mongodb.client.model.Filters;\nimport com.mongodb.client.model.FindOneAndUpdateOptions;\nimport com.mongodb.client.model.ReturnDocument;\nimport java.util.Collections;\nimport java.util.List;\nimport java.util.Map;\nimport java.util.Optional;\nimport java.util.WeakHashMap;\nimport org.bson.Document;\nimport org.bson.types.ObjectId;\nimport org.springframework.dao.DataAccessException;\nimport org.springframework.data.domain.Sort;\nimport org.springframework.data.mongodb.core.MongoTemplate;\nimport org.springframework.data.mongodb.core.query.Criteria;\nimport org.springframework.data.mongodb.core.query.Query;\n\n/** Keeps orders documents in the database, through a MongoTemplate. Every write is stored at once. */\npublic class MongoOrderRepository implements OrderRepository {\n    /** The document each entity was read from: a change writes only the fields that differ */\n    private static final Map<Order, Document> LOADED = Collections.synchronizedMap(new WeakHashMap<>());\n\n    /** The fields a change may write */\n    private static final List<String> FIELDS = List.of(\"code\", \"lines\", \"shipping\");\n\n    private final MongoTemplate mongo;\n\n    public MongoOrderRepository(MongoTemplate mongo) {\n        this.mongo = mongo;\n    }\n\n    @Override\n    public Optional<Order> findById(String id) {\n        Order found = mongo.findOne(Query.query(Criteria.where(\"id\").is(id)), Order.class);\n        return Optional.ofNullable(found == null ? null : loaded(found));\n    }\n\n    @Override\n    public Page<Order> list(int offset, int limit) {\n        List<Order> items = mongo.find(new Query().with(Sort.by(\"id\")).skip(offset).limit(limit), Order.class).stream().map(this::loaded).toList();\n        return new Page<>(items, mongo.count(new Query(), Order.class), offset, limit);\n    }\n\n    @Override\n    public Optional<Order> findByCode(String code) {\n        Order found = mongo.findOne(Query.query(Criteria.where(\"code\").is(code)), Order.class);\n        return Optional.ofNullable(found == null ? null : loaded(found));\n    }\n\n    @Override\n    public Order insert(Order entity) {\n        entity.identifyItems();\n        try {\n            mongo.insert(entity);\n        } catch (DataAccessException error) {\n            throw Documents.refusal(\"Order\", error);\n        }\n        return loaded(entity);\n    }\n\n    @Override\n    public Order update(Order entity) {\n        entity.identifyItems();\n        Document now = Documents.of(mongo, entity);\n        Document changes = Documents.changes(LOADED.get(entity), now, FIELDS);\n        try {\n            if (!changes.isEmpty()) mongo.execute(Order.class, (collection) -> collection.updateOne(Filters.eq(\"_id\", now.get(\"_id\")), changes));\n        } catch (DataAccessException error) {\n            throw Documents.refusal(\"Order\", error);\n        }\n        return loaded(entity);\n    }\n\n    @Override\n    public void delete(Order entity) {\n        try {\n            mongo.remove(Query.query(Criteria.where(\"id\").is(entity.getId())), Order.class);\n        } catch (DataAccessException error) {\n            throw Documents.refusal(\"Order\", error);\n        }\n    }\n\n    @Override\n    public Optional<Order> addLine(String id, Order.Line line) {\n        if (!ObjectId.isValid(id)) return Optional.empty();\n        if (line.getId() == null) line.setId(new ObjectId().toHexString());\n        Document change = new Document(\"$push\", new Document(\"lines\", Documents.of(mongo, line)));\n        Document filter = new Document(\"_id\", new ObjectId(id));\n        FindOneAndUpdateOptions after = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);\n        Document changed;\n        try {\n            changed = mongo.execute(Order.class, (collection) -> collection.findOneAndUpdate(filter, change, after));\n        } catch (DataAccessException error) {\n            throw Documents.refusal(\"Order\", error);\n        }\n        return Optional.ofNullable(changed).map((document) -> loaded(mongo.getConverter().read(Order.class, document)));\n    }\n\n    @Override\n    public Optional<Order> removeLine(String id, String lineId) {\n        if (!ObjectId.isValid(id)) return Optional.empty();\n        if (!ObjectId.isValid(lineId)) return Optional.empty();\n        Document change = new Document(\"$pull\", new Document(\"lines\", new Document(\"_id\", new ObjectId(lineId))));\n        Document filter = new Document(\"_id\", new ObjectId(id));\n        FindOneAndUpdateOptions after = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);\n        Document changed;\n        try {\n            changed = mongo.execute(Order.class, (collection) -> collection.findOneAndUpdate(filter, change, after));\n        } catch (DataAccessException error) {\n            throw Documents.refusal(\"Order\", error);\n        }\n        return Optional.ofNullable(changed).map((document) -> loaded(mongo.getConverter().read(Order.class, document)));\n    }\n\n    /** The same entity, with what it is stored as kept to tell its changes. */\n    private Order loaded(Order entity) {\n        LOADED.put(entity, Documents.of(mongo, entity));\n        return entity;\n    }\n}\n",
+  "src/main/java/app/repositories/MongoShipmentRepository.java": "package app.repositories;\n\nimport app.Documents;\nimport app.common.Page;\nimport app.entities.Shipment;\nimport com.mongodb.client.model.Filters;\nimport com.mongodb.client.model.FindOneAndUpdateOptions;\nimport com.mongodb.client.model.ReturnDocument;\nimport java.util.Collections;\nimport java.util.List;\nimport java.util.Map;\nimport java.util.Optional;\nimport java.util.WeakHashMap;\nimport org.bson.Document;\nimport org.bson.types.ObjectId;\nimport org.springframework.dao.DataAccessException;\nimport org.springframework.data.domain.Sort;\nimport org.springframework.data.mongodb.core.MongoTemplate;\nimport org.springframework.data.mongodb.core.query.Criteria;\nimport org.springframework.data.mongodb.core.query.Query;\n\n/** Keeps shipments documents in the database, through a MongoTemplate. Every write is stored at once. */\npublic class MongoShipmentRepository implements ShipmentRepository {\n    /** The document each entity was read from: a change writes only the fields that differ */\n    private static final Map<Shipment, Document> LOADED = Collections.synchronizedMap(new WeakHashMap<>());\n\n    /** The fields a change may write */\n    private static final List<String> FIELDS = List.of(\"parcel\", \"stops\");\n\n    private final MongoTemplate mongo;\n\n    public MongoShipmentRepository(MongoTemplate mongo) {\n        this.mongo = mongo;\n    }\n\n    @Override\n    public Optional<Shipment> findById(String id) {\n        Shipment found = mongo.findOne(Query.query(Criteria.where(\"id\").is(id)), Shipment.class);\n        return Optional.ofNullable(found == null ? null : loaded(found));\n    }\n\n    @Override\n    public Page<Shipment> list(int offset, int limit) {\n        List<Shipment> items = mongo.find(new Query().with(Sort.by(\"id\")).skip(offset).limit(limit), Shipment.class).stream().map(this::loaded).toList();\n        return new Page<>(items, mongo.count(new Query(), Shipment.class), offset, limit);\n    }\n\n    @Override\n    public Shipment insert(Shipment entity) {\n        try {\n            mongo.insert(entity);\n        } catch (DataAccessException error) {\n            throw Documents.refusal(\"Shipment\", error);\n        }\n        return loaded(entity);\n    }\n\n    @Override\n    public Shipment update(Shipment entity) {\n        Document now = Documents.of(mongo, entity);\n        Document changes = Documents.changes(LOADED.get(entity), now, FIELDS);\n        try {\n            if (!changes.isEmpty()) mongo.execute(Shipment.class, (collection) -> collection.updateOne(Filters.eq(\"_id\", now.get(\"_id\")), changes));\n        } catch (DataAccessException error) {\n            throw Documents.refusal(\"Shipment\", error);\n        }\n        return loaded(entity);\n    }\n\n    @Override\n    public void delete(Shipment entity) {\n        try {\n            mongo.remove(Query.query(Criteria.where(\"id\").is(entity.getId())), Shipment.class);\n        } catch (DataAccessException error) {\n            throw Documents.refusal(\"Shipment\", error);\n        }\n    }\n\n    @Override\n    public Optional<Shipment> addStop(String id, Shipment.Stop stop) {\n        if (!ObjectId.isValid(id)) return Optional.empty();\n        Document change = new Document(\"$push\", new Document(\"stops\", Documents.of(mongo, stop)));\n        Document filter = new Document(\"_id\", new ObjectId(id));\n        FindOneAndUpdateOptions after = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);\n        Document changed;\n        try {\n            changed = mongo.execute(Shipment.class, (collection) -> collection.findOneAndUpdate(filter, change, after));\n        } catch (DataAccessException error) {\n            throw Documents.refusal(\"Shipment\", error);\n        }\n        return Optional.ofNullable(changed).map((document) -> loaded(mongo.getConverter().read(Shipment.class, document)));\n    }\n\n    @Override\n    public Optional<Shipment> removeStop(String id, int position, int size) {\n        if (!ObjectId.isValid(id)) return Optional.empty();\n        Document head = new Document(\"$slice\", List.of(\"$stops\", position));\n        Document tail = new Document(\"$slice\", List.of(\"$stops\", position + 1, Math.max(size, 1)));\n        List<Document> change = List.of(new Document(\"$set\", new Document(\"stops\", new Document(\"$concatArrays\", List.of(head, tail)))));\n        Document filter = new Document(\"_id\", new ObjectId(id)).append(\"stops\", new Document(\"$size\", size));\n        FindOneAndUpdateOptions after = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);\n        Document changed;\n        try {\n            changed = mongo.execute(Shipment.class, (collection) -> collection.findOneAndUpdate(filter, change, after));\n        } catch (DataAccessException error) {\n            throw Documents.refusal(\"Shipment\", error);\n        }\n        return Optional.ofNullable(changed).map((document) -> loaded(mongo.getConverter().read(Shipment.class, document)));\n    }\n\n    /** The same entity, with what it is stored as kept to tell its changes. */\n    private Shipment loaded(Shipment entity) {\n        LOADED.put(entity, Documents.of(mongo, entity));\n        return entity;\n    }\n}\n",
+  "src/main/java/app/repositories/OrderRepository.java": "package app.repositories;\n\nimport app.common.Page;\nimport app.entities.Order;\nimport java.util.List;\nimport java.util.Optional;\n\n/** Where orders rows are kept. Services depend only on this interface. */\npublic interface OrderRepository {\n    /** The row with this primary key, if there is one. */\n    Optional<Order> findById(String id);\n\n    /** At most limit rows from offset, by primary key, and how many there are. */\n    Page<Order> list(int offset, int limit);\n\n    /** The row with this code, if there is one. */\n    Optional<Order> findByCode(String code);\n\n    /** Stores a new row; the values the database fills are read back. */\n    Order insert(Order entity);\n\n    /** Stores the changes made to a row read from this repository. */\n    Order update(Order entity);\n\n    /** Removes a row read from this repository. */\n    void delete(Order entity);\n\n    /** Adds an item to lines, and gives the row as it is then, if there is one. */\n    Optional<Order> addLine(String id, Order.Line line);\n\n    /** Removes an item from lines, and gives the row as it is then, if there is one. */\n    Optional<Order> removeLine(String id, String lineId);\n}\n",
+  "src/main/java/app/repositories/ShipmentRepository.java": "package app.repositories;\n\nimport app.common.Page;\nimport app.entities.Shipment;\nimport java.util.List;\nimport java.util.Optional;\n\n/** Where shipments rows are kept. Services depend only on this interface. */\npublic interface ShipmentRepository {\n    /** The row with this primary key, if there is one. */\n    Optional<Shipment> findById(String id);\n\n    /** At most limit rows from offset, by primary key, and how many there are. */\n    Page<Shipment> list(int offset, int limit);\n\n    /** Stores a new row; the values the database fills are read back. */\n    Shipment insert(Shipment entity);\n\n    /** Stores the changes made to a row read from this repository. */\n    Shipment update(Shipment entity);\n\n    /** Removes a row read from this repository. */\n    void delete(Shipment entity);\n\n    /** Adds an item to stops, and gives the row as it is then, if there is one. */\n    Optional<Shipment> addStop(String id, Shipment.Stop stop);\n\n    /** Removes an item from stops that has this size, and gives the row as it is then, if there is one. */\n    Optional<Shipment> removeStop(String id, int position, int size);\n}\n",
+  "src/main/java/app/services/CustomerChanges.java": "package app.services;\n\nimport app.common.Patch;\nimport app.entities.Customer;\nimport java.time.Instant;\nimport java.util.List;\n\n/** The values of a Customer that change: fields left absent keep their value; Patch.of(null) empties one. */\npublic record CustomerChanges(\n        Patch<String> email,\n        Patch<String> level,\n        Patch<Instant> since,\n        Patch<Customer.Address> address,\n        Patch<List<String>> tags\n) {}\n",
+  "src/main/java/app/services/CustomerService.java": "package app.services;\n\nimport app.UnitOfWork;\nimport app.common.Page;\nimport app.entities.Customer;\nimport app.errors.ConflictException;\nimport app.errors.FieldError;\nimport app.errors.NotFoundException;\nimport app.errors.ValidationFailedException;\nimport java.time.Instant;\nimport java.util.ArrayList;\nimport java.util.LinkedHashMap;\nimport java.util.List;\nimport java.util.Map;\nimport java.util.Objects;\nimport java.util.Optional;\n\n/** Operations on customers. Repositories commit every write. */\npublic class CustomerService {\n    private final UnitOfWork uow;\n\n    public CustomerService(UnitOfWork uow) {\n        this.uow = uow;\n    }\n\n    /** Checks the values against the rules of the \"customers\" table, and the rows they point to; throws ValidationFailedException with every problem. */\n    private void validate(UnitOfWork uow, Map<String, Object> values, Customer current) {\n        boolean creating = current == null;\n        List<FieldError> errors = new ArrayList<>();\n        {\n            Object value = values.get(\"email\");\n            if (value == null) {\n                if (creating || values.containsKey(\"email\")) errors.add(new FieldError(\"email\", \"is required\"));\n            }\n        }\n        {\n            Object value = values.get(\"level\");\n            if (value != null) {\n                if (!List.of(\"basic\", \"gold\").contains(String.valueOf(value))) errors.add(new FieldError(\"level\", \"must be one of: basic, gold\"));\n            }\n        }\n        {\n            Object value = values.get(\"since\");\n            if (value == null) {\n                if (creating || values.containsKey(\"since\")) errors.add(new FieldError(\"since\", \"is required\"));\n            }\n        }\n        {\n            Object value = values.get(\"address\");\n            if (value == null) {\n                if (creating || values.containsKey(\"address\")) errors.add(new FieldError(\"address\", \"is required\"));\n            } else {\n                Customer.Address document = (Customer.Address) value;\n                if (document != null) checkAddress(document, \"address\", errors);\n            }\n        }\n        if (!errors.isEmpty()) throw new ValidationFailedException(\"Customer\", errors);\n    }\n\n    /** Values that must be unique are not taken by another row. */\n    private void checkUnique(UnitOfWork uow, Map<String, Object> values, Customer current) {\n        {\n            String email = (String) (values.containsKey(\"email\") ? values.get(\"email\") : current == null ? null : current.getEmail());\n            if (email != null) {\n                Optional<Customer> other = uow.customers().findByEmail(email);\n                if (other.isPresent() && (current == null || !Objects.equals(other.get().getId(), current.getId())))\n                    throw new ConflictException(\"Customer\", \"email is already taken\", List.of(\"email\"));\n            }\n        }\n    }\n\n    /** Every check before a write: the values, the rows they point to, the unique values. */\n    private void check(UnitOfWork uow, Map<String, Object> values, Customer current) {\n        validate(uow, values, current);\n        checkUnique(uow, values, current);\n    }\n\n    /** Sets the given values on the entity. */\n    @SuppressWarnings(\"unchecked\")\n    private static void apply(Customer entity, Map<String, Object> values) {\n        if (values.containsKey(\"email\")) entity.setEmail((String) values.get(\"email\"));\n        if (values.containsKey(\"level\")) entity.setLevel((String) values.get(\"level\"));\n        if (values.containsKey(\"since\")) entity.setSince((Instant) values.get(\"since\"));\n        if (values.containsKey(\"address\")) entity.setAddress((Customer.Address) values.get(\"address\"));\n        if (values.containsKey(\"tags\")) entity.setTags((List<String>) values.get(\"tags\"));\n    }\n\n    /** The Customer with this key; NotFoundException when there is none. */\n    private Customer find(UnitOfWork uow, String id) {\n        return uow.customers().findById(id).orElseThrow(() -> new NotFoundException(\"Customer\", id));\n    }\n\n    /** The values an update gives, by field. */\n    private static Map<String, Object> given(CustomerChanges changes) {\n        Map<String, Object> values = new LinkedHashMap<>();\n        if (changes.email() != null && changes.email().isPresent()) values.put(\"email\", changes.email().value());\n        if (changes.level() != null && changes.level().isPresent()) values.put(\"level\", changes.level().value());\n        if (changes.since() != null && changes.since().isPresent()) values.put(\"since\", changes.since().value());\n        if (changes.address() != null && changes.address().isPresent()) values.put(\"address\", changes.address().value());\n        if (changes.tags() != null && changes.tags().isPresent()) values.put(\"tags\", changes.tags().value());\n        return values;\n    }\n\n    /** What a Address does not follow of its rules, each with the path of its field. */\n    private static void checkAddress(Customer.Address value, String path, List<FieldError> errors) {\n        if (value.getStreet() == null) errors.add(new FieldError(path + \".street\", \"is required\"));\n        if (value.getZipCode() == null) errors.add(new FieldError(path + \".zip code\", \"is required\"));\n        if (value.getLocation() != null) checkAddressLocation(value.getLocation(), path + \".location\", errors);\n    }\n\n    /** What a Location does not follow of its rules, each with the path of its field. */\n    private static void checkAddressLocation(Customer.Address.Location value, String path, List<FieldError> errors) {\n        if (value.getLatitude() == null) errors.add(new FieldError(path + \".latitude\", \"is required\"));\n        if (value.getLongitude() == null) errors.add(new FieldError(path + \".longitude\", \"is required\"));\n    }\n\n    /** Stores a new Customer after checking it. */\n    public Customer createCustomer(Customer customer) {\n        Map<String, Object> values = new LinkedHashMap<>();\n        if (customer.getEmail() != null) values.put(\"email\", customer.getEmail());\n        if (customer.getLevel() != null) values.put(\"level\", customer.getLevel());\n        if (customer.getSince() != null) values.put(\"since\", customer.getSince());\n        if (customer.getAddress() != null) values.put(\"address\", customer.getAddress());\n        if (customer.getTags() != null) values.put(\"tags\", customer.getTags());\n        return uow.transaction((uow) -> {\n            check(uow, values, null);\n            return uow.customers().insert(customer);\n        });\n    }\n\n    /** The Customer with this key; NotFoundException when there is none. */\n    public Customer getCustomer(String id) {\n        return find(uow, id);\n    }\n\n    /** A page of customers, by primary key. */\n    public Page<Customer> listCustomers(int offset, int limit) {\n        return uow.customers().list(offset, limit);\n    }\n\n    /** Changes the given values of a Customer. */\n    public Customer updateCustomer(String id, CustomerChanges changes) {\n        Map<String, Object> values = given(changes);\n        return uow.transaction((uow) -> {\n            Customer current = find(uow, id);\n            check(uow, values, current);\n            apply(current, values);\n            return uow.customers().update(current);\n        });\n    }\n\n    /** Deletes a Customer. */\n    public void deleteCustomer(String id) {\n        uow.transaction((uow) -> {\n            Customer current = find(uow, id);\n            uow.customers().delete(current);\n            return null;\n        });\n    }\n\n    /** The Customer with this email, if there is one. */\n    public Optional<Customer> findCustomerByEmail(String email) {\n        return uow.customers().findByEmail(email);\n    }\n\n    /** Adds an item to tags. */\n    public Customer addTag(String id, String tag) {\n        return uow.transaction((uow) -> {\n            find(uow, id);\n            return uow.customers().addTag(id, tag).orElseThrow(() -> new NotFoundException(\"Customer\", id));\n        });\n    }\n\n    /** Removes an item from tags, by its value. */\n    public Customer removeTag(String id, String tag) {\n        return uow.transaction((uow) -> {\n            Customer current = find(uow, id);\n            if (current.getTags() == null || !current.getTags().contains(tag)) throw new NotFoundException(\"Tag\", tag);\n            return uow.customers().removeTag(id, tag).orElseThrow(() -> new NotFoundException(\"Customer\", id));\n        });\n    }\n}\n",
+  "src/main/java/app/services/OrderChanges.java": "package app.services;\n\nimport app.common.Patch;\nimport app.entities.Order;\nimport java.util.List;\n\n/** The values of a Order that change: fields left absent keep their value; Patch.of(null) empties one. */\npublic record OrderChanges(\n        Patch<String> code,\n        Patch<List<Order.Line>> lines,\n        Patch<Order.Shipping> shipping\n) {}\n",
+  "src/main/java/app/services/OrderService.java": "package app.services;\n\nimport app.UnitOfWork;\nimport app.common.Page;\nimport app.entities.Order;\nimport app.errors.ConflictException;\nimport app.errors.FieldError;\nimport app.errors.NotFoundException;\nimport app.errors.ValidationFailedException;\nimport java.util.ArrayList;\nimport java.util.LinkedHashMap;\nimport java.util.List;\nimport java.util.Map;\nimport java.util.Objects;\nimport java.util.Optional;\n\n/** Operations on orders. Repositories commit every write. */\npublic class OrderService {\n    private final UnitOfWork uow;\n\n    public OrderService(UnitOfWork uow) {\n        this.uow = uow;\n    }\n\n    /** Checks the values against the rules of the \"orders\" table, and the rows they point to; throws ValidationFailedException with every problem. */\n    private void validate(UnitOfWork uow, Map<String, Object> values, Order current) {\n        boolean creating = current == null;\n        List<FieldError> errors = new ArrayList<>();\n        {\n            Object value = values.get(\"code\");\n            if (value == null) {\n                if (creating || values.containsKey(\"code\")) errors.add(new FieldError(\"code\", \"is required\"));\n            }\n        }\n        {\n            Object value = values.get(\"lines\");\n            if (value == null) {\n                if (creating || values.containsKey(\"lines\")) errors.add(new FieldError(\"lines\", \"is required\"));\n            } else {\n                @SuppressWarnings(\"unchecked\")\n                List<Order.Line> document = (List<Order.Line>) value;\n                if (document != null) {\n                    for (int i0 = 0; i0 < document.size(); i0++) {\n                        if (document.get(i0) == null) errors.add(new FieldError(\"lines\" + \".\" + i0, \"is required\"));\n                        else checkLine(document.get(i0), \"lines\" + \".\" + i0, errors);\n                    }\n                }\n            }\n        }\n        {\n            Object value = values.get(\"shipping\");\n            if (value != null) {\n                Order.Shipping document = (Order.Shipping) value;\n                if (document != null) checkShipping(document, \"shipping\", errors);\n            }\n        }\n        if (!errors.isEmpty()) throw new ValidationFailedException(\"Order\", errors);\n    }\n\n    /** Values that must be unique are not taken by another row. */\n    private void checkUnique(UnitOfWork uow, Map<String, Object> values, Order current) {\n        {\n            String code = (String) (values.containsKey(\"code\") ? values.get(\"code\") : current == null ? null : current.getCode());\n            if (code != null) {\n                Optional<Order> other = uow.orders().findByCode(code);\n                if (other.isPresent() && (current == null || !Objects.equals(other.get().getId(), current.getId())))\n                    throw new ConflictException(\"Order\", \"code is already taken\", List.of(\"code\"));\n            }\n        }\n    }\n\n    /** Every check before a write: the values, the rows they point to, the unique values. */\n    private void check(UnitOfWork uow, Map<String, Object> values, Order current) {\n        validate(uow, values, current);\n        checkUnique(uow, values, current);\n    }\n\n    /** Sets the given values on the entity. */\n    @SuppressWarnings(\"unchecked\")\n    private static void apply(Order entity, Map<String, Object> values) {\n        if (values.containsKey(\"code\")) entity.setCode((String) values.get(\"code\"));\n        if (values.containsKey(\"lines\")) entity.setLines((List<Order.Line>) values.get(\"lines\"));\n        if (values.containsKey(\"shipping\")) entity.setShipping((Order.Shipping) values.get(\"shipping\"));\n    }\n\n    /** The Order with this key; NotFoundException when there is none. */\n    private Order find(UnitOfWork uow, String id) {\n        return uow.orders().findById(id).orElseThrow(() -> new NotFoundException(\"Order\", id));\n    }\n\n    /** The values an update gives, by field. */\n    private static Map<String, Object> given(OrderChanges changes) {\n        Map<String, Object> values = new LinkedHashMap<>();\n        if (changes.code() != null && changes.code().isPresent()) values.put(\"code\", changes.code().value());\n        if (changes.lines() != null && changes.lines().isPresent()) values.put(\"lines\", changes.lines().value());\n        if (changes.shipping() != null && changes.shipping().isPresent()) values.put(\"shipping\", changes.shipping().value());\n        return values;\n    }\n\n    /** What a Line does not follow of its rules, each with the path of its field. */\n    private static void checkLine(Order.Line value, String path, List<FieldError> errors) {\n        if (value.getSku() == null) errors.add(new FieldError(path + \".sku\", \"is required\"));\n        if (value.getQuantity() == null) errors.add(new FieldError(path + \".quantity\", \"is required\"));\n        if (value.getPrice() == null) errors.add(new FieldError(path + \".price\", \"is required\"));\n        if (value.getStatus() != null && !List.of(\"pending\", \"sent\").contains(value.getStatus())) errors.add(new FieldError(path + \".status\", \"must be one of: pending, sent\"));\n        if (value.getDiscounts() != null) {\n            for (int i0 = 0; i0 < value.getDiscounts().size(); i0++) {\n                if (value.getDiscounts().get(i0) == null) errors.add(new FieldError(path + \".discounts\" + \".\" + i0, \"is required\"));\n                else checkLineDiscount(value.getDiscounts().get(i0), path + \".discounts\" + \".\" + i0, errors);\n            }\n        }\n    }\n\n    /** What a Discount does not follow of its rules, each with the path of its field. */\n    private static void checkLineDiscount(Order.Line.Discount value, String path, List<FieldError> errors) {\n        if (value.getReason() == null) errors.add(new FieldError(path + \".reason\", \"is required\"));\n        if (value.getPercent() == null) errors.add(new FieldError(path + \".percent\", \"is required\"));\n    }\n\n    /** What a Shipping does not follow of its rules, each with the path of its field. */\n    private static void checkShipping(Order.Shipping value, String path, List<FieldError> errors) {\n        if (value.getCarrier() == null) errors.add(new FieldError(path + \".carrier\", \"is required\"));\n        if (value.getSentOn() == null) errors.add(new FieldError(path + \".sentOn\", \"is required\"));\n    }\n\n    /** Stores a new Order after checking it. */\n    public Order createOrder(Order order) {\n        Map<String, Object> values = new LinkedHashMap<>();\n        if (order.getCode() != null) values.put(\"code\", order.getCode());\n        if (order.getLines() != null) values.put(\"lines\", order.getLines());\n        if (order.getShipping() != null) values.put(\"shipping\", order.getShipping());\n        return uow.transaction((uow) -> {\n            check(uow, values, null);\n            return uow.orders().insert(order);\n        });\n    }\n\n    /** The Order with this key; NotFoundException when there is none. */\n    public Order getOrder(String id) {\n        return find(uow, id);\n    }\n\n    /** A page of orders, by primary key. */\n    public Page<Order> listOrders(int offset, int limit) {\n        return uow.orders().list(offset, limit);\n    }\n\n    /** Changes the given values of a Order. */\n    public Order updateOrder(String id, OrderChanges changes) {\n        Map<String, Object> values = given(changes);\n        return uow.transaction((uow) -> {\n            Order current = find(uow, id);\n            check(uow, values, current);\n            apply(current, values);\n            return uow.orders().update(current);\n        });\n    }\n\n    /** Deletes a Order. */\n    public void deleteOrder(String id) {\n        uow.transaction((uow) -> {\n            Order current = find(uow, id);\n            uow.orders().delete(current);\n            return null;\n        });\n    }\n\n    /** The Order with this code, if there is one. */\n    public Optional<Order> findOrderByCode(String code) {\n        return uow.orders().findByCode(code);\n    }\n\n    /** Adds an item to lines. */\n    public Order addLine(String id, Order.Line line) {\n        List<FieldError> errors = new ArrayList<>();\n        checkLine(line, \"lines\", errors);\n        if (!errors.isEmpty()) throw new ValidationFailedException(\"Order\", errors);\n        return uow.transaction((uow) -> {\n            find(uow, id);\n            return uow.orders().addLine(id, line).orElseThrow(() -> new NotFoundException(\"Order\", id));\n        });\n    }\n\n    /** Removes an item from lines, by its identifier. */\n    public Order removeLine(String id, String lineId) {\n        return uow.transaction((uow) -> {\n            Order current = find(uow, id);\n            if (current.getLines() == null || current.getLines().stream().noneMatch((item) -> lineId.equals(item.getId()))) throw new NotFoundException(\"Line\", lineId);\n            return uow.orders().removeLine(id, lineId).orElseThrow(() -> new NotFoundException(\"Order\", id));\n        });\n    }\n}\n",
+  "src/main/java/app/services/ShipmentChanges.java": "package app.services;\n\nimport app.common.Patch;\nimport app.entities.Shipment;\nimport java.util.List;\n\n/** The values of a Shipment that change: fields left absent keep their value; Patch.of(null) empties one. */\npublic record ShipmentChanges(\n        Patch<Shipment.Parcel> parcel,\n        Patch<List<Shipment.Stop>> stops\n) {}\n",
+  "src/main/java/app/services/ShipmentService.java": "package app.services;\n\nimport app.UnitOfWork;\nimport app.common.Page;\nimport app.entities.Shipment;\nimport app.errors.ConflictException;\nimport app.errors.FieldError;\nimport app.errors.NotFoundException;\nimport app.errors.ValidationFailedException;\nimport java.util.ArrayList;\nimport java.util.LinkedHashMap;\nimport java.util.List;\nimport java.util.Map;\n\n/** Operations on shipments. Repositories commit every write. */\npublic class ShipmentService {\n    private final UnitOfWork uow;\n\n    public ShipmentService(UnitOfWork uow) {\n        this.uow = uow;\n    }\n\n    /** Checks the values against the rules of the \"shipments\" table, and the rows they point to; throws ValidationFailedException with every problem. */\n    private void validate(UnitOfWork uow, Map<String, Object> values, Shipment current) {\n        boolean creating = current == null;\n        List<FieldError> errors = new ArrayList<>();\n        {\n            Object value = values.get(\"parcel\");\n            if (value == null) {\n                if (creating || values.containsKey(\"parcel\")) errors.add(new FieldError(\"parcel\", \"is required\"));\n            } else {\n                Shipment.Parcel document = (Shipment.Parcel) value;\n                if (document != null) checkParcel(document, \"parcel\", errors);\n            }\n        }\n        {\n            Object value = values.get(\"stops\");\n            if (value != null) {\n                @SuppressWarnings(\"unchecked\")\n                List<Shipment.Stop> document = (List<Shipment.Stop>) value;\n                if (document != null) {\n                    for (int i0 = 0; i0 < document.size(); i0++) {\n                        if (document.get(i0) == null) errors.add(new FieldError(\"stops\" + \".\" + i0, \"is required\"));\n                        else checkStop(document.get(i0), \"stops\" + \".\" + i0, errors);\n                    }\n                }\n            }\n        }\n        if (!errors.isEmpty()) throw new ValidationFailedException(\"Shipment\", errors);\n    }\n\n    /** Every check before a write: the values, the rows they point to, the unique values. */\n    private void check(UnitOfWork uow, Map<String, Object> values, Shipment current) {\n        validate(uow, values, current);\n    }\n\n    /** Sets the given values on the entity. */\n    @SuppressWarnings(\"unchecked\")\n    private static void apply(Shipment entity, Map<String, Object> values) {\n        if (values.containsKey(\"parcel\")) entity.setParcel((Shipment.Parcel) values.get(\"parcel\"));\n        if (values.containsKey(\"stops\")) entity.setStops((List<Shipment.Stop>) values.get(\"stops\"));\n    }\n\n    /** The Shipment with this key; NotFoundException when there is none. */\n    private Shipment find(UnitOfWork uow, String id) {\n        return uow.shipments().findById(id).orElseThrow(() -> new NotFoundException(\"Shipment\", id));\n    }\n\n    /** The values an update gives, by field. */\n    private static Map<String, Object> given(ShipmentChanges changes) {\n        Map<String, Object> values = new LinkedHashMap<>();\n        if (changes.parcel() != null && changes.parcel().isPresent()) values.put(\"parcel\", changes.parcel().value());\n        if (changes.stops() != null && changes.stops().isPresent()) values.put(\"stops\", changes.stops().value());\n        return values;\n    }\n\n    /** What a Parcel does not follow of its rules, each with the path of its field. */\n    private static void checkParcel(Shipment.Parcel value, String path, List<FieldError> errors) {\n        if (value.getWeight() == null) errors.add(new FieldError(path + \".weight\", \"is required\"));\n        if (value.getContents() == null) errors.add(new FieldError(path + \".contents\", \"is required\"));\n        if (value.getSize() != null) checkParcelSize(value.getSize(), path + \".size\", errors);\n    }\n\n    /** What a Size does not follow of its rules, each with the path of its field. */\n    private static void checkParcelSize(Shipment.Parcel.Size value, String path, List<FieldError> errors) {\n        if (value.getHeight() == null) errors.add(new FieldError(path + \".height\", \"is required\"));\n    }\n\n    /** What a Stop does not follow of its rules, each with the path of its field. */\n    private static void checkStop(Shipment.Stop value, String path, List<FieldError> errors) {\n    }\n\n    /** Stores a new Shipment after checking it. */\n    public Shipment createShipment(Shipment shipment) {\n        Map<String, Object> values = new LinkedHashMap<>();\n        if (shipment.getParcel() != null) values.put(\"parcel\", shipment.getParcel());\n        if (shipment.getStops() != null) values.put(\"stops\", shipment.getStops());\n        return uow.transaction((uow) -> {\n            check(uow, values, null);\n            return uow.shipments().insert(shipment);\n        });\n    }\n\n    /** The Shipment with this key; NotFoundException when there is none. */\n    public Shipment getShipment(String id) {\n        return find(uow, id);\n    }\n\n    /** A page of shipments, by primary key. */\n    public Page<Shipment> listShipments(int offset, int limit) {\n        return uow.shipments().list(offset, limit);\n    }\n\n    /** Changes the given values of a Shipment. */\n    public Shipment updateShipment(String id, ShipmentChanges changes) {\n        Map<String, Object> values = given(changes);\n        return uow.transaction((uow) -> {\n            Shipment current = find(uow, id);\n            check(uow, values, current);\n            apply(current, values);\n            return uow.shipments().update(current);\n        });\n    }\n\n    /** Deletes a Shipment. */\n    public void deleteShipment(String id) {\n        uow.transaction((uow) -> {\n            Shipment current = find(uow, id);\n            uow.shipments().delete(current);\n            return null;\n        });\n    }\n\n    /** Adds an item to stops. */\n    public Shipment addStop(String id, Shipment.Stop stop) {\n        List<FieldError> errors = new ArrayList<>();\n        checkStop(stop, \"stops\", errors);\n        if (!errors.isEmpty()) throw new ValidationFailedException(\"Shipment\", errors);\n        return uow.transaction((uow) -> {\n            find(uow, id);\n            return uow.shipments().addStop(id, stop).orElseThrow(() -> new NotFoundException(\"Shipment\", id));\n        });\n    }\n\n    /** Removes an item from stops, by its position. */\n    public Shipment removeStop(String id, int position) {\n        return uow.transaction((uow) -> {\n            Shipment current = find(uow, id);\n            if (current.getStops() == null || position < 0 || position >= current.getStops().size()) throw new NotFoundException(\"Stop\", position);\n            return uow.shipments().removeStop(id, position, current.getStops().size()).orElseThrow(() -> new ConflictException(\"Shipment\", \"was changed by someone else since it was read\", List.of(\"stops\")));\n        });\n    }\n}\n",
+  "src/test/java/app/ConversionsTest.java": "package app;\n\nimport static org.junit.jupiter.api.Assertions.assertEquals;\nimport static org.junit.jupiter.api.Assertions.assertNotNull;\n\nimport app.conversions.CustomerConversions;\nimport app.conversions.OrderConversions;\nimport app.entities.Customer;\nimport app.entities.Order;\nimport org.junit.jupiter.api.Test;\n\n/** Tests of the conversions between the application models and the tables. */\nclass ConversionsTest {\n    private final MemoryUnitOfWork uow = new MemoryUnitOfWork();\n\n    @Test\n    void readsCustomerAndWritesItBack() {\n        Customer row = Factories.addCustomer(uow, 1);\n        var model = CustomerConversions.customerToCustomerModel(row);\n        var values = CustomerConversions.customerModelToCustomer(model);\n        assertEquals(row.getEmail(), values.getEmail());\n        assertEquals(row.getLevel(), values.getLevel());\n        assertEquals(row.getSince(), values.getSince());\n        if (row.getAddress() != null) {\n            assertEquals(row.getAddress().getStreet(), values.getAddress().getStreet());\n            assertEquals(row.getAddress().getZipCode(), values.getAddress().getZipCode());\n            if (row.getAddress().getLocation() != null) {\n                assertEquals(row.getAddress().getLocation().getLatitude(), values.getAddress().getLocation().getLatitude());\n                assertEquals(row.getAddress().getLocation().getLongitude(), values.getAddress().getLocation().getLongitude());\n            } else assertEquals(row.getAddress().getLocation(), values.getAddress().getLocation());\n        } else assertEquals(row.getAddress(), values.getAddress());\n        assertEquals(row.getTags(), values.getTags());\n    }\n\n    @Test\n    void readsOrderAndWritesItBack() {\n        Order row = Factories.addOrder(uow, 1);\n        var model = OrderConversions.orderToOrderModel(row);\n        var values = OrderConversions.orderModelToOrder(model);\n        assertEquals(row.getCode(), values.getCode());\n        if (row.getLines() != null && !row.getLines().isEmpty()) {\n            assertEquals(row.getLines().get(0).getId(), values.getLines().get(0).getId());\n            assertEquals(row.getLines().get(0).getSku(), values.getLines().get(0).getSku());\n            assertEquals(row.getLines().get(0).getQuantity(), values.getLines().get(0).getQuantity());\n            assertEquals(row.getLines().get(0).getPrice(), values.getLines().get(0).getPrice());\n            assertEquals(row.getLines().get(0).getStatus(), values.getLines().get(0).getStatus());\n            if (row.getLines().get(0).getDiscounts() != null && !row.getLines().get(0).getDiscounts().isEmpty()) {\n                assertEquals(row.getLines().get(0).getDiscounts().get(0).getReason(), values.getLines().get(0).getDiscounts().get(0).getReason());\n                assertEquals(row.getLines().get(0).getDiscounts().get(0).getPercent(), values.getLines().get(0).getDiscounts().get(0).getPercent());\n            } else assertEquals(row.getLines().get(0).getDiscounts(), values.getLines().get(0).getDiscounts());\n        } else assertEquals(row.getLines(), values.getLines());\n    }\n}\n",
+  "src/test/java/app/CustomerTest.java": "package app;\n\nimport static org.junit.jupiter.api.Assertions.assertEquals;\nimport static org.junit.jupiter.api.Assertions.assertNotNull;\nimport static org.junit.jupiter.api.Assertions.assertNull;\nimport static org.junit.jupiter.api.Assertions.assertThrows;\nimport static org.junit.jupiter.api.Assertions.assertTrue;\n\nimport app.common.Patch;\nimport app.entities.Customer;\nimport app.errors.ConflictException;\nimport app.errors.FieldError;\nimport app.errors.NotFoundException;\nimport app.errors.ValidationFailedException;\nimport app.services.CustomerChanges;\nimport app.services.CustomerService;\nimport java.util.List;\nimport org.junit.jupiter.api.BeforeEach;\nimport org.junit.jupiter.api.Nested;\nimport org.junit.jupiter.api.Test;\n\n/** Tests of the \"customers\" table. */\nclass CustomerTest {\n    /** The repositories over the test database, opened empty for every test */\n    private MongoUnitOfWork uow;\n\n    @BeforeEach\n    void open() {\n        uow = new MongoUnitOfWork(TestDatabase.open());\n    }\n\n    @Nested\n    class Repository {\n\n        @Test\n        void isStoredAndReadBack() {\n            Customer stored = Factories.addCustomer(uow, 1);\n            Customer found = uow.customers().findById(stored.getId()).orElseThrow();\n            assertEquals(stored.getId(), found.getId());\n            assertTrue(uow.customers().findByEmail(stored.getEmail()).isPresent());\n        }\n\n        @Test\n        void listsRowsByKey() {\n            Factories.addCustomer(uow, 1);\n            Factories.addCustomer(uow, 2);\n            var page = uow.customers().list(0, 1);\n            assertEquals(2, page.total());\n            assertEquals(1, page.items().size());\n        }\n\n        @Test\n        void addsAndRemovesOneItemOfTags() {\n            Customer stored = Factories.addCustomer(uow, 1);\n            int before = stored.getTags() == null ? 0 : stored.getTags().size();\n            String item = \"tags-\" + 7;\n            Customer added = uow.customers().addTag(stored.getId(), item).orElseThrow();\n            assertEquals(before + 1, added.getTags().size());\n            Customer removed = uow.customers().removeTag(stored.getId(), item).orElseThrow();\n            assertEquals(before, removed.getTags().size());\n        }\n\n        @Test\n        void isDeleted() {\n            Customer stored = Factories.addCustomer(uow, 1);\n            uow.customers().delete(stored);\n            assertTrue(uow.customers().findById(stored.getId()).isEmpty());\n        }\n    }\n\n    @Nested\n    class CustomerServiceTest {\n        private final MemoryUnitOfWork uow = new MemoryUnitOfWork();\n\n        @Test\n        void createsAValidRow() {\n            CustomerService service = new CustomerService(uow);\n            int n = 100;\n            Customer row = Factories.newCustomer(1);\n            var created = service.createCustomer(row);\n            var found = service.getCustomer(created.getId());\n            assertEquals(created.getId(), found.getId());\n        }\n\n        @Test\n        void refusesAMissingValue() {\n            CustomerService service = new CustomerService(uow);\n            int n = 100;\n            Customer row = Factories.newCustomer(1);\n            row.setEmail(null);\n            ValidationFailedException error = assertThrows(ValidationFailedException.class, () -> service.createCustomer(row));\n            assertEquals(List.of(\"email\"), error.getErrors().stream().map(FieldError::field).toList());\n        }\n\n        @Test\n        void refusesARepeatedUniqueValue() {\n            CustomerService service = new CustomerService(uow);\n            int n = 100;\n            Customer row = Factories.newCustomer(1);\n            var first = service.createCustomer(row);\n            Customer again = Factories.newCustomer(2);\n            again.setEmail(first.getEmail());\n            assertThrows(ConflictException.class, () -> service.createCustomer(again));\n        }\n\n        @Test\n        void keepsItsOwnUniqueValue() {\n            CustomerService service = new CustomerService(uow);\n            int n = 100;\n            Customer row = Factories.newCustomer(1);\n            var created = service.createCustomer(row);\n            service.updateCustomer(created.getId(), new CustomerChanges(Patch.of(created.getEmail()), Patch.absent(), Patch.absent(), Patch.absent(), Patch.absent()));\n        }\n\n        @Test\n        void saysWhenARowIsMissing() {\n            CustomerService service = new CustomerService(uow);\n            assertThrows(NotFoundException.class, () -> service.getCustomer(\"ffffffffffffffffffffffff\"));\n        }\n\n        @Test\n        void addsAndRemovesOneItemOfTags() {\n            CustomerService service = new CustomerService(uow);\n            int n = 100;\n            Customer row = Factories.newCustomer(1);\n            var created = service.createCustomer(row);\n            int before = created.getTags() == null ? 0 : created.getTags().size();\n            String item = \"tags-\" + 7;\n            var added = service.addTag(created.getId(), item);\n            assertEquals(before + 1, added.getTags().size());\n            var removed = service.removeTag(created.getId(), item);\n            assertEquals(before, removed.getTags().size());\n        }\n\n        @Test\n        void deletesARow() {\n            CustomerService service = new CustomerService(uow);\n            int n = 100;\n            Customer row = Factories.newCustomer(1);\n            var created = service.createCustomer(row);\n            service.deleteCustomer(created.getId());\n            assertThrows(NotFoundException.class, () -> service.getCustomer(created.getId()));\n        }\n    }\n}\n",
+  "src/test/java/app/DatabaseTest.java": "package app;\n\nimport static org.junit.jupiter.api.Assertions.assertEquals;\n\nimport com.mongodb.ConnectionString;\nimport org.junit.jupiter.api.Test;\n\n/** The tests run on the database they were asked to. */\nclass DatabaseTest {\n    @Test\n    void isTheOneTestDatabaseUrlNames() {\n        assertEquals(new ConnectionString(TestDatabase.URL).getDatabase(), TestDatabase.open().getDb().getName());\n    }\n}\n",
+  "src/test/java/app/Factories.java": "package app;\n\nimport app.entities.Customer;\nimport app.entities.Order;\nimport app.entities.Shipment;\nimport java.math.BigDecimal;\nimport java.time.Instant;\nimport java.util.List;\n\n/** Rows for the tests: valid values for every column, and the rows they point to. */\nfinal class Factories {\n    private Factories() {}\n\n    /** A valid Customer that is not stored yet; n makes its unique values differ. */\n    static Customer newCustomer(int n) {\n        Customer entity = new Customer();\n        entity.setEmail(\"email-\" + n);\n        entity.setLevel(\"basic\");\n        entity.setSince(Instant.parse(String.format(\"2026-01-%02dT12:00:00Z\", n % 28 + 1)));\n        entity.setAddress(newCustomerAddress(n));\n        entity.setTags(new java.util.ArrayList<>());\n        return entity;\n    }\n\n    /** A stored Customer. */\n    static Customer addCustomer(UnitOfWork uow, int n) {\n        Customer entity = newCustomer(n);\n        return uow.customers().insert(entity);\n    }\n\n    /** A valid Customer.Address. */\n    static Customer.Address newCustomerAddress(int n) {\n        Customer.Address item = new Customer.Address();\n        item.setStreet(\"street-\" + n);\n        item.setZipCode(\"zipcode-\" + n);\n        item.setLocation(newCustomerAddressLocation(n));\n        return item;\n    }\n\n    /** A valid Customer.Address.Location. */\n    static Customer.Address.Location newCustomerAddressLocation(int n) {\n        Customer.Address.Location item = new Customer.Address.Location();\n        item.setLatitude(n + 0.5);\n        item.setLongitude(n + 0.5);\n        return item;\n    }\n\n    /** A valid Order that is not stored yet; n makes its unique values differ. */\n    static Order newOrder(int n) {\n        Order entity = new Order();\n        entity.setCode(\"code-\" + n);\n        entity.setLines(new java.util.ArrayList<>(List.of(newOrderLine(n))));\n        entity.setShipping(newOrderShipping(n));\n        return entity;\n    }\n\n    /** A stored Order. */\n    static Order addOrder(UnitOfWork uow, int n) {\n        Order entity = newOrder(n);\n        return uow.orders().insert(entity);\n    }\n\n    /** A valid Order.Line. */\n    static Order.Line newOrderLine(int n) {\n        Order.Line item = new Order.Line();\n        item.setSku(\"sku-\" + n);\n        item.setQuantity((n));\n        item.setPrice(new BigDecimal((n % 10000) + \".50\"));\n        item.setStatus(\"pending\");\n        item.setDiscounts(new java.util.ArrayList<>(List.of(newOrderLineDiscount(n))));\n        return item;\n    }\n\n    /** A valid Order.Line.Discount. */\n    static Order.Line.Discount newOrderLineDiscount(int n) {\n        Order.Line.Discount item = new Order.Line.Discount();\n        item.setReason(\"reason-\" + n);\n        item.setPercent(n + 0.5);\n        return item;\n    }\n\n    /** A valid Order.Shipping. */\n    static Order.Shipping newOrderShipping(int n) {\n        Order.Shipping item = new Order.Shipping();\n        item.setCarrier(\"carrier-\" + n);\n        item.setSentOn(Instant.parse(String.format(\"2026-01-%02dT12:00:00Z\", n % 28 + 1)));\n        return item;\n    }\n\n    /** A valid Shipment that is not stored yet; n makes its unique values differ. */\n    static Shipment newShipment(int n) {\n        Shipment entity = new Shipment();\n        entity.setParcel(newShipmentParcel(n));\n        entity.setStops(new java.util.ArrayList<>(List.of(newShipmentStop(n))));\n        return entity;\n    }\n\n    /** A stored Shipment. */\n    static Shipment addShipment(UnitOfWork uow, int n) {\n        Shipment entity = newShipment(n);\n        return uow.shipments().insert(entity);\n    }\n\n    /** A valid Shipment.Parcel. */\n    static Shipment.Parcel newShipmentParcel(int n) {\n        Shipment.Parcel item = new Shipment.Parcel();\n        item.setWeight(n + 0.5);\n        item.setContents(\"contents-\" + n);\n        item.setSize(newShipmentParcelSize(n));\n        return item;\n    }\n\n    /** A valid Shipment.Parcel.Size. */\n    static Shipment.Parcel.Size newShipmentParcelSize(int n) {\n        Shipment.Parcel.Size item = new Shipment.Parcel.Size();\n        item.setHeight(n + 0.5);\n        return item;\n    }\n\n    /** A valid Shipment.Stop. */\n    static Shipment.Stop newShipmentStop(int n) {\n        Shipment.Stop item = new Shipment.Stop();\n        item.setCity(\"city-\" + n);\n        return item;\n    }\n}\n",
+  "src/test/java/app/OrderTest.java": "package app;\n\nimport static org.junit.jupiter.api.Assertions.assertEquals;\nimport static org.junit.jupiter.api.Assertions.assertNotNull;\nimport static org.junit.jupiter.api.Assertions.assertNull;\nimport static org.junit.jupiter.api.Assertions.assertThrows;\nimport static org.junit.jupiter.api.Assertions.assertTrue;\n\nimport app.common.Patch;\nimport app.entities.Order;\nimport app.errors.ConflictException;\nimport app.errors.FieldError;\nimport app.errors.NotFoundException;\nimport app.errors.ValidationFailedException;\nimport app.services.OrderChanges;\nimport app.services.OrderService;\nimport java.util.List;\nimport org.junit.jupiter.api.BeforeEach;\nimport org.junit.jupiter.api.Nested;\nimport org.junit.jupiter.api.Test;\n\n/** Tests of the \"orders\" table. */\nclass OrderTest {\n    /** The repositories over the test database, opened empty for every test */\n    private MongoUnitOfWork uow;\n\n    @BeforeEach\n    void open() {\n        uow = new MongoUnitOfWork(TestDatabase.open());\n    }\n\n    @Nested\n    class Repository {\n\n        @Test\n        void isStoredAndReadBack() {\n            Order stored = Factories.addOrder(uow, 1);\n            Order found = uow.orders().findById(stored.getId()).orElseThrow();\n            assertEquals(stored.getId(), found.getId());\n            assertTrue(uow.orders().findByCode(stored.getCode()).isPresent());\n        }\n\n        @Test\n        void listsRowsByKey() {\n            Factories.addOrder(uow, 1);\n            Factories.addOrder(uow, 2);\n            var page = uow.orders().list(0, 1);\n            assertEquals(2, page.total());\n            assertEquals(1, page.items().size());\n        }\n\n        @Test\n        void addsAndRemovesOneItemOfLines() {\n            Order stored = Factories.addOrder(uow, 1);\n            int before = stored.getLines() == null ? 0 : stored.getLines().size();\n            Order.Line item = Factories.newOrderLine(7);\n            Order added = uow.orders().addLine(stored.getId(), item).orElseThrow();\n            assertEquals(before + 1, added.getLines().size());\n            Order removed = uow.orders().removeLine(stored.getId(), added.getLines().get(before).getId()).orElseThrow();\n            assertEquals(before, removed.getLines().size());\n        }\n\n        @Test\n        void isDeleted() {\n            Order stored = Factories.addOrder(uow, 1);\n            uow.orders().delete(stored);\n            assertTrue(uow.orders().findById(stored.getId()).isEmpty());\n        }\n    }\n\n    @Nested\n    class OrderServiceTest {\n        private final MemoryUnitOfWork uow = new MemoryUnitOfWork();\n\n        @Test\n        void createsAValidRow() {\n            OrderService service = new OrderService(uow);\n            int n = 100;\n            Order row = Factories.newOrder(1);\n            var created = service.createOrder(row);\n            var found = service.getOrder(created.getId());\n            assertEquals(created.getId(), found.getId());\n        }\n\n        @Test\n        void refusesAMissingValue() {\n            OrderService service = new OrderService(uow);\n            int n = 100;\n            Order row = Factories.newOrder(1);\n            row.setCode(null);\n            ValidationFailedException error = assertThrows(ValidationFailedException.class, () -> service.createOrder(row));\n            assertEquals(List.of(\"code\"), error.getErrors().stream().map(FieldError::field).toList());\n        }\n\n        @Test\n        void refusesARepeatedUniqueValue() {\n            OrderService service = new OrderService(uow);\n            int n = 100;\n            Order row = Factories.newOrder(1);\n            var first = service.createOrder(row);\n            Order again = Factories.newOrder(2);\n            again.setCode(first.getCode());\n            assertThrows(ConflictException.class, () -> service.createOrder(again));\n        }\n\n        @Test\n        void keepsItsOwnUniqueValue() {\n            OrderService service = new OrderService(uow);\n            int n = 100;\n            Order row = Factories.newOrder(1);\n            var created = service.createOrder(row);\n            service.updateOrder(created.getId(), new OrderChanges(Patch.of(created.getCode()), Patch.absent(), Patch.absent()));\n        }\n\n        @Test\n        void saysWhenARowIsMissing() {\n            OrderService service = new OrderService(uow);\n            assertThrows(NotFoundException.class, () -> service.getOrder(\"ffffffffffffffffffffffff\"));\n        }\n\n        @Test\n        void addsAndRemovesOneItemOfLines() {\n            OrderService service = new OrderService(uow);\n            int n = 100;\n            Order row = Factories.newOrder(1);\n            var created = service.createOrder(row);\n            int before = created.getLines() == null ? 0 : created.getLines().size();\n            Order.Line item = Factories.newOrderLine(7);\n            var added = service.addLine(created.getId(), item);\n            assertEquals(before + 1, added.getLines().size());\n            var removed = service.removeLine(created.getId(), added.getLines().get(before).getId());\n            assertEquals(before, removed.getLines().size());\n            assertThrows(NotFoundException.class, () -> service.removeLine(created.getId(), \"ffffffffffffffffffffffff\"));\n        }\n\n        @Test\n        void deletesARow() {\n            OrderService service = new OrderService(uow);\n            int n = 100;\n            Order row = Factories.newOrder(1);\n            var created = service.createOrder(row);\n            service.deleteOrder(created.getId());\n            assertThrows(NotFoundException.class, () -> service.getOrder(created.getId()));\n        }\n    }\n}\n",
+  "src/test/java/app/ShipmentTest.java": "package app;\n\nimport static org.junit.jupiter.api.Assertions.assertEquals;\nimport static org.junit.jupiter.api.Assertions.assertNotNull;\nimport static org.junit.jupiter.api.Assertions.assertNull;\nimport static org.junit.jupiter.api.Assertions.assertThrows;\nimport static org.junit.jupiter.api.Assertions.assertTrue;\n\nimport app.entities.Shipment;\nimport app.errors.FieldError;\nimport app.errors.NotFoundException;\nimport app.errors.ValidationFailedException;\nimport app.services.ShipmentService;\nimport java.util.List;\nimport org.junit.jupiter.api.BeforeEach;\nimport org.junit.jupiter.api.Nested;\nimport org.junit.jupiter.api.Test;\n\n/** Tests of the \"shipments\" table. */\nclass ShipmentTest {\n    /** The repositories over the test database, opened empty for every test */\n    private MongoUnitOfWork uow;\n\n    @BeforeEach\n    void open() {\n        uow = new MongoUnitOfWork(TestDatabase.open());\n    }\n\n    @Nested\n    class Repository {\n\n        @Test\n        void isStoredAndReadBack() {\n            Shipment stored = Factories.addShipment(uow, 1);\n            Shipment found = uow.shipments().findById(stored.getId()).orElseThrow();\n            assertEquals(stored.getId(), found.getId());\n        }\n\n        @Test\n        void listsRowsByKey() {\n            Factories.addShipment(uow, 1);\n            Factories.addShipment(uow, 2);\n            var page = uow.shipments().list(0, 1);\n            assertEquals(2, page.total());\n            assertEquals(1, page.items().size());\n        }\n\n        @Test\n        void addsAndRemovesOneItemOfStops() {\n            Shipment stored = Factories.addShipment(uow, 1);\n            int before = stored.getStops() == null ? 0 : stored.getStops().size();\n            Shipment.Stop item = Factories.newShipmentStop(7);\n            Shipment added = uow.shipments().addStop(stored.getId(), item).orElseThrow();\n            assertEquals(before + 1, added.getStops().size());\n            Shipment removed = uow.shipments().removeStop(stored.getId(), before, added.getStops().size()).orElseThrow();\n            assertEquals(before, removed.getStops().size());\n            assertTrue(uow.shipments().removeStop(stored.getId(), 0, before + 5).isEmpty());\n        }\n\n        @Test\n        void isDeleted() {\n            Shipment stored = Factories.addShipment(uow, 1);\n            uow.shipments().delete(stored);\n            assertTrue(uow.shipments().findById(stored.getId()).isEmpty());\n        }\n    }\n\n    @Nested\n    class ShipmentServiceTest {\n        private final MemoryUnitOfWork uow = new MemoryUnitOfWork();\n\n        @Test\n        void createsAValidRow() {\n            ShipmentService service = new ShipmentService(uow);\n            int n = 100;\n            Shipment row = Factories.newShipment(1);\n            var created = service.createShipment(row);\n            var found = service.getShipment(created.getId());\n            assertEquals(created.getId(), found.getId());\n        }\n\n        @Test\n        void refusesAMissingValue() {\n            ShipmentService service = new ShipmentService(uow);\n            int n = 100;\n            Shipment row = Factories.newShipment(1);\n            row.setParcel(null);\n            ValidationFailedException error = assertThrows(ValidationFailedException.class, () -> service.createShipment(row));\n            assertEquals(List.of(\"parcel\"), error.getErrors().stream().map(FieldError::field).toList());\n        }\n\n        @Test\n        void saysWhenARowIsMissing() {\n            ShipmentService service = new ShipmentService(uow);\n            assertThrows(NotFoundException.class, () -> service.getShipment(\"ffffffffffffffffffffffff\"));\n        }\n\n        @Test\n        void addsAndRemovesOneItemOfStops() {\n            ShipmentService service = new ShipmentService(uow);\n            int n = 100;\n            Shipment row = Factories.newShipment(1);\n            var created = service.createShipment(row);\n            int before = created.getStops() == null ? 0 : created.getStops().size();\n            Shipment.Stop item = Factories.newShipmentStop(7);\n            var added = service.addStop(created.getId(), item);\n            assertEquals(before + 1, added.getStops().size());\n            var removed = service.removeStop(created.getId(), before);\n            assertEquals(before, removed.getStops().size());\n            assertThrows(NotFoundException.class, () -> service.removeStop(created.getId(), 99));\n        }\n\n        @Test\n        void deletesARow() {\n            ShipmentService service = new ShipmentService(uow);\n            int n = 100;\n            Shipment row = Factories.newShipment(1);\n            var created = service.createShipment(row);\n            service.deleteShipment(created.getId());\n            assertThrows(NotFoundException.class, () -> service.getShipment(created.getId()));\n        }\n    }\n}\n",
+  "src/test/java/app/TestDatabase.java": "package app;\n\nimport com.mongodb.ConnectionString;\nimport org.springframework.data.mongodb.core.MongoTemplate;\nimport org.springframework.data.mongodb.core.index.MongoPersistentEntityIndexResolver;\n\n/** The test database: the MongoDB database TEST_DATABASE_URL names, with every collection created empty before every test. */\nfinal class TestDatabase {\n    static final String URL = System.getenv(\"TEST_DATABASE_URL\");\n\n    private static MongoTemplate mongo;\n\n    private TestDatabase() {}\n\n    /** The template of the test database, with its collections and their indexes created again. */\n    static synchronized MongoTemplate open() {\n        if (URL == null)\n            throw new IllegalStateException(\"The database tests need a disposable MongoDB database (a replica set, for its transactions): set TEST_DATABASE_URL (it is emptied)\");\n        if (mongo == null) mongo = Database.template(Database.client(URL), new ConnectionString(URL).getDatabase());\n        mongo.getDb().drop();\n        var resolver = new MongoPersistentEntityIndexResolver(mongo.getConverter().getMappingContext());\n        for (Class<?> entity : Database.ENTITIES) {\n            mongo.createCollection(entity);\n            resolver.resolveIndexFor(entity).forEach((index) -> mongo.indexOps(entity).createIndex(index));\n        }\n        return mongo;\n    }\n}\n"
+ }
+}
