@@ -287,7 +287,7 @@ export const fluentOrm: SwiftOrm = {
   label: 'Fluent',
   holder: { type: 'any Database', optional: '(any Database)?', modules: ['FluentKit'] },
   emptyList: (context) => (context.settings.database === 'postgresql' ? '"{}"' : '"[]"'),
-  databaseFile,
+  databaseFiles: (context) => [databaseFile(context)],
   entityFiles: (context, info) => [entityFile(context, info), modelFile(context, info)],
   repository: {
     modules: (context, info) => ['FluentKit', ...(usesSql(context, info) ? ['FluentSQL'] : [])],

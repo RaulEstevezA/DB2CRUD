@@ -16,6 +16,7 @@ describe('stacks and databases', () => {
       'mongophp',
       'mongokotlin',
       'mongorust',
+      'mongoswift',
     ])
     expect(settingsFor('mongodb', settings).database).toBe('mongodb')
     expect(settingsFor('postgresql', settings)).toEqual(settings)

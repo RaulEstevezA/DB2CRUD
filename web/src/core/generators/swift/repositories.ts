@@ -18,6 +18,7 @@ import {
   type Context,
   type TableInfo,
 } from './context.ts'
+import { identifiedLists, listOf } from './documents.ts'
 import { imports, swString } from './swift.ts'
 
 export interface Method {
@@ -67,6 +68,26 @@ export function repositoryMethods(context: Context, info: TableInfo): Method[] {
       case 'update':
         add(`_ entity: ${entity}`, entity, 'Stores the changes made to a row.')
         break
+      case 'addItem':
+      case 'removeItem': {
+        const list = listOf(info, query)
+        const adds = query.kind === 'addItem'
+        // Told apart by its position, it is only removed from a list of the size it was seen in
+        const size = !adds && list.by === 'position' ? [{ name: 'size', type: 'Int' }] : []
+        const params = [
+          ...info.key.map((column) => ({ name: column.prop, type: column.sw })),
+          ...(adds ? [{ name: list.item, type: list.sw }] : list.params),
+          ...size,
+        ]
+        add(
+          params.map((item) => `_ ${item.name}: ${item.type}`).join(', '),
+          `${entity}?`,
+          adds
+            ? `Adds an item to ${query.columns[0]}, and gives the row as it is then, if there is one.`
+            : `Removes an item from ${query.columns[0]}${size.length > 0 ? ' that has this size' : ''}, and gives the row as it is then, if there is one.`,
+        )
+        break
+      }
       case 'delete':
         add(`_ entity: ${entity}`, '', 'Removes a row.')
         break
@@ -124,10 +145,11 @@ function swLiteral(column: ColumnInfo, value: string | number | boolean): string
   }
 }
 
-function memoryFill(column: ColumnInfo): string | null {
+export function memoryFill(column: ColumnInfo): string | null {
   const db = column.column
   const target = `entity.${column.prop}`
   if (db.generated === 'identity') return `if ${target} == nil { ${target} = await rows.nextId() }`
+  if (db.generated === 'uuid' && db.type.kind === 'text' && db.type.objectId) return `${target} = ${target} ?? Bson.newId()`
   if (db.generated === 'uuid') return `${target} = ${target} ?? UUID()`
   if (db.generated === 'now' || db.generated === 'onUpdateNow') return column.sw === 'Date' ? `${target} = ${target} ?? Date()` : null
   if (db.default?.kind === 'literal' && db.default.value !== null) {
@@ -169,18 +191,57 @@ function memoryBody(context: Context, info: TableInfo, method: Method, fills: st
       return ['await visible()']
     case 'insert':
       return [
-        ...(fills.length > 0 ? ['var entity = entity', ...fills] : []),
+        ...(fills.length > 0 || identifiedLists(info).length > 0 ? ['var entity = entity', ...fills] : []),
+        ...(identifiedLists(info).length > 0 ? ['entity.identifyItems()'] : []),
         'let row = entity',
         'await rows.store(row) { sameKey($0, row) }',
         'return row',
       ]
     case 'update':
+      if (identifiedLists(info).length > 0)
+        return [
+          'var entity = entity',
+          'entity.identifyItems()',
+          'let row = entity',
+          'await rows.store(row) { sameKey($0, row) }',
+          'return row',
+        ]
       return ['await rows.store(entity) { sameKey($0, entity) }', 'return entity']
+    case 'addItem':
+    case 'removeItem':
+      return memoryItem(info, method)
     case 'delete':
       return ['await rows.remove { sameKey($0, entity) }']
     default:
       return ['fatalError("not written")']
   }
+}
+
+/** One item of a list added or removed in memory. */
+function memoryItem(info: TableInfo, method: Method): string[] {
+  const list = listOf(info, method.query)
+  const [param] = list.params
+  const items = `found.${list.column.prop}`
+  const adds = method.query.kind === 'addItem'
+  const keys = info.key.map((column) => `$0.${column.prop} == ${column.prop}`).join(' && ')
+  const touched = info.columns.filter(({ column }) => column.generated === 'onUpdateNow')
+  const change = adds
+    ? [
+        ...(list.by === 'id' ? [`var ${list.item} = ${list.item}`, `${list.item}.id = ${list.item}.id ?? Bson.newId()`] : []),
+        `${items} = (${items} ?? []) + [${list.item}]`,
+      ]
+    : list.by === 'position'
+      ? [`guard ${items}?.count == size, position >= 0, position < size else { return nil }`, `${items}?.remove(at: position)`]
+      : [`${items}?.removeAll { $0${list.by === 'id' ? '.id' : ''} == ${param.name} }`]
+  return [
+    `guard var found = await visible().first(where: { ${keys} }) else { return nil }`,
+    ...change,
+    ...(info.version ? [`found.${info.version.prop} = (found.${info.version.prop} ?? 0) + 1`] : []),
+    ...touched.map((column) => `found.${column.prop} = Date()`),
+    'let row = found',
+    'await rows.store(row) { sameKey($0, row) }',
+    'return row',
+  ]
 }
 
 /** The order of two values of a column: `<` when they can be compared, by their text otherwise. */
@@ -252,7 +313,8 @@ export function repositoryFile(context: Context, info: TableInfo): GeneratedFile
       '',
     )
   const sqlBodies = methods.flatMap((item) => block(item, context.orm.repository.body(context, info, item), 'public ', !interfaces))
-  const writesRows = methods.some((method) => ['insert', 'update', 'delete'].includes(method.query.kind))
+  const writesRows = methods.some((method) => ['insert', 'update', 'delete', 'addItem', 'removeItem'].includes(method.query.kind))
+  const functions = context.orm.repository.functions(context, info)
   const reads = methods.some((method) => method.query.kind !== 'delete' && method.query.kind !== 'update')
   body.push(
     `/// Keeps ${info.name} rows in the database, through ${context.orm.label}: on the database of the unit of work, or on its transaction.`,
@@ -270,7 +332,7 @@ export function repositoryFile(context: Context, info: TableInfo): GeneratedFile
     ...sqlBodies,
     ...(writesRows ? ['', ...writeFunction(context, info, 'private ').map((line) => `    ${line}`)] : []),
     '}',
-    ...(reads || methods.some((method) => method.query.kind === 'insert') ? ['', ...context.orm.repository.functions(context, info)] : []),
+    ...(functions.length > 0 && (reads || methods.some((method) => method.query.kind === 'insert')) ? ['', ...functions] : []),
   )
   if (context.settings.memoryRepositories) {
     const fills = info.columns.map(memoryFill).filter((line): line is string => line !== null)

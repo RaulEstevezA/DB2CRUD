@@ -17,6 +17,7 @@ import { findPolicy, findRepository, findService } from '../../crud/types.ts'
 import type { DbColumn, DbSchema, DbTable, DbType } from '../../schema/types.ts'
 import type { ProjectSettings } from '../../settings/settings.ts'
 import type { SwiftOrm } from './orm.ts'
+import { nestedStructs, valueType, type NestedStruct } from './documents.ts'
 import { memberName, typeName } from './swift.ts'
 
 export interface ColumnInfo {
@@ -63,6 +64,8 @@ export interface TableInfo {
   repository: RepositoryDesign
   service: ServiceDesign | null
   writesEntity: boolean
+  /** The structs of its nested documents, by column: only in document databases */
+  nested: Map<string, NestedStruct>
 }
 
 export interface Context {
@@ -119,31 +122,40 @@ function blockingLinks(schema: DbSchema, table: DbTable): ChildLink[] {
 
 const included = <T extends { include: { value: boolean } }>(items: T[]) => items.filter((item) => item.include.value)
 
-function columnInfo(column: DbColumn): ColumnInfo {
+function columnInfo(column: DbColumn, type: { sw: string; comparable: boolean }, own: boolean): ColumnInfo {
   const generated = column.generated !== undefined && column.generated !== 'onUpdateNow'
-  const prop = memberName(column.name)
+  // MongoDB's `_id` is the `id` of the entity, unless the documents have one of their own
+  const prop = own ? 'documentId' : memberName(column.name)
   return {
     column,
     prop,
     key: prop.replace(/`/g, ''),
-    ...swType(column.type),
+    ...type,
     generated,
     required: !column.nullable && column.default === undefined && !generated,
   }
 }
 
-function tableInfo(schema: DbSchema, design: CrudDesign, settings: ProjectSettings, table: DbTable): TableInfo {
+function tableInfo(orm: SwiftOrm, schema: DbSchema, design: CrudDesign, settings: ProjectSettings, table: DbTable): TableInfo {
   const policy = findPolicy(design, table.name)!
   const repository = findRepository(design, table.name)!
   const service = settings.services ? (findService(design, table.name) ?? null) : null
   const entity = typeName(repository.entity)
-  const columns = table.columns.map(columnInfo)
+  const nested = orm.documents ? nestedStructs(table.columns, entity) : new Map<string, NestedStruct>()
+  const ownId = orm.documents === true && table.columns.some((column) => column.name === 'id')
+  const columns = table.columns.map((column) =>
+    columnInfo(
+      column,
+      orm.documents ? valueType(column.type, nested.get(column.name)?.path ?? null) : swType(column.type),
+      ownId && column.name === '_id',
+    ),
+  )
   const byName = (name: string) => columns.find((info) => info.column.name === name)!
   // A table without a primary key is read only; its rows are told apart by all their columns
   const key = (table.primaryKey ?? table.columns.map((column) => column.name)).map(byName)
   const deleteMode = policy.delete.value
   const concurrency = policy.concurrency.value
-  const ownEntities = !repository.entityMissing && schema.source.format === settings.orm
+  const ownEntities = !orm.documents && !repository.entityMissing && schema.source.format === settings.orm
   const writesEntity = settings.entities === 'all' || (settings.entities === 'missing' && !ownEntities)
   return {
     table,
@@ -164,6 +176,7 @@ function tableInfo(schema: DbSchema, design: CrudDesign, settings: ProjectSettin
     repository,
     service,
     writesEntity,
+    nested,
   }
 }
 
@@ -173,7 +186,7 @@ export function createContext(orm: SwiftOrm, schema: DbSchema, design: CrudDesig
     schema,
     design,
     settings,
-    tables: schema.tables.map((table) => tableInfo(schema, design, settings, table)),
+    tables: schema.tables.map((table) => tableInfo(orm, schema, design, settings, table)),
     module: typeName(settings.name),
   }
 }

@@ -19,7 +19,9 @@ import {
   type TableInfo,
 } from './context.ts'
 import { createColumns, createDto, updateColumns, updateType } from './dtos.ts'
-import { imports, swString } from './swift.ts'
+import type { DbType } from '../../schema/types.ts'
+import { listOf, type ListInfo, type NestedStruct } from './documents.ts'
+import { imports, swString, typeName } from './swift.ts'
 import { missingValue, sampleValue } from './samples.ts'
 
 const isNullableKey = (info: TableInfo, key: TableInfo['table']['foreignKeys'][number]) =>
@@ -78,9 +80,10 @@ function factoriesFile(context: Context, makeable: TableInfo[]): GeneratedFile {
         // No sample is sure to fit a type that is not known
         if (column.column.nullable && (isKey || column.column.type.kind === 'unknown')) return []
         const value =
-          column.column.type.kind === 'array'
+          documentValue(info, column) ??
+          (column.column.type.kind === 'array'
             ? context.orm.emptyList(context)
-            : sampleValue(column, info.table.checks, context.schema.enums)
+            : sampleValue(column, info.table.checks, context.schema.enums))
         return [`${column.key}: ${value}`]
       })
     const insert = query(info, 'insert')!
@@ -98,6 +101,7 @@ function factoriesFile(context: Context, makeable: TableInfo[]): GeneratedFile {
       ...ind(fromParents),
       `    return try await uow.${info.attr}.${queryName(context, insert)}(entity)`,
       '}',
+      ...[...info.nested.values()].flatMap((item) => nestedFactories(context, item)),
     ]
   })
   return {
@@ -114,9 +118,62 @@ function factoriesFile(context: Context, makeable: TableInfo[]): GeneratedFile {
   }
 }
 
+// Nested documents
+
+const factoryOf = (item: NestedStruct) => `new${item.path.replace(/\./g, '')}`
+
+/** A column that holds documents, or a list of them, as a Swift expression; null for any other. */
+function documentValue(info: TableInfo, column: ColumnInfo): string | null {
+  const nested = info.nested.get(column.column.name)
+  return nested ? nestedValue(column.column.type, nested) : null
+}
+
+const nestedValue = (type: DbType, nested: NestedStruct): string =>
+  type.kind === 'array' ? `[${nestedValue(type.items, nested)}]` : `${factoryOf(nested)}(n)`
+
+/** A factory per struct of nested document, without the identifier it is given when it is stored. */
+function nestedFactories(context: Context, item: NestedStruct): string[] {
+  const values = item.fields
+    .filter((field) => field.column.name !== '_id' && field.column.type.kind !== 'unknown')
+    .map((field) => {
+      const column = { column: field.column, sw: field.sw } as ColumnInfo
+      const value = field.nested
+        ? nestedValue(field.column.type, field.nested)
+        : field.column.type.kind === 'array'
+          ? context.orm.emptyList(context)
+          : sampleValue(column, field.column.checks ?? [], context.schema.enums)
+      return `${field.key}: ${value}`
+    })
+  return [
+    '',
+    `/// A valid ${item.path}; n makes its values differ.`,
+    `static func ${factoryOf(item)}(_ n: Int) -> ${item.path} {`,
+    `    ${item.path}(${values.join(', ')})`,
+    '}',
+    ...item.structs.flatMap((inner) => nestedFactories(context, inner)),
+  ]
+}
+
+/** The lines that make an item of a list, as a Swift expression of n. */
+function itemLines(context: Context, list: ListInfo): string[] {
+  const value =
+    list.nested && list.type.kind === 'json'
+      ? `Factories.${factoryOf(list.nested)}(n)`
+      : list.type.kind === 'array'
+        ? context.orm.emptyList(context)
+        : sampleValue({ ...list.column, column: { ...list.column.column, type: list.type }, sw: list.sw }, [], context.schema.enums)
+  return [...(/\bn\b/.test(value) ? ['let n = 7'] : []), `let item${list.type.kind === 'array' ? `: ${list.sw}` : ''} = ${value}`]
+}
+
+const itemTest = (list: ListInfo) => `addsAndRemovesOneItemOf${typeName(list.column.key)}`
+
+/** A list of a row, empty when it has none. */
+const itemsOf = (variable: string, list: ListInfo, sure = false) =>
+  sure ? `${variable}.${list.column.prop}` : `(${variable}.${list.column.prop} ?? [])`
+
 // The test database
 
-export const NAMES: Record<string, string> = { postgresql: 'PostgreSQL', mysql: 'MySQL', mariadb: 'MariaDB' }
+export const NAMES: Record<string, string> = { postgresql: 'PostgreSQL', mysql: 'MySQL', mariadb: 'MariaDB', mongodb: 'MongoDB' }
 
 function testDatabaseFile(context: Context): GeneratedFile {
   const database = context.settings.database
@@ -175,8 +232,12 @@ function testDatabaseFile(context: Context): GeneratedFile {
       '    @Suite struct DatabaseTests {',
       '        @Test func isTheTestDatabase() async throws {',
       '            try await TestDatabase.with { uow in',
-      `                let rows = try await ${pieces.check}`,
-      '                let value = try rows[0].decode(column: "value", as: String.self)',
+      ...(pieces.name
+        ? [`                let value = ${pieces.name}`]
+        : [
+            `                let rows = try await ${pieces.check}`,
+            '                let value = try rows[0].decode(column: "value", as: String.self)',
+          ]),
       sqlite
         ? '                #expect(value.hasPrefix("3."))'
         : '                let url = ProcessInfo.processInfo.environment["TEST_DATABASE_URL"] ?? ""\n                #expect(url.split(separator: "/").last?.split(separator: "?").first.map(String.init) == value)',
@@ -316,6 +377,32 @@ function repositoryTests(context: Context, info: TableInfo): string[][] {
         true,
       ),
     )
+  for (const adding of info.queries.filter((item) => item.kind === 'addItem')) {
+    const list = listOf(info, adding)
+    const removing = query(info, 'removeItem', adding.columns)
+    if (!removing || !getByKey) continue
+    const which =
+      list.by === 'id' ? `${itemsOf('added', list)}[before].id!` : list.by === 'value' ? 'item' : `before, ${itemsOf('added', list)}.count`
+    const removeItem = `${repo}.${queryName(context, removing)}(${keyOf('stored')}`
+    tests.push(
+      test(
+        itemTest(list),
+        [
+          `let stored = try await Factories.${addName(info)}(uow, 1)`,
+          `let before = ${itemsOf('stored', list)}.count`,
+          ...itemLines(context, list),
+          `let adding = try await ${repo}.${queryName(context, adding)}(${keyOf('stored')}, item)`,
+          'let added = try #require(adding)',
+          `#expect(${itemsOf('added', list)}.count == before + 1)`,
+          `let removing = try await ${removeItem}, ${which})`,
+          'let removed = try #require(removing)',
+          `#expect(${itemsOf('removed', list)}.count == before)`,
+          list.by === 'position' && `#expect(try await ${removeItem}, 0, before + 5) == nil)`,
+        ],
+        true,
+      ),
+    )
+  }
   return tests
 }
 
@@ -494,6 +581,31 @@ function serviceTests(context: Context, info: TableInfo): string[][] {
         `#expect(isNotFound(await refusal { try await service.${operationName(context, get)}(${keyOf('created')}) }))`,
       ]),
     )
+  for (const operation of info.operations.filter((item) => item.kind === 'addItem')) {
+    const list = listOf(info, operation)
+    const without = op('removeItem', operation.columns)
+    if (!create || !without || info.hidden.includes(list.column.column.name) || !query(info, 'getByKey')) continue
+    // A DTO says when the list is never missing
+    const sure = dtos && !list.column.column.nullable
+    const which = list.by === 'id' ? `${itemsOf('added', list, sure)}[before].id!` : list.by === 'value' ? 'item' : 'before'
+    const missing = list.by === 'id' ? `"${'f'.repeat(24)}"` : list.by === 'value' ? null : '99'
+    const removeItem = `service.${operationName(context, without)}(${keyOf('created')}`
+    tests.push(
+      make(itemTest(list), [
+        ...open,
+        ...parentsFirst,
+        ...row('row', 1),
+        `let created = try await service.${operationName(context, create)}(${input('row')})`,
+        `let before = ${itemsOf('created', list, sure)}.count`,
+        ...itemLines(context, list),
+        `let added = try await service.${operationName(context, operation)}(${keyOf('created')}, item${version('created')})`,
+        `#expect(${itemsOf('added', list, sure)}.count == before + 1)`,
+        `let removed = try await ${removeItem}, ${which}${version('added')})`,
+        `#expect(${itemsOf('removed', list, sure)}.count == before)`,
+        ...(missing !== null ? [`#expect(isNotFound(await refusal { try await ${removeItem}, ${missing}${version('removed')}) }))`] : []),
+      ]),
+    )
+  }
   return tests
 }
 

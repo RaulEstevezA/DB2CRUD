@@ -3,6 +3,8 @@
  * crud-contract.json for CRUD2Controller.
  */
 import type { GeneratedFile } from '../../export/files.ts'
+import { nestedFields } from '../../schema/documents.ts'
+import type { DbType } from '../../schema/types.ts'
 import { lines } from '../types.ts'
 import { fileOf, operationName, serviceType, storedType, writesEntities, type ColumnInfo, type Context } from './context.ts'
 import { createColumns, createDto, readColumns, readDto, updateColumns, updateType } from './dtos.ts'
@@ -112,6 +114,7 @@ export function readmeFile(context: Context): GeneratedFile {
       '',
       '```text',
       `Sources/${context.module}/AppDatabase.swift   the connection of DATABASE_URL`,
+      ...(context.orm.readme.layout ?? []).map((line) => `Sources/${context.module}/${line}`),
       `Sources/${context.module}/UnitOfWork.swift    the repositories of every table, and the transaction of each operation`,
       `Sources/${context.module}/Errors.swift        DomainError: notFound, conflict, validationFailed; no HTTP codes`,
       settings.architecture === 'layer'
@@ -139,11 +142,17 @@ export function readmeFile(context: Context): GeneratedFile {
 }
 
 function typeOf(column: ColumnInfo): Record<string, unknown> {
-  const type = column.column.type
+  const { kind, ...rest } = plainType(column.column.type)
+  return { kind, swift: storedType(column), ...rest }
+}
+
+function plainType(type: DbType): Record<string, unknown> {
+  // What a nested document, or each of a list of them, holds
+  const fields = nestedFields(type)
   return {
     kind: type.kind,
-    swift: storedType(column),
     ...(type.kind === 'text' && type.length !== undefined ? { length: type.length } : {}),
+    ...(fields ? { fields: fields.map((field) => ({ name: field.name, type: plainType(field.type), nullable: field.nullable })) } : {}),
   }
 }
 

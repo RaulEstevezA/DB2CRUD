@@ -110,7 +110,7 @@ export const sqlOrm: SwiftOrm = {
   label: 'SQLKit',
   holder: { type: 'Db', optional: 'Db?', modules: [] },
   emptyList: (context) => (context.settings.database === 'postgresql' ? '"{}"' : '"[]"'),
-  databaseFile,
+  databaseFiles: (context) => [databaseFile(context)],
   entityFiles: (context, info) => [entityFile(context, info)],
   repository: {
     modules: () => ['SQLKit'],

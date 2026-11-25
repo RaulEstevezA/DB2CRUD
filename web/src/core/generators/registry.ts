@@ -25,6 +25,7 @@ import { mongodbOrm as rustMongodbOrm } from './rust/mongodb/index.ts'
 import { rustGenerator } from './rust/generator.ts'
 import { fluentOrm } from './swift/fluent/index.ts'
 import { sqlOrm as swiftSqlOrm } from './swift/sql/index.ts'
+import { mongodbOrm as swiftMongodbOrm } from './swift/mongodb/index.ts'
 import { swiftGenerator } from './swift/generator.ts'
 import { mongodbOrm as phpMongodbOrm } from './php/mongodb/index.ts'
 import { phpGenerator } from './php/common/generator.ts'
@@ -74,6 +75,7 @@ export const GENERATORS: readonly Generator[] = [
   rustGenerator(rustMongodbOrm),
   swiftGenerator(fluentOrm),
   swiftGenerator(swiftSqlOrm),
+  swiftGenerator(swiftMongodbOrm),
 ]
 
 export function findGenerator(settings: Pick<ProjectSettings, 'language' | 'orm'>): Generator | undefined {

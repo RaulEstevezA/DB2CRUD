@@ -30,6 +30,7 @@ export type OrmId =
   | 'mongophp'
   | 'mongokotlin'
   | 'mongorust'
+  | 'mongoswift'
   | 'beanie'
   /** No ORM: SQL through each database's driver */
   | 'sql'
@@ -401,6 +402,17 @@ export const STACKS: readonly StackInfo[] = [
     orm: 'sql',
     label: 'SQL (SQLKit)',
     databases: ['postgresql', 'mysql', 'mariadb', 'sqlite'],
+    execution: ['async'],
+    errors: ['exceptions'],
+    dtoKinds: ['struct'],
+    updates: ['patch', 'optional', 'full'],
+  },
+  {
+    language: 'swift',
+    orm: 'mongoswift',
+    label: 'MongoKitten 7',
+    databases: ['mongodb'],
+    transactions: 'repository',
     execution: ['async'],
     errors: ['exceptions'],
     dtoKinds: ['struct'],

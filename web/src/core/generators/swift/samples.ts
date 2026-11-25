@@ -5,6 +5,7 @@
  */
 import type { DbCheck, DbEnum } from '../../schema/types.ts'
 import { boundedNumber } from '../samples.ts'
+import { FREE } from './documents.ts'
 import type { ColumnInfo } from './context.ts'
 import { swString } from './swift.ts'
 
@@ -47,6 +48,7 @@ export function sampleValue(column: ColumnInfo, checks: DbCheck[], enums: DbEnum
     case 'float':
       return `${column.sw}(${whole(column, checks)}) + 0.5`
     case 'text': {
+      if (type.objectId) return 'String(format: "%024x", n)'
       const length = type.length ?? 40
       if (type.fixed) return `String(format: "%0${length}d", n % ${10 ** Math.min(length, 9)})`
       // The column name and the number, as long as it fits; n stays below 1000 in the tests
@@ -62,9 +64,11 @@ export function sampleValue(column: ColumnInfo, checks: DbCheck[], enums: DbEnum
     case 'boolean':
       return 'true'
     case 'date':
+      return column.sw === 'String' ? 'String(format: "2026-01-%02d", n % 28 + 1)' : day
     case 'datetime':
       return day
     case 'time':
+      if (column.sw === 'String') return 'String(format: "12:%02d:00", n % 60)'
       return 'TimeOfDay(hour: 12, minute: n % 60)'
     case 'uuid':
       return 'UUID(uuidString: String(format: "00000000-0000-4000-8000-%012d", n))!'
@@ -74,6 +78,7 @@ export function sampleValue(column: ColumnInfo, checks: DbCheck[], enums: DbEnum
         ? `Data(repeating: UInt8(n % 256), count: ${type.length})`
         : 'Data([UInt8(n % 256)])'
     case 'json':
+      if (column.sw === FREE) return 'BsonValue(["n": n] as BsonDocument)'
       return '"{\\"n\\": \\(n)}"'
     case 'array':
       return '"[]"'
@@ -84,6 +89,7 @@ export function sampleValue(column: ColumnInfo, checks: DbCheck[], enums: DbEnum
 
 /** A key no row has, as a Swift expression, for the tests of missing rows. */
 export function missingValue(column: ColumnInfo): string {
+  if (column.column.type.kind === 'text' && column.column.type.objectId) return `"${'f'.repeat(24)}"`
   switch (column.sw) {
     case 'Int':
       return '999999'

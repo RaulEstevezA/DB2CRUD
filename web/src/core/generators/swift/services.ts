@@ -25,7 +25,8 @@ import {
   type TableInfo,
 } from './context.ts'
 import { createColumns, readColumns, readDto, updateColumns, createDto, updateType } from './dtos.ts'
-import { imports, memberName, swString } from './swift.ts'
+import { checkCall, documentCheckFunctions, documentRules, listOf } from './documents.ts'
+import { imports, memberName, swString, typeName } from './swift.ts'
 
 type Helper = 'find' | 'read' | 'checkValues' | 'apply' | 'given'
 
@@ -34,6 +35,8 @@ interface Writer {
   info: TableInfo
   dtos: boolean
   used: Set<Helper>
+  /** The lists whose documents are checked before they are added */
+  checkedLists: Set<string>
 }
 
 const ind = (items: string[], spaces = 4) => items.map((line) => (line === '' ? '' : ' '.repeat(spaces) + line))
@@ -72,7 +75,7 @@ function valueRules(column: ColumnInfo, checks: DbCheck[]): string[] {
     `    errors.append(FieldError(${swString(name)}, ${swString(message)}))`,
     '}',
   ]
-  if (type.kind === 'text' && type.length !== undefined)
+  if (type.kind === 'text' && type.length !== undefined && !type.objectId)
     rules.push(...rule(`value.count > ${type.length}`, `is longer than ${type.length} characters`))
   for (const check of checks) {
     const parsed = check.parsed
@@ -103,7 +106,7 @@ function validateFunction(writer: Writer): string[] {
       : !column.column.nullable
         ? { condition: `!creating && values.${column.prop} != nil`, message: 'cannot be empty' }
         : null
-    const rules = valueRules(column, info.table.checks)
+    const rules = [...valueRules(column, info.table.checks), ...documentRules(context, info, column)]
     if (!missing && rules.length === 0) continue
     const report = missing && [`    errors.append(FieldError(${swString(name)}, ${swString(missing.message)}))`, '}']
     if (missing) creating = true
@@ -455,11 +458,74 @@ function operationLines(writer: Writer, operation: OperationDesign): string[] {
     case 'link':
     case 'unlink':
       return linkLines(writer, operation, name)
-    // One item of a list: only document databases have them
     case 'addItem':
     case 'removeItem':
-      return []
+      return itemLines(writer, operation, name)
   }
+}
+
+/** Adds or removes one item of a list, so two people changing the same list do not undo each other. */
+function itemLines(writer: Writer, operation: OperationDesign, name: string): string[] {
+  const { context, info } = writer
+  const adds = operation.kind === 'addItem'
+  const change = query(info, adds ? 'addItem' : 'removeItem', operation.columns)
+  if (!change || !query(info, 'getByKey')) return []
+  writer.used.add('find')
+  const list = listOf(info, change)
+  const kept = list.column.column.name
+  const params = adds ? [{ name: list.item, type: list.sw }] : list.params
+  const [given] = params
+  const version = info.version ? `, version: ${info.version.sw}` : ''
+  const items = `(current.${list.column.prop} ?? [])`
+  const present =
+    list.by === 'id'
+      ? `${items}.contains(where: { $0.id == ${given.name} })`
+      : list.by === 'value'
+        ? `${items}.contains(${given.name})`
+        : `${items}.indices.contains(${given.name})`
+  const position = !adds && list.by === 'position'
+  const checked = adds && list.nested !== null && list.type.kind === 'json'
+  if (checked) writer.checkedLists.add(kept)
+  const gone = position
+    ? `DomainError.conflict(entity: ${swString(info.entity)}, reason: "was changed by someone else since it was read", fields: [${swString(list.column.key)}])`
+    : `DomainError.notFound(entity: ${swString(info.entity)}, key: ${keyText(info.key)})`
+  const args = [keyArgs(info), ...params.map((item) => item.name), ...(position ? [`${items}.count`] : [])].join(', ')
+  if (writer.dtos) writer.used.add('read')
+  return [
+    adds
+      ? `/// Adds an item to ${kept}${info.version ? ', read at version' : ''}.`
+      : `/// Removes an item from ${kept}, by its ${list.by === 'id' ? 'identifier' : list.by}${info.version ? ', read at version' : ''}.`,
+    '@discardableResult',
+    `public func ${name}(${keyParams(info)}, ${params.map((item) => `_ ${item.name}: ${item.type}`).join(', ')}${version}) async throws -> ${resultType(writer)} {`,
+    ...ind([
+      ...(checked
+        ? [
+            'var errors: [FieldError] = []',
+            checkCall(list.nested!, list.item, kept),
+            `if !errors.isEmpty { throw DomainError.validationFailed(entity: ${swString(info.entity)}, errors: errors) }`,
+          ]
+        : []),
+      ...inTransaction(
+        [
+          `${adds && !info.version ? '_ =' : 'let current ='} try await find(uow, ${keyArgs(info)})`,
+          ...versionCheck(writer),
+          ...(adds
+            ? []
+            : [
+                `if !${present} {`,
+                `    throw DomainError.notFound(entity: ${swString(typeName(list.item.replace(/`/g, '')))}, key: "\\(${given.name})")`,
+                '}',
+              ]),
+          `guard let changed = try await ${repo(info)}.${queryName(context, change)}(${args}) else {`,
+          `    throw ${gone}`,
+          '}',
+          `return ${writer.dtos ? 'read(changed)' : 'changed'}`,
+        ],
+        true,
+      ),
+    ]),
+    '}',
+  ]
 }
 
 function linkLines(writer: Writer, operation: OperationDesign, name: string): string[] {
@@ -537,13 +603,17 @@ const TRANSACTIONS = {
 export function serviceFile(context: Context, info: TableInfo): GeneratedFile | null {
   if (!info.service) return null
   const dtos = context.settings.serviceTypes === 'dtos'
-  const writer: Writer = { context, info, dtos, used: new Set() }
+  const writer: Writer = { context, info, dtos, used: new Set(), checkedLists: new Set() }
   const operations = info.operations.map((operation) => operationLines(writer, operation)).filter((block) => block.length > 0)
   const helpers: string[][] = []
   const used = writer.used
   if (used.has('checkValues') || used.has('apply') || used.has('given')) helpers.push(valuesStruct(info))
   if (used.has('checkValues')) helpers.push(checkFunctions(writer))
   if (used.has('apply')) helpers.push(applyFunction(info))
+  const checked = info.columns
+    .filter((column) => (used.has('checkValues') && createColumns(info).includes(column)) || writer.checkedLists.has(column.column.name))
+    .map((column) => column.column.name)
+  helpers.push(...documentCheckFunctions(context, info, checked))
   if (used.has('given')) helpers.push(givenFunction(writer))
   if (used.has('find')) helpers.push(findFunction(writer))
   if (used.has('read')) helpers.push(readFunction(info))

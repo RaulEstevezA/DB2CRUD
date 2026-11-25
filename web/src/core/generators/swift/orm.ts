@@ -17,8 +17,14 @@ export interface SwiftOrm {
   holder: { type: string; optional: string; modules: string[] }
   /** A list without items as the entities keep it, as a Swift expression */
   emptyList(context: Context): string
-  /** `AppDatabase.swift` */
-  databaseFile(context: Context): GeneratedFile
+  /** Columns may hold documents and lists of them, as structs of their own; the entities are always the project's */
+  documents?: boolean
+  /** What the names of the database types start with, when it is not `Sql`: `MongoUnitOfWork` */
+  prefix?: string
+  /** The address of the database, when it is not the one of the dialect */
+  url?: string
+  /** `AppDatabase.swift`, and the files beside it */
+  databaseFiles(context: Context): GeneratedFile[]
   /** The entity of a table, and what maps it */
   entityFiles(context: Context, info: TableInfo): GeneratedFile[]
   /** The database repository of a table, which reaches it through `database` */
@@ -38,12 +44,16 @@ export interface SwiftOrm {
     open: string[]
     recreate: string[]
     check: string
+    /** An expression with the name of the database, when it is not asked for with a query */
+    name?: string
   }
   /** The lines of Package.swift: the packages, and the products the library and its tests use */
   packages(context: Context): { packages: string[]; products: string[]; testProducts: string[] }
   readme: {
     /** What the project is made of, after "for a database that already exists: " */
     intro: string
+    /** The lines of the layout of the files beside `AppDatabase.swift` */
+    layout?: string[]
     /** The lines of the layout per layer and per table */
     entities: string
     table: string
