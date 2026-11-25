@@ -190,3 +190,4 @@ $RECYCLE.BIN/
 !shared/test-cases/outputs/**/logs/
 !shared/test-cases/outputs/**/.env
 !shared/test-cases/outputs/**/.env.*
+!shared/test-cases/orm/**/.env
