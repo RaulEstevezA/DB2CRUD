@@ -1,0 +1,708 @@
+{
+ "schema": {
+  "format": "db-schema",
+  "version": 1,
+  "dialect": "mongodb",
+  "source": {
+   "kind": "orm",
+   "format": "mongoose"
+  },
+  "tables": [
+   {
+    "name": "customers",
+    "columns": [
+     {
+      "name": "_id",
+      "type": {
+       "sql": "ObjectId",
+       "kind": "text",
+       "length": 24,
+       "fixed": true,
+       "objectId": true
+      },
+      "nullable": false,
+      "generated": "uuid"
+     },
+     {
+      "name": "email",
+      "type": {
+       "sql": "String",
+       "kind": "text",
+       "length": 120
+      },
+      "nullable": false
+     },
+     {
+      "name": "name",
+      "type": {
+       "sql": "String",
+       "kind": "text"
+      },
+      "nullable": false
+     },
+     {
+      "name": "passwordHash",
+      "type": {
+       "sql": "String",
+       "kind": "text"
+      },
+      "nullable": true
+     },
+     {
+      "name": "active",
+      "type": {
+       "sql": "Boolean",
+       "kind": "boolean"
+      },
+      "nullable": true,
+      "default": {
+       "kind": "literal",
+       "value": true
+      }
+     },
+     {
+      "name": "level",
+      "type": {
+       "sql": "String",
+       "kind": "text"
+      },
+      "nullable": true,
+      "default": {
+       "kind": "literal",
+       "value": "basic"
+      }
+     },
+     {
+      "name": "address",
+      "type": {
+       "sql": "Object",
+       "kind": "json",
+       "fields": [
+        {
+         "name": "street",
+         "type": {
+          "sql": "String",
+          "kind": "text"
+         },
+         "nullable": false
+        },
+        {
+         "name": "city",
+         "type": {
+          "sql": "String",
+          "kind": "text"
+         },
+         "nullable": false
+        },
+        {
+         "name": "zip code",
+         "type": {
+          "sql": "String",
+          "kind": "text"
+         },
+         "nullable": true
+        },
+        {
+         "name": "location",
+         "type": {
+          "sql": "Object",
+          "kind": "json",
+          "fields": [
+           {
+            "name": "type",
+            "type": {
+             "sql": "String",
+             "kind": "enum",
+             "name": "customers_address_location_type"
+            },
+            "nullable": true
+           },
+           {
+            "name": "coordinates",
+            "type": {
+             "sql": "[Number]",
+             "kind": "array",
+             "items": {
+              "sql": "Number",
+              "kind": "float",
+              "bits": 64
+             }
+            },
+            "nullable": true
+           }
+          ]
+         },
+         "nullable": true
+        }
+       ]
+      },
+      "nullable": true
+     },
+     {
+      "name": "tags",
+      "type": {
+       "sql": "[String]",
+       "kind": "array",
+       "items": {
+        "sql": "String",
+        "kind": "text"
+       }
+      },
+      "nullable": true
+     },
+     {
+      "name": "preferences",
+      "type": {
+       "sql": "Object",
+       "kind": "json",
+       "fields": [
+        {
+         "name": "theme",
+         "type": {
+          "sql": "String",
+          "kind": "text"
+         },
+         "nullable": true,
+         "default": {
+          "kind": "literal",
+          "value": "light"
+         }
+        },
+        {
+         "name": "newsletter",
+         "type": {
+          "sql": "Boolean",
+          "kind": "boolean"
+         },
+         "nullable": true
+        }
+       ]
+      },
+      "nullable": true
+     },
+     {
+      "name": "extra",
+      "type": {
+       "sql": "Mixed",
+       "kind": "json"
+      },
+      "nullable": true
+     },
+     {
+      "name": "deletedAt",
+      "type": {
+       "sql": "Date",
+       "kind": "datetime",
+       "timezone": true
+      },
+      "nullable": true
+     },
+     {
+      "name": "createdAt",
+      "type": {
+       "sql": "Date",
+       "kind": "datetime",
+       "timezone": true
+      },
+      "nullable": true,
+      "generated": "now"
+     },
+     {
+      "name": "updatedAt",
+      "type": {
+       "sql": "Date",
+       "kind": "datetime",
+       "timezone": true
+      },
+      "nullable": true,
+      "generated": "onUpdateNow"
+     }
+    ],
+    "primaryKey": [
+     "_id"
+    ],
+    "foreignKeys": [],
+    "uniques": [
+     {
+      "columns": [
+       "email"
+      ]
+     }
+    ],
+    "indexes": [],
+    "checks": [
+     {
+      "sql": "LENGTH(name) >= 2",
+      "parsed": {
+       "kind": "length",
+       "column": "name",
+       "op": ">=",
+       "value": 2
+      }
+     },
+     {
+      "sql": "level IN ('basic', 'gold')",
+      "parsed": {
+       "kind": "in",
+       "column": "level",
+       "values": [
+        "basic",
+        "gold"
+       ]
+      }
+     }
+    ],
+    "entity": "Customer",
+    "origin": {
+     "line": 61,
+     "column": 1
+    }
+   },
+   {
+    "name": "products",
+    "columns": [
+     {
+      "name": "_id",
+      "type": {
+       "sql": "ObjectId",
+       "kind": "text",
+       "length": 24,
+       "fixed": true,
+       "objectId": true
+      },
+      "nullable": false,
+      "generated": "uuid"
+     },
+     {
+      "name": "sku",
+      "type": {
+       "sql": "String",
+       "kind": "text"
+      },
+      "nullable": false
+     },
+     {
+      "name": "title",
+      "type": {
+       "sql": "String",
+       "kind": "text"
+      },
+      "nullable": false
+     },
+     {
+      "name": "price",
+      "type": {
+       "sql": "Decimal128",
+       "kind": "decimal"
+      },
+      "nullable": false
+     },
+     {
+      "name": "stock",
+      "type": {
+       "sql": "Number",
+       "kind": "float",
+       "bits": 64
+      },
+      "nullable": true,
+      "default": {
+       "kind": "literal",
+       "value": 0
+      }
+     },
+     {
+      "name": "reference",
+      "type": {
+       "sql": "UUID",
+       "kind": "uuid"
+      },
+      "nullable": true
+     },
+     {
+      "name": "picture",
+      "type": {
+       "sql": "Buffer",
+       "kind": "binary"
+      },
+      "nullable": true
+     },
+     {
+      "name": "related",
+      "type": {
+       "sql": "[ObjectId]",
+       "kind": "array",
+       "items": {
+        "sql": "ObjectId",
+        "kind": "text",
+        "length": 24,
+        "fixed": true,
+        "objectId": true
+       }
+      },
+      "nullable": true
+     }
+    ],
+    "primaryKey": [
+     "_id"
+    ],
+    "foreignKeys": [],
+    "uniques": [
+     {
+      "columns": [
+       "sku"
+      ]
+     }
+    ],
+    "indexes": [
+     {
+      "columns": [
+       "title"
+      ]
+     }
+    ],
+    "checks": [
+     {
+      "sql": "stock >= 0",
+      "parsed": {
+       "kind": "compare",
+       "column": "stock",
+       "op": ">=",
+       "value": 0
+      }
+     }
+    ],
+    "entity": "Product",
+    "origin": {
+     "line": 62,
+     "column": 1
+    }
+   },
+   {
+    "name": "orders",
+    "columns": [
+     {
+      "name": "_id",
+      "type": {
+       "sql": "ObjectId",
+       "kind": "text",
+       "length": 24,
+       "fixed": true,
+       "objectId": true
+      },
+      "nullable": false,
+      "generated": "uuid"
+     },
+     {
+      "name": "number",
+      "type": {
+       "sql": "Number",
+       "kind": "float",
+       "bits": 64
+      },
+      "nullable": false
+     },
+     {
+      "name": "year",
+      "type": {
+       "sql": "Number",
+       "kind": "float",
+       "bits": 64
+      },
+      "nullable": false
+     },
+     {
+      "name": "customer",
+      "type": {
+       "sql": "ObjectId",
+       "kind": "text",
+       "length": 24,
+       "fixed": true,
+       "objectId": true
+      },
+      "nullable": false
+     },
+     {
+      "name": "lines",
+      "type": {
+       "sql": "[Object]",
+       "kind": "array",
+       "items": {
+        "sql": "Object",
+        "kind": "json",
+        "fields": [
+         {
+          "name": "_id",
+          "type": {
+           "sql": "ObjectId",
+           "kind": "text",
+           "length": 24,
+           "fixed": true,
+           "objectId": true
+          },
+          "nullable": true,
+          "generated": "uuid"
+         },
+         {
+          "name": "product",
+          "type": {
+           "sql": "ObjectId",
+           "kind": "text",
+           "length": 24,
+           "fixed": true,
+           "objectId": true
+          },
+          "nullable": false
+         },
+         {
+          "name": "quantity",
+          "type": {
+           "sql": "Number",
+           "kind": "float",
+           "bits": 64
+          },
+          "nullable": false,
+          "checks": [
+           {
+            "sql": "quantity >= 1",
+            "parsed": {
+             "kind": "compare",
+             "column": "quantity",
+             "op": ">=",
+             "value": 1
+            }
+           }
+          ]
+         },
+         {
+          "name": "price",
+          "type": {
+           "sql": "Decimal128",
+           "kind": "decimal"
+          },
+          "nullable": false
+         },
+         {
+          "name": "status",
+          "type": {
+           "sql": "String",
+           "kind": "enum",
+           "name": "orders_lines_status"
+          },
+          "nullable": true,
+          "default": {
+           "kind": "literal",
+           "value": "pending"
+          }
+         }
+        ]
+       }
+      },
+      "nullable": false
+     },
+     {
+      "name": "notes",
+      "type": {
+       "sql": "[Object]",
+       "kind": "array",
+       "items": {
+        "sql": "Object",
+        "kind": "json",
+        "fields": [
+         {
+          "name": "_id",
+          "type": {
+           "sql": "ObjectId",
+           "kind": "text",
+           "length": 24,
+           "fixed": true,
+           "objectId": true
+          },
+          "nullable": true,
+          "generated": "uuid"
+         },
+         {
+          "name": "text",
+          "type": {
+           "sql": "String",
+           "kind": "text"
+          },
+          "nullable": true
+         },
+         {
+          "name": "at",
+          "type": {
+           "sql": "Date",
+           "kind": "datetime",
+           "timezone": true
+          },
+          "nullable": true
+         }
+        ]
+       }
+      },
+      "nullable": true
+     },
+     {
+      "name": "placedAt",
+      "type": {
+       "sql": "Date",
+       "kind": "datetime",
+       "timezone": true
+      },
+      "nullable": true,
+      "generated": "now"
+     }
+    ],
+    "primaryKey": [
+     "_id"
+    ],
+    "foreignKeys": [
+     {
+      "columns": [
+       "customer"
+      ],
+      "references": {
+       "table": "customers",
+       "columns": [
+        "_id"
+       ]
+      }
+     }
+    ],
+    "uniques": [
+     {
+      "columns": [
+       "year",
+       "number"
+      ]
+     }
+    ],
+    "indexes": [
+     {
+      "columns": [
+       "customer"
+      ]
+     }
+    ],
+    "checks": [],
+    "entity": "Order",
+    "origin": {
+     "line": 63,
+     "column": 1
+    }
+   },
+   {
+    "name": "countries",
+    "columns": [
+     {
+      "name": "_id",
+      "type": {
+       "sql": "String",
+       "kind": "text"
+      },
+      "nullable": false
+     },
+     {
+      "name": "id",
+      "type": {
+       "sql": "Number",
+       "kind": "float",
+       "bits": 64
+      },
+      "nullable": false
+     },
+     {
+      "name": "name",
+      "type": {
+       "sql": "String",
+       "kind": "text"
+      },
+      "nullable": false
+     }
+    ],
+    "primaryKey": [
+     "_id"
+    ],
+    "foreignKeys": [],
+    "uniques": [
+     {
+      "columns": [
+       "id"
+      ]
+     }
+    ],
+    "indexes": [],
+    "checks": [],
+    "entity": "Country",
+    "origin": {
+     "line": 64,
+     "column": 1
+    }
+   }
+  ],
+  "enums": [
+   {
+    "name": "customers_address_location_type",
+    "values": [
+     "Point"
+    ],
+    "storage": "check"
+   },
+   {
+    "name": "orders_lines_status",
+    "values": [
+     "pending",
+     "sent"
+    ],
+    "storage": "check"
+   }
+  ],
+  "notes": [
+   {
+    "code": "orm.unreadIndex",
+    "params": {
+     "table": "orders",
+     "index": "lines.product"
+    }
+   }
+  ]
+ },
+ "decisions": [],
+ "settings": {
+  "name": "mongorust-mongodb-repositories-only",
+  "language": "rust",
+  "orm": "mongorust",
+  "database": "mongodb",
+  "services": false
+ },
+ "files": {
+  ".env.example": "# Where the database is, and who connects\nDATABASE_URL=mongodb://localhost:27017/app\n# The database the tests use (it is emptied by the tests): one of the same kind as DATABASE_URL\n# TEST_DATABASE_URL=\n",
+  ".gitignore": "/target\n.env\n*.db\n",
+  "Cargo.toml": "[package]\nname = \"mongorust-mongodb-repositories-only\"\nversion = \"0.1.0\"\nedition = \"2024\"\n\n[dependencies]\nasync-trait = \"0.1.92\"\nchrono = { version = \"0.4.45\", default-features = false, features = [\"clock\", \"std\"] }\nrust_decimal = \"1.43.0\"\nmongodb = { version = \"3.10.2\", default-features = false, features = [\"compat-3-3-0\", \"bson-3\", \"rustls-tls\", \"dns-resolver\"] }\ntokio = { version = \"1.54.1\", features = [\"sync\"] }\nuuid = { version = \"1.29.3\", features = [\"v4\"] }\n\n[dev-dependencies]\ntokio = { version = \"1.54.1\", features = [\"macros\", \"rt-multi-thread\", \"sync\"] }\n",
+  "README.md": "# mongorust-mongodb-repositories-only\n\nData access layer generated by [DB2CRUD](https://github.com/RaulEstevezA/DB2CRUD) for a database that already exists: plain entities, repositories and services with the MongoDB driver, in asynchronous Rust. It does not create or migrate the database, and it depends on no web framework.\n\n## Settings\n\n- Database: mongodb.\n- Entities: written for the tables the input had no type for.\n- Services: not written; errors are `Result<T, DomainError>`.\n- Transactions: every repository write is committed at once.\n- Lists: lists return pages by offset and limit.\n\n## Layout\n\n```text\nsrc/database.rs          the connection of DATABASE_URL\nsrc/bson_values.rs       values of documents, and what changed in one\nsrc/unit_of_work.rs      the repositories of every table, and the transactions\nsrc/errors.rs            DomainError: NotFound, Conflict, ValidationFailed, Database; no HTTP codes\nsrc/entities/            one entity per collection\nsrc/repositories/        the repositories of each table\ntests/data/              repositories against a database, services on the in-memory repositories\ncrud-contract.json       what was written, for CRUD2Controller\n```\n\n## Running the tests\n\n```bash\nTEST_DATABASE_URL=\"mongodb://localhost:27017/app\" cargo test   # a real, disposable database: it is emptied\n```\n\nLook for `TODO` in the code: each one marks a decision the input did not settle.\n",
+  "crud-contract.json": "{\n  \"format\": \"crud-contract\",\n  \"version\": 1,\n  \"stack\": {\n    \"language\": \"rust\",\n    \"orm\": \"mongorust\",\n    \"database\": \"mongodb\",\n    \"execution\": \"async\"\n  },\n  \"transactions\": \"repository\",\n  \"paging\": \"offset\",\n  \"types\": [\n    {\n      \"name\": \"Customer\",\n      \"module\": \"mongorust_mongodb_repositories_only::entities::customer\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"rust\": \"String\",\n            \"length\": 24\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"email\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"rust\": \"String\",\n            \"length\": 120\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"name\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"rust\": \"String\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"password_hash\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"rust\": \"Option<String>\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"active\",\n          \"type\": {\n            \"kind\": \"boolean\",\n            \"rust\": \"Option<bool>\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"level\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"rust\": \"Option<String>\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"address\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"rust\": \"Option<mongorust_mongodb_repositories_only::entities::customer::CustomerAddress>\",\n            \"fields\": [\n              {\n                \"name\": \"street\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"city\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"zip code\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": true\n              },\n              {\n                \"name\": \"location\",\n                \"type\": {\n                  \"kind\": \"json\",\n                  \"fields\": [\n                    {\n                      \"name\": \"type\",\n                      \"type\": {\n                        \"kind\": \"enum\"\n                      },\n                      \"nullable\": true\n                    },\n                    {\n                      \"name\": \"coordinates\",\n                      \"type\": {\n                        \"kind\": \"array\"\n                      },\n                      \"nullable\": true\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"tags\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"rust\": \"Option<Vec<String>>\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"preferences\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"rust\": \"Option<mongorust_mongodb_repositories_only::entities::customer::CustomerPreferences>\",\n            \"fields\": [\n              {\n                \"name\": \"theme\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": true\n              },\n              {\n                \"name\": \"newsletter\",\n                \"type\": {\n                  \"kind\": \"boolean\"\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"extra\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"rust\": \"Option<mongodb::bson::Bson>\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"deleted_at\",\n          \"type\": {\n            \"kind\": \"datetime\",\n            \"rust\": \"Option<chrono::DateTime<chrono::Utc>>\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"created_at\",\n          \"type\": {\n            \"kind\": \"datetime\",\n            \"rust\": \"Option<chrono::DateTime<chrono::Utc>>\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"updated_at\",\n          \"type\": {\n            \"kind\": \"datetime\",\n            \"rust\": \"Option<chrono::DateTime<chrono::Utc>>\"\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"Product\",\n      \"module\": \"mongorust_mongodb_repositories_only::entities::product\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"rust\": \"String\",\n            \"length\": 24\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"sku\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"rust\": \"String\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"title\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"rust\": \"String\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"price\",\n          \"type\": {\n            \"kind\": \"decimal\",\n            \"rust\": \"rust_decimal::Decimal\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"stock\",\n          \"type\": {\n            \"kind\": \"float\",\n            \"rust\": \"Option<f64>\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"reference\",\n          \"type\": {\n            \"kind\": \"uuid\",\n            \"rust\": \"Option<uuid::Uuid>\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"picture\",\n          \"type\": {\n            \"kind\": \"binary\",\n            \"rust\": \"Option<Vec<u8>>\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"related\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"rust\": \"Option<Vec<String>>\"\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"Order\",\n      \"module\": \"mongorust_mongodb_repositories_only::entities::order\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"rust\": \"String\",\n            \"length\": 24\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"number\",\n          \"type\": {\n            \"kind\": \"float\",\n            \"rust\": \"f64\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"year\",\n          \"type\": {\n            \"kind\": \"float\",\n            \"rust\": \"f64\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"customer\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"rust\": \"String\",\n            \"length\": 24\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"lines\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"rust\": \"Vec<mongorust_mongodb_repositories_only::entities::order::OrderLine>\",\n            \"fields\": [\n              {\n                \"name\": \"_id\",\n                \"type\": {\n                  \"kind\": \"text\",\n                  \"length\": 24\n                },\n                \"nullable\": true\n              },\n              {\n                \"name\": \"product\",\n                \"type\": {\n                  \"kind\": \"text\",\n                  \"length\": 24\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"quantity\",\n                \"type\": {\n                  \"kind\": \"float\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"price\",\n                \"type\": {\n                  \"kind\": \"decimal\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"status\",\n                \"type\": {\n                  \"kind\": \"enum\"\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"notes\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"rust\": \"Option<Vec<mongorust_mongodb_repositories_only::entities::order::OrderNote>>\",\n            \"fields\": [\n              {\n                \"name\": \"_id\",\n                \"type\": {\n                  \"kind\": \"text\",\n                  \"length\": 24\n                },\n                \"nullable\": true\n              },\n              {\n                \"name\": \"text\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": true\n              },\n              {\n                \"name\": \"at\",\n                \"type\": {\n                  \"kind\": \"datetime\"\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"placed_at\",\n          \"type\": {\n            \"kind\": \"datetime\",\n            \"rust\": \"Option<chrono::DateTime<chrono::Utc>>\"\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"Country\",\n      \"module\": \"mongorust_mongodb_repositories_only::entities::country\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"document_id\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"rust\": \"String\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"float\",\n            \"rust\": \"f64\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"name\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"rust\": \"String\"\n          },\n          \"nullable\": true\n        }\n      ]\n    }\n  ],\n  \"errors\": [\n    {\n      \"kind\": \"notFound\",\n      \"name\": \"DomainError::NotFound\",\n      \"module\": \"mongorust_mongodb_repositories_only::errors\"\n    },\n    {\n      \"kind\": \"conflict\",\n      \"name\": \"DomainError::Conflict\",\n      \"module\": \"mongorust_mongodb_repositories_only::errors\"\n    },\n    {\n      \"kind\": \"validation\",\n      \"name\": \"DomainError::ValidationFailed\",\n      \"module\": \"mongorust_mongodb_repositories_only::errors\"\n    }\n  ],\n  \"common\": \"mongorust_mongodb_repositories_only::common\",\n  \"services\": []\n}\n",
+  "src/bson_values.rs": "//! Values between Rust and the documents of MongoDB, and what changed in a document.\n\nuse mongodb::bson::{Binary, Bson, DateTime, Document, oid::ObjectId, spec::BinarySubtype};\nuse mongodb::error::Error;\n\n/// The document an entity was read from, or stored as: a change writes only the fields that differ. It is no part of the\n/// value of the entity.\n#[derive(Debug, Clone, Default)]\npub struct Loaded(pub Option<Document>);\n\nimpl PartialEq for Loaded {\n    fn eq(&self, _other: &Self) -> bool {\n        true\n    }\n}\n\n/// The update that takes a document from what it was to what it is: only the fields that differ, and inside a nested\n/// document only its own.\npub fn changes(before: Option<&Document>, now: &Document, fields: &[&str]) -> Document {\n    let mut set = Document::new();\n    let mut unset = Document::new();\n    for field in fields {\n        compare(field, before.and_then(|before| before.get(*field)), now.get(*field), &mut set, &mut unset);\n    }\n    let mut result = Document::new();\n    if !set.is_empty() {\n        result.insert(\"$set\", set);\n    }\n    if !unset.is_empty() {\n        result.insert(\"$unset\", unset);\n    }\n    result\n}\n\nfn compare(path: &str, before: Option<&Bson>, now: Option<&Bson>, set: &mut Document, unset: &mut Document) {\n    if before == now {\n        return;\n    }\n    match (before, now) {\n        (_, None) => {\n            unset.insert(path, \"\");\n        }\n        (Some(Bson::Document(before)), Some(Bson::Document(now))) => {\n            for name in before.keys().chain(now.keys().filter(|name| !before.contains_key(name))) {\n                compare(&format!(\"{path}.{name}\"), before.get(name), now.get(name), set, unset);\n            }\n        }\n        (_, Some(value)) => {\n            set.insert(path, value.clone());\n        }\n    }\n}\n\n/// Adds a field of the document to what an update sets.\npub fn also_set(changes: &mut Document, now: &Document, field: &str) {\n    let mut set = changes.get_document(\"$set\").cloned().unwrap_or_default();\n    set.insert(field, now.get(field).cloned());\n    changes.insert(\"$set\", set);\n}\n\n/// Whether a text is an identifier of MongoDB.\npub fn is_object_id(text: &str) -> bool {\n    ObjectId::parse_str(text).is_ok()\n}\n\n/// A field of a document, if it has it.\npub fn read<T>(document: &Document, field: &str, from: impl Fn(&Bson) -> Result<T, Error>) -> Result<Option<T>, Error> {\n    match document.get(field) {\n        None | Some(Bson::Null) => Ok(None),\n        Some(value) => from(value).map(Some),\n    }\n}\n\n/// Writes a field of a document, if there is a value: what is None is left out.\npub fn write<T>(document: &mut Document, field: &str, value: &Option<T>, to: impl Fn(&T) -> Result<Bson, Error>) -> Result<(), Error> {\n    if let Some(value) = value {\n        document.insert(field, to(value)?);\n    }\n    Ok(())\n}\n\n/// Reads a list with the function of its items.\npub fn as_list<T>(from: impl Fn(&Bson) -> Result<T, Error>) -> impl Fn(&Bson) -> Result<Vec<T>, Error> {\n    move |value| {\n        let items = value.as_array().ok_or_else(|| unexpected(value))?;\n        items.iter().filter(|item| **item != Bson::Null).map(&from).collect()\n    }\n}\n\n/// Writes a list with the function of its items.\npub fn of_list<T>(to: impl Fn(&T) -> Result<Bson, Error>) -> impl Fn(&Vec<T>) -> Result<Bson, Error> {\n    move |items| Ok(Bson::Array(items.iter().map(&to).collect::<Result<_, _>>()?))\n}\n\n/// Reads a nested document with the function of its struct.\npub fn as_nested<T>(from: impl Fn(&Document) -> Result<T, Error>) -> impl Fn(&Bson) -> Result<T, Error> {\n    move |value| from(value.as_document().ok_or_else(|| unexpected(value))?)\n}\n\n/// Writes a nested document with the function of its struct.\npub fn of_nested<T>(to: impl Fn(&T) -> Result<Document, Error>) -> impl Fn(&T) -> Result<Bson, Error> {\n    move |value| to(value).map(Bson::Document)\n}\n\nfn unexpected(value: &Bson) -> Error {\n    Error::custom(format!(\"a document has a value of another type: {value}\"))\n}\n\n/// A whole number, whatever the type it was stored with.\nfn whole(value: &Bson) -> Option<i64> {\n    match value {\n        Bson::Int32(number) => Some(i64::from(*number)),\n        Bson::Int64(number) => Some(*number),\n        Bson::Double(number) if number.fract() == 0.0 => Some(*number as i64),\n        _ => None,\n    }\n}\n\n/// A number, whatever the type it was stored with.\nfn number(value: &Bson) -> Option<f64> {\n    match value {\n        Bson::Double(number) => Some(*number),\n        Bson::Int32(number) => Some(f64::from(*number)),\n        Bson::Int64(number) => Some(*number as f64),\n        _ => None,\n    }\n}\n\n/// An exact number, whatever the type it was stored with.\nfn decimal(value: &Bson) -> Option<rust_decimal::Decimal> {\n    let text = match value {\n        Bson::Decimal128(number) => number.to_string(),\n        Bson::Int32(number) => number.to_string(),\n        Bson::Int64(number) => number.to_string(),\n        Bson::Double(number) => number.to_string(),\n        _ => return None,\n    };\n    text.parse().ok().or_else(|| rust_decimal::Decimal::from_scientific(&text).ok())\n}\n\nfn binary(value: &Bson) -> Option<&Vec<u8>> {\n    match value {\n        Bson::Binary(binary) => Some(&binary.bytes),\n        _ => None,\n    }\n}\n\npub fn as_object_id(value: &Bson) -> Result<String, Error> {\n    value.as_object_id().map(|id| id.to_hex()).ok_or_else(|| unexpected(value))\n}\n\npub fn of_object_id(value: &String) -> Result<Bson, Error> {\n    ObjectId::parse_str(value).map(Bson::ObjectId).map_err(Error::custom)\n}\n\npub fn as_text(value: &Bson) -> Result<String, Error> {\n    value.as_str().map(str::to_string).ok_or_else(|| unexpected(value))\n}\n\npub fn of_text(value: &String) -> Result<Bson, Error> {\n    Ok(Bson::String(value.clone()))\n}\n\npub fn as_bool(value: &Bson) -> Result<bool, Error> {\n    value.as_bool().ok_or_else(|| unexpected(value))\n}\n\npub fn of_bool(value: &bool) -> Result<Bson, Error> {\n    Ok(Bson::Boolean(*value))\n}\n\npub fn as_i16(value: &Bson) -> Result<i16, Error> {\n    whole(value).and_then(|number| number.try_into().ok()).ok_or_else(|| unexpected(value))\n}\n\npub fn of_i16(value: &i16) -> Result<Bson, Error> {\n    Ok(Bson::Int32(i32::from(*value)))\n}\n\npub fn as_i32(value: &Bson) -> Result<i32, Error> {\n    whole(value).and_then(|number| number.try_into().ok()).ok_or_else(|| unexpected(value))\n}\n\npub fn of_i32(value: &i32) -> Result<Bson, Error> {\n    Ok(Bson::Int32(*value))\n}\n\npub fn as_i64(value: &Bson) -> Result<i64, Error> {\n    whole(value).ok_or_else(|| unexpected(value))\n}\n\npub fn of_i64(value: &i64) -> Result<Bson, Error> {\n    Ok(Bson::Int64(*value))\n}\n\npub fn as_f32(value: &Bson) -> Result<f32, Error> {\n    number(value).map(|number| number as f32).ok_or_else(|| unexpected(value))\n}\n\npub fn of_f32(value: &f32) -> Result<Bson, Error> {\n    Ok(Bson::Double(f64::from(*value)))\n}\n\npub fn as_f64(value: &Bson) -> Result<f64, Error> {\n    number(value).ok_or_else(|| unexpected(value))\n}\n\npub fn of_f64(value: &f64) -> Result<Bson, Error> {\n    Ok(Bson::Double(*value))\n}\n\npub fn as_decimal(value: &Bson) -> Result<rust_decimal::Decimal, Error> {\n    decimal(value).ok_or_else(|| unexpected(value))\n}\n\npub fn of_decimal(value: &rust_decimal::Decimal) -> Result<Bson, Error> {\n    value.to_string().parse().map(Bson::Decimal128).map_err(Error::custom)\n}\n\npub fn as_moment(value: &Bson) -> Result<chrono::DateTime<chrono::Utc>, Error> {\n    value.as_datetime().and_then(|moment| chrono::DateTime::from_timestamp_millis(moment.timestamp_millis())).ok_or_else(|| unexpected(value))\n}\n\npub fn of_moment(value: &chrono::DateTime<chrono::Utc>) -> Result<Bson, Error> {\n    Ok(Bson::DateTime(DateTime::from_millis(value.timestamp_millis())))\n}\n\npub fn as_uuid(value: &Bson) -> Result<uuid::Uuid, Error> {\n    binary(value).and_then(|bytes| uuid::Uuid::from_slice(bytes).ok()).ok_or_else(|| unexpected(value))\n}\n\npub fn of_uuid(value: &uuid::Uuid) -> Result<Bson, Error> {\n    Ok(Bson::Binary(Binary { subtype: BinarySubtype::Uuid, bytes: value.as_bytes().to_vec() }))\n}\n\npub fn as_bytes(value: &Bson) -> Result<Vec<u8>, Error> {\n    binary(value).cloned().ok_or_else(|| unexpected(value))\n}\n\npub fn of_bytes(value: &Vec<u8>) -> Result<Bson, Error> {\n    Ok(Bson::Binary(Binary { subtype: BinarySubtype::Generic, bytes: value.clone() }))\n}\n\npub fn as_any(value: &Bson) -> Result<Bson, Error> {\n    Some(value.clone()).ok_or_else(|| unexpected(value))\n}\n\npub fn of_any(value: &Bson) -> Result<Bson, Error> {\n    Ok(value.clone())\n}\n",
+  "src/common.rs": "//! What the services and repositories share: the pages lists are read in, and how updates come.\n\n/// A page of a list: the rows from an offset, and how many there are in all.\n#[derive(Debug, Clone, PartialEq)]\npub struct Page<T> {\n    pub items: Vec<T>,\n    pub total: u64,\n    pub offset: u64,\n    pub limit: u64,\n}\n\nimpl<T> Page<T> {\n    /// The same page with every row turned into something else.\n    pub fn map<R>(self, mapper: impl FnMut(T) -> R) -> Page<R> {\n        Page { items: self.items.into_iter().map(mapper).collect(), total: self.total, offset: self.offset, limit: self.limit }\n    }\n}\n",
+  "src/database.rs": "//! The database DATABASE_URL names, through the MongoDB driver. It never migrates: the database already exists.\n\nuse std::sync::Arc;\n\nuse mongodb::bson::Document;\nuse mongodb::error::{Error, ErrorKind, WriteFailure};\nuse mongodb::options::{ReturnDocument, UpdateModifications};\nuse mongodb::{Client, ClientSession, Collection, Database};\nuse tokio::sync::Mutex;\n\nuse crate::errors::DomainError;\n\npub const DEFAULT_URL: &str = \"mongodb://localhost:27017/app\";\n\n/// The database DATABASE_URL names (DEFAULT_URL when it is not set). It creates no collection and no index: the\n/// database already exists.\npub async fn connect() -> Result<Database, Error> {\n    let url = std::env::var(\"DATABASE_URL\").unwrap_or_else(|_| DEFAULT_URL.to_string());\n    database_at(&url).await\n}\n\n/// The database a URL names.\npub async fn database_at(url: &str) -> Result<Database, Error> {\n    let client = Client::with_uri_str(url).await?;\n    client.default_database().ok_or_else(|| Error::custom(\"the URL names no database\"))\n}\n\n/// A database and the session of its transaction, when there is one (MongoDB has them on replica sets only). A refused\n/// write is a Conflict.\n#[derive(Clone)]\npub struct Db {\n    pub database: Database,\n    pub session: Option<Arc<Mutex<ClientSession>>>,\n}\n\nimpl Db {\n    pub fn collection(&self, name: &str) -> Collection<Document> {\n        self.database.collection(name)\n    }\n\n    pub async fn find_one(&self, collection: &str, filter: Document) -> Result<Option<Document>, Error> {\n        let find = self.collection(collection);\n        match &self.session {\n            Some(session) => find.find_one(filter).session(&mut *session.lock().await).await,\n            None => find.find_one(filter).await,\n        }\n    }\n\n    /// The documents of a filter, in order; at most `limit` of them when it is not 0.\n    pub async fn find(&self, collection: &str, filter: Document, sort: Document, skip: u64, limit: u64) -> Result<Vec<Document>, Error> {\n        let source = self.collection(collection);\n        let find = source.find(filter).sort(sort).skip(skip).limit(limit as i64);\n        let mut found = Vec::new();\n        match &self.session {\n            Some(session) => {\n                let mut session = session.lock().await;\n                let mut cursor = find.session(&mut *session).await?;\n                while cursor.advance(&mut session).await? {\n                    found.push(cursor.deserialize_current()?);\n                }\n            }\n            None => {\n                let mut cursor = find.await?;\n                while cursor.advance().await? {\n                    found.push(cursor.deserialize_current()?);\n                }\n            }\n        }\n        Ok(found)\n    }\n\n    pub async fn count(&self, collection: &str, filter: Document) -> Result<u64, Error> {\n        let source = self.collection(collection);\n        match &self.session {\n            Some(session) => source.count_documents(filter).session(&mut *session.lock().await).await,\n            None => source.count_documents(filter).await,\n        }\n    }\n\n    pub async fn insert(&self, entity: &str, collection: &str, document: &Document) -> Result<(), DomainError> {\n        let target = self.collection(collection);\n        let result = match &self.session {\n            Some(session) => target.insert_one(document).session(&mut *session.lock().await).await,\n            None => target.insert_one(document).await,\n        };\n        result.map(|_| ()).map_err(|error| refused(entity, error))\n    }\n\n    pub async fn update(&self, entity: &str, collection: &str, filter: Document, change: Document) -> Result<(), DomainError> {\n        let target = self.collection(collection);\n        let result = match &self.session {\n            Some(session) => target.update_one(filter, change).session(&mut *session.lock().await).await,\n            None => target.update_one(filter, change).await,\n        };\n        result.map(|_| ()).map_err(|error| refused(entity, error))\n    }\n\n    pub async fn delete(&self, entity: &str, collection: &str, filter: Document) -> Result<(), DomainError> {\n        let target = self.collection(collection);\n        let result = match &self.session {\n            Some(session) => target.delete_one(filter).session(&mut *session.lock().await).await,\n            None => target.delete_one(filter).await,\n        };\n        result.map(|_| ()).map_err(|error| refused(entity, error))\n    }\n\n    /// Changes one document where it is, and gives it as it is then; None when there is none.\n    pub async fn change(\n        &self,\n        entity: &str,\n        collection: &str,\n        filter: Document,\n        change: impl Into<UpdateModifications>,\n    ) -> Result<Option<Document>, DomainError> {\n        let target = self.collection(collection);\n        let update = target.find_one_and_update(filter, change).return_document(ReturnDocument::After);\n        let result = match &self.session {\n            Some(session) => update.session(&mut *session.lock().await).await,\n            None => update.await,\n        };\n        result.map_err(|error| refused(entity, error))\n    }\n}\n\n/// A repeated value, or one the validator of the collection does not take, becomes a Conflict.\nfn refused(entity: &str, error: Error) -> DomainError {\n    let code = match error.kind.as_ref() {\n        ErrorKind::Write(WriteFailure::WriteError(refusal)) => refusal.code,\n        ErrorKind::Command(refusal) => refusal.code,\n        _ => 0,\n    };\n    if code == 11000 || code == 121 {\n        DomainError::conflict(entity, &format!(\"the database refused the change: {error}\"), &[])\n    } else {\n        error.into()\n    }\n}\n",
+  "src/entities/country.rs": "use crate::bson_values;\nuse crate::bson_values::Loaded;\nuse mongodb::bson::Document;\nuse mongodb::error::Error;\n\n/// A document of the \"countries\" collection. A field stays `None` until it is set or read.\n#[derive(Debug, Clone, Default, PartialEq)]\npub struct Country {\n    pub document_id: Option<String>,\n    pub id: Option<f64>,\n    pub name: Option<String>,\n    /// As it was read: a change writes only what differs\n    pub loaded: Loaded,\n}\n\nimpl Country {\n    /// What a document holds.\n    pub fn from_document(document: &Document) -> Result<Self, Error> {\n        let mut entity = Country {\n            document_id: bson_values::read(document, \"_id\", bson_values::as_text)?,\n            id: bson_values::read(document, \"id\", bson_values::as_f64)?,\n            name: bson_values::read(document, \"name\", bson_values::as_text)?,\n            loaded: Loaded::default(),\n        };\n        entity.loaded = Loaded(Some(entity.to_document()?));\n        Ok(entity)\n    }\n\n    /// Its document: what is None is left out.\n    pub fn to_document(&self) -> Result<Document, Error> {\n        let mut document = Document::new();\n        bson_values::write(&mut document, \"_id\", &self.document_id, bson_values::of_text)?;\n        bson_values::write(&mut document, \"id\", &self.id, bson_values::of_f64)?;\n        bson_values::write(&mut document, \"name\", &self.name, bson_values::of_text)?;\n        Ok(document)\n    }\n}\n",
+  "src/entities/customer.rs": "use crate::bson_values;\nuse crate::bson_values::Loaded;\nuse mongodb::bson::Document;\nuse mongodb::error::Error;\n\n/// A document of the \"customers\" collection. A field stays `None` until it is set or read.\n#[derive(Debug, Clone, Default, PartialEq)]\npub struct Customer {\n    pub id: Option<String>,\n    pub email: Option<String>,\n    pub name: Option<String>,\n    pub password_hash: Option<String>,\n    pub active: Option<bool>,\n    pub level: Option<String>,\n    pub address: Option<CustomerAddress>,\n    pub tags: Option<Vec<String>>,\n    pub preferences: Option<CustomerPreferences>,\n    pub extra: Option<mongodb::bson::Bson>,\n    pub deleted_at: Option<chrono::DateTime<chrono::Utc>>,\n    pub created_at: Option<chrono::DateTime<chrono::Utc>>,\n    pub updated_at: Option<chrono::DateTime<chrono::Utc>>,\n    /// As it was read: a change writes only what differs\n    pub loaded: Loaded,\n}\n\nimpl Customer {\n    /// What a document holds.\n    pub fn from_document(document: &Document) -> Result<Self, Error> {\n        let mut entity = Customer {\n            id: bson_values::read(document, \"_id\", bson_values::as_object_id)?,\n            email: bson_values::read(document, \"email\", bson_values::as_text)?,\n            name: bson_values::read(document, \"name\", bson_values::as_text)?,\n            password_hash: bson_values::read(document, \"passwordHash\", bson_values::as_text)?,\n            active: bson_values::read(document, \"active\", bson_values::as_bool)?,\n            level: bson_values::read(document, \"level\", bson_values::as_text)?,\n            address: bson_values::read(document, \"address\", bson_values::as_nested(CustomerAddress::from_document))?,\n            tags: bson_values::read(document, \"tags\", bson_values::as_list(bson_values::as_text))?,\n            preferences: bson_values::read(document, \"preferences\", bson_values::as_nested(CustomerPreferences::from_document))?,\n            extra: bson_values::read(document, \"extra\", bson_values::as_any)?,\n            deleted_at: bson_values::read(document, \"deletedAt\", bson_values::as_moment)?,\n            created_at: bson_values::read(document, \"createdAt\", bson_values::as_moment)?,\n            updated_at: bson_values::read(document, \"updatedAt\", bson_values::as_moment)?,\n            loaded: Loaded::default(),\n        };\n        entity.loaded = Loaded(Some(entity.to_document()?));\n        Ok(entity)\n    }\n\n    /// Its document: what is None is left out.\n    pub fn to_document(&self) -> Result<Document, Error> {\n        let mut document = Document::new();\n        bson_values::write(&mut document, \"_id\", &self.id, bson_values::of_object_id)?;\n        bson_values::write(&mut document, \"email\", &self.email, bson_values::of_text)?;\n        bson_values::write(&mut document, \"name\", &self.name, bson_values::of_text)?;\n        bson_values::write(&mut document, \"passwordHash\", &self.password_hash, bson_values::of_text)?;\n        bson_values::write(&mut document, \"active\", &self.active, bson_values::of_bool)?;\n        bson_values::write(&mut document, \"level\", &self.level, bson_values::of_text)?;\n        bson_values::write(&mut document, \"address\", &self.address, bson_values::of_nested(CustomerAddress::to_document))?;\n        bson_values::write(&mut document, \"tags\", &self.tags, bson_values::of_list(bson_values::of_text))?;\n        bson_values::write(&mut document, \"preferences\", &self.preferences, bson_values::of_nested(CustomerPreferences::to_document))?;\n        bson_values::write(&mut document, \"extra\", &self.extra, bson_values::of_any)?;\n        bson_values::write(&mut document, \"deletedAt\", &self.deleted_at, bson_values::of_moment)?;\n        bson_values::write(&mut document, \"createdAt\", &self.created_at, bson_values::of_moment)?;\n        bson_values::write(&mut document, \"updatedAt\", &self.updated_at, bson_values::of_moment)?;\n        Ok(document)\n    }\n}\n\n/// A nested document: it is stored with the one that holds it.\n#[derive(Debug, Clone, Default, PartialEq)]\npub struct CustomerAddress {\n    pub street: Option<String>,\n    pub city: Option<String>,\n    pub zip_code: Option<String>,\n    pub location: Option<CustomerAddressLocation>,\n}\n\nimpl CustomerAddress {\n    /// What a document holds.\n    pub fn from_document(document: &Document) -> Result<Self, Error> {\n        Ok(CustomerAddress {\n            street: bson_values::read(document, \"street\", bson_values::as_text)?,\n            city: bson_values::read(document, \"city\", bson_values::as_text)?,\n            zip_code: bson_values::read(document, \"zip code\", bson_values::as_text)?,\n            location: bson_values::read(document, \"location\", bson_values::as_nested(CustomerAddressLocation::from_document))?,\n        })\n    }\n\n    /// Its document: what is None is left out.\n    pub fn to_document(&self) -> Result<Document, Error> {\n        let mut document = Document::new();\n        bson_values::write(&mut document, \"street\", &self.street, bson_values::of_text)?;\n        bson_values::write(&mut document, \"city\", &self.city, bson_values::of_text)?;\n        bson_values::write(&mut document, \"zip code\", &self.zip_code, bson_values::of_text)?;\n        bson_values::write(&mut document, \"location\", &self.location, bson_values::of_nested(CustomerAddressLocation::to_document))?;\n        Ok(document)\n    }\n}\n\n/// A nested document: it is stored with the one that holds it.\n#[derive(Debug, Clone, Default, PartialEq)]\npub struct CustomerAddressLocation {\n    pub r#type: Option<String>,\n    pub coordinates: Option<Vec<f64>>,\n}\n\nimpl CustomerAddressLocation {\n    /// What a document holds.\n    pub fn from_document(document: &Document) -> Result<Self, Error> {\n        Ok(CustomerAddressLocation {\n            r#type: bson_values::read(document, \"type\", bson_values::as_text)?,\n            coordinates: bson_values::read(document, \"coordinates\", bson_values::as_list(bson_values::as_f64))?,\n        })\n    }\n\n    /// Its document: what is None is left out.\n    pub fn to_document(&self) -> Result<Document, Error> {\n        let mut document = Document::new();\n        bson_values::write(&mut document, \"type\", &self.r#type, bson_values::of_text)?;\n        bson_values::write(&mut document, \"coordinates\", &self.coordinates, bson_values::of_list(bson_values::of_f64))?;\n        Ok(document)\n    }\n}\n\n/// A nested document: it is stored with the one that holds it.\n#[derive(Debug, Clone, Default, PartialEq)]\npub struct CustomerPreferences {\n    pub theme: Option<String>,\n    pub newsletter: Option<bool>,\n}\n\nimpl CustomerPreferences {\n    /// What a document holds.\n    pub fn from_document(document: &Document) -> Result<Self, Error> {\n        Ok(CustomerPreferences {\n            theme: bson_values::read(document, \"theme\", bson_values::as_text)?,\n            newsletter: bson_values::read(document, \"newsletter\", bson_values::as_bool)?,\n        })\n    }\n\n    /// Its document: what is None is left out.\n    pub fn to_document(&self) -> Result<Document, Error> {\n        let mut document = Document::new();\n        bson_values::write(&mut document, \"theme\", &self.theme, bson_values::of_text)?;\n        bson_values::write(&mut document, \"newsletter\", &self.newsletter, bson_values::of_bool)?;\n        Ok(document)\n    }\n}\n",
+  "src/entities/mod.rs": "//! The entities of every collection.\n\npub mod country;\npub mod customer;\npub mod order;\npub mod product;\n",
+  "src/entities/order.rs": "use crate::bson_values;\nuse crate::bson_values::Loaded;\nuse mongodb::bson::Document;\nuse mongodb::bson::oid::ObjectId;\nuse mongodb::error::Error;\n\n/// A document of the \"orders\" collection. A field stays `None` until it is set or read.\n#[derive(Debug, Clone, Default, PartialEq)]\npub struct Order {\n    pub id: Option<String>,\n    pub number: Option<f64>,\n    pub year: Option<f64>,\n    pub customer: Option<String>,\n    pub lines: Option<Vec<OrderLine>>,\n    pub notes: Option<Vec<OrderNote>>,\n    pub placed_at: Option<chrono::DateTime<chrono::Utc>>,\n    /// As it was read: a change writes only what differs\n    pub loaded: Loaded,\n}\n\nimpl Order {\n    /// What a document holds.\n    pub fn from_document(document: &Document) -> Result<Self, Error> {\n        let mut entity = Order {\n            id: bson_values::read(document, \"_id\", bson_values::as_object_id)?,\n            number: bson_values::read(document, \"number\", bson_values::as_f64)?,\n            year: bson_values::read(document, \"year\", bson_values::as_f64)?,\n            customer: bson_values::read(document, \"customer\", bson_values::as_object_id)?,\n            lines: bson_values::read(document, \"lines\", bson_values::as_list(bson_values::as_nested(OrderLine::from_document)))?,\n            notes: bson_values::read(document, \"notes\", bson_values::as_list(bson_values::as_nested(OrderNote::from_document)))?,\n            placed_at: bson_values::read(document, \"placedAt\", bson_values::as_moment)?,\n            loaded: Loaded::default(),\n        };\n        entity.loaded = Loaded(Some(entity.to_document()?));\n        Ok(entity)\n    }\n\n    /// Its document: what is None is left out.\n    pub fn to_document(&self) -> Result<Document, Error> {\n        let mut document = Document::new();\n        bson_values::write(&mut document, \"_id\", &self.id, bson_values::of_object_id)?;\n        bson_values::write(&mut document, \"number\", &self.number, bson_values::of_f64)?;\n        bson_values::write(&mut document, \"year\", &self.year, bson_values::of_f64)?;\n        bson_values::write(&mut document, \"customer\", &self.customer, bson_values::of_object_id)?;\n        bson_values::write(&mut document, \"lines\", &self.lines, bson_values::of_list(bson_values::of_nested(OrderLine::to_document)))?;\n        bson_values::write(&mut document, \"notes\", &self.notes, bson_values::of_list(bson_values::of_nested(OrderNote::to_document)))?;\n        bson_values::write(&mut document, \"placedAt\", &self.placed_at, bson_values::of_moment)?;\n        Ok(document)\n    }\n\n    /// Gives an identifier to the documents of its lists that have none: MongoDB numbers only whole documents.\n    pub fn identify_items(&mut self) {\n        for item in self.lines.iter_mut().flatten() {\n            item.id.get_or_insert_with(|| ObjectId::new().to_hex());\n        }\n        for item in self.notes.iter_mut().flatten() {\n            item.id.get_or_insert_with(|| ObjectId::new().to_hex());\n        }\n    }\n}\n\n/// A nested document: it is stored with the one that holds it.\n#[derive(Debug, Clone, Default, PartialEq)]\npub struct OrderLine {\n    pub id: Option<String>,\n    pub product: Option<String>,\n    pub quantity: Option<f64>,\n    pub price: Option<rust_decimal::Decimal>,\n    pub status: Option<String>,\n}\n\nimpl OrderLine {\n    /// What a document holds.\n    pub fn from_document(document: &Document) -> Result<Self, Error> {\n        Ok(OrderLine {\n            id: bson_values::read(document, \"_id\", bson_values::as_object_id)?,\n            product: bson_values::read(document, \"product\", bson_values::as_object_id)?,\n            quantity: bson_values::read(document, \"quantity\", bson_values::as_f64)?,\n            price: bson_values::read(document, \"price\", bson_values::as_decimal)?,\n            status: bson_values::read(document, \"status\", bson_values::as_text)?,\n        })\n    }\n\n    /// Its document: what is None is left out.\n    pub fn to_document(&self) -> Result<Document, Error> {\n        let mut document = Document::new();\n        bson_values::write(&mut document, \"_id\", &self.id, bson_values::of_object_id)?;\n        bson_values::write(&mut document, \"product\", &self.product, bson_values::of_object_id)?;\n        bson_values::write(&mut document, \"quantity\", &self.quantity, bson_values::of_f64)?;\n        bson_values::write(&mut document, \"price\", &self.price, bson_values::of_decimal)?;\n        bson_values::write(&mut document, \"status\", &self.status, bson_values::of_text)?;\n        Ok(document)\n    }\n}\n\n/// A nested document: it is stored with the one that holds it.\n#[derive(Debug, Clone, Default, PartialEq)]\npub struct OrderNote {\n    pub id: Option<String>,\n    pub text: Option<String>,\n    pub at: Option<chrono::DateTime<chrono::Utc>>,\n}\n\nimpl OrderNote {\n    /// What a document holds.\n    pub fn from_document(document: &Document) -> Result<Self, Error> {\n        Ok(OrderNote {\n            id: bson_values::read(document, \"_id\", bson_values::as_object_id)?,\n            text: bson_values::read(document, \"text\", bson_values::as_text)?,\n            at: bson_values::read(document, \"at\", bson_values::as_moment)?,\n        })\n    }\n\n    /// Its document: what is None is left out.\n    pub fn to_document(&self) -> Result<Document, Error> {\n        let mut document = Document::new();\n        bson_values::write(&mut document, \"_id\", &self.id, bson_values::of_object_id)?;\n        bson_values::write(&mut document, \"text\", &self.text, bson_values::of_text)?;\n        bson_values::write(&mut document, \"at\", &self.at, bson_values::of_moment)?;\n        Ok(document)\n    }\n}\n",
+  "src/entities/product.rs": "use crate::bson_values;\nuse crate::bson_values::Loaded;\nuse mongodb::bson::Document;\nuse mongodb::error::Error;\n\n/// A document of the \"products\" collection. A field stays `None` until it is set or read.\n#[derive(Debug, Clone, Default, PartialEq)]\npub struct Product {\n    pub id: Option<String>,\n    pub sku: Option<String>,\n    pub title: Option<String>,\n    pub price: Option<rust_decimal::Decimal>,\n    pub stock: Option<f64>,\n    pub reference: Option<uuid::Uuid>,\n    pub picture: Option<Vec<u8>>,\n    pub related: Option<Vec<String>>,\n    /// As it was read: a change writes only what differs\n    pub loaded: Loaded,\n}\n\nimpl Product {\n    /// What a document holds.\n    pub fn from_document(document: &Document) -> Result<Self, Error> {\n        let mut entity = Product {\n            id: bson_values::read(document, \"_id\", bson_values::as_object_id)?,\n            sku: bson_values::read(document, \"sku\", bson_values::as_text)?,\n            title: bson_values::read(document, \"title\", bson_values::as_text)?,\n            price: bson_values::read(document, \"price\", bson_values::as_decimal)?,\n            stock: bson_values::read(document, \"stock\", bson_values::as_f64)?,\n            reference: bson_values::read(document, \"reference\", bson_values::as_uuid)?,\n            picture: bson_values::read(document, \"picture\", bson_values::as_bytes)?,\n            related: bson_values::read(document, \"related\", bson_values::as_list(bson_values::as_object_id))?,\n            loaded: Loaded::default(),\n        };\n        entity.loaded = Loaded(Some(entity.to_document()?));\n        Ok(entity)\n    }\n\n    /// Its document: what is None is left out.\n    pub fn to_document(&self) -> Result<Document, Error> {\n        let mut document = Document::new();\n        bson_values::write(&mut document, \"_id\", &self.id, bson_values::of_object_id)?;\n        bson_values::write(&mut document, \"sku\", &self.sku, bson_values::of_text)?;\n        bson_values::write(&mut document, \"title\", &self.title, bson_values::of_text)?;\n        bson_values::write(&mut document, \"price\", &self.price, bson_values::of_decimal)?;\n        bson_values::write(&mut document, \"stock\", &self.stock, bson_values::of_f64)?;\n        bson_values::write(&mut document, \"reference\", &self.reference, bson_values::of_uuid)?;\n        bson_values::write(&mut document, \"picture\", &self.picture, bson_values::of_bytes)?;\n        bson_values::write(&mut document, \"related\", &self.related, bson_values::of_list(bson_values::of_object_id))?;\n        Ok(document)\n    }\n}\n",
+  "src/errors.rs": "//! The errors services return on purpose. They carry no HTTP codes: whoever calls the services translates them.\n\n/// What is wrong with one field.\n#[derive(Debug, Clone, PartialEq)]\npub struct FieldError {\n    pub field: String,\n    pub message: String,\n}\n\nimpl FieldError {\n    pub fn new(field: &str, message: &str) -> Self {\n        Self { field: field.to_string(), message: message.to_string() }\n    }\n}\n\n/// Every error a service returns.\n#[derive(Debug)]\npub enum DomainError {\n    /// No row has this key.\n    NotFound { entity: String, key: String },\n    /// The change clashes with what is stored: a unique value, a newer version, rows that depend on it.\n    Conflict { entity: String, reason: String, fields: Vec<String> },\n    /// The values break the rules of the table: missing, too long, out of range, pointing nowhere.\n    ValidationFailed { entity: String, errors: Vec<FieldError> },\n    /// The database failed for another reason.\n    Database(mongodb::error::Error),\n}\n\nimpl DomainError {\n    /// No row of entity has this key.\n    pub fn not_found(entity: &str, key: impl std::fmt::Debug) -> Self {\n        DomainError::NotFound { entity: entity.to_string(), key: format!(\"{key:?}\") }\n    }\n\n    /// The change clashes with what is stored, on these fields.\n    pub fn conflict(entity: &str, reason: &str, fields: &[&str]) -> Self {\n        DomainError::Conflict {\n            entity: entity.to_string(),\n            reason: reason.to_string(),\n            fields: fields.iter().map(|field| field.to_string()).collect(),\n        }\n    }\n}\n\nimpl std::fmt::Display for DomainError {\n    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {\n        match self {\n            DomainError::NotFound { entity, key } => write!(f, \"No {entity} has the key {key}\"),\n            DomainError::Conflict { entity, reason, .. } => write!(f, \"{entity}: {reason}\"),\n            DomainError::ValidationFailed { entity, errors } => {\n                let problems: Vec<String> = errors.iter().map(|error| format!(\"{}: {}\", error.field, error.message)).collect();\n                write!(f, \"{entity}: {}\", problems.join(\"; \"))\n            }\n            DomainError::Database(error) => write!(f, \"{error}\"),\n        }\n    }\n}\n\nimpl std::error::Error for DomainError {}\n\nimpl From<mongodb::error::Error> for DomainError {\n    fn from(error: mongodb::error::Error) -> Self {\n        DomainError::Database(error)\n    }\n}\n",
+  "src/lib.rs": "//! mongorust-mongodb-repositories-only: the data access layer of the database, through the MongoDB driver. Generated by DB2CRUD.\n\npub mod bson_values;\npub mod common;\npub mod database;\npub mod entities;\npub mod errors;\npub mod repositories;\npub mod unit_of_work;\n",
+  "src/repositories/country.rs": "//! The repositories of the \"countries\" table. Repositories decide nothing.\n\nuse async_trait::async_trait;\nuse crate::bson_values;\nuse crate::bson_values::Loaded;\nuse crate::common::Page;\nuse crate::database::Db;\nuse crate::entities::country::Country;\nuse crate::errors::DomainError;\nuse mongodb::bson::doc;\nuse std::cmp::Ordering;\nuse std::sync::{Arc, Mutex};\n\n/// Where countries rows are kept. Services depend only on this trait.\n#[async_trait]\npub trait CountryRepository: Send + Sync {\n    /// The row with this primary key, or None.\n    async fn find_by_document_id(&self, document_id: String) -> Result<Option<Country>, DomainError>;\n\n    /// At most limit rows from offset, by primary key, and how many there are.\n    async fn list(&self, offset: u64, limit: u64) -> Result<Page<Country>, DomainError>;\n\n    /// The row with this id, or None.\n    async fn find_by_id(&self, id: f64) -> Result<Option<Country>, DomainError>;\n\n    /// Stores a new row; the values the database fills are read back.\n    async fn insert(&self, entity: Country) -> Result<Country, DomainError>;\n\n    /// Stores the changes made to a row.\n    async fn update(&self, entity: Country) -> Result<Country, DomainError>;\n\n    /// Removes a row.\n    async fn delete(&self, entity: &Country) -> Result<(), DomainError>;\n}\n\n/// Keeps countries rows in the database, through the MongoDB driver: on the connection of the unit of work, or in its transaction.\npub struct MongoCountryRepository<'a> {\n    db: &'a Db,\n}\n\nimpl<'a> MongoCountryRepository<'a> {\n    pub fn new(db: &'a Db) -> Self {\n        Self { db }\n    }\n}\n\n#[async_trait]\nimpl CountryRepository for MongoCountryRepository<'_> {\n    async fn find_by_document_id(&self, document_id: String) -> Result<Option<Country>, DomainError> {\n        let found = self.db.find_one(\"countries\", doc! { \"_id\": bson_values::of_text(&document_id)? }).await?;\n        Ok(found.as_ref().map(Country::from_document).transpose()?)\n    }\n\n    async fn list(&self, offset: u64, limit: u64) -> Result<Page<Country>, DomainError> {\n        let total = self.db.count(\"countries\", doc! {}).await?;\n        let found = if limit > 0 {\n            self.db.find(\"countries\", doc! {}, doc! { \"_id\": 1 }, offset, limit).await?\n        } else {\n            Vec::new()\n        };\n        Ok(Page { items: found.iter().map(Country::from_document).collect::<Result<_, _>>()?, total, offset, limit })\n    }\n\n    async fn find_by_id(&self, id: f64) -> Result<Option<Country>, DomainError> {\n        let found = self.db.find_one(\"countries\", doc! { \"id\": bson_values::of_f64(&id)? }).await?;\n        Ok(found.as_ref().map(Country::from_document).transpose()?)\n    }\n\n    async fn insert(&self, entity: Country) -> Result<Country, DomainError> {\n        let mut entity = entity;\n        let document = entity.to_document()?;\n        self.db.insert(\"Country\", \"countries\", &document).await?;\n        entity.loaded = Loaded(Some(document));\n        Ok(entity)\n    }\n\n    async fn update(&self, entity: Country) -> Result<Country, DomainError> {\n        let mut entity = entity;\n        let now = entity.to_document()?;\n        let changes = bson_values::changes(entity.loaded.0.as_ref(), &now, &[\"id\", \"name\"]);\n        if !changes.is_empty() {\n            self.db.update(\"Country\", \"countries\", doc! { \"_id\": now.get(\"_id\").cloned() }, changes).await?;\n        }\n        entity.loaded = Loaded(Some(now));\n        Ok(entity)\n    }\n\n    async fn delete(&self, entity: &Country) -> Result<(), DomainError> {\n        let document_id = entity.document_id.clone().expect(\"document_id is set\");\n        self.db.delete(\"Country\", \"countries\", doc! { \"_id\": bson_values::of_text(&document_id)? }).await\n    }\n}\n\n/// Keeps countries rows in memory, for tests and for trying the services without a database. Its copies share the rows.\n#[derive(Clone, Default)]\npub struct MemoryCountryRepository {\n    rows: Arc<Mutex<Vec<Country>>>,\n}\n\nimpl MemoryCountryRepository {\n    /// The rows reads see, by primary key.\n    fn visible(&self) -> Vec<Country> {\n        let mut rows: Vec<Country> = self.rows.lock().unwrap().iter().cloned().collect();\n        rows.sort_by(|a, b| key_of(a).partial_cmp(&key_of(b)).unwrap_or(Ordering::Equal));\n        rows\n    }\n\n    /// Keeps a row, in place of the one with its key.\n    fn store(&self, entity: &Country) {\n        let mut rows = self.rows.lock().unwrap();\n        rows.retain(|row| key_of(row) != key_of(entity));\n        rows.push(entity.clone());\n    }\n}\n\n/// The key of a row, as a tuple of its key values.\nfn key_of(row: &Country) -> (Option<String>,) {\n    (row.document_id.clone(),)\n}\n\n#[async_trait]\nimpl CountryRepository for MemoryCountryRepository {\n    async fn find_by_document_id(&self, document_id: String) -> Result<Option<Country>, DomainError> {\n        Ok(self.visible().into_iter().find(|row| row.document_id.as_ref() == Some(&document_id)))\n    }\n\n    async fn list(&self, offset: u64, limit: u64) -> Result<Page<Country>, DomainError> {\n        let rows = self.visible();\n        let total = rows.len() as u64;\n        Ok(Page { items: rows.into_iter().skip(offset as usize).take(limit as usize).collect(), total, offset, limit })\n    }\n\n    async fn find_by_id(&self, id: f64) -> Result<Option<Country>, DomainError> {\n        Ok(self.visible().into_iter().find(|row| row.id.as_ref() == Some(&id)))\n    }\n\n    async fn insert(&self, entity: Country) -> Result<Country, DomainError> {\n        self.store(&entity);\n        Ok(entity)\n    }\n\n    async fn update(&self, entity: Country) -> Result<Country, DomainError> {\n        self.store(&entity);\n        Ok(entity)\n    }\n\n    async fn delete(&self, entity: &Country) -> Result<(), DomainError> {\n        self.rows.lock().unwrap().retain(|row| key_of(row) != key_of(entity));\n        Ok(())\n    }\n}\n",
+  "src/repositories/customer.rs": "//! The repositories of the \"customers\" table. Repositories decide nothing.\n\nuse async_trait::async_trait;\nuse crate::bson_values;\nuse crate::bson_values::Loaded;\nuse crate::common::Page;\nuse crate::database::Db;\nuse crate::entities::customer::Customer;\nuse crate::errors::DomainError;\nuse mongodb::bson::doc;\nuse std::cmp::Ordering;\nuse std::sync::{Arc, Mutex};\n\n/// Where customers rows are kept. Services depend only on this trait.\n#[async_trait]\npub trait CustomerRepository: Send + Sync {\n    /// The row with this primary key, or None.\n    async fn find_by_id(&self, id: String) -> Result<Option<Customer>, DomainError>;\n\n    /// At most limit rows from offset, by primary key, and how many there are.\n    async fn list(&self, offset: u64, limit: u64) -> Result<Page<Customer>, DomainError>;\n\n    /// The row with this email, or None.\n    async fn find_by_email(&self, email: String) -> Result<Option<Customer>, DomainError>;\n\n    /// Stores a new row; the values the database fills are read back.\n    async fn insert(&self, entity: Customer) -> Result<Customer, DomainError>;\n\n    /// Stores the changes made to a row.\n    async fn update(&self, entity: Customer) -> Result<Customer, DomainError>;\n\n    /// Removes a row.\n    async fn delete(&self, entity: &Customer) -> Result<(), DomainError>;\n\n    /// Adds an item to tags, and gives the row as it is then, if there is one.\n    async fn add_tag(&self, id: String, tag: String) -> Result<Option<Customer>, DomainError>;\n\n    /// Removes an item from tags, and gives the row as it is then, if there is one.\n    async fn remove_tag(&self, id: String, tag: String) -> Result<Option<Customer>, DomainError>;\n}\n\n/// Keeps customers rows in the database, through the MongoDB driver: on the connection of the unit of work, or in its transaction.\npub struct MongoCustomerRepository<'a> {\n    db: &'a Db,\n}\n\nimpl<'a> MongoCustomerRepository<'a> {\n    pub fn new(db: &'a Db) -> Self {\n        Self { db }\n    }\n}\n\n#[async_trait]\nimpl CustomerRepository for MongoCustomerRepository<'_> {\n    async fn find_by_id(&self, id: String) -> Result<Option<Customer>, DomainError> {\n        if !bson_values::is_object_id(&id) {\n            return Ok(None);\n        }\n        let found = self.db.find_one(\"customers\", doc! { \"_id\": bson_values::of_object_id(&id)?, \"deletedAt\": null }).await?;\n        Ok(found.as_ref().map(Customer::from_document).transpose()?)\n    }\n\n    async fn list(&self, offset: u64, limit: u64) -> Result<Page<Customer>, DomainError> {\n        let total = self.db.count(\"customers\", doc! { \"deletedAt\": null }).await?;\n        let found = if limit > 0 {\n            self.db.find(\"customers\", doc! { \"deletedAt\": null }, doc! { \"_id\": 1 }, offset, limit).await?\n        } else {\n            Vec::new()\n        };\n        Ok(Page { items: found.iter().map(Customer::from_document).collect::<Result<_, _>>()?, total, offset, limit })\n    }\n\n    async fn find_by_email(&self, email: String) -> Result<Option<Customer>, DomainError> {\n        let found = self.db.find_one(\"customers\", doc! { \"email\": bson_values::of_text(&email)?, \"deletedAt\": null }).await?;\n        Ok(found.as_ref().map(Customer::from_document).transpose()?)\n    }\n\n    async fn insert(&self, entity: Customer) -> Result<Customer, DomainError> {\n        let mut entity = entity;\n        entity.id = entity.id.or_else(|| Some(mongodb::bson::oid::ObjectId::new().to_hex()));\n        entity.active = entity.active.or_else(|| Some(true));\n        entity.level = entity.level.or_else(|| Some(\"basic\".to_string()));\n        entity.created_at = entity.created_at.or_else(|| Some(chrono::Utc::now()));\n        entity.updated_at = entity.updated_at.or_else(|| Some(chrono::Utc::now()));\n        let document = entity.to_document()?;\n        self.db.insert(\"Customer\", \"customers\", &document).await?;\n        entity.loaded = Loaded(Some(document));\n        Ok(entity)\n    }\n\n    async fn update(&self, entity: Customer) -> Result<Customer, DomainError> {\n        let mut entity = entity;\n        entity.updated_at = Some(chrono::Utc::now());\n        let now = entity.to_document()?;\n        let mut changes = bson_values::changes(entity.loaded.0.as_ref(), &now, &[\"email\", \"name\", \"passwordHash\", \"active\", \"level\", \"address\", \"tags\", \"preferences\", \"extra\", \"deletedAt\"]);\n        if !changes.is_empty() {\n            bson_values::also_set(&mut changes, &now, \"updatedAt\");\n            self.db.update(\"Customer\", \"customers\", doc! { \"_id\": now.get(\"_id\").cloned() }, changes).await?;\n        }\n        entity.loaded = Loaded(Some(now));\n        Ok(entity)\n    }\n\n    async fn delete(&self, entity: &Customer) -> Result<(), DomainError> {\n        let id = entity.id.clone().expect(\"id is set\");\n        self.db.delete(\"Customer\", \"customers\", doc! { \"_id\": bson_values::of_object_id(&id)? }).await\n    }\n\n    async fn add_tag(&self, id: String, tag: String) -> Result<Option<Customer>, DomainError> {\n        if !bson_values::is_object_id(&id) {\n            return Ok(None);\n        }\n        let change = doc! { \"$push\": { \"tags\": bson_values::of_text(&tag)? }, \"$set\": { \"updatedAt\": mongodb::bson::DateTime::now() } };\n        let changed = self.db.change(\"Customer\", \"customers\", doc! { \"_id\": bson_values::of_object_id(&id)?, \"deletedAt\": null }, change).await?;\n        Ok(changed.as_ref().map(Customer::from_document).transpose()?)\n    }\n\n    async fn remove_tag(&self, id: String, tag: String) -> Result<Option<Customer>, DomainError> {\n        if !bson_values::is_object_id(&id) {\n            return Ok(None);\n        }\n        let change = doc! { \"$pull\": { \"tags\": bson_values::of_text(&tag)? }, \"$set\": { \"updatedAt\": mongodb::bson::DateTime::now() } };\n        let changed = self.db.change(\"Customer\", \"customers\", doc! { \"_id\": bson_values::of_object_id(&id)?, \"deletedAt\": null }, change).await?;\n        Ok(changed.as_ref().map(Customer::from_document).transpose()?)\n    }\n}\n\n/// Keeps customers rows in memory, for tests and for trying the services without a database. Its copies share the rows.\n#[derive(Clone, Default)]\npub struct MemoryCustomerRepository {\n    rows: Arc<Mutex<Vec<Customer>>>,\n}\n\nimpl MemoryCustomerRepository {\n    /// The rows reads see, by primary key.\n    fn visible(&self) -> Vec<Customer> {\n        let mut rows: Vec<Customer> = self.rows.lock().unwrap().iter().filter(|row| row.deleted_at.is_none()).cloned().collect();\n        rows.sort_by(|a, b| key_of(a).partial_cmp(&key_of(b)).unwrap_or(Ordering::Equal));\n        rows\n    }\n\n    /// Keeps a row, in place of the one with its key.\n    fn store(&self, entity: &Customer) {\n        let mut rows = self.rows.lock().unwrap();\n        rows.retain(|row| key_of(row) != key_of(entity));\n        rows.push(entity.clone());\n    }\n}\n\n/// The key of a row, as a tuple of its key values.\nfn key_of(row: &Customer) -> (Option<String>,) {\n    (row.id.clone(),)\n}\n\n#[async_trait]\nimpl CustomerRepository for MemoryCustomerRepository {\n    async fn find_by_id(&self, id: String) -> Result<Option<Customer>, DomainError> {\n        Ok(self.visible().into_iter().find(|row| row.id.as_ref() == Some(&id)))\n    }\n\n    async fn list(&self, offset: u64, limit: u64) -> Result<Page<Customer>, DomainError> {\n        let rows = self.visible();\n        let total = rows.len() as u64;\n        Ok(Page { items: rows.into_iter().skip(offset as usize).take(limit as usize).collect(), total, offset, limit })\n    }\n\n    async fn find_by_email(&self, email: String) -> Result<Option<Customer>, DomainError> {\n        Ok(self.visible().into_iter().find(|row| row.email.as_ref() == Some(&email)))\n    }\n\n    async fn insert(&self, entity: Customer) -> Result<Customer, DomainError> {\n        let mut entity = entity;\n        entity.id = entity.id.or_else(|| Some(mongodb::bson::oid::ObjectId::new().to_hex()));\n        entity.active = entity.active.or_else(|| Some(true));\n        entity.level = entity.level.or_else(|| Some(\"basic\".to_string()));\n        entity.created_at = entity.created_at.or_else(|| Some(chrono::Utc::now()));\n        entity.updated_at = entity.updated_at.or_else(|| Some(chrono::Utc::now()));\n        self.store(&entity);\n        Ok(entity)\n    }\n\n    async fn update(&self, entity: Customer) -> Result<Customer, DomainError> {\n        self.store(&entity);\n        Ok(entity)\n    }\n\n    async fn delete(&self, entity: &Customer) -> Result<(), DomainError> {\n        self.rows.lock().unwrap().retain(|row| key_of(row) != key_of(entity));\n        Ok(())\n    }\n\n    async fn add_tag(&self, id: String, tag: String) -> Result<Option<Customer>, DomainError> {\n        let Some(mut found) = self.visible().into_iter().find(|row| row.id.as_ref() == Some(&id)) else {\n            return Ok(None);\n        };\n        found.tags.get_or_insert_default().push(tag);\n        found.updated_at = Some(chrono::Utc::now());\n        self.store(&found);\n        Ok(Some(found))\n    }\n\n    async fn remove_tag(&self, id: String, tag: String) -> Result<Option<Customer>, DomainError> {\n        let Some(mut found) = self.visible().into_iter().find(|row| row.id.as_ref() == Some(&id)) else {\n            return Ok(None);\n        };\n        found.tags.get_or_insert_default().retain(|item| *item != tag);\n        found.updated_at = Some(chrono::Utc::now());\n        self.store(&found);\n        Ok(Some(found))\n    }\n}\n",
+  "src/repositories/mod.rs": "//! The repositories of every table.\n\npub mod country;\npub mod customer;\npub mod order;\npub mod product;\n",
+  "src/repositories/order.rs": "//! The repositories of the \"orders\" table. Repositories decide nothing.\n\nuse async_trait::async_trait;\nuse crate::bson_values;\nuse crate::bson_values::Loaded;\nuse crate::common::Page;\nuse crate::database::Db;\nuse crate::entities::order::Order;\nuse crate::errors::DomainError;\nuse mongodb::bson::doc;\nuse std::cmp::Ordering;\nuse std::sync::{Arc, Mutex};\n\n/// Where orders rows are kept. Services depend only on this trait.\n#[async_trait]\npub trait OrderRepository: Send + Sync {\n    /// The row with this primary key, or None.\n    async fn find_by_id(&self, id: String) -> Result<Option<Order>, DomainError>;\n\n    /// At most limit rows from offset, by primary key, and how many there are.\n    async fn list(&self, offset: u64, limit: u64) -> Result<Page<Order>, DomainError>;\n\n    /// The row with this year and number, or None.\n    async fn find_by_year_and_number(&self, year: f64, number: f64) -> Result<Option<Order>, DomainError>;\n\n    /// Rows with this customer, by primary key.\n    async fn list_by_customer(&self, customer: String) -> Result<Vec<Order>, DomainError>;\n\n    /// Stores a new row; the values the database fills are read back.\n    async fn insert(&self, entity: Order) -> Result<Order, DomainError>;\n\n    /// Stores the changes made to a row.\n    async fn update(&self, entity: Order) -> Result<Order, DomainError>;\n\n    /// Removes a row.\n    async fn delete(&self, entity: &Order) -> Result<(), DomainError>;\n\n    /// Adds an item to lines, and gives the row as it is then, if there is one.\n    async fn add_line(&self, id: String, line: crate::entities::order::OrderLine) -> Result<Option<Order>, DomainError>;\n\n    /// Removes an item from lines, and gives the row as it is then, if there is one.\n    async fn remove_line(&self, id: String, line_id: String) -> Result<Option<Order>, DomainError>;\n\n    /// Adds an item to notes, and gives the row as it is then, if there is one.\n    async fn add_note(&self, id: String, note: crate::entities::order::OrderNote) -> Result<Option<Order>, DomainError>;\n\n    /// Removes an item from notes, and gives the row as it is then, if there is one.\n    async fn remove_note(&self, id: String, note_id: String) -> Result<Option<Order>, DomainError>;\n}\n\n/// Keeps orders rows in the database, through the MongoDB driver: on the connection of the unit of work, or in its transaction.\npub struct MongoOrderRepository<'a> {\n    db: &'a Db,\n}\n\nimpl<'a> MongoOrderRepository<'a> {\n    pub fn new(db: &'a Db) -> Self {\n        Self { db }\n    }\n}\n\n#[async_trait]\nimpl OrderRepository for MongoOrderRepository<'_> {\n    async fn find_by_id(&self, id: String) -> Result<Option<Order>, DomainError> {\n        if !bson_values::is_object_id(&id) {\n            return Ok(None);\n        }\n        let found = self.db.find_one(\"orders\", doc! { \"_id\": bson_values::of_object_id(&id)? }).await?;\n        Ok(found.as_ref().map(Order::from_document).transpose()?)\n    }\n\n    async fn list(&self, offset: u64, limit: u64) -> Result<Page<Order>, DomainError> {\n        let total = self.db.count(\"orders\", doc! {}).await?;\n        let found = if limit > 0 {\n            self.db.find(\"orders\", doc! {}, doc! { \"_id\": 1 }, offset, limit).await?\n        } else {\n            Vec::new()\n        };\n        Ok(Page { items: found.iter().map(Order::from_document).collect::<Result<_, _>>()?, total, offset, limit })\n    }\n\n    async fn find_by_year_and_number(&self, year: f64, number: f64) -> Result<Option<Order>, DomainError> {\n        let found = self.db.find_one(\"orders\", doc! { \"year\": bson_values::of_f64(&year)?, \"number\": bson_values::of_f64(&number)? }).await?;\n        Ok(found.as_ref().map(Order::from_document).transpose()?)\n    }\n\n    async fn list_by_customer(&self, customer: String) -> Result<Vec<Order>, DomainError> {\n        if !bson_values::is_object_id(&customer) {\n            return Ok(Vec::new());\n        }\n        let found = self.db.find(\"orders\", doc! { \"customer\": bson_values::of_object_id(&customer)? }, doc! { \"_id\": 1 }, 0, 0).await?;\n        Ok(found.iter().map(Order::from_document).collect::<Result<_, _>>()?)\n    }\n\n    async fn insert(&self, entity: Order) -> Result<Order, DomainError> {\n        let mut entity = entity;\n        entity.id = entity.id.or_else(|| Some(mongodb::bson::oid::ObjectId::new().to_hex()));\n        entity.placed_at = entity.placed_at.or_else(|| Some(chrono::Utc::now()));\n        entity.identify_items();\n        let document = entity.to_document()?;\n        self.db.insert(\"Order\", \"orders\", &document).await?;\n        entity.loaded = Loaded(Some(document));\n        Ok(entity)\n    }\n\n    async fn update(&self, entity: Order) -> Result<Order, DomainError> {\n        let mut entity = entity;\n        entity.identify_items();\n        let now = entity.to_document()?;\n        let changes = bson_values::changes(entity.loaded.0.as_ref(), &now, &[\"number\", \"year\", \"customer\", \"lines\", \"notes\"]);\n        if !changes.is_empty() {\n            self.db.update(\"Order\", \"orders\", doc! { \"_id\": now.get(\"_id\").cloned() }, changes).await?;\n        }\n        entity.loaded = Loaded(Some(now));\n        Ok(entity)\n    }\n\n    async fn delete(&self, entity: &Order) -> Result<(), DomainError> {\n        let id = entity.id.clone().expect(\"id is set\");\n        self.db.delete(\"Order\", \"orders\", doc! { \"_id\": bson_values::of_object_id(&id)? }).await\n    }\n\n    async fn add_line(&self, id: String, line: crate::entities::order::OrderLine) -> Result<Option<Order>, DomainError> {\n        if !bson_values::is_object_id(&id) {\n            return Ok(None);\n        }\n        let mut line = line;\n        line.id = line.id.or_else(|| Some(mongodb::bson::oid::ObjectId::new().to_hex()));\n        let change = doc! { \"$push\": { \"lines\": bson_values::of_nested(crate::entities::order::OrderLine::to_document)(&line)? } };\n        let changed = self.db.change(\"Order\", \"orders\", doc! { \"_id\": bson_values::of_object_id(&id)? }, change).await?;\n        Ok(changed.as_ref().map(Order::from_document).transpose()?)\n    }\n\n    async fn remove_line(&self, id: String, line_id: String) -> Result<Option<Order>, DomainError> {\n        if !bson_values::is_object_id(&id) {\n            return Ok(None);\n        }\n        if !bson_values::is_object_id(&line_id) {\n            return Ok(None);\n        }\n        let change = doc! { \"$pull\": { \"lines\": { \"_id\": bson_values::of_object_id(&line_id)? } } };\n        let changed = self.db.change(\"Order\", \"orders\", doc! { \"_id\": bson_values::of_object_id(&id)? }, change).await?;\n        Ok(changed.as_ref().map(Order::from_document).transpose()?)\n    }\n\n    async fn add_note(&self, id: String, note: crate::entities::order::OrderNote) -> Result<Option<Order>, DomainError> {\n        if !bson_values::is_object_id(&id) {\n            return Ok(None);\n        }\n        let mut note = note;\n        note.id = note.id.or_else(|| Some(mongodb::bson::oid::ObjectId::new().to_hex()));\n        let change = doc! { \"$push\": { \"notes\": bson_values::of_nested(crate::entities::order::OrderNote::to_document)(&note)? } };\n        let changed = self.db.change(\"Order\", \"orders\", doc! { \"_id\": bson_values::of_object_id(&id)? }, change).await?;\n        Ok(changed.as_ref().map(Order::from_document).transpose()?)\n    }\n\n    async fn remove_note(&self, id: String, note_id: String) -> Result<Option<Order>, DomainError> {\n        if !bson_values::is_object_id(&id) {\n            return Ok(None);\n        }\n        if !bson_values::is_object_id(&note_id) {\n            return Ok(None);\n        }\n        let change = doc! { \"$pull\": { \"notes\": { \"_id\": bson_values::of_object_id(&note_id)? } } };\n        let changed = self.db.change(\"Order\", \"orders\", doc! { \"_id\": bson_values::of_object_id(&id)? }, change).await?;\n        Ok(changed.as_ref().map(Order::from_document).transpose()?)\n    }\n}\n\n/// Keeps orders rows in memory, for tests and for trying the services without a database. Its copies share the rows.\n#[derive(Clone, Default)]\npub struct MemoryOrderRepository {\n    rows: Arc<Mutex<Vec<Order>>>,\n}\n\nimpl MemoryOrderRepository {\n    /// The rows reads see, by primary key.\n    fn visible(&self) -> Vec<Order> {\n        let mut rows: Vec<Order> = self.rows.lock().unwrap().iter().cloned().collect();\n        rows.sort_by(|a, b| key_of(a).partial_cmp(&key_of(b)).unwrap_or(Ordering::Equal));\n        rows\n    }\n\n    /// Keeps a row, in place of the one with its key.\n    fn store(&self, entity: &Order) {\n        let mut rows = self.rows.lock().unwrap();\n        rows.retain(|row| key_of(row) != key_of(entity));\n        rows.push(entity.clone());\n    }\n}\n\n/// The key of a row, as a tuple of its key values.\nfn key_of(row: &Order) -> (Option<String>,) {\n    (row.id.clone(),)\n}\n\n#[async_trait]\nimpl OrderRepository for MemoryOrderRepository {\n    async fn find_by_id(&self, id: String) -> Result<Option<Order>, DomainError> {\n        Ok(self.visible().into_iter().find(|row| row.id.as_ref() == Some(&id)))\n    }\n\n    async fn list(&self, offset: u64, limit: u64) -> Result<Page<Order>, DomainError> {\n        let rows = self.visible();\n        let total = rows.len() as u64;\n        Ok(Page { items: rows.into_iter().skip(offset as usize).take(limit as usize).collect(), total, offset, limit })\n    }\n\n    async fn find_by_year_and_number(&self, year: f64, number: f64) -> Result<Option<Order>, DomainError> {\n        Ok(self.visible().into_iter().find(|row| row.year.as_ref() == Some(&year) && row.number.as_ref() == Some(&number)))\n    }\n\n    async fn list_by_customer(&self, customer: String) -> Result<Vec<Order>, DomainError> {\n        Ok(self.visible().into_iter().filter(|row| row.customer.as_ref() == Some(&customer)).collect())\n    }\n\n    async fn insert(&self, entity: Order) -> Result<Order, DomainError> {\n        let mut entity = entity;\n        entity.id = entity.id.or_else(|| Some(mongodb::bson::oid::ObjectId::new().to_hex()));\n        entity.placed_at = entity.placed_at.or_else(|| Some(chrono::Utc::now()));\n        entity.identify_items();\n        self.store(&entity);\n        Ok(entity)\n    }\n\n    async fn update(&self, entity: Order) -> Result<Order, DomainError> {\n        let mut entity = entity;\n        entity.identify_items();\n        self.store(&entity);\n        Ok(entity)\n    }\n\n    async fn delete(&self, entity: &Order) -> Result<(), DomainError> {\n        self.rows.lock().unwrap().retain(|row| key_of(row) != key_of(entity));\n        Ok(())\n    }\n\n    async fn add_line(&self, id: String, line: crate::entities::order::OrderLine) -> Result<Option<Order>, DomainError> {\n        let Some(mut found) = self.visible().into_iter().find(|row| row.id.as_ref() == Some(&id)) else {\n            return Ok(None);\n        };\n        let mut line = line;\n        line.id = line.id.or_else(|| Some(mongodb::bson::oid::ObjectId::new().to_hex()));\n        found.lines.get_or_insert_default().push(line);\n        self.store(&found);\n        Ok(Some(found))\n    }\n\n    async fn remove_line(&self, id: String, line_id: String) -> Result<Option<Order>, DomainError> {\n        let Some(mut found) = self.visible().into_iter().find(|row| row.id.as_ref() == Some(&id)) else {\n            return Ok(None);\n        };\n        found.lines.get_or_insert_default().retain(|item| item.id.as_ref() != Some(&line_id));\n        self.store(&found);\n        Ok(Some(found))\n    }\n\n    async fn add_note(&self, id: String, note: crate::entities::order::OrderNote) -> Result<Option<Order>, DomainError> {\n        let Some(mut found) = self.visible().into_iter().find(|row| row.id.as_ref() == Some(&id)) else {\n            return Ok(None);\n        };\n        let mut note = note;\n        note.id = note.id.or_else(|| Some(mongodb::bson::oid::ObjectId::new().to_hex()));\n        found.notes.get_or_insert_default().push(note);\n        self.store(&found);\n        Ok(Some(found))\n    }\n\n    async fn remove_note(&self, id: String, note_id: String) -> Result<Option<Order>, DomainError> {\n        let Some(mut found) = self.visible().into_iter().find(|row| row.id.as_ref() == Some(&id)) else {\n            return Ok(None);\n        };\n        found.notes.get_or_insert_default().retain(|item| item.id.as_ref() != Some(&note_id));\n        self.store(&found);\n        Ok(Some(found))\n    }\n}\n",
+  "src/repositories/product.rs": "//! The repositories of the \"products\" table. Repositories decide nothing.\n\nuse async_trait::async_trait;\nuse crate::bson_values;\nuse crate::bson_values::Loaded;\nuse crate::common::Page;\nuse crate::database::Db;\nuse crate::entities::product::Product;\nuse crate::errors::DomainError;\nuse mongodb::bson::doc;\nuse std::cmp::Ordering;\nuse std::sync::{Arc, Mutex};\n\n/// Where products rows are kept. Services depend only on this trait.\n#[async_trait]\npub trait ProductRepository: Send + Sync {\n    /// The row with this primary key, or None.\n    async fn find_by_id(&self, id: String) -> Result<Option<Product>, DomainError>;\n\n    /// At most limit rows from offset, by primary key, and how many there are.\n    async fn list(&self, offset: u64, limit: u64) -> Result<Page<Product>, DomainError>;\n\n    /// The row with this sku, or None.\n    async fn find_by_sku(&self, sku: String) -> Result<Option<Product>, DomainError>;\n\n    /// Rows with this title, by primary key.\n    async fn find_all_by_title(&self, title: String) -> Result<Vec<Product>, DomainError>;\n\n    /// Stores a new row; the values the database fills are read back.\n    async fn insert(&self, entity: Product) -> Result<Product, DomainError>;\n\n    /// Stores the changes made to a row.\n    async fn update(&self, entity: Product) -> Result<Product, DomainError>;\n\n    /// Removes a row.\n    async fn delete(&self, entity: &Product) -> Result<(), DomainError>;\n\n    /// Adds an item to related, and gives the row as it is then, if there is one.\n    async fn add_related(&self, id: String, related: String) -> Result<Option<Product>, DomainError>;\n\n    /// Removes an item from related, and gives the row as it is then, if there is one.\n    async fn remove_related(&self, id: String, related: String) -> Result<Option<Product>, DomainError>;\n}\n\n/// Keeps products rows in the database, through the MongoDB driver: on the connection of the unit of work, or in its transaction.\npub struct MongoProductRepository<'a> {\n    db: &'a Db,\n}\n\nimpl<'a> MongoProductRepository<'a> {\n    pub fn new(db: &'a Db) -> Self {\n        Self { db }\n    }\n}\n\n#[async_trait]\nimpl ProductRepository for MongoProductRepository<'_> {\n    async fn find_by_id(&self, id: String) -> Result<Option<Product>, DomainError> {\n        if !bson_values::is_object_id(&id) {\n            return Ok(None);\n        }\n        let found = self.db.find_one(\"products\", doc! { \"_id\": bson_values::of_object_id(&id)? }).await?;\n        Ok(found.as_ref().map(Product::from_document).transpose()?)\n    }\n\n    async fn list(&self, offset: u64, limit: u64) -> Result<Page<Product>, DomainError> {\n        let total = self.db.count(\"products\", doc! {}).await?;\n        let found = if limit > 0 {\n            self.db.find(\"products\", doc! {}, doc! { \"_id\": 1 }, offset, limit).await?\n        } else {\n            Vec::new()\n        };\n        Ok(Page { items: found.iter().map(Product::from_document).collect::<Result<_, _>>()?, total, offset, limit })\n    }\n\n    async fn find_by_sku(&self, sku: String) -> Result<Option<Product>, DomainError> {\n        let found = self.db.find_one(\"products\", doc! { \"sku\": bson_values::of_text(&sku)? }).await?;\n        Ok(found.as_ref().map(Product::from_document).transpose()?)\n    }\n\n    async fn find_all_by_title(&self, title: String) -> Result<Vec<Product>, DomainError> {\n        let found = self.db.find(\"products\", doc! { \"title\": bson_values::of_text(&title)? }, doc! { \"_id\": 1 }, 0, 0).await?;\n        Ok(found.iter().map(Product::from_document).collect::<Result<_, _>>()?)\n    }\n\n    async fn insert(&self, entity: Product) -> Result<Product, DomainError> {\n        let mut entity = entity;\n        entity.id = entity.id.or_else(|| Some(mongodb::bson::oid::ObjectId::new().to_hex()));\n        entity.stock = entity.stock.or_else(|| Some(0.0));\n        let document = entity.to_document()?;\n        self.db.insert(\"Product\", \"products\", &document).await?;\n        entity.loaded = Loaded(Some(document));\n        Ok(entity)\n    }\n\n    async fn update(&self, entity: Product) -> Result<Product, DomainError> {\n        let mut entity = entity;\n        let now = entity.to_document()?;\n        let changes = bson_values::changes(entity.loaded.0.as_ref(), &now, &[\"sku\", \"title\", \"price\", \"stock\", \"reference\", \"picture\", \"related\"]);\n        if !changes.is_empty() {\n            self.db.update(\"Product\", \"products\", doc! { \"_id\": now.get(\"_id\").cloned() }, changes).await?;\n        }\n        entity.loaded = Loaded(Some(now));\n        Ok(entity)\n    }\n\n    async fn delete(&self, entity: &Product) -> Result<(), DomainError> {\n        let id = entity.id.clone().expect(\"id is set\");\n        self.db.delete(\"Product\", \"products\", doc! { \"_id\": bson_values::of_object_id(&id)? }).await\n    }\n\n    async fn add_related(&self, id: String, related: String) -> Result<Option<Product>, DomainError> {\n        if !bson_values::is_object_id(&id) {\n            return Ok(None);\n        }\n        let change = doc! { \"$push\": { \"related\": bson_values::of_object_id(&related)? } };\n        let changed = self.db.change(\"Product\", \"products\", doc! { \"_id\": bson_values::of_object_id(&id)? }, change).await?;\n        Ok(changed.as_ref().map(Product::from_document).transpose()?)\n    }\n\n    async fn remove_related(&self, id: String, related: String) -> Result<Option<Product>, DomainError> {\n        if !bson_values::is_object_id(&id) {\n            return Ok(None);\n        }\n        let change = doc! { \"$pull\": { \"related\": bson_values::of_object_id(&related)? } };\n        let changed = self.db.change(\"Product\", \"products\", doc! { \"_id\": bson_values::of_object_id(&id)? }, change).await?;\n        Ok(changed.as_ref().map(Product::from_document).transpose()?)\n    }\n}\n\n/// Keeps products rows in memory, for tests and for trying the services without a database. Its copies share the rows.\n#[derive(Clone, Default)]\npub struct MemoryProductRepository {\n    rows: Arc<Mutex<Vec<Product>>>,\n}\n\nimpl MemoryProductRepository {\n    /// The rows reads see, by primary key.\n    fn visible(&self) -> Vec<Product> {\n        let mut rows: Vec<Product> = self.rows.lock().unwrap().iter().cloned().collect();\n        rows.sort_by(|a, b| key_of(a).partial_cmp(&key_of(b)).unwrap_or(Ordering::Equal));\n        rows\n    }\n\n    /// Keeps a row, in place of the one with its key.\n    fn store(&self, entity: &Product) {\n        let mut rows = self.rows.lock().unwrap();\n        rows.retain(|row| key_of(row) != key_of(entity));\n        rows.push(entity.clone());\n    }\n}\n\n/// The key of a row, as a tuple of its key values.\nfn key_of(row: &Product) -> (Option<String>,) {\n    (row.id.clone(),)\n}\n\n#[async_trait]\nimpl ProductRepository for MemoryProductRepository {\n    async fn find_by_id(&self, id: String) -> Result<Option<Product>, DomainError> {\n        Ok(self.visible().into_iter().find(|row| row.id.as_ref() == Some(&id)))\n    }\n\n    async fn list(&self, offset: u64, limit: u64) -> Result<Page<Product>, DomainError> {\n        let rows = self.visible();\n        let total = rows.len() as u64;\n        Ok(Page { items: rows.into_iter().skip(offset as usize).take(limit as usize).collect(), total, offset, limit })\n    }\n\n    async fn find_by_sku(&self, sku: String) -> Result<Option<Product>, DomainError> {\n        Ok(self.visible().into_iter().find(|row| row.sku.as_ref() == Some(&sku)))\n    }\n\n    async fn find_all_by_title(&self, title: String) -> Result<Vec<Product>, DomainError> {\n        Ok(self.visible().into_iter().filter(|row| row.title.as_ref() == Some(&title)).collect())\n    }\n\n    async fn insert(&self, entity: Product) -> Result<Product, DomainError> {\n        let mut entity = entity;\n        entity.id = entity.id.or_else(|| Some(mongodb::bson::oid::ObjectId::new().to_hex()));\n        entity.stock = entity.stock.or_else(|| Some(0.0));\n        self.store(&entity);\n        Ok(entity)\n    }\n\n    async fn update(&self, entity: Product) -> Result<Product, DomainError> {\n        self.store(&entity);\n        Ok(entity)\n    }\n\n    async fn delete(&self, entity: &Product) -> Result<(), DomainError> {\n        self.rows.lock().unwrap().retain(|row| key_of(row) != key_of(entity));\n        Ok(())\n    }\n\n    async fn add_related(&self, id: String, related: String) -> Result<Option<Product>, DomainError> {\n        let Some(mut found) = self.visible().into_iter().find(|row| row.id.as_ref() == Some(&id)) else {\n            return Ok(None);\n        };\n        found.related.get_or_insert_default().push(related);\n        self.store(&found);\n        Ok(Some(found))\n    }\n\n    async fn remove_related(&self, id: String, related: String) -> Result<Option<Product>, DomainError> {\n        let Some(mut found) = self.visible().into_iter().find(|row| row.id.as_ref() == Some(&id)) else {\n            return Ok(None);\n        };\n        found.related.get_or_insert_default().retain(|item| *item != related);\n        self.store(&found);\n        Ok(Some(found))\n    }\n}\n",
+  "src/unit_of_work.rs": "//! The unit of work: the repositories of every table, and the transactions that group their writes.\n\nuse async_trait::async_trait;\nuse crate::database::Db;\nuse crate::errors::DomainError;\nuse crate::repositories::country::{CountryRepository, MemoryCountryRepository, MongoCountryRepository};\nuse crate::repositories::customer::{CustomerRepository, MemoryCustomerRepository, MongoCustomerRepository};\nuse crate::repositories::order::{MemoryOrderRepository, OrderRepository, MongoOrderRepository};\nuse crate::repositories::product::{MemoryProductRepository, ProductRepository, MongoProductRepository};\nuse mongodb::{ClientSession, Database};\nuse std::sync::Arc;\nuse tokio::sync::Mutex;\n\n/// What services depend on: a repository per table and transactions. Every repository write is committed at once; services open no transaction.\n#[async_trait]\npub trait UnitOfWork: Send + Sync {\n    fn customers(&self) -> Box<dyn CustomerRepository + '_>;\n    fn products(&self) -> Box<dyn ProductRepository + '_>;\n    fn orders(&self) -> Box<dyn OrderRepository + '_>;\n    fn countries(&self) -> Box<dyn CountryRepository + '_>;\n\n    /// A unit of work in a new transaction: its changes are kept when it is committed, and dropped otherwise.\n    async fn begin(&self) -> Result<Box<dyn UnitOfWork>, DomainError>;\n\n    /// Keeps the changes of the transaction this unit of work is in.\n    async fn commit(self: Box<Self>) -> Result<(), DomainError>;\n}\n\n/// The repositories over one database, and its transactions.\npub struct MongoUnitOfWork {\n    db: Db,\n    /// Whether someone else opened the transaction, and commits it\n    joined: bool,\n}\n\nimpl MongoUnitOfWork {\n    /// The repositories over a database: every write outside a transaction is stored at once.\n    pub fn new(database: Database) -> Self {\n        Self { db: Db { database, session: None }, joined: false }\n    }\n\n    /// The repositories inside the transaction of a session someone else opened; commit() commits it.\n    pub fn in_transaction(database: Database, session: ClientSession) -> Self {\n        Self { db: Db { database, session: Some(Arc::new(Mutex::new(session))) }, joined: false }\n    }\n}\n\n#[async_trait]\nimpl UnitOfWork for MongoUnitOfWork {\n    fn customers(&self) -> Box<dyn CustomerRepository + '_> {\n        Box::new(MongoCustomerRepository::new(&self.db))\n    }\n\n    fn products(&self) -> Box<dyn ProductRepository + '_> {\n        Box::new(MongoProductRepository::new(&self.db))\n    }\n\n    fn orders(&self) -> Box<dyn OrderRepository + '_> {\n        Box::new(MongoOrderRepository::new(&self.db))\n    }\n\n    fn countries(&self) -> Box<dyn CountryRepository + '_> {\n        Box::new(MongoCountryRepository::new(&self.db))\n    }\n\n    async fn begin(&self) -> Result<Box<dyn UnitOfWork>, DomainError> {\n        // Joins the transaction already open: whoever opened it commits it\n        if self.db.session.is_some() {\n            return Ok(Box::new(MongoUnitOfWork { db: self.db.clone(), joined: true }));\n        }\n        let mut session = self.db.database.client().start_session().await?;\n        session.start_transaction().await?;\n        Ok(Box::new(MongoUnitOfWork::in_transaction(self.db.database.clone(), session)))\n    }\n\n    async fn commit(self: Box<Self>) -> Result<(), DomainError> {\n        if let (Some(session), false) = (&self.db.session, self.joined) {\n            session.lock().await.commit_transaction().await?;\n        }\n        Ok(())\n    }\n}\n\n/// The in-memory repositories, for tests and for trying the services without a database. Memory has no\n/// transactions: changes are kept as they are made, and every copy of it shares the same rows.\n#[derive(Clone, Default)]\npub struct MemoryUnitOfWork {\n    customers: MemoryCustomerRepository,\n    products: MemoryProductRepository,\n    orders: MemoryOrderRepository,\n    countries: MemoryCountryRepository,\n}\n\n#[async_trait]\nimpl UnitOfWork for MemoryUnitOfWork {\n    fn customers(&self) -> Box<dyn CustomerRepository + '_> {\n        Box::new(self.customers.clone())\n    }\n\n    fn products(&self) -> Box<dyn ProductRepository + '_> {\n        Box::new(self.products.clone())\n    }\n\n    fn orders(&self) -> Box<dyn OrderRepository + '_> {\n        Box::new(self.orders.clone())\n    }\n\n    fn countries(&self) -> Box<dyn CountryRepository + '_> {\n        Box::new(self.countries.clone())\n    }\n\n    async fn begin(&self) -> Result<Box<dyn UnitOfWork>, DomainError> {\n        Ok(Box::new(self.clone()))\n    }\n\n    async fn commit(self: Box<Self>) -> Result<(), DomainError> {\n        Ok(())\n    }\n}\n",
+  "tests/data/country_repository.rs": "//! The repository of the \"countries\" table, against the test database.\n\nuse mongorust_mongodb_repositories_only::unit_of_work::UnitOfWork;\nuse super::{database, factories};\n\n#[tokio::test]\nasync fn is_stored_and_read_back() {\n    let (_turn, uow) = database::open().await;\n    let stored = factories::add_country(&uow, 1).await;\n    let found = uow.countries().find_by_document_id(stored.document_id.clone().expect(\"document_id is set\")).await.expect(\"a read\").expect(\"the row\");\n    assert_eq!(stored.document_id, found.document_id);\n    assert!(uow.countries().find_by_id(stored.id.expect(\"id is set\")).await.expect(\"a read\").is_some());\n}\n\n#[tokio::test]\nasync fn lists_rows_by_key() {\n    let (_turn, uow) = database::open().await;\n    factories::add_country(&uow, 1).await;\n    factories::add_country(&uow, 2).await;\n    let page = uow.countries().list(0, 1).await.expect(\"a page\");\n    assert_eq!(2, page.total);\n    assert_eq!(1, page.items.len());\n}\n\n#[tokio::test]\nasync fn stores_the_changes() {\n    let (_turn, uow) = database::open().await;\n    let mut stored = factories::add_country(&uow, 1).await;\n    stored.name = Some(\"changed\".to_string());\n    uow.countries().update(stored.clone()).await.expect(\"an update\");\n    let found = uow.countries().find_by_document_id(stored.document_id.clone().expect(\"document_id is set\")).await.expect(\"a read\");\n    assert_eq!(Some(\"changed\".to_string()), found.and_then(|row| row.name));\n}\n\n#[tokio::test]\nasync fn is_deleted() {\n    let (_turn, uow) = database::open().await;\n    let stored = factories::add_country(&uow, 1).await;\n    uow.countries().delete(&stored).await.expect(\"a delete\");\n    assert!(uow.countries().find_by_document_id(stored.document_id.clone().expect(\"document_id is set\")).await.expect(\"a read\").is_none());\n}\n",
+  "tests/data/customer_repository.rs": "//! The repository of the \"customers\" table, against the test database.\n\nuse mongorust_mongodb_repositories_only::unit_of_work::UnitOfWork;\nuse super::{database, factories};\n\n#[tokio::test]\nasync fn is_stored_and_read_back() {\n    let (_turn, uow) = database::open().await;\n    let stored = factories::add_customer(&uow, 1).await;\n    let found = uow.customers().find_by_id(stored.id.clone().expect(\"id is set\")).await.expect(\"a read\").expect(\"the row\");\n    assert_eq!(stored.id, found.id);\n    assert!(uow.customers().find_by_email(stored.email.clone().expect(\"email is set\")).await.expect(\"a read\").is_some());\n}\n\n#[tokio::test]\nasync fn lists_rows_by_key() {\n    let (_turn, uow) = database::open().await;\n    factories::add_customer(&uow, 1).await;\n    factories::add_customer(&uow, 2).await;\n    let page = uow.customers().list(0, 1).await.expect(\"a page\");\n    assert_eq!(2, page.total);\n    assert_eq!(1, page.items.len());\n}\n\n#[tokio::test]\nasync fn adds_and_removes_one_item_of_tags() {\n    let (_turn, uow) = database::open().await;\n    let stored = factories::add_customer(&uow, 1).await;\n    let before = stored.tags.as_ref().map_or(0, Vec::len);\n    let n = 7;\n    let item: String = format!(\"tags-{n}\");\n    let added = uow.customers().add_tag(stored.id.clone().expect(\"id is set\"), item.clone()).await.expect(\"a write\").expect(\"the row\");\n    assert_eq!(before + 1, added.tags.as_ref().map_or(0, Vec::len));\n    let removed = uow.customers().remove_tag(stored.id.clone().expect(\"id is set\"), item).await.expect(\"a write\").expect(\"the row\");\n    assert_eq!(before, removed.tags.as_ref().map_or(0, Vec::len));\n}\n",
+  "tests/data/database.rs": "//! The test database: the MongoDB database TEST_DATABASE_URL names, with every collection created empty before every test.\n\nuse mongodb::{Database, IndexModel};\nuse mongodb::bson::{Document, doc};\nuse mongodb::options::IndexOptions;\nuse mongorust_mongodb_repositories_only::database::database_at;\nuse mongorust_mongodb_repositories_only::unit_of_work::MongoUnitOfWork;\nuse tokio::sync::{Mutex, MutexGuard};\n\n/// Every test empties the same database: they take turns\nstatic TURN: Mutex<()> = Mutex::const_new(());\n\n/// The test database.\npub async fn connect() -> Database {\n    let url = std::env::var(\"TEST_DATABASE_URL\").expect(\n        \"The database tests need a disposable MongoDB database (a replica set, for its transactions): set TEST_DATABASE_URL (it is emptied)\",\n    );\n    database_at(&url).await.expect(\"the test database\")\n}\n\n/// The repositories over the test database, with its collections and their indexes created again, and the turn of the\n/// test that holds it.\npub async fn open() -> (MutexGuard<'static, ()>, MongoUnitOfWork) {\n    let turn = TURN.lock().await;\n    let database = connect().await;\n    database.drop().await.expect(\"an empty database\");\n    database.create_collection(\"customers\").await.expect(\"a collection\");\n    database.create_collection(\"products\").await.expect(\"a collection\");\n    database.create_collection(\"orders\").await.expect(\"a collection\");\n    database.create_collection(\"countries\").await.expect(\"a collection\");\n    let index = IndexModel::builder().keys(doc! { \"email\": 1 }).options(IndexOptions::builder().unique(true).build()).build();\n    database.collection::<Document>(\"customers\").create_index(index).await.expect(\"an index\");\n    let index = IndexModel::builder().keys(doc! { \"sku\": 1 }).options(IndexOptions::builder().unique(true).build()).build();\n    database.collection::<Document>(\"products\").create_index(index).await.expect(\"an index\");\n    let index = IndexModel::builder().keys(doc! { \"title\": 1 }).build();\n    database.collection::<Document>(\"products\").create_index(index).await.expect(\"an index\");\n    let index = IndexModel::builder().keys(doc! { \"year\": 1, \"number\": 1 }).options(IndexOptions::builder().unique(true).build()).build();\n    database.collection::<Document>(\"orders\").create_index(index).await.expect(\"an index\");\n    let index = IndexModel::builder().keys(doc! { \"customer\": 1 }).build();\n    database.collection::<Document>(\"orders\").create_index(index).await.expect(\"an index\");\n    let index = IndexModel::builder().keys(doc! { \"id\": 1 }).options(IndexOptions::builder().unique(true).build()).build();\n    database.collection::<Document>(\"countries\").create_index(index).await.expect(\"an index\");\n    (turn, MongoUnitOfWork::new(database))\n}\n\n#[tokio::test]\nasync fn is_the_one_test_database_url_names() {\n    let _turn = TURN.lock().await;\n    let url = std::env::var(\"TEST_DATABASE_URL\").expect(\"TEST_DATABASE_URL\");\n    let name = url.rsplit('/').next().and_then(|name| name.split('?').next());\n    assert_eq!(name, Some(connect().await.name()));\n}\n",
+  "tests/data/factories.rs": "//! Rows for the tests: valid values for every column, and the rows they point to.\n\n// Not every test uses every factory\n#![allow(dead_code)]\n\nuse mongorust_mongodb_repositories_only::entities::country::Country;\nuse mongorust_mongodb_repositories_only::entities::customer::Customer;\nuse mongorust_mongodb_repositories_only::entities::order::Order;\nuse mongorust_mongodb_repositories_only::entities::product::Product;\nuse mongorust_mongodb_repositories_only::unit_of_work::UnitOfWork;\n\n/// A valid Customer that is not stored yet; n makes its unique values differ.\npub fn new_customer(n: i32) -> Customer {\n    Customer {\n        email: Some(format!(\"email-{n}\")),\n        name: Some(format!(\"name-{n}\")),\n        password_hash: Some(format!(\"passwordhash-{n}\")),\n        active: Some(true),\n        level: Some(\"basic\".to_string()),\n        address: Some(new_customer_address(n)),\n        tags: Some(Vec::new()),\n        preferences: Some(new_customer_preferences(n)),\n        extra: Some(mongodb::bson::bson!({ \"n\": n })),\n        updated_at: Some(chrono::NaiveDate::from_ymd_opt(2026, 1, (n % 28 + 1) as u32).expect(\"a date\").and_hms_opt(12, 0, 0).expect(\"a time\").and_utc()),\n        ..Default::default()\n    }\n}\n\n/// A stored Customer.\npub async fn add_customer(uow: &dyn UnitOfWork, n: i32) -> Customer {\n    let entity = new_customer(n);\n    uow.customers().insert(entity).await.expect(\"a stored Customer\")\n}\n\n/// A valid CustomerAddress; n makes its values differ.\npub fn new_customer_address(n: i32) -> mongorust_mongodb_repositories_only::entities::customer::CustomerAddress {\n    mongorust_mongodb_repositories_only::entities::customer::CustomerAddress {\n        street: Some(format!(\"street-{n}\")),\n        city: Some(format!(\"city-{n}\")),\n        zip_code: Some(format!(\"zipcode-{n}\")),\n        location: Some(new_customer_address_location(n)),\n        ..Default::default()\n    }\n}\n\n/// A valid CustomerAddressLocation; n makes its values differ.\npub fn new_customer_address_location(_n: i32) -> mongorust_mongodb_repositories_only::entities::customer::CustomerAddressLocation {\n    mongorust_mongodb_repositories_only::entities::customer::CustomerAddressLocation {\n        r#type: Some(\"Point\".to_string()),\n        coordinates: Some(Vec::new()),\n        ..Default::default()\n    }\n}\n\n/// A valid CustomerPreferences; n makes its values differ.\npub fn new_customer_preferences(n: i32) -> mongorust_mongodb_repositories_only::entities::customer::CustomerPreferences {\n    mongorust_mongodb_repositories_only::entities::customer::CustomerPreferences {\n        theme: Some(format!(\"theme-{n}\")),\n        newsletter: Some(true),\n        ..Default::default()\n    }\n}\n\n/// A valid Product that is not stored yet; n makes its unique values differ.\npub fn new_product(n: i32) -> Product {\n    Product {\n        sku: Some(format!(\"sku-{n}\")),\n        title: Some(format!(\"title-{n}\")),\n        price: Some(rust_decimal::Decimal::new(i64::from(n % 10000) * 100 + 50, 2)),\n        stock: Some(f64::from(n) + 0.5),\n        reference: Some(uuid::Uuid::from_u128(n as u128)),\n        picture: Some(vec![n as u8]),\n        related: Some(Vec::new()),\n        ..Default::default()\n    }\n}\n\n/// A stored Product.\npub async fn add_product(uow: &dyn UnitOfWork, n: i32) -> Product {\n    let entity = new_product(n);\n    uow.products().insert(entity).await.expect(\"a stored Product\")\n}\n\n/// A valid Order that is not stored yet; n makes its unique values differ.\npub fn new_order(n: i32) -> Order {\n    Order {\n        number: Some(f64::from(n) + 0.5),\n        year: Some(f64::from(n) + 0.5),\n        lines: Some(vec![new_order_line(n)]),\n        notes: Some(vec![new_order_note(n)]),\n        ..Default::default()\n    }\n}\n\n/// A stored Order, with the rows it points to.\npub async fn add_order(uow: &dyn UnitOfWork, n: i32) -> Order {\n    let parent0 = add_customer(uow, n).await;\n    let mut entity = new_order(n);\n    entity.customer = parent0.id.clone();\n    uow.orders().insert(entity).await.expect(\"a stored Order\")\n}\n\n/// A valid OrderLine; n makes its values differ.\npub fn new_order_line(n: i32) -> mongorust_mongodb_repositories_only::entities::order::OrderLine {\n    mongorust_mongodb_repositories_only::entities::order::OrderLine {\n        product: Some(format!(\"{n:024x}\")),\n        quantity: Some(f64::from(1 + n) + 0.5),\n        price: Some(rust_decimal::Decimal::new(i64::from(n % 10000) * 100 + 50, 2)),\n        status: Some(\"pending\".to_string()),\n        ..Default::default()\n    }\n}\n\n/// A valid OrderNote; n makes its values differ.\npub fn new_order_note(n: i32) -> mongorust_mongodb_repositories_only::entities::order::OrderNote {\n    mongorust_mongodb_repositories_only::entities::order::OrderNote {\n        text: Some(format!(\"text-{n}\")),\n        at: Some(chrono::NaiveDate::from_ymd_opt(2026, 1, (n % 28 + 1) as u32).expect(\"a date\").and_hms_opt(12, 0, 0).expect(\"a time\").and_utc()),\n        ..Default::default()\n    }\n}\n\n/// A valid Country that is not stored yet; n makes its unique values differ.\npub fn new_country(n: i32) -> Country {\n    Country {\n        document_id: Some(format!(\"id-{n}\")),\n        id: Some(f64::from(n) + 0.5),\n        name: Some(format!(\"name-{n}\")),\n        ..Default::default()\n    }\n}\n\n/// A stored Country.\npub async fn add_country(uow: &dyn UnitOfWork, n: i32) -> Country {\n    let entity = new_country(n);\n    uow.countries().insert(entity).await.expect(\"a stored Country\")\n}\n",
+  "tests/data/main.rs": "//! The tests of the data access layer: the repositories against a real database, the services on the in-memory\n//! repositories (or on the database when the project has none).\n\nmod database;\nmod factories;\nmod customer_repository;\nmod product_repository;\nmod order_repository;\nmod country_repository;\n",
+  "tests/data/order_repository.rs": "//! The repository of the \"orders\" table, against the test database.\n\nuse mongorust_mongodb_repositories_only::unit_of_work::UnitOfWork;\nuse super::{database, factories};\n\n#[tokio::test]\nasync fn is_stored_and_read_back() {\n    let (_turn, uow) = database::open().await;\n    let stored = factories::add_order(&uow, 1).await;\n    let found = uow.orders().find_by_id(stored.id.clone().expect(\"id is set\")).await.expect(\"a read\").expect(\"the row\");\n    assert_eq!(stored.id, found.id);\n    assert!(uow.orders().find_by_year_and_number(stored.year.expect(\"year is set\"), stored.number.expect(\"number is set\")).await.expect(\"a read\").is_some());\n    assert_eq!(1, uow.orders().list_by_customer(stored.customer.clone().expect(\"customer is set\")).await.expect(\"a read\").len());\n}\n\n#[tokio::test]\nasync fn lists_rows_by_key() {\n    let (_turn, uow) = database::open().await;\n    factories::add_order(&uow, 1).await;\n    factories::add_order(&uow, 2).await;\n    let page = uow.orders().list(0, 1).await.expect(\"a page\");\n    assert_eq!(2, page.total);\n    assert_eq!(1, page.items.len());\n}\n\n#[tokio::test]\nasync fn is_deleted() {\n    let (_turn, uow) = database::open().await;\n    let stored = factories::add_order(&uow, 1).await;\n    uow.orders().delete(&stored).await.expect(\"a delete\");\n    assert!(uow.orders().find_by_id(stored.id.clone().expect(\"id is set\")).await.expect(\"a read\").is_none());\n}\n\n#[tokio::test]\nasync fn adds_and_removes_one_item_of_lines() {\n    let (_turn, uow) = database::open().await;\n    let stored = factories::add_order(&uow, 1).await;\n    let before = stored.lines.as_ref().map_or(0, Vec::len);\n    let n = 7;\n    let item: mongorust_mongodb_repositories_only::entities::order::OrderLine = factories::new_order_line(n);\n    let added = uow.orders().add_line(stored.id.clone().expect(\"id is set\"), item).await.expect(\"a write\").expect(\"the row\");\n    assert_eq!(before + 1, added.lines.as_ref().map_or(0, Vec::len));\n    let removed = uow.orders().remove_line(stored.id.clone().expect(\"id is set\"), added.lines.as_ref().expect(\"lines\")[before].id.clone().expect(\"an identifier\")).await.expect(\"a write\").expect(\"the row\");\n    assert_eq!(before, removed.lines.as_ref().map_or(0, Vec::len));\n}\n\n#[tokio::test]\nasync fn adds_and_removes_one_item_of_notes() {\n    let (_turn, uow) = database::open().await;\n    let stored = factories::add_order(&uow, 1).await;\n    let before = stored.notes.as_ref().map_or(0, Vec::len);\n    let n = 7;\n    let item: mongorust_mongodb_repositories_only::entities::order::OrderNote = factories::new_order_note(n);\n    let added = uow.orders().add_note(stored.id.clone().expect(\"id is set\"), item).await.expect(\"a write\").expect(\"the row\");\n    assert_eq!(before + 1, added.notes.as_ref().map_or(0, Vec::len));\n    let removed = uow.orders().remove_note(stored.id.clone().expect(\"id is set\"), added.notes.as_ref().expect(\"notes\")[before].id.clone().expect(\"an identifier\")).await.expect(\"a write\").expect(\"the row\");\n    assert_eq!(before, removed.notes.as_ref().map_or(0, Vec::len));\n}\n",
+  "tests/data/product_repository.rs": "//! The repository of the \"products\" table, against the test database.\n\nuse mongorust_mongodb_repositories_only::unit_of_work::UnitOfWork;\nuse super::{database, factories};\n\n#[tokio::test]\nasync fn is_stored_and_read_back() {\n    let (_turn, uow) = database::open().await;\n    let stored = factories::add_product(&uow, 1).await;\n    let found = uow.products().find_by_id(stored.id.clone().expect(\"id is set\")).await.expect(\"a read\").expect(\"the row\");\n    assert_eq!(stored.id, found.id);\n    assert!(uow.products().find_by_sku(stored.sku.clone().expect(\"sku is set\")).await.expect(\"a read\").is_some());\n}\n\n#[tokio::test]\nasync fn lists_rows_by_key() {\n    let (_turn, uow) = database::open().await;\n    factories::add_product(&uow, 1).await;\n    factories::add_product(&uow, 2).await;\n    let page = uow.products().list(0, 1).await.expect(\"a page\");\n    assert_eq!(2, page.total);\n    assert_eq!(1, page.items.len());\n}\n\n#[tokio::test]\nasync fn stores_the_changes() {\n    let (_turn, uow) = database::open().await;\n    let mut stored = factories::add_product(&uow, 1).await;\n    stored.title = Some(\"changed\".to_string());\n    uow.products().update(stored.clone()).await.expect(\"an update\");\n    let found = uow.products().find_by_id(stored.id.clone().expect(\"id is set\")).await.expect(\"a read\");\n    assert_eq!(Some(\"changed\".to_string()), found.and_then(|row| row.title));\n}\n\n#[tokio::test]\nasync fn is_deleted() {\n    let (_turn, uow) = database::open().await;\n    let stored = factories::add_product(&uow, 1).await;\n    uow.products().delete(&stored).await.expect(\"a delete\");\n    assert!(uow.products().find_by_id(stored.id.clone().expect(\"id is set\")).await.expect(\"a read\").is_none());\n}\n\n#[tokio::test]\nasync fn adds_and_removes_one_item_of_related() {\n    let (_turn, uow) = database::open().await;\n    let stored = factories::add_product(&uow, 1).await;\n    let before = stored.related.as_ref().map_or(0, Vec::len);\n    let n = 7;\n    let item: String = format!(\"{n:024x}\");\n    let added = uow.products().add_related(stored.id.clone().expect(\"id is set\"), item.clone()).await.expect(\"a write\").expect(\"the row\");\n    assert_eq!(before + 1, added.related.as_ref().map_or(0, Vec::len));\n    let removed = uow.products().remove_related(stored.id.clone().expect(\"id is set\"), item).await.expect(\"a write\").expect(\"the row\");\n    assert_eq!(before, removed.related.as_ref().map_or(0, Vec::len));\n}\n"
+ }
+}

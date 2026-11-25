@@ -8,7 +8,7 @@ import { mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync }
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { onOriginalDatabase, originalDdl } from './original-ddl.mjs'
-import { withCsharpRoundTrip, withJavaRoundTrip, withKotlinRoundTrip, withPhpRoundTrip, withPythonRoundTrip, withRoundTrip } from './mongodb-round-trip.mjs'
+import { withCsharpRoundTrip, withJavaRoundTrip, withKotlinRoundTrip, withPhpRoundTrip, withPythonRoundTrip, withRustRoundTrip, withRoundTrip } from './mongodb-round-trip.mjs'
 import { SCENARIOS } from './scenarios/index.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -69,6 +69,7 @@ for (const scenario of SCENARIOS.filter((item) => item.id.startsWith(prefix))) {
   if (scenario.code?.startsWith('mongodb/') && scenario.settings.language === 'csharp') files = withCsharpRoundTrip(files, scenario.settings, scenario.code)
   if (scenario.code?.startsWith('mongodb/') && scenario.settings.language === 'java') files = withJavaRoundTrip(files, scenario.settings, scenario.code)
   if (scenario.code?.startsWith('mongodb/') && scenario.settings.language === 'kotlin') files = withKotlinRoundTrip(files, scenario.settings, scenario.code)
+  if (scenario.code?.startsWith('mongodb/') && scenario.settings.language === 'rust') files = withRustRoundTrip(files, scenario.settings, scenario.code)
   if (scenario.code?.startsWith('mongodb/') && scenario.settings.language === 'python') files = withPythonRoundTrip(files, scenario.settings, scenario.code)
   if (scenario.code?.startsWith('mongodb/') && scenario.settings.language === 'typescript') files = withRoundTrip(files, scenario.settings, scenario.code)
   const folder = join(work, scenario.id)

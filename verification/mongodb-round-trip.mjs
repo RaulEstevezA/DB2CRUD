@@ -1101,3 +1101,222 @@ export function withKotlinRoundTrip(files, settings, code) {
     : KOTLIN_CLINIC.replace('VALIDATORS', () => JSON.stringify(JSON.stringify(clinicValidators())).replaceAll('$', '\\$'))
   return [...files, { path: 'src/test/kotlin/app/RoundTripTest.kt', content: content.replaceAll('READ_ID', read).replaceAll('findById', read) }]
 }
+
+// Rust: the same, in tokio tests
+
+const RUST_SHOP = `//! What no other test of the project says.
+
+use mongodb::bson::{Bson, Document, doc};
+use CRATE::bson_values;
+use CRATE::database::Db;
+use CRATE::entities::order::OrderLine;
+use CRATE::errors::DomainError;
+use CRATE::unit_of_work::{MongoUnitOfWork, UnitOfWork};
+
+use super::{database, factories};
+
+async fn stored(collection: &str) -> Option<Document> {
+    database::connect().await.collection::<Document>(collection).find_one(doc! {}).await.expect("a read")
+}
+
+#[tokio::test]
+async fn keeps_every_value_and_its_type() {
+    let (_turn, uow) = database::open().await;
+    let mut product = uow.products().insert(factories::new_product(1)).await.expect("a product");
+    let id = product.id.clone().expect("id");
+    let found = uow.products().READ_ID(id.clone()).await.expect("a read").expect("the row");
+    assert_eq!(product, found);
+    product.related = Some(vec!["0123456789abcdef01234567".to_string()]);
+    uow.products().update(product.clone()).await.expect("an update");
+    assert_eq!(product.related, uow.products().READ_ID(id).await.expect("a read").expect("the row").related);
+    let document = stored("products").await.expect("a document");
+    assert!(matches!(document.get("_id"), Some(Bson::ObjectId(_))));
+    assert!(matches!(document.get("price"), Some(Bson::Decimal128(_))));
+    assert!(matches!(document.get("reference"), Some(Bson::Binary(binary)) if binary.subtype == mongodb::bson::spec::BinarySubtype::Uuid));
+    assert!(matches!(document.get_array("related").expect("a list")[0], Bson::ObjectId(_)));
+    let order = factories::add_order(&uow, 2).await;
+    let read = uow.orders().READ_ID(order.id.clone().expect("id")).await.expect("a read").expect("the row");
+    assert_eq!(order.lines, read.lines);
+    assert_eq!(order.notes, read.notes);
+    let document = stored("orders").await.expect("a document");
+    let line = document.get_array("lines").expect("a list")[0].as_document().expect("a line").clone();
+    assert!(matches!(line.get("_id"), Some(Bson::ObjectId(_))));
+    assert!(matches!(line.get("product"), Some(Bson::ObjectId(_))));
+    assert!(matches!(line.get("price"), Some(Bson::Decimal128(_))));
+    let customer = factories::add_customer(&uow, 5).await;
+    let other = uow.customers().READ_ID(customer.id.clone().expect("id")).await.expect("a read").expect("the row");
+    assert_eq!(customer.address, other.address);
+    assert_eq!(customer.preferences, other.preferences);
+    assert_eq!(customer.extra, other.extra);
+}
+
+#[tokio::test]
+async fn changes_only_what_is_different() {
+    let (_turn, uow) = database::open().await;
+    let mut inserted = factories::add_customer(&uow, 1).await;
+    let id = inserted.id.clone().expect("id");
+    let target = database::connect().await.collection::<Document>("customers");
+    target.update_one(doc! {}, doc! { "$set": { "unknown": 1, "address.unknown": 2 } }).await.expect("a change");
+    let mut one = uow.customers().READ_ID(id.clone()).await.expect("a read").expect("the row");
+    let mut other = uow.customers().READ_ID(id.clone()).await.expect("a read").expect("the row");
+    one.name = Some("one".to_string());
+    other.level = Some("gold".to_string());
+    other.address.as_mut().expect("address").city = Some("Madrid".to_string());
+    other.password_hash = None;
+    uow.customers().update(one).await.expect("an update");
+    uow.customers().update(other).await.expect("an update");
+    let document = stored("customers").await.expect("a document");
+    assert_eq!(document.get_str("name").ok(), Some("one"));
+    assert_eq!(document.get_str("level").ok(), Some("gold"));
+    assert_eq!(document.get_i32("unknown").ok(), Some(1));
+    let address = document.get_document("address").expect("an address");
+    assert_eq!(address.get_str("city").ok(), Some("Madrid"));
+    assert_eq!(address.get_i32("unknown").ok(), Some(2));
+    assert!(!document.contains_key("passwordHash"));
+    // The entity an insert gives changes only its fields too
+    inserted.name = Some("again".to_string());
+    uow.customers().update(inserted).await.expect("an update");
+    let document = stored("customers").await.expect("a document");
+    assert_eq!((document.get_str("name").ok(), document.get_str("level").ok()), (Some("again"), Some("gold")));
+}
+
+#[tokio::test]
+async fn does_not_undo_what_others_change_in_a_list() {
+    let (_turn, uow) = database::open().await;
+    let id = factories::add_order(&uow, 1).await.id.expect("id");
+    let mut mine = uow.orders().READ_ID(id.clone()).await.expect("a read").expect("the row");
+    let repository = uow.orders();
+    let add = |n| repository.add_line(id.clone(), factories::new_order_line(n));
+    let (a, b, c) = tokio::join!(add(0), add(1), add(2));
+    for added in [a, b, c] {
+        added.expect("a write").expect("the row");
+    }
+    mine.number = Some(99.0);
+    uow.orders().update(mine).await.expect("an update");
+    let found = uow.orders().READ_ID(id.clone()).await.expect("a read").expect("the row");
+    let lines = found.lines.expect("lines");
+    assert_eq!(4, lines.len());
+    for line in &lines[1..] {
+        uow.orders().remove_line(id.clone(), line.id.clone().expect("id")).await.expect("a write").expect("the row");
+    }
+    assert_eq!(1, uow.orders().READ_ID(id.clone()).await.expect("a read").expect("the row").lines.expect("lines").len());
+    assert!(uow.orders().add_line("f".repeat(24), OrderLine::default()).await.expect("a write").is_none());
+    assert!(uow.orders().READ_ID("nothing".to_string()).await.expect("a read").is_none());
+    assert!(uow.orders().add_line("nothing".to_string(), OrderLine::default()).await.expect("a write").is_none());
+    assert!(uow.orders().remove_line(id, "nothing".to_string()).await.expect("a write").is_none());
+}
+
+#[tokio::test]
+async fn refuses_repeated_and_wrong_values() {
+    let (_turn, uow) = database::open().await;
+    factories::add_customer(&uow, 1).await;
+    assert!(matches!(uow.customers().insert(factories::new_customer(1)).await, Err(DomainError::Conflict { .. })));
+    // A document with a value of another type is not read as if it had none
+    assert!(bson_values::read(&doc! { "a": "text" }, "a", bson_values::as_f64).is_err());
+    assert_eq!(bson_values::read(&doc! { "a": 2 }, "a", bson_values::as_f64).expect("a number"), Some(2.0));
+}
+TRANSACTION
+#[tokio::test]
+async fn creates_nothing_in_the_database() {
+    let (_turn, _uow) = database::open().await;
+    let database = database::connect().await;
+    database.drop().await.expect("no database");
+    let other = MongoUnitOfWork::new(database.clone());
+    assert!(other.customers().READ_ID("f".repeat(24)).await.expect("a read").is_none());
+    let db = Db { database: database.clone(), session: None };
+    assert_eq!(0, db.count("customers", doc! {}).await.expect("a count"));
+    assert!(database.list_collection_names().await.expect("the names").is_empty());
+}
+`
+
+const RUST_TRANSACTION = `
+#[tokio::test]
+async fn undoes_a_transaction_that_is_not_committed() {
+    let (_turn, uow) = database::open().await;
+    let inside = uow.begin().await.expect("a transaction");
+    let mut customer = factories::add_customer(inside.as_ref(), 1).await;
+    customer.name = Some("changed".to_string());
+    inside.customers().update(customer).await.expect("an update");
+    drop(inside);
+    assert!(stored("customers").await.is_none());
+    let inside = uow.begin().await.expect("a transaction");
+    let joined = inside.begin().await.expect("the same transaction");
+    factories::add_customer(joined.as_ref(), 1).await;
+    joined.commit().await.expect("nothing yet");
+    assert!(stored("customers").await.is_none());
+    inside.commit().await.expect("a commit");
+    assert!(stored("customers").await.is_some());
+}
+`
+
+const RUST_CLINIC = `//! What no other test of the project says.
+
+use mongodb::bson::{Document, doc};
+use CRATE::entities::patient::PatientContact;
+use CRATE::errors::DomainError;
+use CRATE::unit_of_work::UnitOfWork;
+
+use super::{database, factories};
+
+#[tokio::test]
+async fn fits_the_validators_of_the_collections() {
+    let (_turn, uow) = database::open().await;
+    let target = database::connect().await;
+    // The collections with the validators of their own script, as a command of the server
+VALIDATORS
+    let patient = uow.patients().insert(factories::new_patient(1)).await.expect("a patient");
+    let id = patient.id.clone().expect("id");
+    let mut found = uow.patients().find_by_id(id.clone()).await.expect("a read").expect("the row");
+    assert_eq!(patient.birth, found.birth);
+    assert_eq!(patient.balance, found.balance);
+    let mut room = factories::add_room(&uow, 1).await;
+    found.weight = Some(70.0);
+    found.balance = None;
+    found.visits = Some(3);
+    found.contacts.as_mut().expect("contacts").push(PatientContact {
+        kind: Some("email".to_string()),
+        value: Some("a@b.c".to_string()),
+        ..Default::default()
+    });
+    room.beds = Some(4);
+    uow.patients().update(found).await.expect("an update");
+    uow.rooms().update(room.clone()).await.expect("an update");
+    let changed = uow.patients().find_by_id(id.clone()).await.expect("a read").expect("the row");
+    assert_eq!((Some(70.0), None, Some(3), 2), (changed.weight, changed.balance, changed.visits, changed.contacts.expect("contacts").len()));
+    assert_eq!(Some(4), uow.rooms().find_by_id(room.id.expect("id")).await.expect("a read").expect("the row").beds);
+    assert!(matches!(uow.patients().insert(factories::new_patient(1)).await, Err(DomainError::Conflict { .. })));
+    factories::add_patient(&uow, 2).await;
+    // What only the validator of the collection knows is refused too
+    let mut wrong = factories::new_patient(3);
+    wrong.blood = Some("Z".to_string());
+    assert!(matches!(uow.patients().insert(wrong).await, Err(DomainError::Conflict { .. })));
+    let fax = PatientContact { kind: Some("fax".to_string()), value: Some(String::new()), ..Default::default() };
+    assert!(matches!(uow.patients().add_contact(id, fax).await, Err(DomainError::Conflict { .. })));
+    let _: Option<Document> = target.collection("patients").find_one(doc! {}).await.expect("a read");
+}
+`
+
+/** A value as the doc! macro of Rust writes it. */
+const rustDoc = (value) =>
+  Array.isArray(value)
+    ? `[${value.map(rustDoc).join(', ')}]`
+    : value && typeof value === 'object'
+      ? `{ ${Object.entries(value).map(([name, item]) => `${JSON.stringify(name)}: ${rustDoc(item)}`).join(', ')} }`
+      : JSON.stringify(value)
+
+export function withRustRoundTrip(files, settings, code) {
+  if (settings.architecture === 'table') return files
+  const read = settings.verbs === 'get' ? 'get_by_id' : 'find_by_id'
+  const name = /^name = "(.*)"$/m.exec(files.find((file) => file.path === 'Cargo.toml').content)[1]
+  const commands = Object.entries(clinicValidators()).map(
+    ([collection, validator]) =>
+      `    let command = doc! { "collMod": ${JSON.stringify(collection)}, "validator": ${rustDoc(validator)}, "validationAction": "error" };\n    target.run_command(command).await.expect("a validator");`,
+  )
+  const content = code.endsWith('shop.ts')
+    ? RUST_SHOP.replace('TRANSACTION', () => (settings.transactions === 'operation' ? RUST_TRANSACTION : ''))
+    : RUST_CLINIC.replace('VALIDATORS', () => commands.join('\n'))
+  return [
+    ...files.map((file) => (file.path === 'tests/data/main.rs' ? { ...file, content: `${file.content}mod round_trip;\n` } : file)),
+    { path: 'tests/data/round_trip.rs', content: content.replaceAll('READ_ID', read).replaceAll('CRATE', name.replaceAll('-', '_')) },
+  ]
+}
