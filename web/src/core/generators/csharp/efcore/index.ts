@@ -16,6 +16,8 @@ const VERSIONS = {
   efCore: '9.0.23',
   npgsql: '9.0.4',
   pomelo: '9.0.0',
+  // Pomelo asks for an older one, with a known vulnerability (GHSA-473q-m89c-ghf8)
+  mySqlConnector: '2.6.2',
 }
 
 const PROVIDERS: Record<string, [string, string]> = {
@@ -213,6 +215,9 @@ export const efcoreOrm: CsharpOrm = {
   packages: (context) => [
     ['Microsoft.EntityFrameworkCore.Relational', VERSIONS.efCore],
     PROVIDERS[context.settings.database] ?? PROVIDERS.postgresql,
+    ...(['mysql', 'mariadb'].includes(context.settings.database)
+      ? ([['MySqlConnector', VERSIONS.mySqlConnector]] as [string, string][])
+      : []),
   ],
   readme: {
     intro: 'entities mapped with EF Core 9, repositories over `AppDbContext` and services',

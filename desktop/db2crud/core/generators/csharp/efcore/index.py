@@ -9,7 +9,13 @@ from ..tests import test_file, tests_ns
 from .entities import db_context_file, entity_file, enum_type_name, native_text_file, pg_enums, pg_enums_file
 from .repository import ef_body, ef_tail
 
-VERSIONS = {"efCore": "9.0.23", "npgsql": "9.0.4", "pomelo": "9.0.0"}
+VERSIONS = {
+    "efCore": "9.0.23",
+    "npgsql": "9.0.4",
+    "pomelo": "9.0.0",
+    # Pomelo asks for an older one, with a known vulnerability (GHSA-473q-m89c-ghf8)
+    "mySqlConnector": "2.6.2",
+}
 
 PROVIDERS = {
     "postgresql": ("Npgsql.EntityFrameworkCore.PostgreSQL", VERSIONS["npgsql"]),
@@ -235,6 +241,11 @@ EFCORE_ORM = {
     "packages": lambda context: [
         ("Microsoft.EntityFrameworkCore.Relational", VERSIONS["efCore"]),
         PROVIDERS.get(context["settings"]["database"], PROVIDERS["postgresql"]),
+        *(
+            [("MySqlConnector", VERSIONS["mySqlConnector"])]
+            if context["settings"]["database"] in ("mysql", "mariadb")
+            else []
+        ),
     ],
     "readme": {
         "intro": "entities mapped with EF Core 9, repositories over `AppDbContext` and services",

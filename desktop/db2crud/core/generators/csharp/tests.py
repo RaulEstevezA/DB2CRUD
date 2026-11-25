@@ -409,7 +409,7 @@ def _service_tests(context: dict, info: dict, usings: CsUsings) -> list[list]:
             referenced = column_of(parent, key["references"]["columns"][position])["prop"]
             overrides.append({"column": column, "value": f"parent{index}.{referenced}"})
     # The parents take a number the rows of the test never take: a parent may be a row of the same table
-    start = ["var n = 100;", *parents_first]
+    start = ["var n = 100;", *parents_first] if parents_first else []
 
     def row(variable: str, n: int, extra: list | None = None) -> list[str]:
         extra = extra or []

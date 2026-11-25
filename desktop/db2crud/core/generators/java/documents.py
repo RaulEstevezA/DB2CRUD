@@ -78,10 +78,12 @@ def _imports_of(column_type: dict, entity: str) -> list[str]:
     return [java_import] if java_import else []
 
 
-def _nested_class(column: dict, parent: str, taken: set[str]) -> dict | None:
+def _nested_class(column: dict, parent: str, taken: set[str], in_list: bool = False) -> dict | None:
     fields = nested_fields(column["type"])
     if fields is None:
         return None
+    # In a list, at any depth: lists are written whole, so it carries the fields its class does not know
+    listed = in_list or column["type"]["kind"] == "array"
     name = _class_name_of(column["name"], column["type"]["kind"] == "array", taken)
     path = f"{parent}.{name}"
     # A class inside another cannot have the name of one that encloses it
@@ -90,7 +92,7 @@ def _nested_class(column: dict, parent: str, taken: set[str]) -> dict | None:
     used: set[str] = set()
     written = []
     for field in fields:
-        nested = _nested_class(field, path, inside)
+        nested = _nested_class(field, path, inside, listed)
         if nested:
             classes.append(nested)
         prop = "id" if field["name"] == "_id" else member_name(field["name"])
@@ -107,7 +109,7 @@ def _nested_class(column: dict, parent: str, taken: set[str]) -> dict | None:
                 "nested": nested,
             }
         )
-    return {"name": name, "path": path, "fields": written, "classes": classes}
+    return {"name": name, "path": path, "fields": written, "classes": classes, "listed": listed}
 
 
 def nested_classes(columns: list[dict], entity: str) -> dict[str, dict]:

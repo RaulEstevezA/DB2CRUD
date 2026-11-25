@@ -13,6 +13,79 @@ from .repository import CORE, body, head, tail
 VERSIONS = {"springData": "5.1.3", "driver": "5.8.1"}
 
 
+def _listed(classes) -> list[str]:
+    """The classes of the documents in lists of some nested classes."""
+    return [
+        path for item in classes for path in [*([item["path"]] if item["listed"] else []), *_listed(item["classes"])]
+    ]
+
+
+def _items_of(context: dict) -> list[str]:
+    return [path for info in context["tables"] for path in _listed(info["nested"].values())]
+
+
+def _item_converter_file(context: dict) -> dict:
+    pkg = context["base"]
+    items = _items_of(context)
+    imports = JavaImports(pkg).add(
+        "java.util.Collections",
+        "java.util.Map",
+        "java.util.Set",
+        "java.util.WeakHashMap",
+        "org.bson.Document",
+        "org.bson.conversions.Bson",
+        "org.springframework.data.core.TypeInformation",
+        f"{CORE}.convert.MappingMongoConverter",
+        f"{CORE}.convert.NoOpDbRefResolver",
+        f"{CORE}.mapping.MongoMappingContext",
+        f"{CORE}.mapping.MongoPersistentEntity",
+        f"{CORE}.mapping.MongoPersistentProperty",
+    )
+    for info in context["tables"]:
+        if _listed(info["nested"].values()):
+            imports.add(f"{package_of(context, info, 'entity')}.{info['entity']}")
+    return file(
+        pkg,
+        "ItemConverter",
+        [
+            "/** Keeps the fields the classes of the documents of lists do not know: lists are written whole, and would lose them. */",
+            "class ItemConverter extends MappingMongoConverter {",
+            f"    private static final Set<Class<?>> ITEMS = Set.of({', '.join(f'{item}.class' for item in items)});",
+            "",
+            "    /** The fields each item was read with that its class does not know */",
+            "    private static final Map<Object, Document> OTHERS = Collections.synchronizedMap(new WeakHashMap<>());",
+            "",
+            "    ItemConverter(MongoMappingContext mapping) {",
+            "        super(NoOpDbRefResolver.INSTANCE, mapping);",
+            "    }",
+            "",
+            "    @Override",
+            "    protected <S> S readDocument(ConversionContext context, Bson bson, TypeInformation<? extends S> type) {",
+            "        S item = super.readDocument(context, bson, type);",
+            "        if (item != null && ITEMS.contains(item.getClass()) && bson instanceof Document document) {",
+            "            Document others = new Document(document);",
+            "            for (MongoPersistentProperty property : getMappingContext().getRequiredPersistentEntity(item.getClass())) {",
+            "                others.remove(property.getFieldName());",
+            "            }",
+            "            if (!others.isEmpty()) OTHERS.put(item, others);",
+            "        }",
+            "        return item;",
+            "    }",
+            "",
+            "    @Override",
+            "    protected void writeInternal(Object item, Bson bson, MongoPersistentEntity<?> entity) {",
+            "        super.writeInternal(item, bson, entity);",
+            "        if (item != null && ITEMS.contains(item.getClass()) && bson instanceof Document document) {",
+            "            Document others = OTHERS.get(item);",
+            "            if (others != null) others.forEach(document::putIfAbsent);",
+            "        }",
+            "    }",
+            "}",
+        ],
+        imports,
+    )
+
+
 def _database_file(context: dict) -> dict:
     pkg = context["base"]
     imports = JavaImports(pkg).add(
@@ -27,11 +100,14 @@ def _database_file(context: dict) -> dict:
         f"{CORE}.convert.DefaultMongoTypeMapper",
         f"{CORE}.convert.MappingMongoConverter",
         f"{CORE}.convert.MongoCustomConversions",
-        f"{CORE}.convert.NoOpDbRefResolver",
         f"{CORE}.mapping.MongoMappingContext",
     )
+    items = len(_items_of(context)) > 0
+    if not items:
+        imports.add(f"{CORE}.convert.NoOpDbRefResolver")
     for info in context["tables"]:
         imports.add(f"{package_of(context, info, 'entity')}.{info['entity']}")
+    converter = "ItemConverter(mapping)" if items else "MappingMongoConverter(NoOpDbRefResolver.INSTANCE, mapping)"
     entities = ", ".join(f"{info['entity']}.class" for info in context["tables"])
     return file(
         pkg,
@@ -61,7 +137,7 @@ def _database_file(context: dict) -> dict:
             "        MongoMappingContext mapping = new MongoMappingContext();",
             "        mapping.setSimpleTypeHolder(conversions.getSimpleTypeHolder());",
             "        mapping.afterPropertiesSet();",
-            "        MappingMongoConverter converter = new MappingMongoConverter(NoOpDbRefResolver.INSTANCE, mapping);",
+            f"        MappingMongoConverter converter = new {converter};",
             "        converter.setCustomConversions(conversions);",
             "        // Documents hold no name of a Java class",
             "        converter.setTypeMapper(new DefaultMongoTypeMapper(null));",
@@ -280,7 +356,11 @@ SPRING_DATA_ORM = {
     "url": "mongodb://localhost:27017/app",
     "forget": None,
     "emptyList": lambda context: "new java.util.ArrayList<>()",
-    "databaseFiles": lambda context: [_database_file(context), _documents_file(context)],
+    "databaseFiles": lambda context: [
+        _database_file(context),
+        _documents_file(context),
+        *([_item_converter_file(context)] if _items_of(context) else []),
+    ],
     "entityFile": entity_file,
     "repository": {"doc": _doc, "head": head, "body": body, "tail": tail},
     "unitOfWork": _unit_of_work,

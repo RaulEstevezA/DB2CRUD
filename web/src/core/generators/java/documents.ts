@@ -19,6 +19,8 @@ export interface NestedClass {
   fields: NestedField[]
   /** The classes inside it */
   classes: NestedClass[]
+  /** Whether it is in a list, at any depth: lists are written whole, so it carries the fields its class does not know */
+  listed: boolean
 }
 
 export interface NestedField {
@@ -103,9 +105,10 @@ function importsOf(type: DbType, entity: string): string[] {
   }
 }
 
-function nestedClass(column: DbColumn, parent: string, taken: Set<string>): NestedClass | null {
+function nestedClass(column: DbColumn, parent: string, taken: Set<string>, inList = false): NestedClass | null {
   const fields = nestedFields(column.type)
   if (!fields) return null
+  const listed = inList || listDepth(column.type) > 0
   const name = classNameOf(column.name, listDepth(column.type) > 0, taken)
   const path = `${parent}.${name}`
   // A class inside another cannot have the name of one that encloses it
@@ -113,7 +116,7 @@ function nestedClass(column: DbColumn, parent: string, taken: Set<string>): Nest
   const classes: NestedClass[] = []
   const used = new Set<string>()
   const written = fields.map((field): NestedField => {
-    const nested = nestedClass(field, path, inside)
+    const nested = nestedClass(field, path, inside, listed)
     if (nested) classes.push(nested)
     let prop = field.name === '_id' ? 'id' : memberName(field.name)
     while (used.has(prop)) prop += '_'
@@ -127,7 +130,7 @@ function nestedClass(column: DbColumn, parent: string, taken: Set<string>): Nest
       nested,
     }
   })
-  return { name, path, fields: written, classes }
+  return { name, path, fields: written, classes, listed }
 }
 
 /** The classes of the nested documents of a collection, by column. */

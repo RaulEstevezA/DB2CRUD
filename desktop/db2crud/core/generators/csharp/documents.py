@@ -40,10 +40,12 @@ def _value_type(column_type: dict, nested: str | None) -> tuple[str, bool]:
     return csharp_context.cs_type(column_type, "mongodb")
 
 
-def _nested_class(column: dict, parent: str, taken: set[str]) -> dict | None:
+def _nested_class(column: dict, parent: str, taken: set[str], in_list: bool = False) -> dict | None:
     fields = nested_fields(column["type"])
     if fields is None:
         return None
+    # In a list, at any depth: lists are written whole, so it carries the fields its class does not know
+    listed = in_list or _list_depth(column["type"]) > 0
     words = split_words(column["name"])
     last = words[-1] if words else column["name"]
     if _list_depth(column["type"]) > 0:
@@ -66,7 +68,7 @@ def _nested_class(column: dict, parent: str, taken: set[str]) -> dict | None:
     classes: list[dict] = []
     written = []
     for field, prop in zip(fields, props, strict=True):
-        nested = _nested_class(field, path, inside)
+        nested = _nested_class(field, path, inside, listed)
         if nested:
             classes.append(nested)
         cs, value_type = _value_type(field["type"], nested["path"] if nested else None)
@@ -82,7 +84,7 @@ def _nested_class(column: dict, parent: str, taken: set[str]) -> dict | None:
                 "nested": nested,
             }
         )
-    return {"name": name, "path": path, "fields": written, "classes": classes}
+    return {"name": name, "path": path, "fields": written, "classes": classes, "listed": listed}
 
 
 def nested_classes(columns: list[dict], entity: str) -> dict[str, dict]:

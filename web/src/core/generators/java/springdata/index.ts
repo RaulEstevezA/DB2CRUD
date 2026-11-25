@@ -6,6 +6,7 @@
 import type { GeneratedFile } from '../../../export/files.ts'
 import { lines, type Line } from '../../types.ts'
 import { javaPath, JavaImports } from '../java.ts'
+import type { NestedClass } from '../documents.ts'
 import { errorsPackage, packageOf, repositoryType, sqlRepositoryClass, type Context } from '../context.ts'
 import type { JavaOrm } from '../orm.ts'
 import { dependency } from '../project.ts'
@@ -16,6 +17,73 @@ import { body, head, tail } from './repository.ts'
 const VERSIONS = { springData: '5.1.3', driver: '5.8.1' }
 
 const CORE = 'org.springframework.data.mongodb.core'
+
+/** The classes of the documents in lists of some nested classes. */
+const listed = (classes: Iterable<NestedClass>): string[] =>
+  [...classes].flatMap((item) => [...(item.listed ? [item.path] : []), ...listed(item.classes)])
+
+const itemsOf = (context: Context) => context.tables.flatMap((info) => listed(info.nested.values()))
+
+function itemConverterFile(context: Context): GeneratedFile {
+  const pkg = context.base
+  const items = itemsOf(context)
+  const imports = new JavaImports(pkg).add(
+    'java.util.Collections',
+    'java.util.Map',
+    'java.util.Set',
+    'java.util.WeakHashMap',
+    'org.bson.Document',
+    'org.bson.conversions.Bson',
+    'org.springframework.data.core.TypeInformation',
+    `${CORE}.convert.MappingMongoConverter`,
+    `${CORE}.convert.NoOpDbRefResolver`,
+    `${CORE}.mapping.MongoMappingContext`,
+    `${CORE}.mapping.MongoPersistentEntity`,
+    `${CORE}.mapping.MongoPersistentProperty`,
+  )
+  for (const info of context.tables)
+    if (listed(info.nested.values()).length > 0) imports.add(`${packageOf(context, info, 'entity')}.${info.entity}`)
+  return file(
+    pkg,
+    'ItemConverter',
+    [
+      '/** Keeps the fields the classes of the documents of lists do not know: lists are written whole, and would lose them. */',
+      'class ItemConverter extends MappingMongoConverter {',
+      `    private static final Set<Class<?>> ITEMS = Set.of(${items.map((item) => `${item}.class`).join(', ')});`,
+      '',
+      '    /** The fields each item was read with that its class does not know */',
+      '    private static final Map<Object, Document> OTHERS = Collections.synchronizedMap(new WeakHashMap<>());',
+      '',
+      '    ItemConverter(MongoMappingContext mapping) {',
+      '        super(NoOpDbRefResolver.INSTANCE, mapping);',
+      '    }',
+      '',
+      '    @Override',
+      '    protected <S> S readDocument(ConversionContext context, Bson bson, TypeInformation<? extends S> type) {',
+      '        S item = super.readDocument(context, bson, type);',
+      '        if (item != null && ITEMS.contains(item.getClass()) && bson instanceof Document document) {',
+      '            Document others = new Document(document);',
+      '            for (MongoPersistentProperty property : getMappingContext().getRequiredPersistentEntity(item.getClass())) {',
+      '                others.remove(property.getFieldName());',
+      '            }',
+      '            if (!others.isEmpty()) OTHERS.put(item, others);',
+      '        }',
+      '        return item;',
+      '    }',
+      '',
+      '    @Override',
+      '    protected void writeInternal(Object item, Bson bson, MongoPersistentEntity<?> entity) {',
+      '        super.writeInternal(item, bson, entity);',
+      '        if (item != null && ITEMS.contains(item.getClass()) && bson instanceof Document document) {',
+      '            Document others = OTHERS.get(item);',
+      '            if (others != null) others.forEach(document::putIfAbsent);',
+      '        }',
+      '    }',
+      '}',
+    ],
+    imports,
+  )
+}
 
 function databaseFile(context: Context): GeneratedFile {
   const pkg = context.base
@@ -31,9 +99,10 @@ function databaseFile(context: Context): GeneratedFile {
     `${CORE}.convert.DefaultMongoTypeMapper`,
     `${CORE}.convert.MappingMongoConverter`,
     `${CORE}.convert.MongoCustomConversions`,
-    `${CORE}.convert.NoOpDbRefResolver`,
     `${CORE}.mapping.MongoMappingContext`,
   )
+  const items = itemsOf(context).length > 0
+  if (!items) imports.add(`${CORE}.convert.NoOpDbRefResolver`)
   for (const info of context.tables) imports.add(`${packageOf(context, info, 'entity')}.${info.entity}`)
   return file(
     pkg,
@@ -63,7 +132,7 @@ function databaseFile(context: Context): GeneratedFile {
       '        MongoMappingContext mapping = new MongoMappingContext();',
       '        mapping.setSimpleTypeHolder(conversions.getSimpleTypeHolder());',
       '        mapping.afterPropertiesSet();',
-      '        MappingMongoConverter converter = new MappingMongoConverter(NoOpDbRefResolver.INSTANCE, mapping);',
+      `        MappingMongoConverter converter = new ${items ? 'ItemConverter(mapping)' : 'MappingMongoConverter(NoOpDbRefResolver.INSTANCE, mapping)'};`,
       '        converter.setCustomConversions(conversions);',
       '        // Documents hold no name of a Java class',
       '        converter.setTypeMapper(new DefaultMongoTypeMapper(null));',
@@ -260,7 +329,11 @@ export const springDataOrm: JavaOrm = {
   url: 'mongodb://localhost:27017/app',
   forget: null,
   emptyList: () => 'new java.util.ArrayList<>()',
-  databaseFiles: (context) => [databaseFile(context), documentsFile(context)],
+  databaseFiles: (context) => [
+    databaseFile(context),
+    documentsFile(context),
+    ...(itemsOf(context).length > 0 ? [itemConverterFile(context)] : []),
+  ],
   entityFile,
   repository: {
     doc: (context, info) =>

@@ -49,6 +49,17 @@ it('refuses repeated and wrong values', async () => {
   expect(await uow().customers.READ_ID('not an identifier')).toBeNull()
 })
 TRANSACTION
+it('keeps the unknown fields of items', async () => {
+  const { id } = await addOrder(uow(), 1)
+  const orders = uow().db.connection.collection('orders')
+  await orders.updateOne({}, { $set: { 'lines.0.unknown': 5 } })
+  const found = (await uow().orders.READ_ID(id))!
+  found.lines.push(newOrder(2).lines[0])
+  await uow().orders.update(found)
+  const lines = (await orders.findOne({}))!.lines as Record<string, unknown>[]
+  expect(lines.map((line) => line.unknown)).toEqual([5, undefined])
+})
+
 it('does not undo what others change in a list', async () => {
   const { id } = await addOrder(uow(), 1)
   const item = newOrder(3).lines[0]
@@ -211,6 +222,22 @@ class RoundTripTest {
         assertEquals("one gold 1", document.get("name") + " " + document.get("level") + " " + document.get("unknown"));
         assertEquals("Madrid 2", document.get("address", Document.class).get("city") + " " + document.get("address", Document.class).get("unknown"));
         assertFalse(document.containsKey("passwordHash"));
+    }
+
+    @Test
+    void keepsTheUnknownFieldsOfItems() {
+        String id = Factories.addOrder(uow, 1).getId();
+        uow.mongo().getCollection("orders").updateOne(new Document(), new Document("$set", new Document("lines.0.unknown", 5).append("lines.0.more", List.of(new Document("a", 1)))));
+        Order found = uow.orders().findById(id).orElseThrow();
+        List<Order.Line> lines = new java.util.ArrayList<>(found.getLines());
+        lines.get(0).setQuantity(7.0);
+        lines.add(0, Factories.newOrderLine(2));
+        found.setLines(lines);
+        uow.orders().update(found);
+        List<Document> kept = stored("orders").getList("lines", Document.class);
+        assertEquals(2, kept.size());
+        assertNull(kept.get(0).get("unknown"));
+        assertEquals("7 5 1", kept.get(1).get("quantity", Number.class).intValue() + " " + kept.get(1).get("unknown") + " " + kept.get(1).getList("more", Document.class).get(0).get("a"));
     }
 
     @Test
@@ -578,6 +605,22 @@ public class RoundTripTests : IAsyncLifetime
         Assert.Equal("one gold 1", $"{document["name"]} {document["level"]} {document["unknown"]}");
         Assert.Equal("Madrid 2", $"{document["address"]["city"]} {document["address"]["unknown"]}");
         Assert.False(document.Contains("passwordHash"));
+    }
+
+    [Fact]
+    public async Task KeepsTheUnknownFieldsOfItems()
+    {
+        var id = (await Factories.AddOrderAsync(uow, 1)).Id;
+        await db.Database.GetCollection<BsonDocument>("orders").UpdateOneAsync(new BsonDocument(), new BsonDocument("$set", new BsonDocument { ["lines.0.unknown"] = 5, ["lines.0.more"] = new BsonArray { new BsonDocument("a", 1) } }));
+        var found = (await uow.Orders.READ_ID(id))!;
+        found.Lines[0].Quantity = 7;
+        found.Lines.Insert(0, Factories.NewOrderLine(2));
+        await uow.Orders.UpdateAsync(found);
+        var kept = (await Stored("orders"))!["lines"].AsBsonArray;
+        Assert.Equal(2, kept.Count);
+        Assert.False(kept[0].AsBsonDocument.Contains("unknown"));
+        Assert.Equal("7 5 1", $"{kept[1]["quantity"]} {kept[1]["unknown"]} {kept[1]["more"][0]["a"]}");
+        Assert.DoesNotContain("unknown", System.Text.Json.JsonSerializer.Serialize(found.Lines));
     }
 
     [Fact]

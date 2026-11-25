@@ -1,6 +1,6 @@
 /**
  * The entity of each collection, for the MongoDB driver: the stored name and type of every field and a class per nested
- * document. Fields the classes do not know are left alone.
+ * document. Fields the classes do not know are left alone; the documents of lists, which are written whole, carry theirs.
  */
 import type { GeneratedFile } from '../../../export/files.ts'
 import type { DbColumn, DbType } from '../../../schema/types.ts'
@@ -44,13 +44,27 @@ function properties(fields: Property[]): string[] {
 
 const indented = (items: string[]): string[] => items.map((line) => (line === '' ? '' : `    ${line}`))
 
+/** Where a document of a list keeps the fields its class does not know. Not public, so nothing else sees them. */
+function otherFields(item: NestedClass): string[] {
+  if (!item.listed) return []
+  const taken = new Set([...item.fields.map((field) => field.prop), ...item.classes.map((inner) => inner.name)])
+  let name = 'OtherFields'
+  while (taken.has(name)) name += 'Value'
+  return [
+    '',
+    '/// <summary>The fields this class does not know, which are written back with the list</summary>',
+    '[BsonExtraElements]',
+    `internal BsonDocument? ${name} { get; set; }`,
+  ]
+}
+
 function nestedBlock(item: NestedClass): string[] {
   return [
     '/// <summary>A nested document: it is stored with the one that holds it.</summary>',
-    '[BsonIgnoreExtraElements]',
+    ...(item.listed ? [] : ['[BsonIgnoreExtraElements]']),
     `public class ${item.name}`,
     '{',
-    ...indented([...properties(item.fields), ...item.classes.flatMap((inner) => ['', ...nestedBlock(inner)])]),
+    ...indented([...properties(item.fields), ...otherFields(item), ...item.classes.flatMap((inner) => ['', ...nestedBlock(inner)])]),
     '}',
   ]
 }

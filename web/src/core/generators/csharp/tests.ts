@@ -329,7 +329,7 @@ function serviceTests(context: Context, info: TableInfo, usings: CsUsings): Line
     )
   })
   // The parents take a number the rows of the test never take: a parent may be a row of the same table
-  const start = ['var n = 100;', ...parentsFirst]
+  const start = parentsFirst.length > 0 ? ['var n = 100;', ...parentsFirst] : []
   /** A row from the factory with the parents' keys and the given values set */
   const row = (variable: string, n: number, extra: { column: string; value: string }[] = []) => {
     const given = new Set(extra.map((item) => item.column))

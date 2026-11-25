@@ -1,5 +1,6 @@
 """The entity of each collection, for the MongoDB driver: the stored name and type of every field and a class per nested
-document. Fields the classes do not know are left alone. Mirrors
+document. Fields the classes do not know are left alone; the documents of lists, which are written whole, carry theirs.
+Mirrors
 web/src/core/generators/csharp/mongodriver/entities.ts."""
 
 import re
@@ -53,16 +54,33 @@ def _indented(items: list[str]) -> list[str]:
     return [("" if line == "" else f"    {line}") for line in items]
 
 
+def _other_fields(item: dict) -> list[str]:
+    """Where a document of a list keeps the fields its class does not know. Not public, so nothing else sees them."""
+    if not item["listed"]:
+        return []
+    taken = {*(field["prop"] for field in item["fields"]), *(inner["name"] for inner in item["classes"])}
+    name = "OtherFields"
+    while name in taken:
+        name += "Value"
+    return [
+        "",
+        "/// <summary>The fields this class does not know, which are written back with the list</summary>",
+        "[BsonExtraElements]",
+        f"internal BsonDocument? {name} {{ get; set; }}",
+    ]
+
+
 def _nested_block(item: dict) -> list[str]:
     return [
         "/// <summary>A nested document: it is stored with the one that holds it.</summary>",
-        "[BsonIgnoreExtraElements]",
+        *([] if item["listed"] else ["[BsonIgnoreExtraElements]"]),
         f"public class {item['name']}",
         "{",
         *(
             _indented(
                 [
                     *_properties(item["fields"]),
+                    *_other_fields(item),
                     *(line for inner in item["classes"] for line in ["", *_nested_block(inner)]),
                 ]
             )
