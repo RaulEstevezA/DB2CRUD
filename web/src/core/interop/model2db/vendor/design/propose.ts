@@ -3,6 +3,7 @@ import { allFields, type FieldDef, type ModelDef, type ModelSchema } from '../mo
 import { analyze, hasKey, isParentOnly, keyable, keyField, shapeOf, type SchemaContext } from './analysis.ts'
 import { decision, reason } from './decision.ts'
 import { declaresKey, declaresUnique } from './hints.ts'
+import { proposeQueries } from './queries.ts'
 import type { DesignStrategy } from './strategy.ts'
 import { documentStrategy } from './targets/document.ts'
 import { keyValueStrategy } from './targets/keyValue.ts'
@@ -33,11 +34,15 @@ export function proposeDesign(schema: ModelSchema, target: StorageTarget): Desig
 
 function proposeModel(context: SchemaContext, model: ModelDef, strategy: DesignStrategy): ModelDesign {
   const fields = allFields(context.schema, model)
+  const decided = fields.map((field) => proposeField(context, model, fields, field, strategy))
   return {
     model: model.name,
     include: !isParentOnly(context, model.name),
     key: proposeKey(model, fields, strategy),
-    fields: fields.map((field) => proposeField(context, model, fields, field, strategy)),
+    fields: decided,
+    ...(strategy.queries
+      ? { queries: proposeQueries(fields, decided, (field) => namedOwner(context, model, fields, field) !== null) }
+      : {}),
   }
 }
 
@@ -138,16 +143,22 @@ function proposeWholeNumber(model: ModelDef, fields: FieldDef[], field: FieldDef
   return decision(true, 'probable', [reason('wholeNumberNamed', { field: field.name })], [true, false])
 }
 
-/** `customerId` next to a `Customer` model: the column most likely holds its key. */
-function proposeForeignKey(context: SchemaContext, model: ModelDef, fields: FieldDef[], field: FieldDef): Decision<string | null> | null {
+/** The model whose key a scalar field is named after (`customerId` next to a `Customer` model), or null. */
+function namedOwner(context: SchemaContext, model: ModelDef, fields: FieldDef[], field: FieldDef): string | null {
   if (!keyable({ ...field, nullable: false })) return null
   const words = nameWords(field.name)
   if (words.length < 2 || words[words.length - 1] !== 'id') return null
   if (keyField(model, fields)?.field.name === field.name) return null
   const stem = words.slice(0, -1).join('')
   const target = context.schema.models.find((item) => nameWords(item.name).join('') === stem)
-  if (!target || !hasKey(context, target.name)) return null
+  return target && hasKey(context, target.name) ? target.name : null
+}
+
+/** `customerId` next to a `Customer` model: the column most likely holds its key. */
+function proposeForeignKey(context: SchemaContext, model: ModelDef, fields: FieldDef[], field: FieldDef): Decision<string | null> | null {
+  const target = namedOwner(context, model, fields, field)
+  if (!target) return null
   // `customer: Customer` next to it already says it: the reference reuses this column (physical/relational.ts)
-  if (fields.some((other) => other.type.kind === 'model' && other.type.name === target.name)) return null
-  return decision<string | null>(target.name, 'high', [reason('foreignKeyNamed', { model: target.name })], [target.name, null])
+  if (fields.some((other) => other.type.kind === 'model' && other.type.name === target)) return null
+  return decision<string | null>(target, 'high', [reason('foreignKeyNamed', { model: target })], [target, null])
 }

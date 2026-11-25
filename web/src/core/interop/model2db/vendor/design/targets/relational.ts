@@ -37,6 +37,7 @@ export const relationalStrategy: DesignStrategy = {
   relation,
   foreignKeys: true,
   wholeNumbers: true,
+  queries: true,
   enum: (name) => ({ enum: name, storage: decision('check', 'high', [reason('enumCheck')], ['check', 'native', 'lookup', 'text']) }),
 }
 

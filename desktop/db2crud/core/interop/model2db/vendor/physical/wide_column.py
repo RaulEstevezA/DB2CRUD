@@ -2,6 +2,7 @@
 its key; values kept in the row as user-defined types or collections; and, for a list of other models, a table
 partitioned by the owner's key. Mirrors web/src/core/physical/wideColumn.ts."""
 
+from ..design.queries import describe_query
 from ..design.types import find_model_design
 from ..js import coalesce
 from ..model.naming import to_snake_case
@@ -238,4 +239,61 @@ def build_wide_column(schema: dict, design: dict, naming: dict, database: str) -
             if key_field and column["name"] == key_field["column"]:
                 column["type"] = key_field["type"]
         table["columns"].extend(columns)
+
+    # Each accepted query reads a table of its own: a copy of the rows partitioned by the filter and ordered by the
+    # order, with the model's key last so that every row stays apart
+    queried = False
+    for model_name, table in entities.items():
+        item = find_model_design(design, model_name)
+        fields = all_fields(schema, find_model(schema, model_name))
+
+        def column_of(name: str, model_name=model_name, table=table, item=item, fields=fields) -> str | None:
+            own = next(
+                (column["name"] for column in table["columns"] if column.get("source") == f"{model_name}.{name}"), None
+            )
+            if own:
+                return own
+            # `author` next to `authorId`: the key is in that column
+            field = next((candidate for candidate in fields if candidate["name"] == name), None)
+            return key_holder(field, fields, item, {"naming": naming}) if field else None
+
+        for query in item.get("queries") or []:
+            text = describe_query(query)
+            if query["status"] == "pending":
+                table["todos"].append({"code": "queryPending", "params": {"model": model_name, "query": text}})
+                continue
+            if not table["partitionKey"]:
+                continue
+            filter_ = [column_of(field) for field in query["filter"]]
+            ordered = [column_of(item_sort["field"]) for item_sort in query["sort"]]
+            if any(column is None for column in [*filter_, *ordered]):
+                notes.append({"code": "queryNotIndexed", "params": {"model": model_name, "query": text}})
+                continue
+            if not filter_:
+                notes.append(
+                    {"code": "queryNeedsFilter", "params": {"database": database, "model": model_name, "query": text}}
+                )
+                continue
+            # By the key itself: the model's table already answers it
+            if all(column in filter_ for column in table["partitionKey"]):
+                continue
+            descending = [ordered[i] for i, sorted_ in enumerate(query["sort"]) if sorted_["direction"] == "desc"]
+            query_table = {
+                "name": free_name(f"{table['name']}_by_{'_'.join(filter_)}", table_names),
+                "model": model_name,
+                "kind": "query",
+                "columns": [dict(column) for column in table["columns"]],
+                "partitionKey": filter_,
+                "clusteringKey": [
+                    *ordered,
+                    *(column for column in table["partitionKey"] if column not in filter_ and column not in ordered),
+                ],
+            }
+            if descending:
+                query_table["descending"] = descending
+            query_table.update({"query": f"{model_name} {text}", "indexes": [], "todos": []})
+            tables.append(query_table)
+            queried = True
+    if queried:
+        notes.append({"code": "queryTables", "params": {"database": database}})
     return {"kind": "widecolumn", "types": types, "tables": tables, "notes": notes}

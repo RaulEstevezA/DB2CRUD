@@ -129,7 +129,41 @@ def _read_model(value, path: str) -> dict:
     table = _optional_string(value.get("table", _MISSING), f"{path}.table")
     if table:
         result["table"] = table
+    # Projects saved before queries existed have none: they are proposed when the design is reconciled
+    if "queries" in value:
+        _check(isinstance(value["queries"], list), f"{path}.queries")
+        result["queries"] = [
+            _read_query(query, f"{path}.queries[{index}]") for index, query in enumerate(value["queries"])
+        ]
     return result
+
+
+def _read_query(value, path: str) -> dict:
+    _check(_is_object(value), path)
+    _check(
+        isinstance(value.get("filter"), list) and all(isinstance(field, str) for field in value["filter"]),
+        f"{path}.filter",
+    )
+    _check(
+        isinstance(value.get("sort"), list)
+        and all(
+            _is_object(item) and isinstance(item.get("field"), str) and item.get("direction") in ("asc", "desc")
+            for item in value["sort"]
+        ),
+        f"{path}.sort",
+    )
+    _check(value.get("status") in STATUSES, f"{path}.status")
+    _check(
+        isinstance(value.get("reasons"), list)
+        and all(_is_object(item) and isinstance(item.get("code"), str) for item in value["reasons"]),
+        f"{path}.reasons",
+    )
+    return {
+        "filter": list(value["filter"]),
+        "sort": [{"field": item["field"], "direction": item["direction"]} for item in value["sort"]],
+        "status": value["status"],
+        "reasons": value["reasons"],
+    }
 
 
 def _read_enum(value, path: str) -> dict:

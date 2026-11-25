@@ -8,6 +8,7 @@ import {
   type EnumDesign,
   type FieldDesign,
   type ModelDesign,
+  type QueryDesign,
   type Reason,
   type StorageTarget,
 } from '../design/types.ts'
@@ -131,6 +132,30 @@ function readField(value: unknown, path: string): FieldDesign {
   return result
 }
 
+function readQuery(value: unknown, path: string): QueryDesign {
+  check(isObject(value), path)
+  const query = value as Json
+  check(Array.isArray(query.filter) && query.filter.every((field) => typeof field === 'string'), `${path}.filter`)
+  check(
+    Array.isArray(query.sort) &&
+      query.sort.every(
+        (item) => isObject(item) && typeof item.field === 'string' && (item.direction === 'asc' || item.direction === 'desc'),
+      ),
+    `${path}.sort`,
+  )
+  check(STATUSES.includes(query.status as DecisionStatus), `${path}.status`)
+  check(
+    Array.isArray(query.reasons) && query.reasons.every((reason) => isObject(reason) && typeof reason.code === 'string'),
+    `${path}.reasons`,
+  )
+  return {
+    filter: [...(query.filter as string[])],
+    sort: (query.sort as Json[]).map((item) => ({ field: item.field as string, direction: item.direction as 'asc' | 'desc' })),
+    status: query.status as DecisionStatus,
+    reasons: query.reasons as Reason[],
+  }
+}
+
 function readModel(value: unknown, path: string): ModelDesign {
   check(isObject(value) && typeof value.model === 'string' && typeof value.include === 'boolean' && Array.isArray(value.fields), path)
   const model = value as Json
@@ -143,6 +168,11 @@ function readModel(value: unknown, path: string): ModelDesign {
   if (key) result.key = key as ModelDesign['key']
   const table = optionalString(model.table, `${path}.table`)
   if (table) result.table = table
+  // Projects saved before queries existed have none: they are proposed when the design is reconciled
+  if (model.queries !== undefined) {
+    check(Array.isArray(model.queries), `${path}.queries`)
+    result.queries = (model.queries as unknown[]).map((query, index) => readQuery(query, `${path}.queries[${index}]`))
+  }
   return result
 }
 

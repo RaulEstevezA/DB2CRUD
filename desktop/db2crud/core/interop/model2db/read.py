@@ -164,13 +164,17 @@ def _db_table(table: dict, engine: str, enums: list[dict], with_entities: bool) 
     return result
 
 
+# Advice about the queries of the design: it changes no table, and is for Model2DB to settle
+_QUERY_ADVICE = {"model2db.queryPending", "model2db.queryIndexes", "model2db.queryNotIndexed"}
+
+
 def _notes_of(physical: dict) -> list[dict]:
     """What the build left pending or noted, so the interface can say it."""
     notes = [{"code": f"model2db.{note['code']}", "params": note["params"]} for note in physical["notes"]]
     for table in physical["tables"]:
         for todo in table["todos"]:
             notes.append({"code": f"model2db.{todo['code']}", "params": {**todo["params"], "table": table["name"]}})
-    return notes
+    return [note for note in notes if note["code"] not in _QUERY_ADVICE]
 
 
 def read_model2db_project(text: str) -> dict:

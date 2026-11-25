@@ -2,6 +2,7 @@ import { nameWords } from '../model/naming.ts'
 import { allFields, findEnum, findModel, type FieldDef, type ModelSchema, type TypeRef } from '../model/schema.ts'
 import { findModelDesign, type Design, type ModelDesign } from '../design/types.ts'
 import { columnName, constraintName, freeName, tableName } from './naming.ts'
+import { addQueryIndexes } from './queryIndexes.ts'
 import { modelRoles } from './roles.ts'
 import type { BsonSchema, NamingOptions, Collection, DocumentSchema, Index, Note, Todo } from './types.ts'
 
@@ -51,6 +52,8 @@ export function buildDocument(schema: ModelSchema, design: Design, naming: Namin
     todos: Todo[]
     indexes: Index[]
     collection: string
+    /** Path of each field of the stored model in its document, for the queries */
+    paths: Map<string, string>
   }
 
   const typeSchema = (type: TypeRef, nullable: boolean, seen: Set<string>, path: string[], scope: Scope): BsonSchema => {
@@ -122,6 +125,7 @@ export function buildDocument(schema: ModelSchema, design: Design, naming: Namin
         const holder = keyHolder(field, allFields(schema, found), item, options)
         if (holder) {
           addIndex(scope, [...path, holder], false)
+          if (root) scope.paths.set(field.name, holder)
           continue
         }
         const id = idType(target)
@@ -132,6 +136,7 @@ export function buildDocument(schema: ModelSchema, design: Design, naming: Namin
       } else bson = isKey ? keySchema(field.type) : typeSchema(field.type, field.nullable, seen, fieldPath, scope)
       if (field.description) bson.description = field.description
       properties[name] = bson
+      if (root && !scope.paths.has(field.name)) scope.paths.set(field.name, name)
       if (!optional || isKey) {
         if (!required.includes(name)) required.push(name)
       }
@@ -147,15 +152,30 @@ export function buildDocument(schema: ModelSchema, design: Design, naming: Namin
     scope.indexes.push({ name: constraintName(unique ? 'uq' : 'ix', scope.collection, [path.join('_')]), columns, unique })
   }
 
+  let queried = false
   for (const model of schema.models) {
     const name = names.get(model.name)
     if (!name) continue
     const item = findModelDesign(design, model.name) as ModelDesign
-    const scope: Scope = { todos: [], indexes: [], collection: name }
+    const scope: Scope = { todos: [], indexes: [], collection: name, paths: new Map() }
     if (item.key?.status === 'pending') scope.todos.push({ code: 'keyPending', params: { model: model.name } })
     const validator = objectSchema(model.name, new Set([model.name]), [], scope, true)
+    const added = addQueryIndexes(
+      {
+        name,
+        model: model.name,
+        columnOf: (field) => scope.paths.get(field),
+        indexes: scope.indexes,
+        covering: [{ name: '', columns: ['_id'], unique: true }, ...scope.indexes.filter((index) => index.unique)],
+        pending: (query) => scope.todos.push({ code: 'queryPending', params: { model: model.name, query } }),
+      },
+      item.queries ?? [],
+      notes,
+    )
+    if (added) queried = true
     collections.push({ name, model: model.name, validator, indexes: scope.indexes, todos: scope.todos })
   }
+  if (queried) notes.push({ code: 'queryIndexes', params: {} })
   return { kind: 'document', collections, notes: dedupe(notes) }
 }
 

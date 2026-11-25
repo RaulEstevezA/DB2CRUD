@@ -101,10 +101,15 @@ def _js_slice(text: str, end: int) -> str:
 
 def constraint_name(prefix: str, table: str, columns: list[str]) -> str:
     """Name of a constraint or index: `fk_orders_customer_id`, shortened if it gets too long."""
-    name = "_".join([prefix, table, *columns])
-    if _js_length(name) <= MAX_IDENTIFIER:
+    return short_name("_".join([prefix, table, *columns]), MAX_IDENTIFIER)
+
+
+def short_name(name: str, max_length: int) -> str:
+    """A name cut to `max_length` characters, ending with a hash of the whole name so that two long names stay
+    apart."""
+    if _js_length(name) <= max_length:
         return name
     hashed = 0
     for char in name:
         hashed = (hashed * 31 + _char_code(char)) & 0xFFFFFFFF
-    return f"{_js_slice(name, MAX_IDENTIFIER - 9)}_{_base36(hashed)[:8]}"
+    return f"{_js_slice(name, max_length - 9)}_{_base36(hashed)[:8]}"

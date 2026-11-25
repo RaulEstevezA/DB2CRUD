@@ -29,6 +29,8 @@ export const wideColumnStrategy: DesignStrategy = {
   // No foreign keys: a column holding another model's key is a plain column
   foreignKeys: false,
   wholeNumbers: false,
+  // Each query becomes a table of its own (physical/wideColumn.ts)
+  queries: true,
   enum: () => null,
 }
 

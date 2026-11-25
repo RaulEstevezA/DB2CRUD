@@ -10,6 +10,7 @@ from ..js import coalesce
 from ..model.naming import name_words
 from ..model.schema import all_fields, find_enum, find_model
 from .naming import column_name, constraint_name, free_name, table_name
+from .query_indexes import add_query_indexes
 from .roles import model_roles
 
 PRIMITIVE_BSON = {
@@ -152,6 +153,8 @@ def build_document(schema: dict, design: dict, naming: dict) -> dict:
                 holder = key_holder(field, fields, item, options)
                 if holder:
                     add_index(scope, [*path, holder], False)
+                    if root:
+                        scope["paths"][field["name"]] = holder
                     continue
                 identifier = id_type(target)
                 bson = {"bsonType": "array", "items": identifier} if field["type"]["kind"] == "array" else identifier
@@ -169,6 +172,8 @@ def build_document(schema: dict, design: dict, naming: dict) -> dict:
             if field.get("description"):
                 bson = {**bson, "description": field["description"]}
             properties[name] = bson
+            if root and field["name"] not in scope["paths"]:
+                scope["paths"][field["name"]] = name
             if (not optional or is_key) and name not in required:
                 required.append(name)
             unique = (decided or {}).get("unique")
@@ -194,15 +199,34 @@ def build_document(schema: dict, design: dict, naming: dict) -> dict:
             }
         )
 
+    queried = False
     for model in schema["models"]:
         name = names.get(model["name"])
         if not name:
             continue
         item = find_model_design(design, model["name"])
-        scope = {"todos": [], "indexes": [], "collection": name}
+        scope = {"todos": [], "indexes": [], "collection": name, "paths": {}}
         if item.get("key") and item["key"]["status"] == "pending":
             scope["todos"].append({"code": "keyPending", "params": {"model": model["name"]}})
         validator = object_schema(model["name"], {model["name"]}, [], scope, True)
+        added = add_query_indexes(
+            {
+                "name": name,
+                "model": model["name"],
+                "column_of": scope["paths"].get,
+                "indexes": scope["indexes"],
+                "covering": [
+                    {"name": "", "columns": ["_id"], "unique": True},
+                    *(index for index in scope["indexes"] if index["unique"]),
+                ],
+                "pending": lambda query, scope=scope, model=model: scope["todos"].append(
+                    {"code": "queryPending", "params": {"model": model["name"], "query": query}}
+                ),
+            },
+            item.get("queries") or [],
+            notes,
+        )
+        queried = queried or added
         collections.append(
             {
                 "name": name,
@@ -212,6 +236,8 @@ def build_document(schema: dict, design: dict, naming: dict) -> dict:
                 "todos": scope["todos"],
             }
         )
+    if queried:
+        notes.append({"code": "queryIndexes", "params": {}})
     return {"kind": "document", "collections": collections, "notes": _dedupe(notes)}
 
 

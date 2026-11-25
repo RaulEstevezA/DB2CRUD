@@ -1,5 +1,6 @@
-import type { ModelSchema } from '../model/schema.ts'
+import { allFields, findModel, type ModelSchema } from '../model/schema.ts'
 import { proposeDesign } from './propose.ts'
+import { cleanQuery, keepQuery, queryableFields } from './queries.ts'
 import {
   FIELD_DECISIONS,
   sameValue,
@@ -8,6 +9,8 @@ import {
   type FieldDecisionKind,
   type FieldDesign,
   type ModelDesign,
+  type QueryDesign,
+  type QuerySort,
   type StorageTarget,
 } from './types.ts'
 
@@ -16,7 +19,11 @@ import {
 
 /** Which decision an edit is about. */
 export type DecisionRef =
-  { kind: 'key'; model: string } | { kind: FieldDecisionKind; model: string; field: string } | { kind: 'enum'; enum: string }
+  | { kind: 'key'; model: string }
+  | { kind: FieldDecisionKind; model: string; field: string }
+  | { kind: 'enum'; enum: string }
+  /** A proposed query, by its position in the model's queries */
+  | { kind: 'query'; model: string; index: number }
 
 function mapModel(design: Design, model: string, change: (item: ModelDesign) => ModelDesign): Design {
   return { ...design, models: design.models.map((item) => (item.model === model ? change(item) : item)) }
@@ -32,6 +39,8 @@ function choose<T>(decision: Decision<T>, value: T): Decision<T> {
 }
 
 export function getDecision(design: Design, ref: DecisionRef): Decision<unknown> | undefined {
+  // A query is not a choice between options: it is accepted, changed or removed (acceptQuery, setQuery)
+  if (ref.kind === 'query') return undefined
   if (ref.kind === 'enum') return design.enums.find((item) => item.enum === ref.enum)?.storage
   const model = design.models.find((item) => item.model === ref.model)
   if (ref.kind === 'key') return model?.key
@@ -40,6 +49,7 @@ export function getDecision(design: Design, ref: DecisionRef): Decision<unknown>
 
 /** Chooses a value for a decision; without a value, confirms the suggestion as it is. */
 export function decide(design: Design, ref: DecisionRef, value?: unknown): Design {
+  if (ref.kind === 'query') return value === undefined ? acceptQuery(design, ref.model, ref.index) : design
   const current = getDecision(design, ref)
   if (!current) return design
   const next = value === undefined ? current.value : value
@@ -82,6 +92,35 @@ export function setFieldIndex(design: Design, model: string, field: string, inde
   })
 }
 
+function mapQueries(design: Design, model: string, change: (queries: QueryDesign[]) => QueryDesign[]): Design {
+  return mapModel(design, model, (item) => ({ ...item, queries: change(item.queries ?? []) }))
+}
+
+/** A query written by the user; it is applied at once. */
+export function addQuery(design: Design, model: string, filter: string[], sort: QuerySort[]): Design {
+  const query = cleanQuery(filter, sort)
+  if (query.filter.length + query.sort.length === 0) return design
+  return mapQueries(design, model, (queries) => [...queries, { ...query, status: 'active', reasons: [] }])
+}
+
+/** Changes a query; the user made it, so it is applied and no longer carries the proposal's reasons. */
+export function setQuery(design: Design, model: string, index: number, filter: string[], sort: QuerySort[]): Design {
+  const query = cleanQuery(filter, sort)
+  if (query.filter.length + query.sort.length === 0) return removeQuery(design, model, index)
+  return mapQueries(design, model, (queries) =>
+    queries.map((item, i) => (i === index ? { ...query, status: 'active', reasons: [] } : item)),
+  )
+}
+
+/** Accepts a proposed query as it is. */
+export function acceptQuery(design: Design, model: string, index: number): Design {
+  return mapQueries(design, model, (queries) => queries.map((item, i) => (i === index ? { ...item, status: 'active' } : item)))
+}
+
+export function removeQuery(design: Design, model: string, index: number): Design {
+  return mapQueries(design, model, (queries) => queries.filter((_, i) => i !== index))
+}
+
 /** A column name or type written by the user; an empty text goes back to the derived one. */
 export function setFieldOverride(design: Design, model: string, field: string, key: 'column' | 'type', value: string): Design {
   const text = value.trim()
@@ -111,7 +150,7 @@ export function reconcile(previous: Design | null, schema: ModelSchema, target: 
     models: fresh.models.map((model) => {
       const old = previous.models.find((item) => item.model === model.model)
       if (!old) return model
-      return {
+      const next: ModelDesign = {
         ...model,
         include: old.include,
         ...(old.table ? { table: old.table } : {}),
@@ -130,10 +169,20 @@ export function reconcile(previous: Design | null, schema: ModelSchema, target: 
           return next
         }),
       }
+      // Proposed only the first time: afterwards the queries are the ones the user reviewed
+      if (next.queries && old.queries) next.queries = keptQueries(schema, next, old.queries)
+      return next
     }),
     enums: fresh.enums.map((item) => {
       const old = previous.enums.find((other) => other.enum === item.enum)
       return { ...item, storage: keep(item.storage, old?.storage) ?? item.storage }
     }),
   }
+}
+
+/** The queries the user already reviewed, with the fields that are gone left out. */
+function keptQueries(schema: ModelSchema, model: ModelDesign, queries: QueryDesign[]): QueryDesign[] {
+  const found = findModel(schema, model.model)
+  const queryable = found ? queryableFields(allFields(schema, found), model.fields) : []
+  return queries.map((query) => keepQuery(query, queryable)).filter((query): query is QueryDesign => query !== null)
 }

@@ -14,5 +14,7 @@ export function todoText(todo: Todo, model: string, kind: 'table' | 'collection'
       return `TODO: "${model}.${params.field}" points to "${params.model}", which has no ${kind} of its own.`
     case 'foreignKeyTargetNotStored':
       return `TODO: "${params.column}" refers to "${params.model}", whose ${key} is not decided yet.`
+    case 'queryPending':
+      return `TODO: does the application read "${params.model}" ${params.query}? Accept the query in the design to index it.`
   }
 }

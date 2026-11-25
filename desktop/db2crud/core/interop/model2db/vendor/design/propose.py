@@ -5,6 +5,7 @@ from ..model.schema import all_fields
 from .analysis import analyze, has_key, is_parent_only, key_field, keyable, shape_of
 from .decision import decision, reason
 from .hints import declares_key, declares_unique
+from .queries import propose_queries
 from .targets.document import STRATEGY as DOCUMENT
 from .targets.key_value import STRATEGY as KEY_VALUE
 from .targets.relational import STRATEGY as RELATIONAL
@@ -27,12 +28,18 @@ def propose_design(schema: dict, target: str) -> dict:
 
 def _propose_model(context: dict, model: dict, strategy: dict) -> dict:
     fields = all_fields(context["schema"], model)
-    return {
+    decided = [_propose_field(context, model, fields, field, strategy) for field in fields]
+    result = {
         "model": model["name"],
         "include": not is_parent_only(context, model["name"]),
         "key": _propose_key(model, fields, strategy),
-        "fields": [_propose_field(context, model, fields, field, strategy) for field in fields],
+        "fields": decided,
     }
+    if strategy["queries"]:
+        result["queries"] = propose_queries(
+            fields, decided, lambda field: _named_owner(context, model, fields, field) is not None
+        )
+    return result
 
 
 def _propose_key(model: dict, fields: list[dict], strategy: dict) -> dict:
@@ -114,7 +121,8 @@ def _propose_whole_number(model: dict, fields: list[dict], field: dict) -> dict 
     return decision(True, "probable", [reason("wholeNumberNamed", {"field": field["name"]})], [True, False])
 
 
-def _propose_foreign_key(context: dict, model: dict, fields: list[dict], field: dict) -> dict | None:
+def _named_owner(context: dict, model: dict, fields: list[dict], field: dict) -> str | None:
+    """The model whose key a scalar field is named after (`customerId` next to a `Customer` model), or None."""
     if not keyable({**field, "nullable": False}):
         return None
     words = name_words(field["name"])
@@ -125,10 +133,13 @@ def _propose_foreign_key(context: dict, model: dict, fields: list[dict], field: 
         return None
     stem = "".join(words[:-1])
     target = next((item for item in context["schema"]["models"] if "".join(name_words(item["name"])) == stem), None)
-    if not target or not has_key(context, target["name"]):
+    return target["name"] if target and has_key(context, target["name"]) else None
+
+
+def _propose_foreign_key(context: dict, model: dict, fields: list[dict], field: dict) -> dict | None:
+    target = _named_owner(context, model, fields, field)
+    if not target:
         return None
-    if any(other["type"]["kind"] == "model" and other["type"]["name"] == target["name"] for other in fields):
+    if any(other["type"]["kind"] == "model" and other["type"]["name"] == target for other in fields):
         return None
-    return decision(
-        target["name"], "high", [reason("foreignKeyNamed", {"model": target["name"]})], [target["name"], None]
-    )
+    return decision(target, "high", [reason("foreignKeyNamed", {"model": target})], [target, None])

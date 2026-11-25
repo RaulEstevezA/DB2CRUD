@@ -1,7 +1,9 @@
 """Edits of a design. Each returns a new design and leaves the previous one untouched, so the history can
 keep it for undo. Mirrors web/src/core/design/edit.ts."""
 
+from ..model.schema import all_fields, find_model
 from .propose import propose_design
+from .queries import clean_query, keep_query, queryable_fields
 from .types import FIELD_DECISIONS, same_value
 
 
@@ -21,6 +23,9 @@ def _choose(decision: dict, value) -> dict:
 
 
 def get_decision(design: dict, ref: dict) -> dict | None:
+    # A query is not a choice between options: it is accepted, changed or removed (accept_query, set_query)
+    if ref["kind"] == "query":
+        return None
     if ref["kind"] == "enum":
         item = next((entry for entry in design["enums"] if entry["enum"] == ref["enum"]), None)
         return item["storage"] if item else None
@@ -36,6 +41,8 @@ _MISSING = object()
 
 def decide(design: dict, ref: dict, value=_MISSING) -> dict:
     """Chooses a value for a decision; without a value, confirms the suggestion as it is."""
+    if ref["kind"] == "query":
+        return accept_query(design, ref["model"], ref["index"]) if value is _MISSING else design
     current = get_decision(design, ref)
     if not current:
         return design
@@ -89,6 +96,45 @@ def set_field_index(design: dict, model: str, field: str, index: bool) -> dict:
         return {**rest, "index": True} if index else rest
 
     return _map_field(design, model, field, change)
+
+
+def _map_queries(design: dict, model: str, change) -> dict:
+    return _map_model(design, model, lambda item: {**item, "queries": change(item.get("queries") or [])})
+
+
+def add_query(design: dict, model: str, filter_: list[str], sort: list[dict]) -> dict:
+    """A query written by the user; it is applied at once."""
+    query = clean_query(filter_, sort)
+    if not query["filter"] and not query["sort"]:
+        return design
+    return _map_queries(design, model, lambda queries: [*queries, {**query, "status": "active", "reasons": []}])
+
+
+def set_query(design: dict, model: str, index: int, filter_: list[str], sort: list[dict]) -> dict:
+    """Changes a query; the user made it, so it is applied and no longer carries the proposal's reasons."""
+    query = clean_query(filter_, sort)
+    if not query["filter"] and not query["sort"]:
+        return remove_query(design, model, index)
+    return _map_queries(
+        design,
+        model,
+        lambda queries: [
+            {**query, "status": "active", "reasons": []} if i == index else item for i, item in enumerate(queries)
+        ],
+    )
+
+
+def accept_query(design: dict, model: str, index: int) -> dict:
+    """Accepts a proposed query as it is."""
+    return _map_queries(
+        design,
+        model,
+        lambda queries: [{**item, "status": "active"} if i == index else item for i, item in enumerate(queries)],
+    )
+
+
+def remove_query(design: dict, model: str, index: int) -> dict:
+    return _map_queries(design, model, lambda queries: [item for i, item in enumerate(queries) if i != index])
 
 
 def set_field_override(design: dict, model: str, field: str, key: str, value: str) -> dict:
@@ -145,9 +191,20 @@ def reconcile(previous: dict | None, schema: dict, target: str) -> dict:
                     updated[key] = was[key]
             fields.append(updated)
         merged["fields"] = fields
+        # Proposed only the first time: afterwards the queries are the ones the user reviewed
+        if "queries" in merged and "queries" in old:
+            merged["queries"] = _kept_queries(schema, merged, old["queries"])
         models.append(merged)
     enums = []
     for item in fresh["enums"]:
         old = next((other for other in previous["enums"] if other["enum"] == item["enum"]), None)
         enums.append({**item, "storage": _keep(item["storage"], old["storage"] if old else None) or item["storage"]})
     return {**fresh, "models": models, "enums": enums}
+
+
+def _kept_queries(schema: dict, model: dict, queries: list[dict]) -> list[dict]:
+    """The queries the user already reviewed, with the fields that are gone left out."""
+    found = find_model(schema, model["model"])
+    queryable = queryable_fields(all_fields(schema, found), model["fields"]) if found else []
+    kept = [keep_query(query, queryable) for query in queries]
+    return [query for query in kept if query is not None]

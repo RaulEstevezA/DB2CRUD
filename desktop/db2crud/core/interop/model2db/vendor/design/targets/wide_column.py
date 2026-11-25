@@ -69,5 +69,7 @@ STRATEGY = {
     # No foreign keys: a column holding another model's key is a plain column
     "foreign_keys": False,
     "whole_numbers": False,
+    # The queries the application runs, to index by them (design/queries.py)
+    "queries": True,
     "enum": lambda name: None,
 }

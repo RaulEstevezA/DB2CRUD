@@ -39,6 +39,10 @@ export interface Index {
   name: string
   columns: string[]
   unique: boolean
+  /** Columns kept in descending order (a query reads the newest first) */
+  descending?: string[]
+  /** The query of the design it serves (`Post` by `userId`, `createdAt` descending), for the notes */
+  query?: string
 }
 
 export interface Check {
@@ -53,7 +57,7 @@ export interface Todo {
   params: Record<string, string>
 }
 
-export type TodoCode = 'relationPending' | 'keyPending' | 'targetNotStored' | 'foreignKeyTargetNotStored'
+export type TodoCode = 'relationPending' | 'keyPending' | 'targetNotStored' | 'foreignKeyTargetNotStored' | 'queryPending'
 
 export type TableKind = 'entity' | 'list' | 'map' | 'join' | 'lookup'
 
@@ -109,6 +113,18 @@ export type NoteCode =
   | 'compositeKeyReadOnly'
   /** Written by an output: the database has no unique indexes, so the application keeps the value unique */
   | 'uniqueInApplication'
+  /** Written by an output: the ORM cannot keep a column of an index in descending order */
+  | 'indexOrderIgnored'
+  /** Redis: a search is sorted by one field, so a query ordered by several keeps the first */
+  | 'querySortOne'
+  /** Wide columns: each query reads a table of its own, which the application keeps in step */
+  | 'queryTables'
+  /** Wide columns: a query without a filter cannot read rows in order */
+  | 'queryNeedsFilter'
+  /** Indexes come from the queries of the design: check them with the real queries and data */
+  | 'queryIndexes'
+  /** A query uses a field that is not stored as a column of its own, so it has no index */
+  | 'queryNotIndexed'
 
 export interface RelationalSchema {
   kind: 'relational'
@@ -170,6 +186,8 @@ export interface KeyStructure {
 export interface SearchField {
   field: string
   type: 'TAG' | 'NUMERIC'
+  /** A query orders its results by this field (`SORTBY`) */
+  sortable?: boolean
 }
 
 /** The keys of a stored model: a hash under `prefix:<key>`, and what hangs from it. */
@@ -203,11 +221,16 @@ export interface CqlColumn {
 export interface CqlTable {
   name: string
   model: string
-  /** `entity`: a stored model; `child`: the keys of a list of other models, partitioned by the owner's key */
-  kind: 'entity' | 'child'
+  /** `entity`: a stored model; `child`: the keys of a list of other models, partitioned by the owner's key;
+   * `query`: a copy of a model's rows for one query, partitioned by its filter and ordered by its order */
+  kind: 'entity' | 'child' | 'query'
   columns: CqlColumn[]
   partitionKey: string[]
   clusteringKey: string[]
+  /** Clustering columns kept in descending order */
+  descending?: string[]
+  /** `query` tables: the query they answer (`Post by userId, ordered by createdAt desc`) */
+  query?: string
   /** Secondary indexes, on one column each */
   indexes: { name: string; column: string }[]
   todos: Todo[]

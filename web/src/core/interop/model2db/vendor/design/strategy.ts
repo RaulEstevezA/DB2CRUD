@@ -16,6 +16,8 @@ export interface DesignStrategy {
   foreignKeys: boolean
   /** Whether numbers without a size named like counts (`quantity`) are proposed as whole numbers */
   wholeNumbers: boolean
+  /** Whether the design keeps the queries the application runs, to index by them (design/queries.ts) */
+  queries: boolean
   /** How each enum is stored; null when the database has a single way */
   enum(name: string): EnumDesign | null
 }

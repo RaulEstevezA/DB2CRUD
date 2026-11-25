@@ -55,9 +55,13 @@ const MAX_IDENTIFIER = 60
 
 /** Name of a constraint or index: `fk_orders_customer_id`, shortened if it gets too long. */
 export function constraintName(prefix: string, table: string, columns: string[]): string {
-  const name = [prefix, table, ...columns].join('_')
-  if (name.length <= MAX_IDENTIFIER) return name
+  return shortName([prefix, table, ...columns].join('_'), MAX_IDENTIFIER)
+}
+
+/** A name cut to `max` characters, ending with a hash of the whole name so that two long names stay apart. */
+export function shortName(name: string, max: number): string {
+  if (name.length <= max) return name
   let hash = 0
   for (const char of name) hash = (hash * 31 + char.charCodeAt(0)) >>> 0
-  return `${name.slice(0, MAX_IDENTIFIER - 9)}_${hash.toString(36).slice(0, 8)}`
+  return `${name.slice(0, max - 9)}_${hash.toString(36).slice(0, 8)}`
 }

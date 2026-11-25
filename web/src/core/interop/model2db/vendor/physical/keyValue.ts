@@ -1,4 +1,5 @@
 import { allFields, findEnum, findModel, modelOf, type FieldDef, type ModelSchema, type TypeRef } from '../model/schema.ts'
+import { describeQuery } from '../design/queries.ts'
 import { findModelDesign, type Design, type FieldDesign } from '../design/types.ts'
 import { keyHolder } from './document.ts'
 import { storesNull } from './relational/names.ts'
@@ -42,6 +43,7 @@ export function buildKeyValue(schema: ModelSchema, design: Design, naming: Namin
   }
 
   const entries: KeyEntry[] = []
+  let queried = false
   for (const model of schema.models) {
     const prefix = prefixes.get(model.name)
     if (!prefix) continue
@@ -155,7 +157,40 @@ export function buildKeyValue(schema: ModelSchema, design: Design, naming: Namin
       }
     }
     addFields(fields, item.fields, [], model.name)
+
+    // Each accepted query searches the hash by its filter fields and sorts by its first order field
+    const fieldOf = (name: string): HashField | undefined => {
+      const own = entry.fields.find((hash) => hash.source === `${model.name}.${name}`)
+      if (own) return own
+      const field = fields.find((candidate) => candidate.name === name)
+      const holder = field ? keyHolder(field, fields, item, { naming }) : null
+      return holder ? entry.fields.find((hash) => hash.name === holder) : undefined
+    }
+    const typeOf = (hash: HashField): SearchField['type'] => (hash.holds === 'number' ? 'NUMERIC' : 'TAG')
+    for (const query of item.queries ?? []) {
+      const text = describeQuery(query)
+      if (query.status === 'pending') {
+        entry.todos.push({ code: 'queryPending', params: { model: model.name, query: text } })
+        continue
+      }
+      const filter = query.filter.map(fieldOf)
+      const sort = query.sort.map((sorted) => fieldOf(sorted.field))
+      if ([...filter, ...sort].some((hash) => hash === undefined)) {
+        notes.push({ code: 'queryNotIndexed', params: { model: model.name, query: text } })
+        continue
+      }
+      // The key is read with HGETALL, without a search
+      for (const hash of filter as HashField[]) if (hash.name !== entry.keyField) search(hash.name, typeOf(hash))
+      const first = sort[0]
+      if (first) {
+        search(first.name, typeOf(first))
+        entry.search.find((other) => other.field === first.name)!.sortable = true
+      }
+      if (sort.length > 1) notes.push({ code: 'querySortOne', params: { model: model.name, query: text, field: query.sort[0].field } })
+      queried = true
+    }
     entries.push(entry)
   }
+  if (queried) notes.push({ code: 'queryIndexes', params: {} })
   return { kind: 'keyvalue', entries, notes }
 }

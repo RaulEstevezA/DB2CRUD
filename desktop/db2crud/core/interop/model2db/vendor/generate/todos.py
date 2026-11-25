@@ -13,4 +13,9 @@ def todo_text(todo: dict, model: str, kind: str) -> str:
         return f'TODO: choose the {key} of "{params["model"]}".'
     if code == "targetNotStored":
         return f'TODO: "{model}.{params["field"]}" points to "{params["model"]}", which has no {kind} of its own.'
+    if code == "queryPending":
+        return (
+            f'TODO: does the application read "{params["model"]}" {params["query"]}? '
+            "Accept the query in the design to index it."
+        )
     return f'TODO: "{params["column"]}" refers to "{params["model"]}", whose {key} is not decided yet.'

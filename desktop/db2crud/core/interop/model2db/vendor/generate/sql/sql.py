@@ -430,8 +430,11 @@ def generate_sql(schema: dict, dialect: str, title: str | None = None, migration
                 for value in enum_item["values"]:
                     out.append(f"{insert} ({string_list([value])});")
         for index in table["indexes"]:
+            if index.get("query"):
+                out.append(f"-- Query: {index['query']}")
             unique = "UNIQUE " if index["unique"] else ""
-            columns = ", ".join(q(name) for name in index["columns"])
+            descending = index.get("descending") or []
+            columns = ", ".join(f"{q(name)}{' DESC' if name in descending else ''}" for name in index["columns"])
             out.append(f"CREATE {unique}INDEX {q(index['name'])} ON {q(table['name'])} ({columns});")
         for fk in postponed:
             later.append(f"ALTER TABLE {q(table['name'])} ADD {_foreign_key_clause(fk, q)};")

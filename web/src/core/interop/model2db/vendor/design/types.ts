@@ -68,6 +68,8 @@ export type ReasonCode =
   | 'uniqueNamed'
   // Whole numbers
   | 'wholeNumberNamed'
+  // Queries
+  | 'queryByOwner'
   // Enums
   | 'enumCheck'
   | 'enumDocument'
@@ -154,6 +156,26 @@ export const FIELD_DECISIONS = ['relation', 'foreignKey', 'unique', 'wholeNumber
 
 export type FieldDecisionKind = (typeof FIELD_DECISIONS)[number]
 
+export type SortDirection = 'asc' | 'desc'
+
+/** A field the rows of a query come back ordered by. */
+export interface QuerySort {
+  field: string
+  direction: SortDirection
+}
+
+/** A way the application reads a stored model: rows whose `filter` fields equal a value, ordered by the
+ * `sort` fields (`Post` by `userId`, newest `createdAt` first). The fields decide the indexes, which the
+ * fields alone cannot say. A proposed query waits for the user (`pending`); one the user wrote or accepted
+ * is `active` and turns into an index. */
+export interface QueryDesign {
+  filter: string[]
+  sort: QuerySort[]
+  status: DecisionStatus
+  /** Why Model2DB proposed it; empty when the user wrote it */
+  reasons: Reason[]
+}
+
 export interface ModelDesign {
   model: string
   /** Only for models no other model refers to: false leaves them out of the database */
@@ -163,6 +185,9 @@ export interface ModelDesign {
   fields: FieldDesign[]
   /** Table or collection name chosen by the user */
   table?: string
+  /** How the application reads the model, for the databases that index by it (DesignStrategy.queries).
+   * Undefined until proposed: once present, even empty, it is the user's and is never proposed again. */
+  queries?: QueryDesign[]
 }
 
 export interface EnumDesign {

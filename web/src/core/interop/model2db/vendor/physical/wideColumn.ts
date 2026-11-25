@@ -1,5 +1,6 @@
 import { toSnakeCase } from '../model/naming.ts'
 import { allFields, findModel, modelOf, type FieldDef, type ModelSchema, type TypeRef } from '../model/schema.ts'
+import { describeQuery } from '../design/queries.ts'
 import { findModelDesign, type Design, type FieldDesign } from '../design/types.ts'
 import { keyHolder } from './document.ts'
 import { columnName, constraintName, freeName, joinNames, tableName } from './naming.ts'
@@ -227,5 +228,56 @@ export function buildWideColumn(schema: ModelSchema, design: Design, naming: Nam
     for (const column of columns) if (keyField && column.name === keyField.column) column.type = keyField.type
     table.columns.push(...columns)
   }
+
+  // Each accepted query reads a table of its own: a copy of the rows partitioned by the filter and ordered by
+  // the order, with the model's key last so that every row stays apart
+  let queried = false
+  for (const [modelName, table] of entities) {
+    const item = findModelDesign(design, modelName)!
+    const fields = allFields(schema, findModel(schema, modelName)!)
+    const columnOf = (name: string): string | undefined => {
+      const own = table.columns.find((column) => column.source === `${modelName}.${name}`)?.name
+      if (own) return own
+      // `author` next to `authorId`: the key is in that column
+      const field = fields.find((candidate) => candidate.name === name)
+      return field ? (keyHolder(field, fields, item, { naming }) ?? undefined) : undefined
+    }
+    for (const query of item.queries ?? []) {
+      const text = describeQuery(query)
+      if (query.status === 'pending') {
+        table.todos.push({ code: 'queryPending', params: { model: modelName, query: text } })
+        continue
+      }
+      if (table.partitionKey.length === 0) continue
+      const filter = query.filter.map(columnOf)
+      const sort = query.sort.map((sorted) => columnOf(sorted.field))
+      if ([...filter, ...sort].some((column) => column === undefined)) {
+        notes.push({ code: 'queryNotIndexed', params: { model: modelName, query: text } })
+        continue
+      }
+      if (filter.length === 0) {
+        notes.push({ code: 'queryNeedsFilter', params: { database, model: modelName, query: text } })
+        continue
+      }
+      // By the key itself: the model's table already answers it
+      if (table.partitionKey.every((column) => filter.includes(column))) continue
+      const ordered = sort as string[]
+      const descending = query.sort.flatMap((sorted, i) => (sorted.direction === 'desc' ? [ordered[i]] : []))
+      tables.push({
+        name: freeName(`${table.name}_by_${(filter as string[]).join('_')}`, tableNames),
+        model: modelName,
+        kind: 'query',
+        columns: table.columns.map((column) => ({ ...column })),
+        partitionKey: filter as string[],
+        clusteringKey: [...ordered, ...table.partitionKey.filter((column) => !filter.includes(column) && !ordered.includes(column))],
+        ...(descending.length > 0 ? { descending } : {}),
+        query: `${modelName} ${text}`,
+        indexes: [],
+        todos: [],
+      })
+      queried = true
+    }
+  }
+  if (queried) notes.push({ code: 'queryTables', params: { database } })
   return { kind: 'widecolumn', types, tables, notes }
 }

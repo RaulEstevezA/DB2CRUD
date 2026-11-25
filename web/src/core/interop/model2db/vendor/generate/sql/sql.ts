@@ -405,8 +405,11 @@ export function generateSql(schema: RelationalSchema, dialect: Dialect, options:
       if (enumItem && rules.multiRowInsert) out.push(`${insert} ${enumItem.values.map((value) => `(${stringList([value])})`).join(', ')};`)
       else if (enumItem) for (const value of enumItem.values) out.push(`${insert} (${stringList([value])});`)
     }
-    for (const index of table.indexes)
-      out.push(`CREATE ${index.unique ? 'UNIQUE ' : ''}INDEX ${q(index.name)} ON ${q(table.name)} (${index.columns.map(q).join(', ')});`)
+    for (const index of table.indexes) {
+      if (index.query) out.push(`-- Query: ${index.query}`)
+      const columns = index.columns.map((column) => `${q(column)}${index.descending?.includes(column) ? ' DESC' : ''}`)
+      out.push(`CREATE ${index.unique ? 'UNIQUE ' : ''}INDEX ${q(index.name)} ON ${q(table.name)} (${columns.join(', ')});`)
+    }
     for (const fk of postponed) later.push(`ALTER TABLE ${q(table.name)} ADD ${foreignKeyClause(fk, q)};`)
   }
   if (later.length > 0) out.push('', '-- References between tables that refer to each other', ...later)

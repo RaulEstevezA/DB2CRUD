@@ -83,5 +83,7 @@ STRATEGY = {
     "relation": relation,
     "foreign_keys": True,
     "whole_numbers": True,
+    # The queries the application runs, to index by them (design/queries.py)
+    "queries": True,
     "enum": enum,
 }

@@ -167,12 +167,15 @@ function dbEnum(item: PhysicalEnum): DbEnum | null {
   return { name: item.sqlName, values: item.values.map(String), storage: item.storage }
 }
 
+/** Advice about the queries of the design: it changes no table, and is for Model2DB to settle. */
+const QUERY_ADVICE = new Set(['queryPending', 'queryIndexes', 'queryNotIndexed'])
+
 /** What the build left pending or noted, so the interface can say it. */
 function notesOf(physical: RelationalSchema): DbNote[] {
   const notes: DbNote[] = physical.notes.map((note) => ({ code: `model2db.${note.code}`, params: note.params }))
   for (const table of physical.tables)
     for (const todo of table.todos) notes.push({ code: `model2db.${todo.code}`, params: { ...todo.params, table: table.name } })
-  return notes
+  return notes.filter((note) => !QUERY_ADVICE.has(note.code.slice('model2db.'.length)))
 }
 
 /** The physical schema of a saved Model2DB project, or why it cannot be read. */

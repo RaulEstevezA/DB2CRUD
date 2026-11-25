@@ -3,6 +3,7 @@ with lists, sets and hashes of its own under that key, and a search index on the
 and the ones the user indexed. Redis keeps every value as text; the description says what each one holds.
 Mirrors web/src/core/physical/keyValue.ts."""
 
+from ..design.queries import describe_query
 from ..design.types import find_model_design
 from ..js import coalesce
 from ..model.schema import all_fields, find_enum, find_model, model_of
@@ -210,7 +211,56 @@ def build_key_value(schema: dict, design: dict, naming: dict) -> dict:
                 entry["fields"].append(hash_field)
 
         add_fields(fields, item["fields"], [], model["name"])
+
+        # Each accepted query searches the hash by its filter fields and sorts by its first order field
+        def field_of(name: str) -> dict | None:
+            own = next(
+                (hash_field for hash_field in entry["fields"] if hash_field.get("source") == f"{model['name']}.{name}"),
+                None,
+            )
+            if own:
+                return own
+            field = next((candidate for candidate in fields if candidate["name"] == name), None)
+            holder = key_holder(field, fields, item, {"naming": naming}) if field else None
+            return (
+                next((hash_field for hash_field in entry["fields"] if hash_field["name"] == holder), None)
+                if holder
+                else None
+            )
+
+        def type_of(hash_field: dict) -> str:
+            return "NUMERIC" if hash_field["holds"] == "number" else "TAG"
+
+        for query in item.get("queries") or []:
+            text = describe_query(query)
+            if query["status"] == "pending":
+                entry["todos"].append({"code": "queryPending", "params": {"model": model["name"], "query": text}})
+                continue
+            filter_ = [field_of(name) for name in query["filter"]]
+            ordered = [field_of(sorted_["field"]) for sorted_ in query["sort"]]
+            if any(hash_field is None for hash_field in [*filter_, *ordered]):
+                notes.append({"code": "queryNotIndexed", "params": {"model": model["name"], "query": text}})
+                continue
+            # The key is read with HGETALL, without a search
+            for hash_field in filter_:
+                if hash_field["name"] != entry["keyField"]:
+                    search(hash_field["name"], type_of(hash_field))
+            if ordered:
+                first = ordered[0]
+                search(first["name"], type_of(first))
+                next(other for other in entry["search"] if other["field"] == first["name"])["sortable"] = True
+            if len(ordered) > 1:
+                notes.append(
+                    {
+                        "code": "querySortOne",
+                        "params": {"model": model["name"], "query": text, "field": query["sort"][0]["field"]},
+                    }
+                )
+            queried.append(True)
         return entry
 
+    queried: list[bool] = []
     entries = [build_entry(model) for model in schema["models"] if model["name"] in prefixes]
+    if queried:
+        notes.append({"code": "queryIndexes", "params": {}})
     return {"kind": "keyvalue", "entries": entries, "notes": notes}
