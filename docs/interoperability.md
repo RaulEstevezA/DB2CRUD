@@ -49,7 +49,7 @@ Every project DB2CRUD writes has a `crud-contract.json` at its root. It says wha
 |---|---|
 | `format`, `version` | Always `crud-contract` and `1`. A reader refuses other formats and newer versions. |
 | `stack.language` | `python`, `typescript`, `java`, `csharp`, `php`, `kotlin`, `rust` or `swift`. |
-| `stack.orm` | The ORM of the data access: `sqlalchemy`, `django`, `typeorm`, `prisma`, `drizzle`, `sequelize`, `jpa`, `efcore`, `doctrine`, `eloquent`, `exposed`, `seaorm`, `fluent`, `mongoose`, `springdata` or `beanie`. |
+| `stack.orm` | The ORM of the data access: `sqlalchemy`, `django`, `typeorm`, `prisma`, `drizzle`, `sequelize`, `jpa`, `efcore`, `doctrine`, `eloquent`, `exposed`, `seaorm`, `fluent`, `mongoose`, `springdata`, `beanie` or `mongodriver`. |
 | `stack.database` | `postgresql`, `mysql`, `mariadb` or `sqlite`. |
 | `stack.execution` | `sync` or `async`: whether the operations of the services are awaited. |
 | `transactions` | Where a transaction starts and ends: `operation` (each service operation is one), `caller` (the caller opens it through the unit of work) or `write` (each repository write is one). |
