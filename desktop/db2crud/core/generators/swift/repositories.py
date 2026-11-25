@@ -15,6 +15,7 @@ from .context import (
     sql_repository,
     sw_file,
 )
+from .documents import identified_lists, list_of
 from .swift import imports, sw_string
 
 
@@ -60,6 +61,24 @@ def repository_methods(context: dict, info: dict) -> list[dict]:
             add(f"_ entity: {entity}", entity, "Stores a new row; the values the database fills are read back.")
         elif kind == "update":
             add(f"_ entity: {entity}", entity, "Stores the changes made to a row.")
+        elif kind in ("addItem", "removeItem"):
+            items = list_of(info, query_design)
+            adds = kind == "addItem"
+            # Told apart by its position, it is only removed from a list of the size it was seen in
+            size = [{"name": "size", "type": "Int"}] if not adds and items["by"] == "position" else []
+            params = [
+                *({"name": column["prop"], "type": column["sw"]} for column in info["key"]),
+                *([{"name": items["item"], "type": items["sw"]}] if adds else items["params"]),
+                *size,
+            ]
+            kept = query_design["columns"][0]
+            add(
+                ", ".join(f"_ {item['name']}: {item['type']}" for item in params),
+                f"{entity}?",
+                f"Adds an item to {kept}, and gives the row as it is then, if there is one."
+                if adds
+                else f"Removes an item from {kept}{' that has this size' if size else ''}, and gives the row as it is then, if there is one.",
+            )
         elif kind == "delete":
             add(f"_ entity: {entity}", "", "Removes a row.")
     return methods
@@ -119,13 +138,15 @@ def _sw_literal(column: dict, value) -> str | None:
     return None
 
 
-def _memory_fill(column: dict) -> str | None:
+def memory_fill(column: dict) -> str | None:
     db = column["column"]
     target = f"entity.{column['prop']}"
     generated = db.get("generated")
     default = db.get("default")
     if generated == "identity":
         return f"if {target} == nil {{ {target} = await rows.nextId() }}"
+    if generated == "uuid" and db["type"].get("objectId"):
+        return f"{target} = {target} ?? Bson.newId()"
     if generated == "uuid":
         return f"{target} = {target} ?? UUID()"
     if generated in ("now", "onUpdateNow"):
@@ -169,16 +190,59 @@ def _memory_body(context: dict, info: dict, method: dict, fills: list[str]) -> l
         return ["await visible()"]
     if kind == "insert":
         return [
-            *(["var entity = entity", *fills] if fills else []),
+            *(["var entity = entity", *fills] if fills or identified_lists(info) else []),
+            *(["entity.identifyItems()"] if identified_lists(info) else []),
             "let row = entity",
             "await rows.store(row) { sameKey($0, row) }",
             "return row",
         ]
     if kind == "update":
+        if identified_lists(info):
+            return [
+                "var entity = entity",
+                "entity.identifyItems()",
+                "let row = entity",
+                "await rows.store(row) { sameKey($0, row) }",
+                "return row",
+            ]
         return ["await rows.store(entity) { sameKey($0, entity) }", "return entity"]
+    if kind in ("addItem", "removeItem"):
+        return _memory_item(info, method)
     if kind == "delete":
         return ["await rows.remove { sameKey($0, entity) }"]
     return ['fatalError("not written")']
+
+
+def _memory_item(info: dict, method: dict) -> list[str]:
+    """One item of a list added or removed in memory."""
+    items = list_of(info, method["query"])
+    name = items["params"][0]["name"]
+    held = f"found.{items['column']['prop']}"
+    item = items["item"]
+    keys = " && ".join(f"$0.{column['prop']} == {column['prop']}" for column in info["key"])
+    touched = [column for column in info["columns"] if column["column"].get("generated") == "onUpdateNow"]
+    change = []
+    if method["query"]["kind"] == "addItem":
+        if items["by"] == "id":
+            change += [f"var {item} = {item}", f"{item}.id = {item}.id ?? Bson.newId()"]
+        change.append(f"{held} = ({held} ?? []) + [{item}]")
+    elif items["by"] == "position":
+        change += [
+            f"guard {held}?.count == size, position >= 0, position < size else {{ return nil }}",
+            f"{held}?.remove(at: position)",
+        ]
+    else:
+        change.append(f"{held}?.removeAll {{ $0{'.id' if items['by'] == 'id' else ''} == {name} }}")
+    version = info["version"]["prop"] if info["version"] else None
+    return [
+        f"guard var found = await visible().first(where: {{ {keys} }}) else {{ return nil }}",
+        *change,
+        *([f"found.{version} = (found.{version} ?? 0) + 1"] if version else []),
+        *(f"found.{column['prop']} = Date()" for column in touched),
+        "let row = found",
+        "await rows.store(row) { sameKey($0, row) }",
+        "return row",
+    ]
 
 
 def _less_of(column: dict, a: str, b: str) -> str:
@@ -273,7 +337,9 @@ def repository_file(context: dict, info: dict) -> dict:
     sql_bodies: list[str] = []
     for item in methods:
         sql_bodies += _block(item, context["orm"]["repository"]["body"](context, info, item), "public ", not interfaces)
-    writes_rows = any(method["query"]["kind"] in ("insert", "update", "delete") for method in methods)
+    writing = ("insert", "update", "delete", "addItem", "removeItem")
+    writes_rows = any(method["query"]["kind"] in writing for method in methods)
+    functions = context["orm"]["repository"]["functions"](context, info)
     reads = any(method["query"]["kind"] not in ("delete", "update") for method in methods)
     body += [
         f"/// Keeps {info['name']} rows in the database, through {context['orm']['label']}: on the database of the unit of work, or on its transaction.",
@@ -297,14 +363,10 @@ def repository_file(context: dict, info: dict) -> dict:
         *sql_bodies,
         *(["", *(f"    {line}" for line in _write_function(context, info, "private "))] if writes_rows else []),
         "}",
-        *(
-            ["", *context["orm"]["repository"]["functions"](context, info)]
-            if reads or any(m["query"]["kind"] == "insert" for m in methods)
-            else []
-        ),
+        *(["", *functions] if functions and (reads or any(m["query"]["kind"] == "insert" for m in methods)) else []),
     ]
     if context["settings"]["memoryRepositories"]:
-        fills = [line for line in (_memory_fill(column) for column in info["columns"]) if line is not None]
+        fills = [line for line in (memory_fill(column) for column in info["columns"]) if line is not None]
         cursor = (
             any(method["query"]["kind"] == "list" for method in methods) and context["settings"]["paging"] == "cursor"
         )

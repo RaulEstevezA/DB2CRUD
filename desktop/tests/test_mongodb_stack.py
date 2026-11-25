@@ -23,6 +23,7 @@ def test_stack_follows_the_database():
         "mongophp",
         "mongokotlin",
         "mongorust",
+        "mongoswift",
     ]
     assert settings_for("mongodb", settings)["database"] == "mongodb"
     assert settings_for("postgresql", settings) == settings

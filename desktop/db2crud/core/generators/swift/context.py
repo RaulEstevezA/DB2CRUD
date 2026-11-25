@@ -10,6 +10,7 @@ TableInfo; the context is {"schema", "design", "settings", "tables", "module"}.
 import re
 
 from ...crud.types import find_policy, find_repository, find_service
+from .documents import nested_structs, value_type
 from .swift import member_name, type_name
 
 BLOCKING = (None, "no action", "restrict")
@@ -53,10 +54,11 @@ def _included(items: list[dict]) -> list[dict]:
     return [item for item in items if item["include"]["value"]]
 
 
-def _column_info(column: dict) -> dict:
+def _column_info(column: dict, types: tuple[str, bool], own: bool) -> dict:
     generated = column.get("generated") is not None and column.get("generated") != "onUpdateNow"
-    prop = member_name(column["name"])
-    sw, comparable = sw_type(column["type"])
+    # MongoDB's `_id` is the `id` of the entity, unless the documents have one of their own
+    prop = "documentId" if own else member_name(column["name"])
+    sw, comparable = types
     return {
         "column": column,
         "prop": prop,
@@ -68,12 +70,24 @@ def _column_info(column: dict) -> dict:
     }
 
 
-def _table_info(schema: dict, design: dict, settings: dict, table: dict) -> dict:
+def _table_info(orm: dict, schema: dict, design: dict, settings: dict, table: dict) -> dict:
     policy = find_policy(design, table["name"])
     repository = find_repository(design, table["name"])
     service = find_service(design, table["name"]) if settings["services"] else None
     entity = type_name(repository["entity"])
-    columns = [_column_info(column) for column in table["columns"]]
+    documents = bool(orm.get("documents"))
+    nested = nested_structs(table["columns"], entity) if documents else {}
+    own_id = documents and any(column["name"] == "id" for column in table["columns"])
+
+    def types_of(column: dict) -> tuple[str, bool]:
+        if not documents:
+            return sw_type(column["type"])
+        struct = nested.get(column["name"])
+        return value_type(column["type"], struct["path"] if struct else None)
+
+    columns = [
+        _column_info(column, types_of(column), own_id and column["name"] == "_id") for column in table["columns"]
+    ]
 
     def by_name(name: str) -> dict:
         return next(info for info in columns if info["column"]["name"] == name)
@@ -84,7 +98,7 @@ def _table_info(schema: dict, design: dict, settings: dict, table: dict) -> dict
     )
     delete_mode = policy["delete"]["value"]
     concurrency = policy["concurrency"]["value"]
-    own_entities = not repository["entityMissing"] and schema["source"]["format"] == settings["orm"]
+    own_entities = not documents and not repository["entityMissing"] and schema["source"]["format"] == settings["orm"]
     writes_entity = settings["entities"] == "all" or (settings["entities"] == "missing" and not own_entities)
     children = policy["children"]
     return {
@@ -106,6 +120,7 @@ def _table_info(schema: dict, design: dict, settings: dict, table: dict) -> dict
         "repository": repository,
         "service": service,
         "writesEntity": writes_entity,
+        "nested": nested,
     }
 
 
@@ -115,7 +130,7 @@ def create_context(orm: dict, schema: dict, design: dict, settings: dict) -> dic
         "schema": schema,
         "design": design,
         "settings": settings,
-        "tables": [_table_info(schema, design, settings, table) for table in schema["tables"]],
+        "tables": [_table_info(orm, schema, design, settings, table) for table in schema["tables"]],
         "module": type_name(settings["name"]),
     }
 

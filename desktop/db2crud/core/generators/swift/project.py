@@ -3,6 +3,7 @@ crud-contract.json for CRUD2Controller. Mirrors web/src/core/generators/swift/pr
 
 import json
 
+from ...schema.documents import nested_fields
 from ..types import lines
 from .context import file_of, operation_name, service_type, stored_type, writes_entities
 from .dtos import create_columns, create_dto, read_columns, read_dto, update_columns, update_type
@@ -135,6 +136,7 @@ def readme_file(context: dict) -> dict:
             "",
             "```text",
             f"Sources/{module}/AppDatabase.swift   the connection of DATABASE_URL",
+            *(f"Sources/{module}/{line}" for line in context["orm"]["readme"].get("layout", [])),
             f"Sources/{module}/UnitOfWork.swift    the repositories of every table, and the transaction of each operation",
             f"Sources/{module}/Errors.swift        DomainError: notFound, conflict, validationFailed; no HTTP codes",
             [
@@ -163,10 +165,21 @@ def readme_file(context: dict) -> dict:
 
 
 def _type_of(column: dict) -> dict:
-    column_type = column["column"]["type"]
-    result = {"kind": column_type["kind"], "swift": stored_type(column)}
+    plain = _plain_type(column["column"]["type"])
+    return {"kind": plain["kind"], "swift": stored_type(column), **plain}
+
+
+def _plain_type(column_type: dict) -> dict:
+    result = {"kind": column_type["kind"]}
     if column_type["kind"] == "text" and column_type.get("length") is not None:
         result["length"] = column_type["length"]
+    # What a nested document, or each of a list of them, holds
+    fields = nested_fields(column_type)
+    if fields is not None:
+        result["fields"] = [
+            {"name": field["name"], "type": _plain_type(field["type"]), "nullable": field["nullable"]}
+            for field in fields
+        ]
     return result
 
 

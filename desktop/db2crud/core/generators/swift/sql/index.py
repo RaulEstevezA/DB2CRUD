@@ -126,7 +126,7 @@ SQL_ORM = {
     "label": "SQLKit",
     "holder": {"type": "Db", "optional": "Db?", "modules": []},
     "emptyList": lambda context: '"{}"' if context["settings"]["database"] == "postgresql" else '"[]"',
-    "databaseFile": database_file,
+    "databaseFiles": lambda context: [database_file(context)],
     "entityFiles": lambda context, info: [entity_file(context, info)],
     "repository": {
         "modules": lambda *_: ["SQLKit"],

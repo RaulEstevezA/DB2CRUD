@@ -6,6 +6,7 @@ import re
 
 from ...js import js_string
 from ..samples import bounded_number
+from .documents import FREE
 from .swift import sw_string
 
 
@@ -61,6 +62,8 @@ def sample_value(column: dict, checks: list[dict], enums: list[dict]) -> str:
     if kind == "float":
         return f"{column['sw']}({_whole(column, checks)}) + 0.5"
     if kind == "text":
+        if column_type.get("objectId"):
+            return 'String(format: "%024x", n)'
         length = column_type.get("length")
         length = 40 if length is None else length
         if column_type.get("fixed"):
@@ -74,9 +77,13 @@ def sample_value(column: dict, checks: list[dict], enums: list[dict]) -> str:
         return sw_string(values[0] if values else "value")
     if kind == "boolean":
         return "true"
+    if kind == "date" and column["sw"] == "String":
+        return 'String(format: "2026-01-%02d", n % 28 + 1)'
     if kind in ("date", "datetime"):
         return DAY
     if kind == "time":
+        if column["sw"] == "String":
+            return 'String(format: "12:%02d:00", n % 60)'
         return "TimeOfDay(hour: 12, minute: n % 60)"
     if kind == "uuid":
         return 'UUID(uuidString: String(format: "00000000-0000-4000-8000-%012d", n))!'
@@ -89,6 +96,8 @@ def sample_value(column: dict, checks: list[dict], enums: list[dict]) -> str:
             else "Data([UInt8(n % 256)])"
         )
     if kind == "json":
+        if column["sw"] == FREE:
+            return 'BsonValue(["n": n] as BsonDocument)'
         return '"{\\"n\\": \\(n)}"'
     if kind == "array":
         return '"[]"'
@@ -110,4 +119,6 @@ MISSING = {
 
 def missing_value(column: dict) -> str:
     """A key no row has, as a Swift expression, for the tests of missing rows."""
+    if column["column"]["type"].get("objectId"):
+        return f'"{"f" * 24}"'
     return MISSING.get(column["sw"], '"missing"')

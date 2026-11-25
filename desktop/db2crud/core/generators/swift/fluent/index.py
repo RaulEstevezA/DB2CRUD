@@ -398,7 +398,7 @@ FLUENT_ORM = {
     "label": "Fluent",
     "holder": {"type": "any Database", "optional": "(any Database)?", "modules": ["FluentKit"]},
     "emptyList": lambda context: '"{}"' if context["settings"]["database"] == "postgresql" else '"[]"',
-    "databaseFile": _database_file,
+    "databaseFiles": lambda context: [_database_file(context)],
     "entityFiles": lambda context, info: [entity_file(context, info), model_file(context, info)],
     "repository": {
         "modules": lambda context, info: ["FluentKit", *(["FluentSQL"] if uses_sql(context, info) else [])],

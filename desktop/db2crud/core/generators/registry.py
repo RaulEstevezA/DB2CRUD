@@ -30,6 +30,7 @@ from .rust.seaorm.index import SEAORM_ORM
 from .rust.sql.index import SQL_ORM as RUST_SQL_ORM
 from .swift.fluent.index import FLUENT_ORM
 from .swift.generator import swift_generator
+from .swift.mongodb.index import MONGODB_ORM as SWIFT_MONGODB_ORM
 from .swift.sql.index import SQL_ORM as SWIFT_SQL_ORM
 from .typescript.common.generator import typescript_generator
 from .typescript.drizzle.index import DRIZZLE_ORM
@@ -68,6 +69,7 @@ GENERATORS = [
     rust_generator(RUST_MONGODB_ORM),
     swift_generator(FLUENT_ORM),
     swift_generator(SWIFT_SQL_ORM),
+    swift_generator(SWIFT_MONGODB_ORM),
 ]
 
 

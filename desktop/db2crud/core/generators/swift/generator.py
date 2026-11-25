@@ -1,6 +1,8 @@
-"""The Swift generator: data access layers in Swift with async/await and no web framework, over Fluent or SQLKit. Every
-file of the package, composed from the modules of this folder; each module writes one kind of file.
+"""The Swift generator: data access layers in Swift with async/await and no web framework, over Fluent, SQLKit or MongoKitten.
+Every file of the package, composed from the modules of this folder; each module writes one kind of file.
 Mirrors web/src/core/generators/swift/generator.ts."""
+
+import re
 
 from ...conversions.plan import plan_conversions
 from .context import create_context
@@ -15,7 +17,7 @@ from .tests import can_make, test_files
 
 def _code(context: dict) -> list[dict]:
     files = [
-        context["orm"]["databaseFile"](context),
+        *context["orm"]["databaseFiles"](context),
         errors_file(context),
         common_file(context),
         unit_of_work_file(context),
@@ -33,9 +35,24 @@ def _code(context: dict) -> list[dict]:
     return [file for file in files if file is not None]
 
 
+def _named(orm: dict, files: list[dict]) -> list[dict]:
+    """The files with the database types named as the strategy asks: `SqlUnitOfWork` is `MongoUnitOfWork` in a document
+    database."""
+    prefix = orm.get("prefix")
+    if not prefix:
+        return files
+
+    def rename(text: str) -> str:
+        return re.sub(r"\bSql(?=UnitOfWork\b|\w+Repository\b)", prefix, text)
+
+    return [{**item, "content": rename(item["content"])} for item in files]
+
+
 def _generate(orm: dict, schema: dict, design: dict, settings: dict, models: dict | None = None) -> list[dict]:
     context = create_context(orm, schema, design, settings)
-    plans = service_plans(context, plan_conversions(schema, design, models)) if models else []
+    plans = (
+        service_plans(context, plan_conversions(schema, design, models, bool(orm.get("documents")))) if models else []
+    )
     conversions = conversion_files(context, models["schema"], plans) if models else []
     tests = test_files(context)
     conversion_tests = (
@@ -52,7 +69,7 @@ def _generate(orm: dict, schema: dict, design: dict, settings: dict, models: dic
         if conversions
         else None
     )
-    return [
+    files = [
         readme_file(context),
         package_file(context, target),
         env_example_file(context),
@@ -63,6 +80,7 @@ def _generate(orm: dict, schema: dict, design: dict, settings: dict, models: dic
         *tests,
         *([conversion_tests] if conversion_tests else []),
     ]
+    return _named(orm, files)
 
 
 def swift_generator(orm: dict) -> dict:

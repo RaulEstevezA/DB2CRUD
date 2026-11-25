@@ -314,6 +314,17 @@ STACKS = [
         "dtoKinds": ["struct"],
         "updates": ["patch", "optional", "full"],
     },
+    {
+        "language": "swift",
+        "orm": "mongoswift",
+        "label": "MongoKitten 7",
+        "databases": ["mongodb"],
+        "transactions": "repository",
+        "execution": ["async"],
+        "errors": ["exceptions"],
+        "dtoKinds": ["struct"],
+        "updates": ["patch", "optional", "full"],
+    },
 ]
 
 DEFAULT_SETTINGS = {

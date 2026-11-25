@@ -21,8 +21,9 @@ from .context import (
     stored,
     sw_file,
 )
+from .documents import check_call, document_check_functions, document_rules, list_of
 from .dtos import create_columns, create_dto, read_columns, read_dto, update_columns, update_type
-from .swift import imports, member_name, sw_string
+from .swift import imports, member_name, sw_string, type_name
 
 
 def _ind(items: list[str], spaces: int = 4) -> list[str]:
@@ -91,7 +92,7 @@ def _value_rules(column: dict, checks: list[dict]) -> list[str]:
             "}",
         ]
 
-    if column_type["kind"] == "text" and column_type.get("length") is not None:
+    if column_type["kind"] == "text" and column_type.get("length") is not None and not column_type.get("objectId"):
         length = js_string(column_type["length"])
         rules += rule(f"value.count > {length}", f"is longer than {length} characters")
     for check in checks:
@@ -134,7 +135,7 @@ def _validate_function(writer: dict) -> list[str]:
             missing = {"condition": f"!creating && values.{prop} != nil", "message": "cannot be empty"}
         else:
             missing = None
-        rules = _value_rules(column, info["table"]["checks"])
+        rules = [*_value_rules(column, info["table"]["checks"]), *document_rules(context, info, column)]
         if not missing and not rules:
             continue
         report = (
@@ -549,9 +550,83 @@ def _operation_lines(writer: dict, operation: dict) -> list[str]:
             f"/// The {info['name']} with this {joined}.",
             *_fn([], f"{name}({params}) async throws -> [{_result_type(writer)}]", [f"{rows}{mapped}"]),
         ]
+    if kind in ("addItem", "removeItem"):
+        return _item_lines(writer, operation, name)
     if kind in ("link", "unlink"):
         return _link_lines(writer, operation, name)
     return []
+
+
+def _item_lines(writer: dict, operation: dict, name: str) -> list[str]:
+    """Adds or removes one item of a list, so two people changing the same list do not undo each other."""
+    context, info = writer["context"], writer["info"]
+    adds = operation["kind"] == "addItem"
+    change = query(info, operation["kind"], operation["columns"])
+    if not change or not query(info, "getByKey"):
+        return []
+    writer["used"].add("find")
+    items = list_of(info, change)
+    kept = items["column"]["column"]["name"]
+    params = [{"name": items["item"], "type": items["sw"]}] if adds else items["params"]
+    given = params[0]["name"]
+    version = info["version"]
+    read_at = ", read at version" if version else ""
+    held = f"(current.{items['column']['prop']} ?? [])"
+    if items["by"] == "id":
+        present = f"{held}.contains(where: {{ $0.id == {given} }})"
+    elif items["by"] == "value":
+        present = f"{held}.contains({given})"
+    else:
+        present = f"{held}.indices.contains({given})"
+    position = not adds and items["by"] == "position"
+    checked = adds and items["nested"] and items["type"]["kind"] == "json"
+    if checked:
+        writer["checkedLists"].add(kept)
+    entity = sw_string(info["entity"])
+    if position:
+        reason = "was changed by someone else since it was read"
+        key = sw_string(items["column"]["key"])
+        gone = f'DomainError.conflict(entity: {entity}, reason: "{reason}", fields: [{key}])'
+    else:
+        gone = f"DomainError.notFound(entity: {entity}, key: {_key_text(info['key'])})"
+    args = ", ".join([_key_args(info), *(item["name"] for item in params), *([f"{held}.count"] if position else [])])
+    if writer["dtos"]:
+        writer["used"].add("read")
+    by = "identifier" if items["by"] == "id" else items["by"]
+    item_name = sw_string(type_name(items["item"].replace("`", "")))
+    signature = ", ".join(f"_ {item['name']}: {item['type']}" for item in params)
+    version_param = f", version: {version['sw']}" if version else ""
+    body = [
+        f"{'_ =' if adds and not version else 'let current ='} try await find(uow, {_key_args(info)})",
+        *_version_check(writer),
+    ]
+    if not adds:
+        body += [
+            f"if !{present} {{",
+            f'    throw DomainError.notFound(entity: {item_name}, key: "\\({given})")',
+            "}",
+        ]
+    body += [
+        f"guard let changed = try await {_repo(info)}.{query_name(context, change)}({args}) else {{",
+        f"    throw {gone}",
+        "}",
+        f"return {'read(changed)' if writer['dtos'] else 'changed'}",
+    ]
+    lines = []
+    if checked:
+        lines += [
+            "var errors: [FieldError] = []",
+            check_call(items["nested"], items["item"], kept),
+            f"if !errors.isEmpty {{ throw DomainError.validationFailed(entity: {entity}, errors: errors) }}",
+        ]
+    result = _result_type(writer)
+    return [
+        f"/// Adds an item to {kept}{read_at}." if adds else f"/// Removes an item from {kept}, by its {by}{read_at}.",
+        "@discardableResult",
+        f"public func {name}({_key_params(info)}, {signature}{version_param}) async throws -> {result} {{",
+        *_ind([*lines, *_in_transaction(body, True)]),
+        "}",
+    ]
 
 
 def _link_lines(writer: dict, operation: dict, name: str) -> list[str]:
@@ -634,7 +709,7 @@ def service_file(context: dict, info: dict) -> dict | None:
     if not info["service"]:
         return None
     dtos = context["settings"]["serviceTypes"] == "dtos"
-    writer = {"context": context, "info": info, "dtos": dtos, "used": set()}
+    writer = {"context": context, "info": info, "dtos": dtos, "used": set(), "checkedLists": set()}
     operations = [block for block in (_operation_lines(writer, operation) for operation in info["operations"]) if block]
     used = writer["used"]
     helpers: list[list[str]] = []
@@ -644,6 +719,13 @@ def service_file(context: dict, info: dict) -> dict | None:
         helpers.append(_check_functions(writer))
     if "apply" in used:
         helpers.append(_apply_function(info))
+    checked = [
+        column["column"]["name"]
+        for column in info["columns"]
+        if ("checkValues" in used and is_in(column, create_columns(info)))
+        or column["column"]["name"] in writer["checkedLists"]
+    ]
+    helpers += document_check_functions(context, info, checked)
     if "given" in used:
         helpers.append(_given_function(writer))
     if "find" in used:
