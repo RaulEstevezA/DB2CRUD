@@ -23,8 +23,9 @@ from .context import (
     service_class,
     stored,
 )
+from .documents import check_call, document_check_functions, document_rules, list_of
 from .dtos import create_columns, create_dto, read_columns, read_dto, update_class, update_columns, update_type
-from .kotlin import KtImports, kt_string
+from .kotlin import KtImports, kt_string, type_name
 
 
 def _repo(info: dict, uow: str = "uow") -> str:
@@ -79,7 +80,7 @@ def _value_rules(column: dict, checks: list[dict]) -> list[str]:
     def rule(condition: str, message: str) -> str:
         return f"if ({condition}) errors += FieldError({kt_string(name)}, {kt_string(message)})"
 
-    if column_type["kind"] == "text" and column_type.get("length") is not None:
+    if column_type["kind"] == "text" and column_type.get("length") is not None and not column_type.get("objectId"):
         length = js_string(column_type["length"])
         rules.append(rule(f"value is String && value.length > {length}", f"is longer than {length} characters"))
     for check in checks:
@@ -128,7 +129,7 @@ def _validate_method(writer: dict) -> list[str]:
             missing = {"condition": f"!creating && {key} in values", "message": "cannot be empty"}
         else:
             missing = None
-        rules = _value_rules(column, info["table"]["checks"])
+        rules = [*_value_rules(column, info["table"]["checks"]), *document_rules(context, info, column)]
         if not missing and not rules:
             continue
         if missing:
@@ -497,9 +498,77 @@ def _operation_lines(writer: dict, operation: dict) -> list[str]:
             f"/** The {info['name']} with this {joined}. */",
             f"fun {name}({params}): List<{_result_type(writer)}> = {rows}{'.map { read(it) }' if dtos else ''}",
         ]
+    if kind in ("addItem", "removeItem"):
+        return _item_lines(writer, operation, name)
     if kind in ("link", "unlink"):
         return _link_lines(writer, operation, name)
     return []
+
+
+def _item_lines(writer: dict, operation: dict, name: str) -> list[str]:
+    """Adds or removes one item of a list, so two people changing the same list do not undo each other."""
+    context, info, imports = writer["context"], writer["info"], writer["imports"]
+    adds = operation["kind"] == "addItem"
+    change = query(info, operation["kind"], operation["columns"])
+    if not change or not query(info, "getByKey"):
+        return []
+    items = list_of(info, change)
+    if items["column"]["ktImport"]:
+        imports.add(items["column"]["ktImport"])
+    kept = items["column"]["column"]["name"]
+    params = [{"name": items["item"], "type": items["kt"]}] if adds else items["params"]
+    param = params[0]["name"]
+    version = info["version"]
+    read_at = ", read at version" if version else ""
+    held = f"current.{items['column']['prop']}.orEmpty()"
+    if items["by"] == "id":
+        missing = f"{held}.none {{ it.id == {param} }}"
+    elif items["by"] == "value":
+        missing = f"{param} !in {held}"
+    else:
+        missing = f"{param} !in {held}.indices"
+    position = not adds and items["by"] == "position"
+    imports.add(qualified(errors_package(context), "NotFoundException"))
+    if position:
+        imports.add(qualified(errors_package(context), "ConflictException"))
+    entity = kt_string(info["entity"])
+    checked = adds and items["nested"] and items["type"]["kind"] == "json"
+    if position:
+        key = kt_string(items["column"]["key"])
+        gone = f'ConflictException({entity}, "was changed by someone else since it was read", listOf({key}))'
+    else:
+        gone = f"NotFoundException({entity}, {_key_value(info)})"
+    args = ", ".join([_key_args(info), *(item["name"] for item in params), *([f"{held}.size"] if position else [])])
+    by = "identifier" if items["by"] == "id" else items["by"]
+    item_name = kt_string(type_name(items["item"].replace("`", "")))
+    body = _in_transaction(
+        [
+            f"{'' if adds and not version else 'val current = '}find(uow, {_key_args(info)})",
+            *_version_check(writer),
+            *([] if adds else [f"if ({missing}) throw NotFoundException({item_name}, {param})"]),
+            _out(writer, f"{_repo(info)}.{query_name(context, change)}({args}) ?: throw {gone}"),
+        ]
+    )
+    joined = "\n    ".join(body)
+    signature = ", ".join(f"{item['name']}: {item['type']}" for item in params)
+    version_param = f", version: {version['kt']}" if version else ""
+    return [
+        f"/** Adds an item to {kept}{read_at}. */"
+        if adds
+        else f"/** Removes an item from {kept}, by its {by}{read_at}. */",
+        f"fun {name}({_key_params(info)}, {signature}{version_param}): {_result_type(writer)} {{",
+        *(
+            [
+                "    val errors = mutableListOf<FieldError>()",
+                f"    {check_call(items['nested'], items['item'], kept)}",
+                f"    if (errors.isNotEmpty()) throw ValidationFailedException({entity}, errors)",
+            ]
+            if checked
+            else []
+        ),
+        f"    return {joined}",
+        "}",
+    ]
 
 
 def _link_lines(writer: dict, operation: dict, name: str) -> list[str]:
@@ -617,6 +686,8 @@ def service_file(context: dict, info: dict) -> dict | None:
         ]
     if writes and updates:
         helpers.append(_given_method(writer))
+    if writes:
+        helpers += document_check_functions(context, info)
     hidden_names = info["hidden"]
     hidden = bool(hidden_names) and not dtos
     members = [*operations, *(block for block in helpers if block)]
@@ -632,6 +703,7 @@ def service_file(context: dict, info: dict) -> dict | None:
         imports.write(),
         [
             f"/** Operations on {info['name']}. {TRANSACTIONS[context['settings']['transactions']]} */",
+            writes and any("<" in column["kt"] for column in info["columns"]) and '@Suppress("UNCHECKED_CAST")',
             f"class {service_class(info)}(private val unitOfWork: UnitOfWork) {{",
             hidden
             and f"    // TODO: {', '.join(hidden_names)} {'is' if one else 'are'} returned with the entity; use DTOs to leave {'it' if one else 'them'} out",

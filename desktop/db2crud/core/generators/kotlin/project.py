@@ -4,6 +4,7 @@ Mirrors web/src/core/generators/kotlin/project.ts."""
 
 import json
 
+from ...schema.documents import nested_fields
 from ..types import lines
 from .context import (
     common_package,
@@ -93,17 +94,18 @@ def gradle_files(context: dict, models_folder: bool = False) -> list[dict]:
 
 def env_example_file(context: dict) -> dict:
     sqlite = context["settings"]["database"] == "sqlite"
+    url = context["orm"].get("url")
     return {
         "path": ".env.example",
         "content": lines(
-            "# Where the database is (a JDBC URL), and who connects",
+            "# Where the database is" if url else "# Where the database is (a JDBC URL), and who connects",
             f"DATABASE_URL={default_url(context)}",
-            None if sqlite else ["DATABASE_USER=app", "DATABASE_PASSWORD=app"],
+            None if sqlite or url else ["DATABASE_USER=app", "DATABASE_PASSWORD=app"],
             "# The tests use SQLite in a temporary file unless this names another database (it is emptied by the tests)"
             if sqlite
             else "# The database the tests use (it is emptied by the tests): one of the same kind as DATABASE_URL",
             "# TEST_DATABASE_URL=",
-            None if sqlite else ["# TEST_DATABASE_USER=", "# TEST_DATABASE_PASSWORD="],
+            None if sqlite or url else ["# TEST_DATABASE_USER=", "# TEST_DATABASE_PASSWORD="],
             "",
         ),
     }
@@ -151,7 +153,7 @@ def readme_file(context: dict) -> dict:
         services = f"take and return {takes}; {LABELS['updates'][settings['updates']]}"
     else:
         services = "not written"
-    users = "" if sqlite else " TEST_DATABASE_USER=app TEST_DATABASE_PASSWORD=app"
+    users = "" if sqlite or context["orm"].get("url") else " TEST_DATABASE_USER=app TEST_DATABASE_PASSWORD=app"
     return {
         "path": "README.md",
         "content": lines(
@@ -199,10 +201,21 @@ def readme_file(context: dict) -> dict:
 
 
 def _type_of(column: dict) -> dict:
-    column_type = column["column"]["type"]
-    result = {"kind": column_type["kind"], "kotlin": stored_type(column)}
+    plain = _plain_type(column["column"]["type"])
+    return {"kind": plain["kind"], "kotlin": stored_type(column), **plain}
+
+
+def _plain_type(column_type: dict) -> dict:
+    result = {"kind": column_type["kind"]}
     if column_type["kind"] == "text" and column_type.get("length") is not None:
         result["length"] = column_type["length"]
+    # What a nested document, or each of a list of them, holds
+    fields = nested_fields(column_type)
+    if fields is not None:
+        result["fields"] = [
+            {"name": field["name"], "type": _plain_type(field["type"]), "nullable": field["nullable"]}
+            for field in fields
+        ]
     return result
 
 

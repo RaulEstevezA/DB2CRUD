@@ -48,8 +48,8 @@ class KtImports:
         self._names: list[str] = []
 
     def add(self, *names: str) -> "KtImports":
-        for name in names:
-            if name not in self._names:
+        for name in (item for given in names for item in given.split(",")):
+            if name and name not in self._names:
                 self._names.append(name)
         return self
 

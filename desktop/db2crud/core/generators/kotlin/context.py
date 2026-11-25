@@ -10,6 +10,7 @@ import re
 
 from ...crud.types import find_policy, find_repository, find_service
 from ...model.naming import to_camel_case
+from .documents import document_type, nested_classes
 from .kotlin import member_name, type_name
 
 BLOCKING = (None, "no action", "restrict")
@@ -58,13 +59,14 @@ def _included(items: list[dict]) -> list[dict]:
     return [item for item in items if item["include"]["value"]]
 
 
-def _column_info(column: dict, database: str) -> dict:
+def _column_info(column: dict, types: tuple[str, str | None], own: bool) -> dict:
     generated = column.get("generated") is not None and column.get("generated") != "onUpdateNow"
-    kt, kt_import = kt_type(column["type"], database)
+    kt, kt_import = types
+    # MongoDB's `_id` is the `id` of the entity, unless the documents have one of their own
     return {
         "column": column,
-        "prop": member_name(column["name"]),
-        "key": to_camel_case(column["name"]) or "value",
+        "prop": "documentId" if own else member_name(column["name"]),
+        "key": "documentId" if own else to_camel_case(column["name"]) or "value",
         "kt": kt,
         "ktImport": kt_import,
         "generated": generated,
@@ -72,12 +74,30 @@ def _column_info(column: dict, database: str) -> dict:
     }
 
 
-def _table_info(schema: dict, design: dict, settings: dict, table: dict) -> dict:
+def _table_info(orm: dict, schema: dict, design: dict, settings: dict, table: dict) -> dict:
     policy = find_policy(design, table["name"])
     repository = find_repository(design, table["name"])
     service = find_service(design, table["name"]) if settings["services"] else None
     entity = type_name(repository["entity"])
-    columns = [_column_info(column, settings["database"]) for column in table["columns"]]
+    delete_mode = policy["delete"]["value"]
+    concurrency = policy["concurrency"]["value"]
+    own_entities = (
+        not orm.get("documents") and not repository["entityMissing"] and schema["source"]["format"] == settings["orm"]
+    )
+    writes_entity = settings["entities"] == "all" or (settings["entities"] == "missing" and not own_entities)
+    pkg = re.sub(r"[^a-z0-9]", "", table["name"].lower()) or "table"
+    documents = bool(orm.get("documents"))
+    nested = nested_classes(table["columns"], entity) if documents else {}
+    own_id = documents and any(column["name"] == "id" for column in table["columns"])
+    entity_class = f"{_entity_package(settings, pkg, writes_entity)}.{entity}"
+    columns = [
+        _column_info(
+            column,
+            document_type(column, nested, entity_class) if documents else kt_type(column["type"], settings["database"]),
+            own_id and column["name"] == "_id",
+        )
+        for column in table["columns"]
+    ]
 
     def by_name(name: str) -> dict:
         return next(info for info in columns if info["column"]["name"] == name)
@@ -86,17 +106,13 @@ def _table_info(schema: dict, design: dict, settings: dict, table: dict) -> dict
     key_names = (
         table["primaryKey"] if table["primaryKey"] is not None else [column["name"] for column in table["columns"]]
     )
-    delete_mode = policy["delete"]["value"]
-    concurrency = policy["concurrency"]["value"]
-    own_entities = not repository["entityMissing"] and schema["source"]["format"] == settings["orm"]
-    writes_entity = settings["entities"] == "all" or (settings["entities"] == "missing" and not own_entities)
     children = policy["children"]
     return {
         "table": table,
         "name": table["name"],
         "entity": entity,
         "tableObject": f"{entity}Table",
-        "pkg": re.sub(r"[^a-z0-9]", "", table["name"].lower()) or "table",
+        "pkg": pkg,
         "attr": member_name(table["name"]),
         "columns": columns,
         "key": [by_name(name) for name in key_names],
@@ -110,6 +126,7 @@ def _table_info(schema: dict, design: dict, settings: dict, table: dict) -> dict
         "repository": repository,
         "service": service,
         "writesEntity": writes_entity,
+        "nested": nested,
     }
 
 
@@ -119,8 +136,8 @@ def create_context(orm: dict, schema: dict, design: dict, settings: dict) -> dic
         "schema": schema,
         "design": design,
         "settings": settings,
-        "tables": [_table_info(schema, design, settings, table) for table in schema["tables"]],
-        "base": "app",
+        "tables": [_table_info(orm, schema, design, settings, table) for table in schema["tables"]],
+        "base": BASE,
     }
 
 
@@ -157,6 +174,16 @@ def stored(expression: str, column: dict) -> str:
 
 
 # Packages and names
+
+BASE = "app"
+
+
+def _entity_package(settings: dict, pkg: str, written: bool) -> str:
+    """The package of an entity, before its table is known."""
+    if not written:
+        return settings["entitiesModule"]
+    return f"{BASE}.{pkg}" if settings["architecture"] == "table" else f"{BASE}.entities"
+
 
 FOLDERS = {"entity": "entities", "repository": "repositories", "service": "services", "dtos": "dtos"}
 

@@ -5,6 +5,7 @@ Mirrors web/src/core/generators/kotlin/repositories.ts."""
 import re
 
 from ...js import js_string
+from ...schema.documents import is_object_id
 from .context import (
     column_of,
     common_package,
@@ -17,6 +18,7 @@ from .context import (
     repository_interface,
     sql_repository_class,
 )
+from .documents import identified_lists, list_of
 from .kotlin import KtImports, kt_string
 
 
@@ -70,6 +72,25 @@ def repository_methods(context: dict, info: dict, imports: KtImports) -> list[di
             )
         elif kind == "update":
             add([{"name": "entity", "type": entity}], entity, "Stores the changes made to a row.")
+        elif kind in ("addItem", "removeItem"):
+            items = list_of(info, query_design)
+            if items["column"]["ktImport"]:
+                imports.add(items["column"]["ktImport"])
+            adds = kind == "addItem"
+            # Told apart by its position, it is only removed from a list of the size it was seen in
+            size = [{"name": "size", "type": "Int"}] if not adds and items["by"] == "position" else []
+            stored_list = query_design["columns"][0]
+            add(
+                [
+                    *({"name": column["prop"], "type": column["kt"]} for column in info["key"]),
+                    *([{"name": items["item"], "type": items["kt"]}] if adds else items["params"]),
+                    *size,
+                ],
+                f"{entity}?",
+                f"Adds an item to {stored_list}, and gives the row as it is then, if there is one."
+                if adds
+                else f"Removes an item from {stored_list}{' that has this size' if size else ''}, and gives the row as it is then, if there is one.",
+            )
         elif kind == "delete":
             add([{"name": "entity", "type": entity}], "Unit", "Removes a row.")
     return methods
@@ -110,7 +131,7 @@ def kt_literal(column: dict, value) -> str:
     return kt_string(text)
 
 
-def _memory_fill(column: dict, imports: KtImports) -> str | None:
+def memory_fill(column: dict, imports: KtImports) -> str | None:
     db = column["column"]
     target = f"entity.{column['prop']}"
     generated = db.get("generated")
@@ -119,6 +140,9 @@ def _memory_fill(column: dict, imports: KtImports) -> str | None:
         kt = column["kt"]
         following = "nextId++" if kt == "Long" else "(nextId++).toShort()" if kt == "Short" else "(nextId++).toInt()"
         return f"{target} = {target} ?: {following}"
+    if generated == "uuid" and is_object_id(db["type"]):
+        imports.add("org.bson.types.ObjectId")
+        return f"{target} = {target} ?: ObjectId().toHexString()"
     if generated == "uuid":
         imports.add("java.util.UUID")
         return f"{target} = {target} ?: UUID.randomUUID()"
@@ -142,7 +166,7 @@ def _memory_visible(info: dict) -> str:
     return f"it.{soft['prop']} != true" if soft["column"]["type"]["kind"] == "boolean" else f"it.{soft['prop']} == null"
 
 
-def _memory_body(context: dict, info: dict, method: dict) -> list[str]:
+def _memory_body(context: dict, info: dict, method: dict, imports: KtImports) -> list[str]:
     conditions = " && ".join(
         f"it.{column_of(info, name)['prop']} == {column_of(info, name)['prop']}" for name in method["query"]["columns"]
     )
@@ -166,10 +190,47 @@ def _memory_body(context: dict, info: dict, method: dict) -> list[str]:
             ]
         return ["return visible()"]
     if kind in ("insert", "update"):
-        return ["rows[keyOf(entity)] = entity", "return entity"]
+        identified = ["entity.identifyItems()"] if identified_lists(info) else []
+        return [*identified, "rows[keyOf(entity)] = entity", "return entity"]
+    if kind in ("addItem", "removeItem"):
+        return _memory_item(info, method, imports)
     if kind == "delete":
         return ["rows.remove(keyOf(entity))"]
     return ["throw UnsupportedOperationException()"]
+
+
+def _memory_item(info: dict, method: dict, imports: KtImports) -> list[str]:
+    """One item of a list added or removed in memory."""
+    items = list_of(info, method["query"])
+    name = items["params"][0]["name"]
+    held = f"found.{items['column']['prop']}"
+    adds = method["query"]["kind"] == "addItem"
+    position = not adds and items["by"] == "position"
+    keys = " && ".join(f"it.{column['prop']} == {column['prop']}" for column in info["key"])
+    version = info["version"]
+    touched = [column for column in info["columns"] if column["column"].get("generated") == "onUpdateNow"]
+    for column in touched:
+        if column["ktImport"]:
+            imports.add(column["ktImport"])
+    change = []
+    if adds:
+        if items["by"] == "id":
+            imports.add("org.bson.types.ObjectId")
+            change.append(f"{items['item']}.id = {items['item']}.id ?: ObjectId().toHexString()")
+        # A list in a list is one item, not several
+        change.append(f"{held} = {held}.orEmpty() + listOf({items['item']})")
+    elif position:
+        change.append(f"{held} = {held}.orEmpty().filterIndexed {{ index, _ -> index != position }}")
+    else:
+        change.append(f"{held} = {held}.orEmpty().filter {{ it{'.id' if items['by'] == 'id' else ''} != {name} }}")
+    return [
+        f"val found = visible().firstOrNull {{ {keys} }} ?: return null",
+        *([f"if ({held}.orEmpty().size != size) return null"] if position else []),
+        *change,
+        *([f"found.{version['prop']} = (found.{version['prop']} ?: 0) + 1"] if version else []),
+        *(f"found.{column['prop']} = {column['kt']}.now()" for column in touched),
+        "return found",
+    ]
 
 
 def _block(method: dict, body: list[str], modifier: str, doc: bool) -> list[str]:
@@ -238,10 +299,10 @@ def repository_files(context: dict, info: dict) -> list[dict]:
     if context["settings"]["memoryRepositories"]:
         imports = KtImports(pkg).add(entity_class)
         methods = repository_methods(context, info, imports)
-        fills = [line for line in (_memory_fill(column, imports) for column in info["columns"]) if line is not None]
+        fills = [line for line in (memory_fill(column, imports) for column in info["columns"]) if line is not None]
         bodies = []
         for item in methods:
-            body = _memory_body(context, info, item)
+            body = _memory_body(context, info, item, imports)
             bodies += _block(item, [*fills, *body] if item["query"]["kind"] == "insert" else body, "override ", False)
         identity = any(column["column"].get("generated") == "identity" for column in info["columns"])
         entity = info["entity"]

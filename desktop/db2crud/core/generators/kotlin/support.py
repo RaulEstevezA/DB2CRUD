@@ -115,7 +115,7 @@ URLS = {
 
 
 def default_url(context: dict) -> str:
-    return URLS.get(context["settings"]["database"], URLS["postgresql"])
+    return context["orm"].get("url") or URLS.get(context["settings"]["database"], URLS["postgresql"])
 
 
 def _how(context: dict) -> dict:

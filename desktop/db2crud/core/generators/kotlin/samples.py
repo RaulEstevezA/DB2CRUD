@@ -5,6 +5,7 @@ different numbers do not clash on unique columns. Mirrors web/src/core/generator
 import re
 
 from ...js import is_number, js_string
+from ...schema.documents import is_object_id
 from ..samples import bounded_number
 from .kotlin import KtImports, kt_string
 from .repositories import kt_literal
@@ -56,6 +57,8 @@ def sample_value(column: dict, checks: list[dict], enums: list[dict], imports: K
         whole = _whole({**column, "kt": "Int"}, checks)
         return f"{whole} + 0.5f" if column["kt"] == "Float" else f"{whole} + 0.5"
     if kind == "text":
+        if column_type.get("objectId"):
+            return '"%024x".format(n)'
         length = column_type.get("length")
         length = 40 if length is None else length
         if column_type.get("fixed"):
@@ -70,8 +73,12 @@ def sample_value(column: dict, checks: list[dict], enums: list[dict], imports: K
     if kind == "boolean":
         return "true"
     if kind == "date":
+        if column["kt"] == "String":
+            return '"2026-01-%02d".format(n % 28 + 1)'
         return "LocalDate.of(2026, 1, n % 28 + 1)"
     if kind == "time":
+        if column["kt"] == "String":
+            return '"12:%02d:00".format(n % 60)'
         return "LocalTime.of(12, n % 60)"
     if kind == "datetime":
         if column["kt"] == "OffsetDateTime":
@@ -92,6 +99,8 @@ def sample_value(column: dict, checks: list[dict], enums: list[dict], imports: K
             else "byteArrayOf(n.toByte())"
         )
     if kind == "json":
+        if column["kt"] == "Any":
+            return 'mapOf("n" to n)'
         return '"{\\"n\\": $n}"'
     if kind == "array":
         return '"[]"'
@@ -115,4 +124,6 @@ def missing_value(column: dict, imports: KtImports) -> str:
     """A key no row has, as a Kotlin expression, for the tests of missing rows."""
     if column["ktImport"]:
         imports.add(column["ktImport"])
+    if is_object_id(column["column"]["type"]):
+        return f'"{"f" * 24}"'
     return MISSING.get(column["kt"], '"missing"')

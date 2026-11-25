@@ -12,6 +12,7 @@ from .java.springdata.index import SPRING_DATA_ORM
 from .java.sql.index import SQL_ORM as JAVA_SQL_ORM
 from .kotlin.exposed.index import EXPOSED_ORM
 from .kotlin.generator import kotlin_generator
+from .kotlin.mongodb.index import MONGODB_ORM as KOTLIN_MONGODB_ORM
 from .kotlin.sql.index import SQL_ORM as KOTLIN_SQL_ORM
 from .php.common.generator import php_generator
 from .php.doctrine.index import DOCTRINE_ORM
@@ -60,6 +61,7 @@ GENERATORS = [
     php_generator(PHP_MONGODB_ORM),
     kotlin_generator(EXPOSED_ORM),
     kotlin_generator(KOTLIN_SQL_ORM),
+    kotlin_generator(KOTLIN_MONGODB_ORM),
     rust_generator(SEAORM_ORM),
     rust_generator(RUST_SQL_ORM),
     swift_generator(FLUENT_ORM),

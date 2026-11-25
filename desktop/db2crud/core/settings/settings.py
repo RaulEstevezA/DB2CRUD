@@ -248,6 +248,17 @@ STACKS = [
         "updates": ["patch", "optional", "full"],
     },
     {
+        "language": "kotlin",
+        "orm": "mongokotlin",
+        "label": "MongoDB Kotlin driver 5",
+        "databases": ["mongodb"],
+        "transactions": "repository",
+        "execution": ["sync"],
+        "errors": ["exceptions"],
+        "dtoKinds": ["data", "class"],
+        "updates": ["patch", "optional", "full"],
+    },
+    {
         "language": "rust",
         "orm": "seaorm",
         "label": "SeaORM 2",

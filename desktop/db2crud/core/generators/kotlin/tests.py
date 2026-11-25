@@ -4,6 +4,8 @@ table objects, and service tests on the in-memory unit of work (or on the databa
 repositories). The database is SQLite in a temporary file unless TEST_DATABASE_URL names another. Mirrors
 web/src/core/generators/kotlin/tests.ts."""
 
+import re
+
 from .context import (
     column_of,
     common_package,
@@ -21,8 +23,9 @@ from .context import (
     stored,
     writes_entities,
 )
+from .documents import list_of
 from .dtos import create_columns, create_dto, update_class, update_columns, update_type
-from .kotlin import KtImports, kt_string
+from .kotlin import KtImports, kt_string, type_name
 from .samples import missing_value, sample_value
 
 
@@ -92,7 +95,10 @@ def _factories_file(context: dict, makeable: list[dict]) -> dict:
             # No sample is sure to fit a type that is not known
             if column["column"]["nullable"] and (is_key or column["column"]["type"]["kind"] == "unknown"):
                 continue
-            if column["column"]["type"]["kind"] == "array":
+            nested = info["nested"].get(column["column"]["name"])
+            if nested:
+                sample = _nested_value(column["column"]["type"], nested)
+            elif column["column"]["type"]["kind"] == "array":
                 sample = context["orm"]["emptyList"](context)
             else:
                 sample = sample_value(column, info["table"]["checks"], context["schema"]["enums"], imports)
@@ -113,6 +119,7 @@ def _factories_file(context: dict, makeable: list[dict]) -> dict:
                 *from_parents,
                 f"        return uow.{info['attr']}.{query_name(context, insert)}(entity)",
                 "    }",
+                *(line for item in info["nested"].values() for line in _nested_factories(context, item, imports)),
             ]
         )
     body: list[str] = []
@@ -131,6 +138,65 @@ def _factories_file(context: dict, makeable: list[dict]) -> dict:
             "}",
         ],
     )
+
+
+# Nested documents
+
+
+def _factory_of(item: dict) -> str:
+    return f"new{''.join(item['path'].split('.'))}"
+
+
+def _nested_value(column_type: dict, nested: dict) -> str:
+    if column_type["kind"] == "array":
+        return f"listOf({_nested_value(column_type['items'], nested)})"
+    return f"{_factory_of(nested)}(n)"
+
+
+_IMPORTED = {"Instant": "java.time.Instant", "BigDecimal": "java.math.BigDecimal", "UUID": "java.util.UUID"}
+
+
+def _nested_factories(context: dict, item: dict, imports: KtImports) -> list[str]:
+    """A factory per class of nested document, without the identifier it is given when it is stored."""
+    values = []
+    for field in item["fields"]:
+        column = field["column"]
+        if column["name"] == "_id" or column["type"]["kind"] == "unknown":
+            continue
+        for name, kt_import in _IMPORTED.items():
+            if re.search(rf"\b{name}\b", field["kt"]):
+                imports.add(kt_import)
+        if field["nested"]:
+            value = _nested_value(column["type"], field["nested"])
+        elif column["type"]["kind"] == "array":
+            value = context["orm"]["emptyList"](context)
+        else:
+            sample = {"column": column, "kt": field["kt"], "ktImport": None}
+            value = sample_value(sample, column.get("checks") or [], context["schema"]["enums"], imports)
+        values.append(f"            {field['prop']} = {value},")
+    return [
+        "",
+        f"    /** A valid {item['path']}; n makes its values differ. */",
+        f"    fun {_factory_of(item)}(n: Int): {item['path']} =",
+        f"        {item['path']}(",
+        *values,
+        "        )",
+        *(line for inner in item["classes"] for line in _nested_factories(context, inner, imports)),
+    ]
+
+
+def _item_sample(context: dict, items: dict, imports: KtImports) -> str:
+    """A value for an item of a list, as a Kotlin expression of n."""
+    if items["nested"] and items["type"]["kind"] == "json":
+        return f"Factories.{_factory_of(items['nested'])}(n)"
+    if items["type"]["kind"] == "array":
+        return context["orm"]["emptyList"](context)
+    column = {**items["column"], "column": {**items["column"]["column"], "type": items["type"]}, "kt": items["kt"]}
+    return sample_value(column, [], context["schema"]["enums"], imports)
+
+
+def _item_test(items: dict) -> str:
+    return f"addsAndRemovesOneItemOf{type_name(items['column']['key'])}"
 
 
 # The test database
@@ -186,7 +252,7 @@ def _same(column: dict) -> str:
     return "kotlin.test.assertContentEquals" if column["kt"] == "ByteArray" else "assertEquals"
 
 
-def _repository_tests(context: dict, info: dict) -> list[list[str]]:
+def _repository_tests(context: dict, info: dict, imports: KtImports) -> list[list[str]]:
     repo = f"uow.{info['attr']}"
 
     def key_of(variable: str) -> str:
@@ -279,6 +345,34 @@ def _repository_tests(context: dict, info: dict) -> list[list[str]]:
                 ],
             )
         )
+    for adding in (item for item in info["queries"] if item["kind"] == "addItem"):
+        items = list_of(info, adding)
+        removing = query(info, "removeItem", adding["columns"])
+        if not removing or not get_by_key:
+            continue
+        if items["column"]["ktImport"]:
+            imports.add(items["column"]["ktImport"])
+        held = f"{items['column']['prop']}.orEmpty()"
+        which = {"id": f"added.{held}[before].id!!", "value": "item", "position": f"before, added.{held}.size"}[
+            items["by"]
+        ]
+        remove_item = f"{repo}.{query_name(context, removing)}({key_of('stored')}"
+        tests.append(
+            _test(
+                _item_test(items),
+                [
+                    "val n = 7",
+                    stored1,
+                    f"val before = stored.{held}.size",
+                    f"val item: {items['kt']} = {_item_sample(context, items, imports)}",
+                    f"val added = {repo}.{query_name(context, adding)}({key_of('stored')}, item)!!",
+                    f"assertEquals(before + 1, added.{held}.size)",
+                    f"val removed = {remove_item}, {which})!!",
+                    f"assertEquals(before, removed.{held}.size)",
+                    items["by"] == "position" and f"assertNull({remove_item}, 0, before + 5))",
+                ],
+            )
+        )
     return tests
 
 
@@ -345,7 +439,9 @@ def _service_tests(context: dict, info: dict, imports: KtImports) -> list[list[s
         return f"{update_type(context, info)}({fields})"
 
     def version(variable: str) -> str:
-        return f", {member(variable, info['version'])}" if info["version"] else ""
+        if not info["version"]:
+            return ""
+        return f", {member(variable, info['version'])}{'!!' if info['version']['column']['nullable'] else ''}"
 
     tests: list[list[str]] = []
     opened = [f"val service = {service}(uow)"]
@@ -515,6 +611,40 @@ def _service_tests(context: dict, info: dict, imports: KtImports) -> list[list[s
                 ],
             )
         )
+    for operation in (item for item in info["operations"] if item["kind"] == "addItem"):
+        items = list_of(info, operation)
+        without = op("removeItem", operation["columns"])
+        if not create or not without or items["column"]["column"]["name"] in info["hidden"]:
+            continue
+        if items["column"]["ktImport"]:
+            imports.add(items["column"]["ktImport"])
+        imports.add(qualified(errors_package(context), "NotFoundException"), "kotlin.test.assertFailsWith")
+        # A DTO says when the list is never missing
+        sure = dtos and not items["column"]["column"]["nullable"]
+        held = f"{items['column']['prop']}{'' if sure else '.orEmpty()'}"
+        which = {"id": f"added.{held}[before].id!!", "value": "item", "position": "before"}[items["by"]]
+        missing = {"id": f'"{"f" * 24}"', "value": None, "position": "99"}[items["by"]]
+        remove_item = f"service.{operation_name(context, without)}({key_of('created')}"
+        tests.append(
+            _test(
+                _item_test(items),
+                [
+                    "val n = 7",
+                    *opened,
+                    *parents_first,
+                    *row("row", 1),
+                    f"val created = service.{operation_name(context, create)}({input_of('row')})",
+                    f"val before = created.{held}.size",
+                    f"val item: {items['kt']} = {_item_sample(context, items, imports)}",
+                    f"val added = service.{operation_name(context, operation)}({key_of('created')}, item{version('created')})",
+                    f"assertEquals(before + 1, added.{held}.size)",
+                    f"val removed = {remove_item}, {which}{version('added')})",
+                    f"assertEquals(before, removed.{held}.size)",
+                    missing is not None
+                    and f"assertFailsWith<NotFoundException> {{ {remove_item}, {missing}{version('removed')}) }}",
+                ],
+            )
+        )
     return tests
 
 
@@ -571,7 +701,7 @@ def test_files(context: dict) -> list[dict]:
             imports = KtImports(context["base"]).add(
                 *ASSERTIONS, *(["kotlin.test.AfterTest"] if context["orm"]["closeTest"] else [])
             )
-            blocks = _repository_tests(context, info)
+            blocks = _repository_tests(context, info, imports)
             files.append(
                 kt_file(
                     test_path(context, f"{info['entity']}RepositoryTest"),

@@ -21,6 +21,7 @@ def test_stack_follows_the_database():
         "springdata",
         "mongodriver",
         "mongophp",
+        "mongokotlin",
     ]
     assert settings_for("mongodb", settings)["database"] == "mongodb"
     assert settings_for("postgresql", settings) == settings
