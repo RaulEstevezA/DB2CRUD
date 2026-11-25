@@ -1,0 +1,634 @@
+{
+ "tables": [
+  {
+   "table": "customers",
+   "models": [
+    {
+     "direction": "both",
+     "model": {
+      "value": "Customer",
+      "status": "active",
+      "confidence": "exact",
+      "reasons": [
+       {
+        "code": "modelName",
+        "params": {
+         "model": "Customer"
+        }
+       }
+      ],
+      "options": [
+       "Customer",
+       null
+      ]
+     },
+     "columns": [
+      {
+       "column": "_id",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "id"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldWords",
+          "params": {
+           "field": "id"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "email"
+         },
+         {
+          "kind": "field",
+          "field": "level"
+         },
+         {
+          "kind": "field",
+          "field": "since"
+         },
+         {
+          "kind": "field",
+          "field": "address"
+         },
+         {
+          "kind": "field",
+          "field": "tags"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "email",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "email"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldName",
+          "params": {
+           "field": "email"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "email"
+         },
+         {
+          "kind": "field",
+          "field": "level"
+         },
+         {
+          "kind": "field",
+          "field": "since"
+         },
+         {
+          "kind": "field",
+          "field": "address"
+         },
+         {
+          "kind": "field",
+          "field": "tags"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "level",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "level"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldName",
+          "params": {
+           "field": "level"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "email"
+         },
+         {
+          "kind": "field",
+          "field": "level"
+         },
+         {
+          "kind": "field",
+          "field": "since"
+         },
+         {
+          "kind": "field",
+          "field": "address"
+         },
+         {
+          "kind": "field",
+          "field": "tags"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "since",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "since"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldName",
+          "params": {
+           "field": "since"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "email"
+         },
+         {
+          "kind": "field",
+          "field": "level"
+         },
+         {
+          "kind": "field",
+          "field": "since"
+         },
+         {
+          "kind": "field",
+          "field": "address"
+         },
+         {
+          "kind": "field",
+          "field": "tags"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "address",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "address"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldName",
+          "params": {
+           "field": "address"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "email"
+         },
+         {
+          "kind": "field",
+          "field": "level"
+         },
+         {
+          "kind": "field",
+          "field": "since"
+         },
+         {
+          "kind": "field",
+          "field": "address"
+         },
+         {
+          "kind": "field",
+          "field": "tags"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "tags",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "tags"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldName",
+          "params": {
+           "field": "tags"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "email"
+         },
+         {
+          "kind": "field",
+          "field": "level"
+         },
+         {
+          "kind": "field",
+          "field": "since"
+         },
+         {
+          "kind": "field",
+          "field": "address"
+         },
+         {
+          "kind": "field",
+          "field": "tags"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      }
+     ],
+     "children": [],
+     "unused": []
+    }
+   ]
+  },
+  {
+   "table": "orders",
+   "models": [
+    {
+     "direction": "both",
+     "model": {
+      "value": "Order",
+      "status": "active",
+      "confidence": "exact",
+      "reasons": [
+       {
+        "code": "modelName",
+        "params": {
+         "model": "Order"
+        }
+       }
+      ],
+      "options": [
+       "Order",
+       null
+      ]
+     },
+     "columns": [
+      {
+       "column": "_id",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "id"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldWords",
+          "params": {
+           "field": "id"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "code"
+         },
+         {
+          "kind": "field",
+          "field": "lines"
+         },
+         {
+          "kind": "field",
+          "field": "shipping"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "code",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "code"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldName",
+          "params": {
+           "field": "code"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "code"
+         },
+         {
+          "kind": "field",
+          "field": "lines"
+         },
+         {
+          "kind": "field",
+          "field": "shipping"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "lines",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "lines"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldName",
+          "params": {
+           "field": "lines"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "code"
+         },
+         {
+          "kind": "field",
+          "field": "lines"
+         },
+         {
+          "kind": "field",
+          "field": "shipping"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "shipping",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "shipping"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldName",
+          "params": {
+           "field": "shipping"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "code"
+         },
+         {
+          "kind": "field",
+          "field": "lines"
+         },
+         {
+          "kind": "field",
+          "field": "shipping"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      }
+     ],
+     "children": [],
+     "unused": []
+    }
+   ]
+  },
+  {
+   "table": "shipments",
+   "models": [
+    {
+     "direction": "both",
+     "model": {
+      "value": "Shipment",
+      "status": "active",
+      "confidence": "exact",
+      "reasons": [
+       {
+        "code": "modelName",
+        "params": {
+         "model": "Shipment"
+        }
+       }
+      ],
+      "options": [
+       "Shipment",
+       null
+      ]
+     },
+     "columns": [
+      {
+       "column": "_id",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "id"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldWords",
+          "params": {
+           "field": "id"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "parcel"
+         },
+         {
+          "kind": "field",
+          "field": "stops"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "parcel",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "parcel"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldName",
+          "params": {
+           "field": "parcel"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "parcel"
+         },
+         {
+          "kind": "field",
+          "field": "stops"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      },
+      {
+       "column": "stops",
+       "source": {
+        "value": {
+         "kind": "field",
+         "field": "stops"
+        },
+        "status": "active",
+        "confidence": "exact",
+        "reasons": [
+         {
+          "code": "fieldName",
+          "params": {
+           "field": "stops"
+          }
+         }
+        ],
+        "options": [
+         {
+          "kind": "field",
+          "field": "id"
+         },
+         {
+          "kind": "field",
+          "field": "parcel"
+         },
+         {
+          "kind": "field",
+          "field": "stops"
+         },
+         null
+        ]
+       },
+       "conflicts": []
+      }
+     ],
+     "children": [],
+     "unused": []
+    }
+   ]
+  }
+ ]
+}

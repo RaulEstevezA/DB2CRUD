@@ -17,7 +17,7 @@ runner_of() {
     jpa-* | springdata-* | java-sql-*) echo ./runners/java.sh ;;
     efcore-* | csharp-sql-* | mongodriver-*) echo ./runners/dotnet.sh ;;
     doctrine-* | eloquent-* | php-sql-* | mongophp-*) echo ./runners/php.sh ;;
-    exposed-* | kotlin-sql-*) echo ./runners/kotlin.sh ;;
+    exposed-* | kotlin-sql-* | mongokotlin-*) echo ./runners/kotlin.sh ;;
     seaorm-* | rust-sql-*) echo ./runners/rust.sh ;;
     fluent-* | swift-sql-*) echo ./runners/swift.sh ;;
   esac

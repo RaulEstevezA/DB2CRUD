@@ -904,3 +904,200 @@ export function withPhpRoundTrip(files, settings, code) {
     : PHP_CLINIC.replace('VALIDATORS', () => `'${JSON.stringify(clinicValidators()).replace(/'/g, "\\'")}'`)
   return [...files, { path: 'tests/RoundTripTest.php', content: content.replaceAll('READ_ID', read) }]
 }
+
+// Kotlin: the same, in kotlin.test
+
+const KOTLIN_SHOP = `package app
+
+import app.entities.Order
+import app.errors.ConflictException
+import java.util.UUID
+import kotlin.concurrent.thread
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertContentEquals
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertIs
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import org.bson.Document
+import org.bson.types.Binary
+import org.bson.types.Decimal128
+import org.bson.types.ObjectId
+
+class RoundTripTest {
+    private lateinit var uow: MongoUnitOfWork
+
+    @BeforeTest
+    fun open() {
+        uow = TestDatabase.open()
+    }
+
+    @AfterTest
+    fun close() {
+        uow.db.close()
+    }
+
+    private fun stored(collection: String): Document? = uow.db.database.getCollection<Document>(collection).find().toList().firstOrNull()
+
+    @Test
+    fun keepsEveryValueAndItsType() {
+        val product = uow.products.insert(Factories.newProduct(1))
+        val found = uow.products.READ_ID(product.id!!)!!
+        assertEquals(product.price, found.price)
+        assertEquals(product.reference, found.reference)
+        assertContentEquals(product.picture, found.picture)
+        product.related = listOf("0123456789abcdef01234567")
+        uow.products.update(product)
+        assertEquals(product.related, uow.products.READ_ID(product.id!!)!!.related)
+        val document = stored("products")!!
+        assertIs<ObjectId>(document["_id"])
+        assertIs<Decimal128>(document["price"])
+        assertIs<UUID>(document["reference"])
+        assertIs<Binary>(document["picture"])
+        assertIs<ObjectId>((document["related"] as List<*>)[0])
+        val order = Factories.addOrder(uow, 2)
+        val read = uow.orders.READ_ID(order.id!!)!!
+        assertEquals(order.lines, read.lines)
+        assertEquals(order.notes, read.notes)
+        val line = (stored("orders")!!["lines"] as List<*>)[0] as Document
+        assertIs<ObjectId>(line["_id"])
+        assertIs<ObjectId>(line["product"])
+        assertIs<Decimal128>(line["price"])
+        val customer = Factories.addCustomer(uow, 5)
+        val other = uow.customers.READ_ID(customer.id!!)!!
+        assertEquals(customer.address, other.address)
+        assertEquals(customer.preferences, other.preferences)
+        assertEquals<Any?>(Document(customer.extra as Map<String, Any?>), other.extra)
+    }
+
+    @Test
+    fun changesOnlyWhatIsDifferent() {
+        val inserted = Factories.addCustomer(uow, 1)
+        val id = inserted.id!!
+        uow.db.database.getCollection<Document>("customers")
+            .updateOne(Document(), Document("\\$set", Document("unknown", 1).append("address.unknown", 2)))
+        val one = uow.customers.READ_ID(id)!!
+        val other = uow.customers.READ_ID(id)!!
+        one.name = "one"
+        (one.extra as Document)["n"] = 42
+        other.level = "gold"
+        other.address!!.city = "Madrid"
+        other.passwordHash = null
+        uow.customers.update(one)
+        uow.customers.update(other)
+        val document = stored("customers")!!
+        assertEquals(listOf<Any?>("one", "gold", 1), listOf(document["name"], document["level"], document["unknown"]))
+        val address = document["address"] as Document
+        assertEquals(listOf<Any?>("Madrid", 2), listOf(address["city"], address["unknown"]))
+        assertEquals<Any?>(42, (document["extra"] as Document)["n"])
+        assertEquals(false, "passwordHash" in document)
+        // The entity an insert gives changes only its fields too
+        inserted.name = "again"
+        uow.customers.update(inserted)
+        assertEquals<Any?>("gold", stored("customers")!!["level"])
+    }
+
+    @Test
+    fun doesNotUndoWhatOthersChangeInAList() {
+        val id = Factories.addOrder(uow, 1).id!!
+        val mine = uow.orders.READ_ID(id)!!
+        (0..3).map { thread { uow.orders.addLine(id, Factories.newOrderLine(it)) } }.forEach { it.join() }
+        mine.number = 99.0
+        uow.orders.update(mine)
+        val found = uow.orders.READ_ID(id)!!
+        assertEquals(5, found.lines!!.size)
+        found.lines!!.drop(1).map { thread { uow.orders.removeLine(id, it.id!!) } }.forEach { it.join() }
+        assertEquals(1, uow.orders.READ_ID(id)!!.lines!!.size)
+        assertNull(uow.orders.addLine("f".repeat(24), Factories.newOrderLine(1)))
+        assertNull(uow.orders.READ_ID("nothing"))
+        assertNull(uow.orders.addLine("nothing", Order.Line()))
+        assertNull(uow.orders.removeLine(id, "nothing"))
+    }
+
+    @Test
+    fun refusesRepeatedValues() {
+        Factories.addCustomer(uow, 1)
+        assertFailsWith<ConflictException> { Factories.addCustomer(uow, 1) }
+    }
+TRANSACTION
+    @Test
+    fun createsNothingInTheDatabase() {
+        uow.db.database.drop()
+        val other = MongoUnitOfWork(Db(TestDatabase.client, AppDatabase.name(TestDatabase.url)))
+        assertNull(other.customers.READ_ID("f".repeat(24)))
+        assertEquals(emptyList(), uow.db.database.listCollectionNames().toList())
+    }
+}
+`
+
+const KOTLIN_TRANSACTION = `
+    @Test
+    fun undoesATransactionThatFails() {
+        assertFailsWith<IllegalStateException> {
+            uow.transaction { inside ->
+                val customer = Factories.addCustomer(inside, 1)
+                customer.name = "changed"
+                inside.customers.update(customer)
+                error("stop")
+            }
+        }
+        assertNull(stored("customers"))
+        uow.transaction { inside -> Factories.addCustomer(inside, 1) }
+        assertNotNull(stored("customers"))
+    }
+`
+
+const KOTLIN_CLINIC = `package app
+
+import app.entities.Patient
+import app.errors.ConflictException
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import org.bson.Document
+
+class RoundTripTest {
+    @Test
+    fun fitsTheValidatorsOfTheCollections() {
+        val uow = TestDatabase.open()
+        // The collections with the validators of their own script, as JSON
+        for ((name, validator) in Document.parse(VALIDATORS))
+            uow.db.database.runCommand(Document("collMod", name).append("validator", validator).append("validationAction", "error"))
+        val patient = uow.patients.insert(Factories.newPatient(1))
+        val found = uow.patients.findById(patient.id!!)!!
+        assertEquals(patient.birth, found.birth)
+        assertEquals(patient.balance, found.balance)
+        val room = Factories.addRoom(uow, 1)
+        found.weight = 70.0
+        found.balance = null
+        found.visits = 3
+        found.contacts = found.contacts!! + Patient.Contact(kind = "email", value = "a@b.c")
+        room.beds = 4
+        uow.patients.update(found)
+        uow.rooms.update(room)
+        val changed = uow.patients.findById(patient.id!!)!!
+        assertEquals(listOf<Any?>(70.0, null, 3, 2), listOf(changed.weight, changed.balance, changed.visits, changed.contacts!!.size))
+        assertEquals(4, uow.rooms.findById(room.id!!)!!.beds)
+        assertFailsWith<ConflictException> { uow.patients.insert(Factories.newPatient(1)) }
+        Factories.addPatient(uow, 2)
+        // What only the validator of the collection knows is refused too
+        val wrong = Factories.newPatient(3)
+        wrong.blood = "Z"
+        assertFailsWith<ConflictException> { uow.patients.insert(wrong) }
+        assertFailsWith<ConflictException> { uow.patients.addContact(patient.id!!, Patient.Contact(kind = "fax", value = "")) }
+    }
+}
+`
+
+export function withKotlinRoundTrip(files, settings, code) {
+  if (settings.architecture === 'table') return files
+  const shop = code.endsWith('shop.ts')
+  const read = settings.verbs === 'get' ? 'getById' : 'findById'
+  const content = shop
+    ? KOTLIN_SHOP.replace('TRANSACTION', () => (settings.transactions === 'operation' ? KOTLIN_TRANSACTION : ''))
+    : KOTLIN_CLINIC.replace('VALIDATORS', () => JSON.stringify(JSON.stringify(clinicValidators())).replaceAll('$', '\\$'))
+  return [...files, { path: 'src/test/kotlin/app/RoundTripTest.kt', content: content.replaceAll('READ_ID', read).replaceAll('findById', read) }]
+}

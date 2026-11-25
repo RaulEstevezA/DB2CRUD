@@ -1,0 +1,935 @@
+{
+ "schema": {
+  "format": "db-schema",
+  "version": 1,
+  "dialect": "mongodb",
+  "source": {
+   "kind": "orm",
+   "format": "mongodb"
+  },
+  "tables": [
+   {
+    "name": "customers",
+    "columns": [
+     {
+      "name": "_id",
+      "type": {
+       "sql": "ObjectId",
+       "kind": "text",
+       "length": 24,
+       "fixed": true,
+       "objectId": true
+      },
+      "nullable": false,
+      "generated": "uuid"
+     },
+     {
+      "name": "email",
+      "type": {
+       "sql": "string",
+       "kind": "text"
+      },
+      "nullable": false
+     },
+     {
+      "name": "level",
+      "type": {
+       "sql": "string",
+       "kind": "text"
+      },
+      "nullable": true
+     },
+     {
+      "name": "since",
+      "type": {
+       "sql": "date",
+       "kind": "datetime",
+       "timezone": true
+      },
+      "nullable": false
+     },
+     {
+      "name": "address",
+      "type": {
+       "sql": "object",
+       "kind": "json",
+       "fields": [
+        {
+         "name": "street",
+         "type": {
+          "sql": "string",
+          "kind": "text"
+         },
+         "nullable": false
+        },
+        {
+         "name": "zip code",
+         "type": {
+          "sql": "string",
+          "kind": "text"
+         },
+         "nullable": false
+        },
+        {
+         "name": "location",
+         "type": {
+          "sql": "object",
+          "kind": "json",
+          "fields": [
+           {
+            "name": "latitude",
+            "type": {
+             "sql": "double",
+             "kind": "float",
+             "bits": 64
+            },
+            "nullable": false
+           },
+           {
+            "name": "longitude",
+            "type": {
+             "sql": "double",
+             "kind": "float",
+             "bits": 64
+            },
+            "nullable": false
+           }
+          ]
+         },
+         "nullable": true
+        }
+       ]
+      },
+      "nullable": false
+     },
+     {
+      "name": "tags",
+      "type": {
+       "sql": "array<string>",
+       "kind": "array",
+       "items": {
+        "sql": "string",
+        "kind": "text"
+       }
+      },
+      "nullable": true
+     }
+    ],
+    "primaryKey": [
+     "_id"
+    ],
+    "foreignKeys": [],
+    "uniques": [
+     {
+      "columns": [
+       "email"
+      ]
+     }
+    ],
+    "indexes": [],
+    "checks": [
+     {
+      "sql": "level IN ('basic', 'gold')",
+      "parsed": {
+       "kind": "in",
+       "column": "level",
+       "values": [
+        "basic",
+        "gold"
+       ]
+      }
+     }
+    ],
+    "origin": {
+     "line": 2,
+     "column": 1
+    }
+   },
+   {
+    "name": "orders",
+    "columns": [
+     {
+      "name": "_id",
+      "type": {
+       "sql": "ObjectId",
+       "kind": "text",
+       "length": 24,
+       "fixed": true,
+       "objectId": true
+      },
+      "nullable": false,
+      "generated": "uuid"
+     },
+     {
+      "name": "code",
+      "type": {
+       "sql": "string",
+       "kind": "text"
+      },
+      "nullable": false
+     },
+     {
+      "name": "lines",
+      "type": {
+       "sql": "array<object>",
+       "kind": "array",
+       "items": {
+        "sql": "object",
+        "kind": "json",
+        "fields": [
+         {
+          "name": "_id",
+          "type": {
+           "sql": "ObjectId",
+           "kind": "text",
+           "length": 24,
+           "fixed": true,
+           "objectId": true
+          },
+          "nullable": true
+         },
+         {
+          "name": "sku",
+          "type": {
+           "sql": "string",
+           "kind": "text"
+          },
+          "nullable": false
+         },
+         {
+          "name": "quantity",
+          "type": {
+           "sql": "int",
+           "kind": "integer",
+           "bits": 32
+          },
+          "nullable": false
+         },
+         {
+          "name": "price",
+          "type": {
+           "sql": "decimal",
+           "kind": "decimal"
+          },
+          "nullable": false
+         },
+         {
+          "name": "status",
+          "type": {
+           "sql": "string",
+           "kind": "enum",
+           "name": "orders_lines_status"
+          },
+          "nullable": true
+         },
+         {
+          "name": "discounts",
+          "type": {
+           "sql": "array<object>",
+           "kind": "array",
+           "items": {
+            "sql": "object",
+            "kind": "json",
+            "fields": [
+             {
+              "name": "reason",
+              "type": {
+               "sql": "string",
+               "kind": "text"
+              },
+              "nullable": false
+             },
+             {
+              "name": "percent",
+              "type": {
+               "sql": "double",
+               "kind": "float",
+               "bits": 64
+              },
+              "nullable": false
+             }
+            ]
+           }
+          },
+          "nullable": true
+         }
+        ]
+       }
+      },
+      "nullable": false
+     },
+     {
+      "name": "shipping",
+      "type": {
+       "sql": "object",
+       "kind": "json",
+       "fields": [
+        {
+         "name": "carrier",
+         "type": {
+          "sql": "string",
+          "kind": "text"
+         },
+         "nullable": false
+        },
+        {
+         "name": "sentOn",
+         "type": {
+          "sql": "date",
+          "kind": "datetime",
+          "timezone": true
+         },
+         "nullable": false
+        }
+       ]
+      },
+      "nullable": true
+     }
+    ],
+    "primaryKey": [
+     "_id"
+    ],
+    "foreignKeys": [],
+    "uniques": [
+     {
+      "columns": [
+       "code"
+      ]
+     }
+    ],
+    "indexes": [],
+    "checks": [],
+    "origin": {
+     "line": 30,
+     "column": 1
+    }
+   },
+   {
+    "name": "shipments",
+    "columns": [
+     {
+      "name": "_id",
+      "type": {
+       "sql": "ObjectId",
+       "kind": "text",
+       "length": 24,
+       "fixed": true,
+       "objectId": true
+      },
+      "nullable": false,
+      "generated": "uuid"
+     },
+     {
+      "name": "parcel",
+      "type": {
+       "sql": "object",
+       "kind": "json",
+       "fields": [
+        {
+         "name": "weight",
+         "type": {
+          "sql": "double",
+          "kind": "float",
+          "bits": 64
+         },
+         "nullable": false
+        },
+        {
+         "name": "contents",
+         "type": {
+          "sql": "string",
+          "kind": "text"
+         },
+         "nullable": false
+        },
+        {
+         "name": "size",
+         "type": {
+          "sql": "object",
+          "kind": "json",
+          "fields": [
+           {
+            "name": "height",
+            "type": {
+             "sql": "double",
+             "kind": "float",
+             "bits": 64
+            },
+            "nullable": false
+           }
+          ]
+         },
+         "nullable": true
+        }
+       ]
+      },
+      "nullable": false
+     },
+     {
+      "name": "stops",
+      "type": {
+       "sql": "array<object>",
+       "kind": "array",
+       "items": {
+        "sql": "object",
+        "kind": "json",
+        "fields": [
+         {
+          "name": "city",
+          "type": {
+           "sql": "string",
+           "kind": "text"
+          },
+          "nullable": true
+         }
+        ]
+       }
+      },
+      "nullable": true
+     }
+    ],
+    "primaryKey": [
+     "_id"
+    ],
+    "foreignKeys": [],
+    "uniques": [],
+    "indexes": [],
+    "checks": [],
+    "origin": {
+     "line": 70,
+     "column": 1
+    }
+   }
+  ],
+  "enums": [
+   {
+    "name": "orders_lines_status",
+    "values": [
+     "pending",
+     "sent"
+    ],
+    "storage": "check"
+   }
+  ],
+  "notes": []
+ },
+ "decisions": [],
+ "settings": {
+  "name": "mongokotlin-mongodb-conversions-dtos",
+  "language": "kotlin",
+  "orm": "mongokotlin",
+  "database": "mongodb",
+  "serviceTypes": "dtos"
+ },
+ "models": {
+  "schema": {
+   "format": "model-schema",
+   "version": 1,
+   "origin": {
+    "format": "kotlin",
+    "language": "kotlin"
+   },
+   "models": [
+    {
+     "name": "Location",
+     "kind": "record",
+     "fields": [
+      {
+       "name": "latitude",
+       "type": {
+        "kind": "primitive",
+        "name": "float",
+        "bits": 64
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "Double"
+      },
+      {
+       "name": "longitude",
+       "type": {
+        "kind": "primitive",
+        "name": "float",
+        "bits": 64
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "Double"
+      }
+     ],
+     "namespace": "shop.models",
+     "construction": "named"
+    },
+    {
+     "name": "Address",
+     "kind": "record",
+     "fields": [
+      {
+       "name": "street",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String"
+      },
+      {
+       "name": "zipCode",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String"
+      },
+      {
+       "name": "location",
+       "type": {
+        "kind": "model",
+        "name": "Location"
+       },
+       "nullable": true,
+       "optional": true,
+       "originalType": "Location?",
+       "defaultValue": null
+      }
+     ],
+     "namespace": "shop.models",
+     "construction": "named"
+    },
+    {
+     "name": "Customer",
+     "kind": "record",
+     "fields": [
+      {
+       "name": "id",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String"
+      },
+      {
+       "name": "email",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String"
+      },
+      {
+       "name": "level",
+       "type": {
+        "kind": "enum",
+        "name": "Level"
+       },
+       "nullable": true,
+       "optional": false,
+       "originalType": "Level?"
+      },
+      {
+       "name": "since",
+       "type": {
+        "kind": "primitive",
+        "name": "datetime"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "Instant"
+      },
+      {
+       "name": "address",
+       "type": {
+        "kind": "model",
+        "name": "Address"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "Address"
+      },
+      {
+       "name": "tags",
+       "type": {
+        "kind": "array",
+        "items": {
+         "kind": "primitive",
+         "name": "string"
+        }
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "List<String>"
+      }
+     ],
+     "namespace": "shop.models",
+     "construction": "named"
+    },
+    {
+     "name": "Discount",
+     "kind": "class",
+     "fields": [
+      {
+       "name": "reason",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String",
+       "defaultValue": ""
+      },
+      {
+       "name": "percent",
+       "type": {
+        "kind": "primitive",
+        "name": "float",
+        "bits": 64
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "Double",
+       "defaultValue": 0
+      }
+     ],
+     "namespace": "shop.models",
+     "construction": "properties"
+    },
+    {
+     "name": "OrderLine",
+     "kind": "class",
+     "fields": [
+      {
+       "name": "id",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": true,
+       "optional": false,
+       "originalType": "String?",
+       "defaultValue": null
+      },
+      {
+       "name": "sku",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String",
+       "defaultValue": ""
+      },
+      {
+       "name": "quantity",
+       "type": {
+        "kind": "primitive",
+        "name": "integer",
+        "bits": 32
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "Int",
+       "defaultValue": 0
+      },
+      {
+       "name": "price",
+       "type": {
+        "kind": "primitive",
+        "name": "decimal"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "BigDecimal"
+      },
+      {
+       "name": "status",
+       "type": {
+        "kind": "enum",
+        "name": "LineStatus"
+       },
+       "nullable": true,
+       "optional": false,
+       "originalType": "LineStatus?",
+       "defaultValue": null
+      },
+      {
+       "name": "discounts",
+       "type": {
+        "kind": "array",
+        "items": {
+         "kind": "model",
+         "name": "Discount"
+        }
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "List<Discount>"
+      }
+     ],
+     "namespace": "shop.models",
+     "construction": "properties"
+    },
+    {
+     "name": "Shipping",
+     "kind": "record",
+     "fields": [
+      {
+       "name": "carrier",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String"
+      },
+      {
+       "name": "sentOn",
+       "type": {
+        "kind": "primitive",
+        "name": "date"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "LocalDate"
+      }
+     ],
+     "namespace": "shop.models",
+     "construction": "named"
+    },
+    {
+     "name": "Order",
+     "kind": "record",
+     "fields": [
+      {
+       "name": "id",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String"
+      },
+      {
+       "name": "code",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String"
+      },
+      {
+       "name": "lines",
+       "type": {
+        "kind": "array",
+        "items": {
+         "kind": "model",
+         "name": "OrderLine"
+        }
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "List<OrderLine>"
+      },
+      {
+       "name": "shipping",
+       "type": {
+        "kind": "model",
+        "name": "Shipping"
+       },
+       "nullable": true,
+       "optional": true,
+       "originalType": "Shipping?",
+       "defaultValue": null
+      }
+     ],
+     "namespace": "shop.models",
+     "construction": "named"
+    },
+    {
+     "name": "Parcel",
+     "kind": "record",
+     "fields": [
+      {
+       "name": "weight",
+       "type": {
+        "kind": "primitive",
+        "name": "float",
+        "bits": 64
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "Double"
+      },
+      {
+       "name": "size",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String"
+      },
+      {
+       "name": "fragile",
+       "type": {
+        "kind": "primitive",
+        "name": "boolean"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "Boolean"
+      }
+     ],
+     "namespace": "shop.models",
+     "construction": "named"
+    },
+    {
+     "name": "Shipment",
+     "kind": "record",
+     "fields": [
+      {
+       "name": "id",
+       "type": {
+        "kind": "primitive",
+        "name": "string"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "String"
+      },
+      {
+       "name": "parcel",
+       "type": {
+        "kind": "model",
+        "name": "Parcel"
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "Parcel"
+      },
+      {
+       "name": "stops",
+       "type": {
+        "kind": "array",
+        "items": {
+         "kind": "primitive",
+         "name": "string"
+        }
+       },
+       "nullable": false,
+       "optional": false,
+       "originalType": "List<String>"
+      }
+     ],
+     "namespace": "shop.models",
+     "construction": "named"
+    }
+   ],
+   "enums": [
+    {
+     "name": "Level",
+     "values": [
+      {
+       "name": "basic"
+      },
+      {
+       "name": "gold"
+      }
+     ],
+     "namespace": "shop.models"
+    },
+    {
+     "name": "LineStatus",
+     "values": [
+      {
+       "name": "pending"
+      },
+      {
+       "name": "sent"
+      }
+     ],
+     "namespace": "shop.models"
+    }
+   ]
+  },
+  "project": null
+ },
+ "files": {
+  ".env.example": "# Where the database is\nDATABASE_URL=mongodb://localhost:27017/app\n# The database the tests use (it is emptied by the tests): one of the same kind as DATABASE_URL\n# TEST_DATABASE_URL=\n",
+  ".gitignore": "build/\n.gradle/\n.kotlin/\n.env\n*.db\n",
+  "README.md": "# mongokotlin-mongodb-conversions-dtos\n\nData access layer generated by [DB2CRUD](https://github.com/RaulEstevezA/DB2CRUD) for a database that already exists: plain entities, repositories and services with the MongoDB driver, in Kotlin on the JVM. It does not create or migrate the database, and it depends on no web framework.\n\n## Settings\n\n- Database: mongodb.\n- Entities: written for the tables the input had no class for.\n- Services: take and return DTOs (data classes); updates take a Patch per field: absent, or a value that may be null.\n- Transactions: every repository write is committed at once.\n- Lists: lists return pages by offset and limit.\n\n## Layout\n\n```text\nsrc/main/kotlin/app/AppDatabase.kt      opens the database DATABASE_URL names\nsrc/main/kotlin/app/Db.kt               a database and the session of its transaction\nsrc/main/kotlin/app/Documents.kt        values of documents, and what changed in one\nsrc/main/kotlin/app/UnitOfWork.kt       the repositories of every table, and the transaction of each operation\nsrc/main/kotlin/app/errors/             NotFoundException, ConflictException, ValidationFailedException: no HTTP codes\nsrc/main/kotlin/app/entities/           one entity per collection\nsrc/main/kotlin/app/repositories/       the repositories of each table\nsrc/main/kotlin/app/services/           one service per table\nsrc/test/kotlin/app/                    repositories against a database, services on the in-memory repositories\ncrud-contract.json                      what was written, for CRUD2Controller\n```\n\n## Running the tests\n\n```bash\nTEST_DATABASE_URL=\"mongodb://localhost:27017/app\" gradle test   # a real, disposable database: it is emptied\n```\n\nLook for `TODO` in the code: each one marks a decision the input did not settle.\n",
+  "build.gradle.kts": "plugins {\n    kotlin(\"jvm\") version \"2.4.21\"\n}\n\nrepositories {\n    mavenCentral()\n}\n\ndependencies {\n    implementation(\"org.mongodb:mongodb-driver-kotlin-sync:5.15.0\")\n    testImplementation(kotlin(\"test\"))\n    testImplementation(platform(\"org.junit:junit-bom:6.1.3\"))\n    testImplementation(\"org.junit.jupiter:junit-jupiter\")\n    testRuntimeOnly(\"org.junit.platform:junit-platform-launcher\")\n}\n\nkotlin {\n    jvmToolchain(21)\n}\n\ntasks.test {\n    useJUnitPlatform()\n    // Every test empties the same database: they run one after another\n    maxParallelForks = 1\n}\n",
+  "crud-contract.json": "{\n  \"format\": \"crud-contract\",\n  \"version\": 1,\n  \"stack\": {\n    \"language\": \"kotlin\",\n    \"orm\": \"mongokotlin\",\n    \"database\": \"mongodb\",\n    \"execution\": \"sync\"\n  },\n  \"transactions\": \"repository\",\n  \"paging\": \"offset\",\n  \"types\": [\n    {\n      \"name\": \"Customer\",\n      \"module\": \"app.entities\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"kotlin\": \"String\",\n            \"length\": 24\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"email\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"kotlin\": \"String\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"level\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"kotlin\": \"String?\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"since\",\n          \"type\": {\n            \"kind\": \"datetime\",\n            \"kotlin\": \"Instant\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"address\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"kotlin\": \"Customer.Address\",\n            \"fields\": [\n              {\n                \"name\": \"street\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"zip code\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"location\",\n                \"type\": {\n                  \"kind\": \"json\",\n                  \"fields\": [\n                    {\n                      \"name\": \"latitude\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    },\n                    {\n                      \"name\": \"longitude\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"tags\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"kotlin\": \"List<String>?\"\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"CustomerCreate\",\n      \"module\": \"app.dtos\",\n      \"kind\": \"create\",\n      \"fields\": [\n        {\n          \"name\": \"email\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"kotlin\": \"String\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"level\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"kotlin\": \"String?\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"since\",\n          \"type\": {\n            \"kind\": \"datetime\",\n            \"kotlin\": \"Instant\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"address\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"kotlin\": \"Customer.Address\",\n            \"fields\": [\n              {\n                \"name\": \"street\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"zip code\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"location\",\n                \"type\": {\n                  \"kind\": \"json\",\n                  \"fields\": [\n                    {\n                      \"name\": \"latitude\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    },\n                    {\n                      \"name\": \"longitude\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"tags\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"kotlin\": \"List<String>?\"\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"CustomerUpdate\",\n      \"module\": \"app.dtos\",\n      \"kind\": \"update\",\n      \"updates\": \"patch\",\n      \"fields\": [\n        {\n          \"name\": \"email\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"kotlin\": \"String\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"level\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"kotlin\": \"String?\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"since\",\n          \"type\": {\n            \"kind\": \"datetime\",\n            \"kotlin\": \"Instant\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"address\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"kotlin\": \"Customer.Address\",\n            \"fields\": [\n              {\n                \"name\": \"street\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"zip code\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"location\",\n                \"type\": {\n                  \"kind\": \"json\",\n                  \"fields\": [\n                    {\n                      \"name\": \"latitude\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    },\n                    {\n                      \"name\": \"longitude\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"tags\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"kotlin\": \"List<String>?\"\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"CustomerRead\",\n      \"module\": \"app.dtos\",\n      \"kind\": \"read\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"kotlin\": \"String\",\n            \"length\": 24\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"email\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"kotlin\": \"String\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"level\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"kotlin\": \"String?\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"since\",\n          \"type\": {\n            \"kind\": \"datetime\",\n            \"kotlin\": \"Instant\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"address\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"kotlin\": \"Customer.Address\",\n            \"fields\": [\n              {\n                \"name\": \"street\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"zip code\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"location\",\n                \"type\": {\n                  \"kind\": \"json\",\n                  \"fields\": [\n                    {\n                      \"name\": \"latitude\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    },\n                    {\n                      \"name\": \"longitude\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"tags\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"kotlin\": \"List<String>?\"\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"Order\",\n      \"module\": \"app.entities\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"kotlin\": \"String\",\n            \"length\": 24\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"code\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"kotlin\": \"String\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"lines\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"kotlin\": \"List<Order.Line>\",\n            \"fields\": [\n              {\n                \"name\": \"_id\",\n                \"type\": {\n                  \"kind\": \"text\",\n                  \"length\": 24\n                },\n                \"nullable\": true\n              },\n              {\n                \"name\": \"sku\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"quantity\",\n                \"type\": {\n                  \"kind\": \"integer\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"price\",\n                \"type\": {\n                  \"kind\": \"decimal\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"status\",\n                \"type\": {\n                  \"kind\": \"enum\"\n                },\n                \"nullable\": true\n              },\n              {\n                \"name\": \"discounts\",\n                \"type\": {\n                  \"kind\": \"array\",\n                  \"fields\": [\n                    {\n                      \"name\": \"reason\",\n                      \"type\": {\n                        \"kind\": \"text\"\n                      },\n                      \"nullable\": false\n                    },\n                    {\n                      \"name\": \"percent\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"shipping\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"kotlin\": \"Order.Shipping?\",\n            \"fields\": [\n              {\n                \"name\": \"carrier\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"sentOn\",\n                \"type\": {\n                  \"kind\": \"datetime\"\n                },\n                \"nullable\": false\n              }\n            ]\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"OrderCreate\",\n      \"module\": \"app.dtos\",\n      \"kind\": \"create\",\n      \"fields\": [\n        {\n          \"name\": \"code\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"kotlin\": \"String\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"lines\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"kotlin\": \"List<Order.Line>\",\n            \"fields\": [\n              {\n                \"name\": \"_id\",\n                \"type\": {\n                  \"kind\": \"text\",\n                  \"length\": 24\n                },\n                \"nullable\": true\n              },\n              {\n                \"name\": \"sku\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"quantity\",\n                \"type\": {\n                  \"kind\": \"integer\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"price\",\n                \"type\": {\n                  \"kind\": \"decimal\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"status\",\n                \"type\": {\n                  \"kind\": \"enum\"\n                },\n                \"nullable\": true\n              },\n              {\n                \"name\": \"discounts\",\n                \"type\": {\n                  \"kind\": \"array\",\n                  \"fields\": [\n                    {\n                      \"name\": \"reason\",\n                      \"type\": {\n                        \"kind\": \"text\"\n                      },\n                      \"nullable\": false\n                    },\n                    {\n                      \"name\": \"percent\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"shipping\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"kotlin\": \"Order.Shipping?\",\n            \"fields\": [\n              {\n                \"name\": \"carrier\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"sentOn\",\n                \"type\": {\n                  \"kind\": \"datetime\"\n                },\n                \"nullable\": false\n              }\n            ]\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"OrderUpdate\",\n      \"module\": \"app.dtos\",\n      \"kind\": \"update\",\n      \"updates\": \"patch\",\n      \"fields\": [\n        {\n          \"name\": \"code\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"kotlin\": \"String\"\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"lines\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"kotlin\": \"List<Order.Line>\",\n            \"fields\": [\n              {\n                \"name\": \"_id\",\n                \"type\": {\n                  \"kind\": \"text\",\n                  \"length\": 24\n                },\n                \"nullable\": true\n              },\n              {\n                \"name\": \"sku\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"quantity\",\n                \"type\": {\n                  \"kind\": \"integer\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"price\",\n                \"type\": {\n                  \"kind\": \"decimal\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"status\",\n                \"type\": {\n                  \"kind\": \"enum\"\n                },\n                \"nullable\": true\n              },\n              {\n                \"name\": \"discounts\",\n                \"type\": {\n                  \"kind\": \"array\",\n                  \"fields\": [\n                    {\n                      \"name\": \"reason\",\n                      \"type\": {\n                        \"kind\": \"text\"\n                      },\n                      \"nullable\": false\n                    },\n                    {\n                      \"name\": \"percent\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"shipping\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"kotlin\": \"Order.Shipping?\",\n            \"fields\": [\n              {\n                \"name\": \"carrier\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"sentOn\",\n                \"type\": {\n                  \"kind\": \"datetime\"\n                },\n                \"nullable\": false\n              }\n            ]\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"OrderRead\",\n      \"module\": \"app.dtos\",\n      \"kind\": \"read\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"kotlin\": \"String\",\n            \"length\": 24\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"code\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"kotlin\": \"String\"\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"lines\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"kotlin\": \"List<Order.Line>\",\n            \"fields\": [\n              {\n                \"name\": \"_id\",\n                \"type\": {\n                  \"kind\": \"text\",\n                  \"length\": 24\n                },\n                \"nullable\": true\n              },\n              {\n                \"name\": \"sku\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"quantity\",\n                \"type\": {\n                  \"kind\": \"integer\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"price\",\n                \"type\": {\n                  \"kind\": \"decimal\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"status\",\n                \"type\": {\n                  \"kind\": \"enum\"\n                },\n                \"nullable\": true\n              },\n              {\n                \"name\": \"discounts\",\n                \"type\": {\n                  \"kind\": \"array\",\n                  \"fields\": [\n                    {\n                      \"name\": \"reason\",\n                      \"type\": {\n                        \"kind\": \"text\"\n                      },\n                      \"nullable\": false\n                    },\n                    {\n                      \"name\": \"percent\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"shipping\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"kotlin\": \"Order.Shipping?\",\n            \"fields\": [\n              {\n                \"name\": \"carrier\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"sentOn\",\n                \"type\": {\n                  \"kind\": \"datetime\"\n                },\n                \"nullable\": false\n              }\n            ]\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"Shipment\",\n      \"module\": \"app.entities\",\n      \"kind\": \"entity\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"kotlin\": \"String\",\n            \"length\": 24\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"parcel\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"kotlin\": \"Shipment.Parcel\",\n            \"fields\": [\n              {\n                \"name\": \"weight\",\n                \"type\": {\n                  \"kind\": \"float\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"contents\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"size\",\n                \"type\": {\n                  \"kind\": \"json\",\n                  \"fields\": [\n                    {\n                      \"name\": \"height\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"stops\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"kotlin\": \"List<Shipment.Stop>?\",\n            \"fields\": [\n              {\n                \"name\": \"city\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"ShipmentCreate\",\n      \"module\": \"app.dtos\",\n      \"kind\": \"create\",\n      \"fields\": [\n        {\n          \"name\": \"parcel\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"kotlin\": \"Shipment.Parcel\",\n            \"fields\": [\n              {\n                \"name\": \"weight\",\n                \"type\": {\n                  \"kind\": \"float\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"contents\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"size\",\n                \"type\": {\n                  \"kind\": \"json\",\n                  \"fields\": [\n                    {\n                      \"name\": \"height\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"stops\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"kotlin\": \"List<Shipment.Stop>?\",\n            \"fields\": [\n              {\n                \"name\": \"city\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"ShipmentUpdate\",\n      \"module\": \"app.dtos\",\n      \"kind\": \"update\",\n      \"updates\": \"patch\",\n      \"fields\": [\n        {\n          \"name\": \"parcel\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"kotlin\": \"Shipment.Parcel\",\n            \"fields\": [\n              {\n                \"name\": \"weight\",\n                \"type\": {\n                  \"kind\": \"float\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"contents\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"size\",\n                \"type\": {\n                  \"kind\": \"json\",\n                  \"fields\": [\n                    {\n                      \"name\": \"height\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        },\n        {\n          \"name\": \"stops\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"kotlin\": \"List<Shipment.Stop>?\",\n            \"fields\": [\n              {\n                \"name\": \"city\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        }\n      ]\n    },\n    {\n      \"name\": \"ShipmentRead\",\n      \"module\": \"app.dtos\",\n      \"kind\": \"read\",\n      \"fields\": [\n        {\n          \"name\": \"id\",\n          \"type\": {\n            \"kind\": \"text\",\n            \"kotlin\": \"String\",\n            \"length\": 24\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"parcel\",\n          \"type\": {\n            \"kind\": \"json\",\n            \"kotlin\": \"Shipment.Parcel\",\n            \"fields\": [\n              {\n                \"name\": \"weight\",\n                \"type\": {\n                  \"kind\": \"float\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"contents\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": false\n              },\n              {\n                \"name\": \"size\",\n                \"type\": {\n                  \"kind\": \"json\",\n                  \"fields\": [\n                    {\n                      \"name\": \"height\",\n                      \"type\": {\n                        \"kind\": \"float\"\n                      },\n                      \"nullable\": false\n                    }\n                  ]\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": false\n        },\n        {\n          \"name\": \"stops\",\n          \"type\": {\n            \"kind\": \"array\",\n            \"kotlin\": \"List<Shipment.Stop>?\",\n            \"fields\": [\n              {\n                \"name\": \"city\",\n                \"type\": {\n                  \"kind\": \"text\"\n                },\n                \"nullable\": true\n              }\n            ]\n          },\n          \"nullable\": true\n        }\n      ]\n    }\n  ],\n  \"errors\": [\n    {\n      \"kind\": \"notFound\",\n      \"name\": \"NotFoundException\",\n      \"module\": \"app.errors\"\n    },\n    {\n      \"kind\": \"conflict\",\n      \"name\": \"ConflictException\",\n      \"module\": \"app.errors\"\n    },\n    {\n      \"kind\": \"validation\",\n      \"name\": \"ValidationFailedException\",\n      \"module\": \"app.errors\"\n    }\n  ],\n  \"common\": \"app.common\",\n  \"services\": [\n    {\n      \"name\": \"CustomerService\",\n      \"module\": \"app.services\",\n      \"operations\": [\n        {\n          \"name\": \"createCustomer\",\n          \"kind\": \"create\",\n          \"errors\": [\n            \"validation\",\n            \"conflict\"\n          ]\n        },\n        {\n          \"name\": \"getCustomer\",\n          \"kind\": \"get\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"listCustomers\",\n          \"kind\": \"list\",\n          \"errors\": []\n        },\n        {\n          \"name\": \"updateCustomer\",\n          \"kind\": \"update\",\n          \"errors\": [\n            \"notFound\",\n            \"validation\",\n            \"conflict\"\n          ]\n        },\n        {\n          \"name\": \"deleteCustomer\",\n          \"kind\": \"delete\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"findCustomerByEmail\",\n          \"kind\": \"find\",\n          \"by\": [\n            \"email\"\n          ],\n          \"errors\": []\n        },\n        {\n          \"name\": \"addTag\",\n          \"kind\": \"addItem\",\n          \"by\": [\n            \"tags\"\n          ],\n          \"errors\": [\n            \"notFound\",\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"removeTag\",\n          \"kind\": \"removeItem\",\n          \"by\": [\n            \"tags\"\n          ],\n          \"errors\": [\n            \"notFound\",\n            \"conflict\"\n          ]\n        }\n      ]\n    },\n    {\n      \"name\": \"OrderService\",\n      \"module\": \"app.services\",\n      \"operations\": [\n        {\n          \"name\": \"createOrder\",\n          \"kind\": \"create\",\n          \"errors\": [\n            \"validation\",\n            \"conflict\"\n          ]\n        },\n        {\n          \"name\": \"getOrder\",\n          \"kind\": \"get\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"listOrders\",\n          \"kind\": \"list\",\n          \"errors\": []\n        },\n        {\n          \"name\": \"updateOrder\",\n          \"kind\": \"update\",\n          \"errors\": [\n            \"notFound\",\n            \"validation\",\n            \"conflict\"\n          ]\n        },\n        {\n          \"name\": \"deleteOrder\",\n          \"kind\": \"delete\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"findOrderByCode\",\n          \"kind\": \"find\",\n          \"by\": [\n            \"code\"\n          ],\n          \"errors\": []\n        },\n        {\n          \"name\": \"addLine\",\n          \"kind\": \"addItem\",\n          \"by\": [\n            \"lines\"\n          ],\n          \"errors\": [\n            \"notFound\",\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"removeLine\",\n          \"kind\": \"removeItem\",\n          \"by\": [\n            \"lines\"\n          ],\n          \"errors\": [\n            \"notFound\",\n            \"conflict\"\n          ]\n        }\n      ]\n    },\n    {\n      \"name\": \"ShipmentService\",\n      \"module\": \"app.services\",\n      \"operations\": [\n        {\n          \"name\": \"createShipment\",\n          \"kind\": \"create\",\n          \"errors\": [\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"getShipment\",\n          \"kind\": \"get\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"listShipments\",\n          \"kind\": \"list\",\n          \"errors\": []\n        },\n        {\n          \"name\": \"updateShipment\",\n          \"kind\": \"update\",\n          \"errors\": [\n            \"notFound\",\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"deleteShipment\",\n          \"kind\": \"delete\",\n          \"errors\": [\n            \"notFound\"\n          ]\n        },\n        {\n          \"name\": \"addStop\",\n          \"kind\": \"addItem\",\n          \"by\": [\n            \"stops\"\n          ],\n          \"errors\": [\n            \"notFound\",\n            \"validation\"\n          ]\n        },\n        {\n          \"name\": \"removeStop\",\n          \"kind\": \"removeItem\",\n          \"by\": [\n            \"stops\"\n          ],\n          \"errors\": [\n            \"notFound\",\n            \"conflict\"\n          ]\n        }\n      ]\n    }\n  ]\n}\n",
+  "settings.gradle.kts": "rootProject.name = \"mongokotlin-mongodb-conversions-dtos\"\n",
+  "src/main/kotlin/app/AppDatabase.kt": "package app\n\nimport com.mongodb.ConnectionString\nimport com.mongodb.MongoClientSettings\nimport com.mongodb.kotlin.client.MongoClient\nimport org.bson.UuidRepresentation\n\n/** The MongoDB database DATABASE_URL names. It creates no collection and no index: the database already exists. */\nobject AppDatabase {\n    const val DEFAULT_URL = \"mongodb://localhost:27017/app\"\n\n    /** One client for the whole application: it keeps the connections. */\n    private val shared by lazy { client(url()) }\n\n    /** The URL of DATABASE_URL, or the default one. */\n    fun url(): String = System.getenv(\"DATABASE_URL\") ?: DEFAULT_URL\n\n    /** The name of the database a URL names. */\n    fun name(url: String): String = checkNotNull(ConnectionString(url).database) { \"The URL names no database\" }\n\n    /** A client for the server at url, which keeps UUIDs as the standard says. */\n    fun client(url: String): MongoClient =\n        MongoClient.create(\n            MongoClientSettings.builder()\n                .applyConnectionString(ConnectionString(url))\n                .uuidRepresentation(UuidRepresentation.STANDARD)\n                .build(),\n        )\n\n    /** A Db over DATABASE_URL, one per unit of work; close it when done. */\n    fun open(): Db = Db(shared, name(url()))\n}\n",
+  "src/main/kotlin/app/Db.kt": "package app\n\nimport app.errors.ConflictException\nimport com.mongodb.MongoException\nimport com.mongodb.client.model.FindOneAndUpdateOptions\nimport com.mongodb.client.model.ReturnDocument\nimport com.mongodb.kotlin.client.ClientSession\nimport com.mongodb.kotlin.client.MongoClient\nimport org.bson.Document\n\n/** A database and the session of its transaction, when there is one (MongoDB has them on replica sets only). A refused write is a ConflictException. */\nclass Db(private val client: MongoClient, name: String) : AutoCloseable {\n    val database = client.getDatabase(name)\n\n    private var session: ClientSession? = null\n\n    val inTransaction: Boolean get() = session != null\n\n    fun begin() {\n        session = client.startSession().also { it.startTransaction() }\n    }\n\n    fun commit() {\n        session?.commitTransaction()\n        end()\n    }\n\n    fun rollback() {\n        session?.let { if (it.hasActiveTransaction) it.abortTransaction() }\n        end()\n    }\n\n    override fun close() = rollback()\n\n    private fun end() {\n        session?.close()\n        session = null\n    }\n\n    fun collection(name: String) = database.getCollection<Document>(name)\n\n    fun find(collection: String, filter: Document, sort: Document? = null, skip: Int = 0, limit: Int = 0): List<Document> {\n        val found = session?.let { collection(collection).find(it, filter) } ?: collection(collection).find(filter)\n        return found.sort(sort).skip(skip).limit(limit).toList()\n    }\n\n    fun count(collection: String, filter: Document): Long =\n        session?.let { collection(collection).countDocuments(it, filter) } ?: collection(collection).countDocuments(filter)\n\n    fun insert(entity: String, collection: String, document: Document) {\n        write(entity) { session?.let { collection(collection).insertOne(it, document) } ?: collection(collection).insertOne(document) }\n    }\n\n    fun update(entity: String, collection: String, filter: Document, change: Document) {\n        write(entity) { session?.let { collection(collection).updateOne(it, filter, change) } ?: collection(collection).updateOne(filter, change) }\n    }\n\n    fun delete(entity: String, collection: String, filter: Document) {\n        write(entity) { session?.let { collection(collection).deleteOne(it, filter) } ?: collection(collection).deleteOne(filter) }\n    }\n\n    /** Changes one document where it is, and gives it as it is then; null when there is none. */\n    fun change(entity: String, collection: String, filter: Document, change: Document): Document? =\n        write(entity) {\n            val session = session\n            if (session == null) collection(collection).findOneAndUpdate(filter, change, AFTER)\n            else collection(collection).findOneAndUpdate(session, filter, change, AFTER)\n        }\n\n    /** The same, with the stages of a pipeline. */\n    fun rewrite(entity: String, collection: String, filter: Document, stages: List<Document>): Document? =\n        write(entity) {\n            val session = session\n            if (session == null) collection(collection).findOneAndUpdate(filter, stages, AFTER)\n            else collection(collection).findOneAndUpdate(session, filter, stages, AFTER)\n        }\n\n    /** A repeated value, or one the validator of the collection does not take, as a domain error. */\n    private fun <T> write(entity: String, work: () -> T): T =\n        try {\n            work()\n        } catch (error: MongoException) {\n            if (error.code != 11000 && error.code != 121) throw error\n            throw ConflictException(entity, \"the database refused the change: ${error.message}\")\n        }\n\n    private companion object {\n        val AFTER: FindOneAndUpdateOptions = FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER)\n    }\n}\n",
+  "src/main/kotlin/app/Documents.kt": "package app\n\nimport java.math.BigDecimal\nimport java.util.Objects\nimport org.bson.Document\nimport org.bson.types.Binary\nimport org.bson.types.Decimal128\n\n/** Values of documents, and what changed in one. */\nobject Documents {\n    /** An exact number of a document, whatever the type it was stored with. */\n    fun decimal(value: Any?): BigDecimal? =\n        when (value) {\n            null -> null\n            is Decimal128 -> value.bigDecimalValue()\n            else -> BigDecimal(value.toString())\n        }\n\n    /** The update that takes a document from what it was to what it is: only the fields that differ, and inside a nested document only its own. */\n    fun changes(before: Document?, now: Document, fields: List<String>): Document {\n        val set = Document()\n        val unset = Document()\n        for (field in fields) compare(\"\", field, before?.get(field), now[field], set, unset)\n        val result = Document()\n        if (set.isNotEmpty()) result[\"\\$set\"] = set\n        if (unset.isNotEmpty()) result[\"\\$unset\"] = unset\n        return result\n    }\n\n    /** A copy of a value of a document, which stays as it is when the value changes. */\n    fun copy(value: Any?): Any? =\n        when (value) {\n            is Map<*, *> -> Document().also { document -> value.forEach { (name, item) -> document[name.toString()] = copy(item) } }\n            is List<*> -> value.map { copy(it) }\n            is Binary -> Binary(value.type, value.data.copyOf())\n            else -> value\n        }\n\n    private fun compare(path: String, field: String, before: Any?, now: Any?, set: Document, unset: Document) {\n        val name = path + field\n        if (Objects.deepEquals(before, now)) return\n        if (now == null) unset[name] = \"\"\n        else if (before is Document && now is Document)\n            (before.keys + now.keys).forEach { compare(\"$name.\", it, before[it], now[it], set, unset) }\n        else set[name] = now\n    }\n}\n",
+  "src/main/kotlin/app/MemoryUnitOfWork.kt": "package app\n\nimport app.repositories.CustomerRepository\nimport app.repositories.MemoryCustomerRepository\nimport app.repositories.MemoryOrderRepository\nimport app.repositories.MemoryShipmentRepository\nimport app.repositories.OrderRepository\nimport app.repositories.ShipmentRepository\n\n/** The in-memory repositories, for tests and for trying the services without a database. */\nclass MemoryUnitOfWork : UnitOfWork {\n    override val customers: CustomerRepository = MemoryCustomerRepository()\n    override val orders: OrderRepository = MemoryOrderRepository()\n    override val shipments: ShipmentRepository = MemoryShipmentRepository()\n\n    /** Memory has no transactions: changes are kept as they are made. */\n    override fun <T> transaction(work: (UnitOfWork) -> T): T = work(this)\n}\n",
+  "src/main/kotlin/app/MongoUnitOfWork.kt": "package app\n\nimport app.repositories.CustomerRepository\nimport app.repositories.OrderRepository\nimport app.repositories.ShipmentRepository\nimport app.repositories.MongoCustomerRepository\nimport app.repositories.MongoOrderRepository\nimport app.repositories.MongoShipmentRepository\n\n/** The repositories over one Db, and its transaction. */\nclass MongoUnitOfWork(val db: Db) : UnitOfWork {\n    override val customers: CustomerRepository = MongoCustomerRepository(db)\n    override val orders: OrderRepository = MongoOrderRepository(db)\n    override val shipments: ShipmentRepository = MongoShipmentRepository(db)\n\n    /** Every write is committed at once: this only groups the code. */\n    override fun <T> transaction(work: (UnitOfWork) -> T): T = work(this)\n}\n",
+  "src/main/kotlin/app/UnitOfWork.kt": "package app\n\nimport app.repositories.CustomerRepository\nimport app.repositories.OrderRepository\nimport app.repositories.ShipmentRepository\n\n/** What services depend on: a repository per table and a transaction. Every repository write is committed at once; transaction() only groups the code. */\ninterface UnitOfWork {\n    val customers: CustomerRepository\n    val orders: OrderRepository\n    val shipments: ShipmentRepository\n\n    /** Runs work with the repositories of the transaction; commits when it ends, rolls back when it throws. */\n    fun <T> transaction(work: (UnitOfWork) -> T): T\n}\n",
+  "src/main/kotlin/app/application_models/Address.kt": "package app.application_models\n\n/** Address, as the application has it. */\ndata class Address(\n    val street: String,\n    val zipCode: String,\n    val location: Location? = null,\n)\n",
+  "src/main/kotlin/app/application_models/Customer.kt": "package app.application_models\n\nimport java.time.Instant\n\n/** Customer, as the application has it. */\ndata class Customer(\n    val id: String,\n    val email: String,\n    val level: Level? = null,\n    val since: Instant,\n    val address: Address,\n    val tags: List<String>,\n)\n",
+  "src/main/kotlin/app/application_models/Discount.kt": "package app.application_models\n\n/** Discount, as the application has it. */\nclass Discount {\n    var reason: String = \"\"\n    var percent: Double = 0.0\n}\n",
+  "src/main/kotlin/app/application_models/Level.kt": "package app.application_models\n\n/** Level, as the application has it. */\nenum class Level {\n    basic,\n    gold,\n}\n",
+  "src/main/kotlin/app/application_models/LineStatus.kt": "package app.application_models\n\n/** LineStatus, as the application has it. */\nenum class LineStatus {\n    pending,\n    sent,\n}\n",
+  "src/main/kotlin/app/application_models/Location.kt": "package app.application_models\n\n/** Location, as the application has it. */\ndata class Location(\n    val latitude: Double,\n    val longitude: Double,\n)\n",
+  "src/main/kotlin/app/application_models/Order.kt": "package app.application_models\n\n/** Order, as the application has it. */\ndata class Order(\n    val id: String,\n    val code: String,\n    val lines: List<OrderLine>,\n    val shipping: Shipping? = null,\n)\n",
+  "src/main/kotlin/app/application_models/OrderLine.kt": "package app.application_models\n\nimport java.math.BigDecimal\n\n/** OrderLine, as the application has it. */\nclass OrderLine {\n    var id: String? = null\n    var sku: String = \"\"\n    var quantity: Int = 0\n    var price: BigDecimal = BigDecimal.ZERO\n    var status: LineStatus? = null\n    var discounts: List<Discount> = emptyList()\n}\n",
+  "src/main/kotlin/app/application_models/Parcel.kt": "package app.application_models\n\n/** Parcel, as the application has it. */\ndata class Parcel(\n    val weight: Double,\n    val size: String,\n    val fragile: Boolean,\n)\n",
+  "src/main/kotlin/app/application_models/Shipment.kt": "package app.application_models\n\n/** Shipment, as the application has it. */\ndata class Shipment(\n    val id: String,\n    val parcel: Parcel,\n    val stops: List<String>,\n)\n",
+  "src/main/kotlin/app/application_models/Shipping.kt": "package app.application_models\n\nimport java.time.LocalDate\n\n/** Shipping, as the application has it. */\ndata class Shipping(\n    val carrier: String,\n    val sentOn: LocalDate,\n)\n",
+  "src/main/kotlin/app/common/Page.kt": "package app.common\n\n/** A page of a list: the rows from an offset, and how many there are in all. */\ndata class Page<T>(val items: List<T>, val total: Long, val offset: Int, val limit: Int) {\n    /** The same page with every row turned into something else. */\n    fun <R> map(mapper: (T) -> R): Page<R> = Page(items.map(mapper), total, offset, limit)\n}\n",
+  "src/main/kotlin/app/common/Patch.kt": "package app.common\n\n/** A field of an update: absent (it keeps its value), or present with a value, which may be null. */\nclass Patch<out T> private constructor(val isPresent: Boolean, val value: T?) {\n    override fun toString(): String = if (isPresent) \"Patch[$value]\" else \"Patch.absent\"\n\n    companion object {\n        private val ABSENT = Patch<Nothing>(false, null)\n\n        /** The field keeps its value. */\n        fun <T> absent(): Patch<T> = ABSENT\n\n        /** The field takes this value, which may be null. */\n        fun <T> of(value: T?): Patch<T> = Patch(true, value)\n    }\n}\n",
+  "src/main/kotlin/app/conversions/CustomerConversions.kt": "package app.conversions\n\nimport app.application_models.Address\nimport app.application_models.Customer as CustomerModel\nimport app.application_models.Level\nimport app.application_models.Location\nimport app.dtos.CustomerCreate\nimport app.dtos.CustomerRead\nimport app.entities.Customer\n\n/** Conversions between the application models and the \"customers\" table: what the service takes and returns. */\nobject CustomerConversions {\n    /** A Customer as the customers table takes it. */\n    fun customerModelToCustomerCreate(model: CustomerModel): CustomerCreate {\n        return CustomerCreate(\n            email = model.email,\n            level = model.level?.let { when (it) { Level.basic -> \"basic\"; Level.gold -> \"gold\" } },\n            since = model.since,\n            address = customerAddressToDocument(model.address),\n            tags = model.tags,\n        )\n    }\n\n    /** A row of the customers table as a Customer. */\n    fun customerReadToCustomerModel(row: CustomerRead): CustomerModel {\n        return CustomerModel(\n            id = row.id,\n            email = row.email,\n            level = row.level?.let { when (it) { \"basic\" -> Level.basic; \"gold\" -> Level.gold; else -> throw IllegalArgumentException(\"No Level for this value\") } },\n            since = row.since,\n            address = customerAddressFromDocument(row.address),\n            tags = row.tags.orEmpty(),\n        )\n    }\n\n    /** A Location as the documents of the customers collection keep it. */\n    private fun customerAddressLocationToDocument(value: Location): Customer.Address.Location {\n        return Customer.Address.Location(\n            latitude = value.latitude,\n            longitude = value.longitude,\n        )\n    }\n\n    /** An Address as the documents of the customers collection keep it. */\n    private fun customerAddressToDocument(value: Address): Customer.Address {\n        return Customer.Address(\n            street = value.street,\n            zipCode = value.zipCode,\n            location = value.location?.let { customerAddressLocationToDocument(it) },\n        )\n    }\n\n    /** A document of the customers collection as a Location. */\n    private fun customerAddressLocationFromDocument(value: Customer.Address.Location): Location {\n        return Location(\n            latitude = value.latitude!!,\n            longitude = value.longitude!!,\n        )\n    }\n\n    /** A document of the customers collection as an Address. */\n    private fun customerAddressFromDocument(value: Customer.Address): Address {\n        return Address(\n            street = value.street!!,\n            zipCode = value.zipCode!!,\n            location = value.location?.let { customerAddressLocationFromDocument(it) },\n        )\n    }\n}\n",
+  "src/main/kotlin/app/conversions/OrderConversions.kt": "package app.conversions\n\nimport app.application_models.Discount\nimport app.application_models.LineStatus\nimport app.application_models.Order as OrderModel\nimport app.application_models.OrderLine\nimport app.application_models.Shipping\nimport app.dtos.OrderCreate\nimport app.dtos.OrderRead\nimport app.entities.Order\nimport java.time.ZoneOffset\n\n/** Conversions between the application models and the \"orders\" table: what the service takes and returns. */\nobject OrderConversions {\n    /** An Order as the orders table takes it. */\n    fun orderModelToOrderCreate(model: OrderModel): OrderCreate {\n        return OrderCreate(\n            code = model.code,\n            lines = model.lines.map { orderLinesToDocument(it) },\n            shipping = model.shipping?.let { orderShippingToDocument(it) },\n        )\n    }\n\n    /** A row of the orders table as an Order. */\n    fun orderReadToOrderModel(row: OrderRead): OrderModel {\n        return OrderModel(\n            id = row.id,\n            code = row.code,\n            lines = row.lines.map { orderLinesFromDocument(it) },\n            shipping = row.shipping?.let { orderShippingFromDocument(it) },\n        )\n    }\n\n    /** A Discount as the documents of the orders collection keep it. */\n    private fun orderLinesDiscountsToDocument(value: Discount): Order.Line.Discount {\n        return Order.Line.Discount(\n            reason = value.reason,\n            percent = value.percent,\n        )\n    }\n\n    /** An OrderLine as the documents of the orders collection keep it. */\n    private fun orderLinesToDocument(value: OrderLine): Order.Line {\n        return Order.Line(\n            id = value.id,\n            sku = value.sku,\n            quantity = value.quantity,\n            price = value.price,\n            status = value.status?.let { when (it) { LineStatus.pending -> \"pending\"; LineStatus.sent -> \"sent\" } },\n            discounts = value.discounts.map { orderLinesDiscountsToDocument(it) },\n        )\n    }\n\n    /** A Shipping as the documents of the orders collection keep it. */\n    private fun orderShippingToDocument(value: Shipping): Order.Shipping {\n        return Order.Shipping(\n            carrier = value.carrier,\n            sentOn = value.sentOn.atStartOfDay(ZoneOffset.UTC).toInstant(),\n        )\n    }\n\n    /** A document of the orders collection as a Discount. */\n    private fun orderLinesDiscountsFromDocument(value: Order.Line.Discount): Discount {\n        return Discount().apply {\n            reason = value.reason!!\n            percent = value.percent!!\n        }\n    }\n\n    /** A document of the orders collection as an OrderLine. */\n    private fun orderLinesFromDocument(value: Order.Line): OrderLine {\n        return OrderLine().apply {\n            id = value.id\n            sku = value.sku!!\n            quantity = value.quantity!!\n            price = value.price!!\n            status = value.status?.let { when (it) { \"pending\" -> LineStatus.pending; \"sent\" -> LineStatus.sent; else -> throw IllegalArgumentException(\"No LineStatus for this value\") } }\n            discounts = value.discounts.orEmpty().map { orderLinesDiscountsFromDocument(it) }\n        }\n    }\n\n    /** A document of the orders collection as a Shipping. */\n    private fun orderShippingFromDocument(value: Order.Shipping): Shipping {\n        return Shipping(\n            carrier = value.carrier!!,\n            sentOn = value.sentOn!!.atOffset(ZoneOffset.UTC).toLocalDate(),\n        )\n    }\n}\n",
+  "src/main/kotlin/app/conversions/ShipmentConversions.kt": "package app.conversions\n\nimport app.application_models.Parcel\nimport app.application_models.Shipment as ShipmentModel\nimport app.dtos.ShipmentCreate\nimport app.dtos.ShipmentRead\nimport app.entities.Shipment\n\n/** Conversions between the application models and the \"shipments\" table: what the service takes and returns. */\nobject ShipmentConversions {\n    /** A Shipment as the shipments table takes it. */\n    fun shipmentModelToShipmentCreate(model: ShipmentModel): ShipmentCreate {\n        return ShipmentCreate(\n            parcel = shipmentParcelToDocument(model.parcel),\n            // TODO: stops: DB2CRUD does not write this conversion (stops)\n        )\n    }\n\n    /** A row of the shipments table as a Shipment. */\n    fun shipmentReadToShipmentModel(row: ShipmentRead): ShipmentModel {\n        return ShipmentModel(\n            id = row.id,\n            parcel = shipmentParcelFromDocument(row.parcel),\n            stops = TODO(\"stops: DB2CRUD does not write this conversion (stops)\"),\n        )\n    }\n\n    /** A Parcel as the documents of the shipments collection keep it. */\n    private fun shipmentParcelToDocument(value: Parcel): Shipment.Parcel {\n        // Not stored: fragile\n        return Shipment.Parcel(\n            weight = value.weight,\n            // TODO: contents: no field of the model gives it (contents)\n            // TODO: size: DB2CRUD does not write this conversion (size)\n        )\n    }\n\n    /** A document of the shipments collection as a Parcel. */\n    private fun shipmentParcelFromDocument(value: Shipment.Parcel): Parcel {\n        return Parcel(\n            weight = value.weight!!,\n            size = TODO(\"size: DB2CRUD does not write this conversion (size)\"),\n            fragile = TODO(\"fragile: no field of the model gives it (fragile)\"),\n        )\n    }\n}\n",
+  "src/main/kotlin/app/dtos/CustomerCreate.kt": "package app.dtos\n\nimport app.entities.Customer\nimport java.time.Instant\n\n/** The values of a new Customer. Fields left null take the database's default; the service says which ones are required. */\ndata class CustomerCreate(\n    val email: String? = null,\n    val level: String? = null,\n    val since: Instant? = null,\n    val address: Customer.Address? = null,\n    val tags: List<String>? = null,\n)\n",
+  "src/main/kotlin/app/dtos/CustomerRead.kt": "package app.dtos\n\nimport app.entities.Customer\nimport java.time.Instant\n\n/** A Customer as services return it. */\ndata class CustomerRead(\n    val id: String,\n    val email: String,\n    val level: String?,\n    val since: Instant,\n    val address: Customer.Address,\n    val tags: List<String>?,\n)\n",
+  "src/main/kotlin/app/dtos/CustomerUpdate.kt": "package app.dtos\n\nimport app.common.Patch\nimport app.entities.Customer\nimport java.time.Instant\n\n/** The values of a Customer that change: fields left absent keep their value; Patch.of(null) empties one. */\ndata class CustomerUpdate(\n    val email: Patch<String?> = Patch.absent(),\n    val level: Patch<String?> = Patch.absent(),\n    val since: Patch<Instant?> = Patch.absent(),\n    val address: Patch<Customer.Address?> = Patch.absent(),\n    val tags: Patch<List<String>?> = Patch.absent(),\n)\n",
+  "src/main/kotlin/app/dtos/OrderCreate.kt": "package app.dtos\n\nimport app.entities.Order\n\n/** The values of a new Order. Fields left null take the database's default; the service says which ones are required. */\ndata class OrderCreate(\n    val code: String? = null,\n    val lines: List<Order.Line>? = null,\n    val shipping: Order.Shipping? = null,\n)\n",
+  "src/main/kotlin/app/dtos/OrderRead.kt": "package app.dtos\n\nimport app.entities.Order\n\n/** A Order as services return it. */\ndata class OrderRead(\n    val id: String,\n    val code: String,\n    val lines: List<Order.Line>,\n    val shipping: Order.Shipping?,\n)\n",
+  "src/main/kotlin/app/dtos/OrderUpdate.kt": "package app.dtos\n\nimport app.common.Patch\nimport app.entities.Order\n\n/** The values of a Order that change: fields left absent keep their value; Patch.of(null) empties one. */\ndata class OrderUpdate(\n    val code: Patch<String?> = Patch.absent(),\n    val lines: Patch<List<Order.Line>?> = Patch.absent(),\n    val shipping: Patch<Order.Shipping?> = Patch.absent(),\n)\n",
+  "src/main/kotlin/app/dtos/ShipmentCreate.kt": "package app.dtos\n\nimport app.entities.Shipment\n\n/** The values of a new Shipment. Fields left null take the database's default; the service says which ones are required. */\ndata class ShipmentCreate(\n    val parcel: Shipment.Parcel? = null,\n    val stops: List<Shipment.Stop>? = null,\n)\n",
+  "src/main/kotlin/app/dtos/ShipmentRead.kt": "package app.dtos\n\nimport app.entities.Shipment\n\n/** A Shipment as services return it. */\ndata class ShipmentRead(\n    val id: String,\n    val parcel: Shipment.Parcel,\n    val stops: List<Shipment.Stop>?,\n)\n",
+  "src/main/kotlin/app/dtos/ShipmentUpdate.kt": "package app.dtos\n\nimport app.common.Patch\nimport app.entities.Shipment\n\n/** The values of a Shipment that change: fields left absent keep their value; Patch.of(null) empties one. */\ndata class ShipmentUpdate(\n    val parcel: Patch<Shipment.Parcel?> = Patch.absent(),\n    val stops: Patch<List<Shipment.Stop>?> = Patch.absent(),\n)\n",
+  "src/main/kotlin/app/entities/Customer.kt": "package app.entities\n\nimport java.time.Instant\n\n/** A document of the \"customers\" collection; a property stays null until it is set or read. */\nclass Customer(\n    var id: String? = null,\n    var email: String? = null,\n    var level: String? = null,\n    var since: Instant? = null,\n    var address: Customer.Address? = null,\n    var tags: List<String>? = null,\n) {\n    /** A nested document: it is stored with the one that holds it. */\n    data class Address(\n        var street: String? = null,\n        var zipCode: String? = null,\n        var location: Customer.Address.Location? = null,\n    ) {\n        /** A nested document: it is stored with the one that holds it. */\n        data class Location(\n            var latitude: Double? = null,\n            var longitude: Double? = null,\n        )\n    }\n}\n",
+  "src/main/kotlin/app/entities/Order.kt": "package app.entities\n\nimport java.math.BigDecimal\nimport java.time.Instant\nimport org.bson.types.ObjectId\n\n/** A document of the \"orders\" collection; a property stays null until it is set or read. */\nclass Order(\n    var id: String? = null,\n    var code: String? = null,\n    var lines: List<Order.Line>? = null,\n    var shipping: Order.Shipping? = null,\n) {\n    /** Gives an identifier to the documents of its lists that have none: MongoDB numbers only whole documents. */\n    fun identifyItems() {\n        lines?.forEach { it.id = it.id ?: ObjectId().toHexString() }\n    }\n\n    /** A nested document: it is stored with the one that holds it. */\n    data class Line(\n        var id: String? = null,\n        var sku: String? = null,\n        var quantity: Int? = null,\n        var price: BigDecimal? = null,\n        var status: String? = null,\n        var discounts: List<Order.Line.Discount>? = null,\n    ) {\n        /** A nested document: it is stored with the one that holds it. */\n        data class Discount(\n            var reason: String? = null,\n            var percent: Double? = null,\n        )\n    }\n\n    /** A nested document: it is stored with the one that holds it. */\n    data class Shipping(\n        var carrier: String? = null,\n        var sentOn: Instant? = null,\n    )\n}\n",
+  "src/main/kotlin/app/entities/Shipment.kt": "package app.entities\n\n/** A document of the \"shipments\" collection; a property stays null until it is set or read. */\nclass Shipment(\n    var id: String? = null,\n    var parcel: Shipment.Parcel? = null,\n    var stops: List<Shipment.Stop>? = null,\n) {\n    /** A nested document: it is stored with the one that holds it. */\n    data class Parcel(\n        var weight: Double? = null,\n        var contents: String? = null,\n        var size: Shipment.Parcel.Size? = null,\n    ) {\n        /** A nested document: it is stored with the one that holds it. */\n        data class Size(\n            var height: Double? = null,\n        )\n    }\n\n    /** A nested document: it is stored with the one that holds it. */\n    data class Stop(\n        var city: String? = null,\n    )\n}\n",
+  "src/main/kotlin/app/errors/Errors.kt": "package app.errors\n\n/** Base of every error a service throws on purpose. They carry no HTTP codes: whoever calls the services translates them. */\nabstract class DomainException(message: String) : RuntimeException(message)\n\n/** No row has this key. */\nclass NotFoundException(val entity: String, val key: Any) :\n    DomainException(\"No $entity has the key ${if (key is List<*>) key.joinToString(\", \") else key}\")\n\n/** The change clashes with what is stored: a unique value, a newer version, rows that depend on it. */\nclass ConflictException(val entity: String, val reason: String, val fields: List<String> = emptyList()) :\n    DomainException(\"$entity: $reason\")\n\n/** What is wrong with one field. */\ndata class FieldError(val field: String, val message: String)\n\n/** The values break the rules of the table: missing, too long, out of range, pointing nowhere. */\nclass ValidationFailedException(val entity: String, val errors: List<FieldError>) :\n    DomainException(\"$entity: \" + errors.joinToString(\"; \") { \"${it.field}: ${it.message}\" })\n",
+  "src/main/kotlin/app/repositories/CustomerRepository.kt": "package app.repositories\n\nimport app.common.Page\nimport app.entities.Customer\n\n/** Where customers rows are kept. Services depend only on this interface. */\ninterface CustomerRepository {\n    /** The row with this primary key, or null. */\n    fun findById(id: String): Customer?\n\n    /** At most limit rows from offset, by primary key, and how many there are. */\n    fun list(offset: Int, limit: Int): Page<Customer>\n\n    /** The row with this email, or null. */\n    fun findByEmail(email: String): Customer?\n\n    /** Stores a new row; the values the database fills are read back. */\n    fun insert(entity: Customer): Customer\n\n    /** Stores the changes made to a row. */\n    fun update(entity: Customer): Customer\n\n    /** Removes a row. */\n    fun delete(entity: Customer): Unit\n\n    /** Adds an item to tags, and gives the row as it is then, if there is one. */\n    fun addTag(id: String, tag: String): Customer?\n\n    /** Removes an item from tags, and gives the row as it is then, if there is one. */\n    fun removeTag(id: String, tag: String): Customer?\n}\n",
+  "src/main/kotlin/app/repositories/MemoryCustomerRepository.kt": "package app.repositories\n\nimport app.common.Page\nimport app.entities.Customer\nimport org.bson.types.ObjectId\n\n/** Keeps customers rows in memory, for tests and for trying the services without a database. */\nclass MemoryCustomerRepository : CustomerRepository {\n    private val rows = linkedMapOf<List<Any?>, Customer>()\n\n    /** The key of a row, as a list of its key values. */\n    private fun keyOf(row: Customer): List<Any?> = listOf(row.id)\n\n    /** Orders two keys value by value. */\n    @Suppress(\"UNCHECKED_CAST\")\n    private fun compareKeys(a: List<Any?>, b: List<Any?>): Int {\n        for (index in a.indices) {\n            val order = compareValues(a[index] as Comparable<Any>?, b[index] as Comparable<Any>?)\n            if (order != 0) return order\n        }\n        return 0\n    }\n\n    private fun visible(): List<Customer> =\n        rows.values.filter { true }.sortedWith { a, b -> compareKeys(keyOf(a), keyOf(b)) }\n\n    override fun findById(id: String): Customer? {\n        return visible().firstOrNull { it.id == id }\n    }\n\n    override fun list(offset: Int, limit: Int): Page<Customer> {\n        val rows = visible()\n        return Page(rows.drop(offset).take(limit), rows.size.toLong(), offset, limit)\n    }\n\n    override fun findByEmail(email: String): Customer? {\n        return visible().firstOrNull { it.email == email }\n    }\n\n    override fun insert(entity: Customer): Customer {\n        entity.id = entity.id ?: ObjectId().toHexString()\n        rows[keyOf(entity)] = entity\n        return entity\n    }\n\n    override fun update(entity: Customer): Customer {\n        rows[keyOf(entity)] = entity\n        return entity\n    }\n\n    override fun delete(entity: Customer): Unit {\n        rows.remove(keyOf(entity))\n    }\n\n    override fun addTag(id: String, tag: String): Customer? {\n        val found = visible().firstOrNull { it.id == id } ?: return null\n        found.tags = found.tags.orEmpty() + listOf(tag)\n        return found\n    }\n\n    override fun removeTag(id: String, tag: String): Customer? {\n        val found = visible().firstOrNull { it.id == id } ?: return null\n        found.tags = found.tags.orEmpty().filter { it != tag }\n        return found\n    }\n}\n",
+  "src/main/kotlin/app/repositories/MemoryOrderRepository.kt": "package app.repositories\n\nimport app.common.Page\nimport app.entities.Order\nimport org.bson.types.ObjectId\n\n/** Keeps orders rows in memory, for tests and for trying the services without a database. */\nclass MemoryOrderRepository : OrderRepository {\n    private val rows = linkedMapOf<List<Any?>, Order>()\n\n    /** The key of a row, as a list of its key values. */\n    private fun keyOf(row: Order): List<Any?> = listOf(row.id)\n\n    /** Orders two keys value by value. */\n    @Suppress(\"UNCHECKED_CAST\")\n    private fun compareKeys(a: List<Any?>, b: List<Any?>): Int {\n        for (index in a.indices) {\n            val order = compareValues(a[index] as Comparable<Any>?, b[index] as Comparable<Any>?)\n            if (order != 0) return order\n        }\n        return 0\n    }\n\n    private fun visible(): List<Order> =\n        rows.values.filter { true }.sortedWith { a, b -> compareKeys(keyOf(a), keyOf(b)) }\n\n    override fun findById(id: String): Order? {\n        return visible().firstOrNull { it.id == id }\n    }\n\n    override fun list(offset: Int, limit: Int): Page<Order> {\n        val rows = visible()\n        return Page(rows.drop(offset).take(limit), rows.size.toLong(), offset, limit)\n    }\n\n    override fun findByCode(code: String): Order? {\n        return visible().firstOrNull { it.code == code }\n    }\n\n    override fun insert(entity: Order): Order {\n        entity.id = entity.id ?: ObjectId().toHexString()\n        entity.identifyItems()\n        rows[keyOf(entity)] = entity\n        return entity\n    }\n\n    override fun update(entity: Order): Order {\n        entity.identifyItems()\n        rows[keyOf(entity)] = entity\n        return entity\n    }\n\n    override fun delete(entity: Order): Unit {\n        rows.remove(keyOf(entity))\n    }\n\n    override fun addLine(id: String, line: Order.Line): Order? {\n        val found = visible().firstOrNull { it.id == id } ?: return null\n        line.id = line.id ?: ObjectId().toHexString()\n        found.lines = found.lines.orEmpty() + listOf(line)\n        return found\n    }\n\n    override fun removeLine(id: String, lineId: String): Order? {\n        val found = visible().firstOrNull { it.id == id } ?: return null\n        found.lines = found.lines.orEmpty().filter { it.id != lineId }\n        return found\n    }\n}\n",
+  "src/main/kotlin/app/repositories/MemoryShipmentRepository.kt": "package app.repositories\n\nimport app.common.Page\nimport app.entities.Shipment\nimport org.bson.types.ObjectId\n\n/** Keeps shipments rows in memory, for tests and for trying the services without a database. */\nclass MemoryShipmentRepository : ShipmentRepository {\n    private val rows = linkedMapOf<List<Any?>, Shipment>()\n\n    /** The key of a row, as a list of its key values. */\n    private fun keyOf(row: Shipment): List<Any?> = listOf(row.id)\n\n    /** Orders two keys value by value. */\n    @Suppress(\"UNCHECKED_CAST\")\n    private fun compareKeys(a: List<Any?>, b: List<Any?>): Int {\n        for (index in a.indices) {\n            val order = compareValues(a[index] as Comparable<Any>?, b[index] as Comparable<Any>?)\n            if (order != 0) return order\n        }\n        return 0\n    }\n\n    private fun visible(): List<Shipment> =\n        rows.values.filter { true }.sortedWith { a, b -> compareKeys(keyOf(a), keyOf(b)) }\n\n    override fun findById(id: String): Shipment? {\n        return visible().firstOrNull { it.id == id }\n    }\n\n    override fun list(offset: Int, limit: Int): Page<Shipment> {\n        val rows = visible()\n        return Page(rows.drop(offset).take(limit), rows.size.toLong(), offset, limit)\n    }\n\n    override fun insert(entity: Shipment): Shipment {\n        entity.id = entity.id ?: ObjectId().toHexString()\n        rows[keyOf(entity)] = entity\n        return entity\n    }\n\n    override fun update(entity: Shipment): Shipment {\n        rows[keyOf(entity)] = entity\n        return entity\n    }\n\n    override fun delete(entity: Shipment): Unit {\n        rows.remove(keyOf(entity))\n    }\n\n    override fun addStop(id: String, stop: Shipment.Stop): Shipment? {\n        val found = visible().firstOrNull { it.id == id } ?: return null\n        found.stops = found.stops.orEmpty() + listOf(stop)\n        return found\n    }\n\n    override fun removeStop(id: String, position: Int, size: Int): Shipment? {\n        val found = visible().firstOrNull { it.id == id } ?: return null\n        if (found.stops.orEmpty().size != size) return null\n        found.stops = found.stops.orEmpty().filterIndexed { index, _ -> index != position }\n        return found\n    }\n}\n",
+  "src/main/kotlin/app/repositories/MongoCustomerRepository.kt": "package app.repositories\n\nimport app.Db\nimport app.Documents\nimport app.common.Page\nimport app.entities.Customer\nimport java.util.Collections\nimport java.util.Date\nimport java.util.WeakHashMap\nimport org.bson.Document\nimport org.bson.types.ObjectId\n\n/** Keeps customers rows in the database, through the MongoDB driver. Every write is stored at once. */\nclass MongoCustomerRepository(private val db: Db) : CustomerRepository {\n    private val collection = \"customers\"\n\n    /** The fields a change may write */\n    private val fields = listOf(\"email\", \"level\", \"since\", \"address\", \"tags\")\n\n    override fun findById(id: String): Customer? {\n        if (!ObjectId.isValid(id)) return null\n        return db.find(collection, Document(\"_id\", ObjectId(id)), limit = 1).firstOrNull()?.let { loaded(it) }\n    }\n\n    override fun list(offset: Int, limit: Int): Page<Customer> {\n        val items = if (limit > 0) db.find(collection, Document(), sort = Document(\"_id\", 1), skip = offset, limit = limit).map { loaded(it) } else emptyList()\n        return Page(items, db.count(collection, Document()), offset, limit)\n    }\n\n    override fun findByEmail(email: String): Customer? {\n        return db.find(collection, Document(\"email\", email), limit = 1).firstOrNull()?.let { loaded(it) }\n    }\n\n    override fun insert(entity: Customer): Customer {\n        entity.id = entity.id ?: ObjectId().toHexString()\n        db.insert(\"Customer\", collection, toDocument(entity))\n        READ[entity] = Documents.copy(toDocument(entity)) as Document\n        return entity\n    }\n\n    override fun update(entity: Customer): Customer {\n        val now = toDocument(entity)\n        val changes = Documents.changes(READ[entity], now, fields)\n        if (changes.isNotEmpty()) {\n            db.update(\"Customer\", collection, Document(\"_id\", now[\"_id\"]), changes)\n        }\n        READ[entity] = Documents.copy(now) as Document\n        return entity\n    }\n\n    override fun delete(entity: Customer): Unit {\n        db.delete(\"Customer\", collection, Document(\"_id\", ObjectId(entity.id!!)))\n    }\n\n    override fun addTag(id: String, tag: String): Customer? {\n        if (!ObjectId.isValid(id)) return null\n        val change = Document(\"\\$push\", Document(\"tags\", tag))\n        return db.change(\"Customer\", collection, Document(\"_id\", ObjectId(id)), change)?.let { loaded(it) }\n    }\n\n    override fun removeTag(id: String, tag: String): Customer? {\n        if (!ObjectId.isValid(id)) return null\n        val change = Document(\"\\$pull\", Document(\"tags\", tag))\n        return db.change(\"Customer\", collection, Document(\"_id\", ObjectId(id)), change)?.let { loaded(it) }\n    }\n\n    /** The entity of a document, with the document kept to tell its changes. */\n    private fun loaded(document: Document): Customer {\n        val entity = fromDocument(document)\n        READ[entity] = Documents.copy(toDocument(entity)) as Document\n        return entity\n    }\n\n    /** The document of a Customer: what is null is left out. */\n    private fun toDocument(value: Customer): Document {\n        val document = Document()\n        value.id?.let { document[\"_id\"] = ObjectId(it) }\n        value.email?.let { document[\"email\"] = it }\n        value.level?.let { document[\"level\"] = it }\n        value.since?.let { document[\"since\"] = Date.from(it) }\n        value.address?.let { document[\"address\"] = addressToDocument(it) }\n        value.tags?.let { document[\"tags\"] = it }\n        return document\n    }\n\n    private fun fromDocument(document: Document): Customer =\n        Customer(\n            id = document[\"_id\"]?.toString(),\n            email = document[\"email\"] as String?,\n            level = document[\"level\"] as String?,\n            since = (document[\"since\"] as Date?)?.toInstant(),\n            address = (document[\"address\"] as Document?)?.let { addressFromDocument(it) },\n            tags = (document[\"tags\"] as List<*>?)?.mapNotNull { it as String? },\n        )\n\n    /** The document of a Customer.Address: what is null is left out. */\n    private fun addressToDocument(value: Customer.Address): Document {\n        val document = Document()\n        value.street?.let { document[\"street\"] = it }\n        value.zipCode?.let { document[\"zip code\"] = it }\n        value.location?.let { document[\"location\"] = addressLocationToDocument(it) }\n        return document\n    }\n\n    private fun addressFromDocument(document: Document): Customer.Address =\n        Customer.Address(\n            street = document[\"street\"] as String?,\n            zipCode = document[\"zip code\"] as String?,\n            location = (document[\"location\"] as Document?)?.let { addressLocationFromDocument(it) },\n        )\n\n    /** The document of a Customer.Address.Location: what is null is left out. */\n    private fun addressLocationToDocument(value: Customer.Address.Location): Document {\n        val document = Document()\n        value.latitude?.let { document[\"latitude\"] = it }\n        value.longitude?.let { document[\"longitude\"] = it }\n        return document\n    }\n\n    private fun addressLocationFromDocument(document: Document): Customer.Address.Location =\n        Customer.Address.Location(\n            latitude = (document[\"latitude\"] as Number?)?.toDouble(),\n            longitude = (document[\"longitude\"] as Number?)?.toDouble(),\n        )\n\n    private companion object {\n        /** The document each entity was read from: a change writes only the fields that differ */\n        val READ: MutableMap<Customer, Document> = Collections.synchronizedMap(WeakHashMap())\n    }\n}\n",
+  "src/main/kotlin/app/repositories/MongoOrderRepository.kt": "package app.repositories\n\nimport app.Db\nimport app.Documents\nimport app.common.Page\nimport app.entities.Order\nimport java.util.Collections\nimport java.util.Date\nimport java.util.WeakHashMap\nimport org.bson.Document\nimport org.bson.types.Decimal128\nimport org.bson.types.ObjectId\n\n/** Keeps orders rows in the database, through the MongoDB driver. Every write is stored at once. */\nclass MongoOrderRepository(private val db: Db) : OrderRepository {\n    private val collection = \"orders\"\n\n    /** The fields a change may write */\n    private val fields = listOf(\"code\", \"lines\", \"shipping\")\n\n    override fun findById(id: String): Order? {\n        if (!ObjectId.isValid(id)) return null\n        return db.find(collection, Document(\"_id\", ObjectId(id)), limit = 1).firstOrNull()?.let { loaded(it) }\n    }\n\n    override fun list(offset: Int, limit: Int): Page<Order> {\n        val items = if (limit > 0) db.find(collection, Document(), sort = Document(\"_id\", 1), skip = offset, limit = limit).map { loaded(it) } else emptyList()\n        return Page(items, db.count(collection, Document()), offset, limit)\n    }\n\n    override fun findByCode(code: String): Order? {\n        return db.find(collection, Document(\"code\", code), limit = 1).firstOrNull()?.let { loaded(it) }\n    }\n\n    override fun insert(entity: Order): Order {\n        entity.id = entity.id ?: ObjectId().toHexString()\n        entity.identifyItems()\n        db.insert(\"Order\", collection, toDocument(entity))\n        READ[entity] = Documents.copy(toDocument(entity)) as Document\n        return entity\n    }\n\n    override fun update(entity: Order): Order {\n        entity.identifyItems()\n        val now = toDocument(entity)\n        val changes = Documents.changes(READ[entity], now, fields)\n        if (changes.isNotEmpty()) {\n            db.update(\"Order\", collection, Document(\"_id\", now[\"_id\"]), changes)\n        }\n        READ[entity] = Documents.copy(now) as Document\n        return entity\n    }\n\n    override fun delete(entity: Order): Unit {\n        db.delete(\"Order\", collection, Document(\"_id\", ObjectId(entity.id!!)))\n    }\n\n    override fun addLine(id: String, line: Order.Line): Order? {\n        if (!ObjectId.isValid(id)) return null\n        line.id = line.id ?: ObjectId().toHexString()\n        val change = Document(\"\\$push\", Document(\"lines\", lineToDocument(line)))\n        return db.change(\"Order\", collection, Document(\"_id\", ObjectId(id)), change)?.let { loaded(it) }\n    }\n\n    override fun removeLine(id: String, lineId: String): Order? {\n        if (!ObjectId.isValid(id)) return null\n        if (!ObjectId.isValid(lineId)) return null\n        val change = Document(\"\\$pull\", Document(\"lines\", Document(\"_id\", ObjectId(lineId))))\n        return db.change(\"Order\", collection, Document(\"_id\", ObjectId(id)), change)?.let { loaded(it) }\n    }\n\n    /** The entity of a document, with the document kept to tell its changes. */\n    private fun loaded(document: Document): Order {\n        val entity = fromDocument(document)\n        READ[entity] = Documents.copy(toDocument(entity)) as Document\n        return entity\n    }\n\n    /** The document of a Order: what is null is left out. */\n    private fun toDocument(value: Order): Document {\n        val document = Document()\n        value.id?.let { document[\"_id\"] = ObjectId(it) }\n        value.code?.let { document[\"code\"] = it }\n        value.lines?.let { held -> document[\"lines\"] = held.map { lineToDocument(it) } }\n        value.shipping?.let { document[\"shipping\"] = shippingToDocument(it) }\n        return document\n    }\n\n    private fun fromDocument(document: Document): Order =\n        Order(\n            id = document[\"_id\"]?.toString(),\n            code = document[\"code\"] as String?,\n            lines = (document[\"lines\"] as List<*>?)?.mapNotNull { (it as Document?)?.let { lineFromDocument(it) } },\n            shipping = (document[\"shipping\"] as Document?)?.let { shippingFromDocument(it) },\n        )\n\n    /** The document of a Order.Line: what is null is left out. */\n    private fun lineToDocument(value: Order.Line): Document {\n        val document = Document()\n        value.id?.let { document[\"_id\"] = ObjectId(it) }\n        value.sku?.let { document[\"sku\"] = it }\n        value.quantity?.let { document[\"quantity\"] = it }\n        value.price?.let { document[\"price\"] = Decimal128(it) }\n        value.status?.let { document[\"status\"] = it }\n        value.discounts?.let { held -> document[\"discounts\"] = held.map { lineDiscountToDocument(it) } }\n        return document\n    }\n\n    private fun lineFromDocument(document: Document): Order.Line =\n        Order.Line(\n            id = document[\"_id\"]?.toString(),\n            sku = document[\"sku\"] as String?,\n            quantity = (document[\"quantity\"] as Number?)?.toInt(),\n            price = Documents.decimal(document[\"price\"]),\n            status = document[\"status\"] as String?,\n            discounts = (document[\"discounts\"] as List<*>?)?.mapNotNull { (it as Document?)?.let { lineDiscountFromDocument(it) } },\n        )\n\n    /** The document of a Order.Line.Discount: what is null is left out. */\n    private fun lineDiscountToDocument(value: Order.Line.Discount): Document {\n        val document = Document()\n        value.reason?.let { document[\"reason\"] = it }\n        value.percent?.let { document[\"percent\"] = it }\n        return document\n    }\n\n    private fun lineDiscountFromDocument(document: Document): Order.Line.Discount =\n        Order.Line.Discount(\n            reason = document[\"reason\"] as String?,\n            percent = (document[\"percent\"] as Number?)?.toDouble(),\n        )\n\n    /** The document of a Order.Shipping: what is null is left out. */\n    private fun shippingToDocument(value: Order.Shipping): Document {\n        val document = Document()\n        value.carrier?.let { document[\"carrier\"] = it }\n        value.sentOn?.let { document[\"sentOn\"] = Date.from(it) }\n        return document\n    }\n\n    private fun shippingFromDocument(document: Document): Order.Shipping =\n        Order.Shipping(\n            carrier = document[\"carrier\"] as String?,\n            sentOn = (document[\"sentOn\"] as Date?)?.toInstant(),\n        )\n\n    private companion object {\n        /** The document each entity was read from: a change writes only the fields that differ */\n        val READ: MutableMap<Order, Document> = Collections.synchronizedMap(WeakHashMap())\n    }\n}\n",
+  "src/main/kotlin/app/repositories/MongoShipmentRepository.kt": "package app.repositories\n\nimport app.Db\nimport app.Documents\nimport app.common.Page\nimport app.entities.Shipment\nimport java.util.Collections\nimport java.util.WeakHashMap\nimport org.bson.Document\nimport org.bson.types.ObjectId\n\n/** Keeps shipments rows in the database, through the MongoDB driver. Every write is stored at once. */\nclass MongoShipmentRepository(private val db: Db) : ShipmentRepository {\n    private val collection = \"shipments\"\n\n    /** The fields a change may write */\n    private val fields = listOf(\"parcel\", \"stops\")\n\n    override fun findById(id: String): Shipment? {\n        if (!ObjectId.isValid(id)) return null\n        return db.find(collection, Document(\"_id\", ObjectId(id)), limit = 1).firstOrNull()?.let { loaded(it) }\n    }\n\n    override fun list(offset: Int, limit: Int): Page<Shipment> {\n        val items = if (limit > 0) db.find(collection, Document(), sort = Document(\"_id\", 1), skip = offset, limit = limit).map { loaded(it) } else emptyList()\n        return Page(items, db.count(collection, Document()), offset, limit)\n    }\n\n    override fun insert(entity: Shipment): Shipment {\n        entity.id = entity.id ?: ObjectId().toHexString()\n        db.insert(\"Shipment\", collection, toDocument(entity))\n        READ[entity] = Documents.copy(toDocument(entity)) as Document\n        return entity\n    }\n\n    override fun update(entity: Shipment): Shipment {\n        val now = toDocument(entity)\n        val changes = Documents.changes(READ[entity], now, fields)\n        if (changes.isNotEmpty()) {\n            db.update(\"Shipment\", collection, Document(\"_id\", now[\"_id\"]), changes)\n        }\n        READ[entity] = Documents.copy(now) as Document\n        return entity\n    }\n\n    override fun delete(entity: Shipment): Unit {\n        db.delete(\"Shipment\", collection, Document(\"_id\", ObjectId(entity.id!!)))\n    }\n\n    override fun addStop(id: String, stop: Shipment.Stop): Shipment? {\n        if (!ObjectId.isValid(id)) return null\n        val change = Document(\"\\$push\", Document(\"stops\", stopToDocument(stop)))\n        return db.change(\"Shipment\", collection, Document(\"_id\", ObjectId(id)), change)?.let { loaded(it) }\n    }\n\n    override fun removeStop(id: String, position: Int, size: Int): Shipment? {\n        if (!ObjectId.isValid(id)) return null\n        val head = Document(\"\\$slice\", listOf(\"\\$stops\", position))\n        val tail = Document(\"\\$slice\", listOf(\"\\$stops\", position + 1, maxOf(size, 1)))\n        val change = listOf(Document(\"\\$set\", Document(\"stops\", Document(\"\\$concatArrays\", listOf(head, tail)))))\n        return db.rewrite(\"Shipment\", collection, Document(\"_id\", ObjectId(id)).append(\"stops\", Document(\"\\$size\", size)), change)?.let { loaded(it) }\n    }\n\n    /** The entity of a document, with the document kept to tell its changes. */\n    private fun loaded(document: Document): Shipment {\n        val entity = fromDocument(document)\n        READ[entity] = Documents.copy(toDocument(entity)) as Document\n        return entity\n    }\n\n    /** The document of a Shipment: what is null is left out. */\n    private fun toDocument(value: Shipment): Document {\n        val document = Document()\n        value.id?.let { document[\"_id\"] = ObjectId(it) }\n        value.parcel?.let { document[\"parcel\"] = parcelToDocument(it) }\n        value.stops?.let { held -> document[\"stops\"] = held.map { stopToDocument(it) } }\n        return document\n    }\n\n    private fun fromDocument(document: Document): Shipment =\n        Shipment(\n            id = document[\"_id\"]?.toString(),\n            parcel = (document[\"parcel\"] as Document?)?.let { parcelFromDocument(it) },\n            stops = (document[\"stops\"] as List<*>?)?.mapNotNull { (it as Document?)?.let { stopFromDocument(it) } },\n        )\n\n    /** The document of a Shipment.Parcel: what is null is left out. */\n    private fun parcelToDocument(value: Shipment.Parcel): Document {\n        val document = Document()\n        value.weight?.let { document[\"weight\"] = it }\n        value.contents?.let { document[\"contents\"] = it }\n        value.size?.let { document[\"size\"] = parcelSizeToDocument(it) }\n        return document\n    }\n\n    private fun parcelFromDocument(document: Document): Shipment.Parcel =\n        Shipment.Parcel(\n            weight = (document[\"weight\"] as Number?)?.toDouble(),\n            contents = document[\"contents\"] as String?,\n            size = (document[\"size\"] as Document?)?.let { parcelSizeFromDocument(it) },\n        )\n\n    /** The document of a Shipment.Parcel.Size: what is null is left out. */\n    private fun parcelSizeToDocument(value: Shipment.Parcel.Size): Document {\n        val document = Document()\n        value.height?.let { document[\"height\"] = it }\n        return document\n    }\n\n    private fun parcelSizeFromDocument(document: Document): Shipment.Parcel.Size =\n        Shipment.Parcel.Size(\n            height = (document[\"height\"] as Number?)?.toDouble(),\n        )\n\n    /** The document of a Shipment.Stop: what is null is left out. */\n    private fun stopToDocument(value: Shipment.Stop): Document {\n        val document = Document()\n        value.city?.let { document[\"city\"] = it }\n        return document\n    }\n\n    private fun stopFromDocument(document: Document): Shipment.Stop =\n        Shipment.Stop(\n            city = document[\"city\"] as String?,\n        )\n\n    private companion object {\n        /** The document each entity was read from: a change writes only the fields that differ */\n        val READ: MutableMap<Shipment, Document> = Collections.synchronizedMap(WeakHashMap())\n    }\n}\n",
+  "src/main/kotlin/app/repositories/OrderRepository.kt": "package app.repositories\n\nimport app.common.Page\nimport app.entities.Order\n\n/** Where orders rows are kept. Services depend only on this interface. */\ninterface OrderRepository {\n    /** The row with this primary key, or null. */\n    fun findById(id: String): Order?\n\n    /** At most limit rows from offset, by primary key, and how many there are. */\n    fun list(offset: Int, limit: Int): Page<Order>\n\n    /** The row with this code, or null. */\n    fun findByCode(code: String): Order?\n\n    /** Stores a new row; the values the database fills are read back. */\n    fun insert(entity: Order): Order\n\n    /** Stores the changes made to a row. */\n    fun update(entity: Order): Order\n\n    /** Removes a row. */\n    fun delete(entity: Order): Unit\n\n    /** Adds an item to lines, and gives the row as it is then, if there is one. */\n    fun addLine(id: String, line: Order.Line): Order?\n\n    /** Removes an item from lines, and gives the row as it is then, if there is one. */\n    fun removeLine(id: String, lineId: String): Order?\n}\n",
+  "src/main/kotlin/app/repositories/ShipmentRepository.kt": "package app.repositories\n\nimport app.common.Page\nimport app.entities.Shipment\n\n/** Where shipments rows are kept. Services depend only on this interface. */\ninterface ShipmentRepository {\n    /** The row with this primary key, or null. */\n    fun findById(id: String): Shipment?\n\n    /** At most limit rows from offset, by primary key, and how many there are. */\n    fun list(offset: Int, limit: Int): Page<Shipment>\n\n    /** Stores a new row; the values the database fills are read back. */\n    fun insert(entity: Shipment): Shipment\n\n    /** Stores the changes made to a row. */\n    fun update(entity: Shipment): Shipment\n\n    /** Removes a row. */\n    fun delete(entity: Shipment): Unit\n\n    /** Adds an item to stops, and gives the row as it is then, if there is one. */\n    fun addStop(id: String, stop: Shipment.Stop): Shipment?\n\n    /** Removes an item from stops that has this size, and gives the row as it is then, if there is one. */\n    fun removeStop(id: String, position: Int, size: Int): Shipment?\n}\n",
+  "src/main/kotlin/app/services/CustomerService.kt": "package app.services\n\nimport app.UnitOfWork\nimport app.common.Page\nimport app.dtos.CustomerCreate\nimport app.dtos.CustomerRead\nimport app.dtos.CustomerUpdate\nimport app.entities.Customer\nimport app.errors.ConflictException\nimport app.errors.FieldError\nimport app.errors.NotFoundException\nimport app.errors.ValidationFailedException\nimport java.time.Instant\n\n/** Operations on customers. Repositories commit every write. */\n@Suppress(\"UNCHECKED_CAST\")\nclass CustomerService(private val unitOfWork: UnitOfWork) {\n    /** Stores a new Customer after checking it. */\n    fun createCustomer(data: CustomerCreate): CustomerRead {\n        val values = mapOf(\n            \"email\" to data.email,\n            \"level\" to data.level,\n            \"since\" to data.since,\n            \"address\" to data.address,\n            \"tags\" to data.tags,\n        ).filterValues { it != null }\n        return unitOfWork.transaction { uow ->\n            checkValues(uow, values, null)\n            val entity = Customer()\n            applyValues(entity, values)\n            read(uow.customers.insert(entity))\n        }\n    }\n\n    /** The Customer with this key; NotFoundException when there is none. */\n    fun getCustomer(id: String): CustomerRead = read(find(unitOfWork, id))\n\n    /** A page of customers, by primary key. */\n    fun listCustomers(offset: Int, limit: Int): Page<CustomerRead> = unitOfWork.customers.list(offset, limit).map { read(it) }\n\n    /** Changes the given values of a Customer. */\n    fun updateCustomer(id: String, changes: CustomerUpdate): CustomerRead {\n        val values = given(changes)\n        return unitOfWork.transaction { uow ->\n            val current = find(uow, id)\n            checkValues(uow, values, current)\n            applyValues(current, values)\n            read(uow.customers.update(current))\n        }\n    }\n\n    /** Deletes a Customer. */\n    fun deleteCustomer(id: String) {\n        unitOfWork.transaction { uow ->\n            val current = find(uow, id)\n            uow.customers.delete(current)\n        }\n    }\n\n    /** The Customer with this email, or null. */\n    fun findCustomerByEmail(email: String): CustomerRead? = unitOfWork.customers.findByEmail(email)?.let { read(it) }\n\n    /** Adds an item to tags. */\n    fun addTag(id: String, tag: String): CustomerRead {\n        return unitOfWork.transaction { uow ->\n            find(uow, id)\n            read(uow.customers.addTag(id, tag) ?: throw NotFoundException(\"Customer\", id))\n        }\n    }\n\n    /** Removes an item from tags, by its value. */\n    fun removeTag(id: String, tag: String): CustomerRead {\n        return unitOfWork.transaction { uow ->\n            val current = find(uow, id)\n            if (tag !in current.tags.orEmpty()) throw NotFoundException(\"Tag\", tag)\n            read(uow.customers.removeTag(id, tag) ?: throw NotFoundException(\"Customer\", id))\n        }\n    }\n\n    /** Checks the values against the rules of the \"customers\" table, and the rows they point to; throws ValidationFailedException with every problem. */\n    private fun validate(uow: UnitOfWork, values: Map<String, Any?>, current: Customer?) {\n        val creating = current == null\n        val errors = mutableListOf<FieldError>()\n        run {\n            val value = values[\"email\"]\n            if (value == null) {\n                if (creating || \"email\" in values) errors += FieldError(\"email\", \"is required\")\n            }\n        }\n        run {\n            val value = values[\"level\"]\n            if (value != null) {\n                if (value.toString() !in listOf(\"basic\", \"gold\")) errors += FieldError(\"level\", \"must be one of: basic, gold\")\n            }\n        }\n        run {\n            val value = values[\"since\"]\n            if (value == null) {\n                if (creating || \"since\" in values) errors += FieldError(\"since\", \"is required\")\n            }\n        }\n        run {\n            val value = values[\"address\"]\n            if (value == null) {\n                if (creating || \"address\" in values) errors += FieldError(\"address\", \"is required\")\n            } else {\n                val document = value as Customer.Address\n                checkAddress(document, \"address\", errors)\n            }\n        }\n        if (errors.isNotEmpty()) throw ValidationFailedException(\"Customer\", errors)\n    }\n\n    /** Values that must be unique are not taken by another row. */\n    private fun checkUnique(uow: UnitOfWork, values: Map<String, Any?>, current: Customer?) {\n        run {\n            val email = if (\"email\" in values) values[\"email\"] as String? else current?.email\n            if (email != null) {\n                val other = uow.customers.findByEmail(email)\n                if (other != null && (current == null || other.id != current.id))\n                    throw ConflictException(\"Customer\", \"email is already taken\", listOf(\"email\"))\n            }\n        }\n    }\n\n    /** Every check before a write: the values, the rows they point to, the unique values. */\n    private fun checkValues(uow: UnitOfWork, values: Map<String, Any?>, current: Customer?) {\n        validate(uow, values, current)\n        checkUnique(uow, values, current)\n    }\n\n    /** Sets the given values on the entity. */\n    private fun applyValues(entity: Customer, values: Map<String, Any?>) {\n        if (\"email\" in values) entity.email = values[\"email\"] as String?\n        if (\"level\" in values) entity.level = values[\"level\"] as String?\n        if (\"since\" in values) entity.since = values[\"since\"] as Instant?\n        if (\"address\" in values) entity.address = values[\"address\"] as Customer.Address?\n        if (\"tags\" in values) entity.tags = values[\"tags\"] as List<String>?\n    }\n\n    /** The Customer with this key; NotFoundException when there is none. */\n    private fun find(uow: UnitOfWork, id: String): Customer =\n        uow.customers.findById(id) ?: throw NotFoundException(\"Customer\", id)\n\n    /** The Customer as services return it. */\n    private fun read(entity: Customer): CustomerRead =\n        CustomerRead(\n            id = entity.id!!,\n            email = entity.email!!,\n            level = entity.level,\n            since = entity.since!!,\n            address = entity.address!!,\n            tags = entity.tags,\n        )\n\n    /** The values an update gives, by field. */\n    private fun given(changes: CustomerUpdate): Map<String, Any?> {\n        val values = mutableMapOf<String, Any?>()\n        if (changes.email.isPresent) values[\"email\"] = changes.email.value\n        if (changes.level.isPresent) values[\"level\"] = changes.level.value\n        if (changes.since.isPresent) values[\"since\"] = changes.since.value\n        if (changes.address.isPresent) values[\"address\"] = changes.address.value\n        if (changes.tags.isPresent) values[\"tags\"] = changes.tags.value\n        return values\n    }\n\n    /** What a Customer.Address does not follow of its rules, each with the path of its field. */\n    private fun checkAddress(value: Customer.Address, path: String, errors: MutableList<FieldError>) {\n        if (value.street == null) errors += FieldError(path + \".street\", \"is required\")\n        if (value.zipCode == null) errors += FieldError(path + \".zip code\", \"is required\")\n        value.location.let { held ->\n            if (held != null) {\n                checkAddressLocation(held, path + \".location\", errors)\n            }\n        }\n    }\n\n    /** What a Customer.Address.Location does not follow of its rules, each with the path of its field. */\n    private fun checkAddressLocation(value: Customer.Address.Location, path: String, errors: MutableList<FieldError>) {\n        if (value.latitude == null) errors += FieldError(path + \".latitude\", \"is required\")\n        if (value.longitude == null) errors += FieldError(path + \".longitude\", \"is required\")\n    }\n}\n",
+  "src/main/kotlin/app/services/OrderService.kt": "package app.services\n\nimport app.UnitOfWork\nimport app.common.Page\nimport app.dtos.OrderCreate\nimport app.dtos.OrderRead\nimport app.dtos.OrderUpdate\nimport app.entities.Order\nimport app.errors.ConflictException\nimport app.errors.FieldError\nimport app.errors.NotFoundException\nimport app.errors.ValidationFailedException\n\n/** Operations on orders. Repositories commit every write. */\n@Suppress(\"UNCHECKED_CAST\")\nclass OrderService(private val unitOfWork: UnitOfWork) {\n    /** Stores a new Order after checking it. */\n    fun createOrder(data: OrderCreate): OrderRead {\n        val values = mapOf(\n            \"code\" to data.code,\n            \"lines\" to data.lines,\n            \"shipping\" to data.shipping,\n        ).filterValues { it != null }\n        return unitOfWork.transaction { uow ->\n            checkValues(uow, values, null)\n            val entity = Order()\n            applyValues(entity, values)\n            read(uow.orders.insert(entity))\n        }\n    }\n\n    /** The Order with this key; NotFoundException when there is none. */\n    fun getOrder(id: String): OrderRead = read(find(unitOfWork, id))\n\n    /** A page of orders, by primary key. */\n    fun listOrders(offset: Int, limit: Int): Page<OrderRead> = unitOfWork.orders.list(offset, limit).map { read(it) }\n\n    /** Changes the given values of a Order. */\n    fun updateOrder(id: String, changes: OrderUpdate): OrderRead {\n        val values = given(changes)\n        return unitOfWork.transaction { uow ->\n            val current = find(uow, id)\n            checkValues(uow, values, current)\n            applyValues(current, values)\n            read(uow.orders.update(current))\n        }\n    }\n\n    /** Deletes a Order. */\n    fun deleteOrder(id: String) {\n        unitOfWork.transaction { uow ->\n            val current = find(uow, id)\n            uow.orders.delete(current)\n        }\n    }\n\n    /** The Order with this code, or null. */\n    fun findOrderByCode(code: String): OrderRead? = unitOfWork.orders.findByCode(code)?.let { read(it) }\n\n    /** Adds an item to lines. */\n    fun addLine(id: String, line: Order.Line): OrderRead {\n        val errors = mutableListOf<FieldError>()\n        checkLine(line, \"lines\", errors)\n        if (errors.isNotEmpty()) throw ValidationFailedException(\"Order\", errors)\n        return unitOfWork.transaction { uow ->\n            find(uow, id)\n            read(uow.orders.addLine(id, line) ?: throw NotFoundException(\"Order\", id))\n        }\n    }\n\n    /** Removes an item from lines, by its identifier. */\n    fun removeLine(id: String, lineId: String): OrderRead {\n        return unitOfWork.transaction { uow ->\n            val current = find(uow, id)\n            if (current.lines.orEmpty().none { it.id == lineId }) throw NotFoundException(\"Line\", lineId)\n            read(uow.orders.removeLine(id, lineId) ?: throw NotFoundException(\"Order\", id))\n        }\n    }\n\n    /** Checks the values against the rules of the \"orders\" table, and the rows they point to; throws ValidationFailedException with every problem. */\n    private fun validate(uow: UnitOfWork, values: Map<String, Any?>, current: Order?) {\n        val creating = current == null\n        val errors = mutableListOf<FieldError>()\n        run {\n            val value = values[\"code\"]\n            if (value == null) {\n                if (creating || \"code\" in values) errors += FieldError(\"code\", \"is required\")\n            }\n        }\n        run {\n            val value = values[\"lines\"]\n            if (value == null) {\n                if (creating || \"lines\" in values) errors += FieldError(\"lines\", \"is required\")\n            } else {\n                val document = value as List<Order.Line>\n                document.forEachIndexed { i0, item0 ->\n                    checkLine(item0, \"lines\" + \".\" + i0, errors)\n                }\n            }\n        }\n        run {\n            val value = values[\"shipping\"]\n            if (value != null) {\n                val document = value as Order.Shipping\n                checkShipping(document, \"shipping\", errors)\n            }\n        }\n        if (errors.isNotEmpty()) throw ValidationFailedException(\"Order\", errors)\n    }\n\n    /** Values that must be unique are not taken by another row. */\n    private fun checkUnique(uow: UnitOfWork, values: Map<String, Any?>, current: Order?) {\n        run {\n            val code = if (\"code\" in values) values[\"code\"] as String? else current?.code\n            if (code != null) {\n                val other = uow.orders.findByCode(code)\n                if (other != null && (current == null || other.id != current.id))\n                    throw ConflictException(\"Order\", \"code is already taken\", listOf(\"code\"))\n            }\n        }\n    }\n\n    /** Every check before a write: the values, the rows they point to, the unique values. */\n    private fun checkValues(uow: UnitOfWork, values: Map<String, Any?>, current: Order?) {\n        validate(uow, values, current)\n        checkUnique(uow, values, current)\n    }\n\n    /** Sets the given values on the entity. */\n    private fun applyValues(entity: Order, values: Map<String, Any?>) {\n        if (\"code\" in values) entity.code = values[\"code\"] as String?\n        if (\"lines\" in values) entity.lines = values[\"lines\"] as List<Order.Line>?\n        if (\"shipping\" in values) entity.shipping = values[\"shipping\"] as Order.Shipping?\n    }\n\n    /** The Order with this key; NotFoundException when there is none. */\n    private fun find(uow: UnitOfWork, id: String): Order =\n        uow.orders.findById(id) ?: throw NotFoundException(\"Order\", id)\n\n    /** The Order as services return it. */\n    private fun read(entity: Order): OrderRead =\n        OrderRead(\n            id = entity.id!!,\n            code = entity.code!!,\n            lines = entity.lines!!,\n            shipping = entity.shipping,\n        )\n\n    /** The values an update gives, by field. */\n    private fun given(changes: OrderUpdate): Map<String, Any?> {\n        val values = mutableMapOf<String, Any?>()\n        if (changes.code.isPresent) values[\"code\"] = changes.code.value\n        if (changes.lines.isPresent) values[\"lines\"] = changes.lines.value\n        if (changes.shipping.isPresent) values[\"shipping\"] = changes.shipping.value\n        return values\n    }\n\n    /** What a Order.Line does not follow of its rules, each with the path of its field. */\n    private fun checkLine(value: Order.Line, path: String, errors: MutableList<FieldError>) {\n        if (value.sku == null) errors += FieldError(path + \".sku\", \"is required\")\n        if (value.quantity == null) errors += FieldError(path + \".quantity\", \"is required\")\n        if (value.price == null) errors += FieldError(path + \".price\", \"is required\")\n        value.status.let { held ->\n            if (held != null) {\n                if (held !in listOf(\"pending\", \"sent\")) errors += FieldError(path + \".status\", \"must be one of: pending, sent\")\n            }\n        }\n        value.discounts.let { held ->\n            if (held != null) {\n                held.forEachIndexed { i0, item0 ->\n                    checkLineDiscount(item0, path + \".discounts\" + \".\" + i0, errors)\n                }\n            }\n        }\n    }\n\n    /** What a Order.Line.Discount does not follow of its rules, each with the path of its field. */\n    private fun checkLineDiscount(value: Order.Line.Discount, path: String, errors: MutableList<FieldError>) {\n        if (value.reason == null) errors += FieldError(path + \".reason\", \"is required\")\n        if (value.percent == null) errors += FieldError(path + \".percent\", \"is required\")\n    }\n\n    /** What a Order.Shipping does not follow of its rules, each with the path of its field. */\n    private fun checkShipping(value: Order.Shipping, path: String, errors: MutableList<FieldError>) {\n        if (value.carrier == null) errors += FieldError(path + \".carrier\", \"is required\")\n        if (value.sentOn == null) errors += FieldError(path + \".sentOn\", \"is required\")\n    }\n}\n",
+  "src/main/kotlin/app/services/ShipmentService.kt": "package app.services\n\nimport app.UnitOfWork\nimport app.common.Page\nimport app.dtos.ShipmentCreate\nimport app.dtos.ShipmentRead\nimport app.dtos.ShipmentUpdate\nimport app.entities.Shipment\nimport app.errors.ConflictException\nimport app.errors.FieldError\nimport app.errors.NotFoundException\nimport app.errors.ValidationFailedException\n\n/** Operations on shipments. Repositories commit every write. */\n@Suppress(\"UNCHECKED_CAST\")\nclass ShipmentService(private val unitOfWork: UnitOfWork) {\n    /** Stores a new Shipment after checking it. */\n    fun createShipment(data: ShipmentCreate): ShipmentRead {\n        val values = mapOf(\n            \"parcel\" to data.parcel,\n            \"stops\" to data.stops,\n        ).filterValues { it != null }\n        return unitOfWork.transaction { uow ->\n            checkValues(uow, values, null)\n            val entity = Shipment()\n            applyValues(entity, values)\n            read(uow.shipments.insert(entity))\n        }\n    }\n\n    /** The Shipment with this key; NotFoundException when there is none. */\n    fun getShipment(id: String): ShipmentRead = read(find(unitOfWork, id))\n\n    /** A page of shipments, by primary key. */\n    fun listShipments(offset: Int, limit: Int): Page<ShipmentRead> = unitOfWork.shipments.list(offset, limit).map { read(it) }\n\n    /** Changes the given values of a Shipment. */\n    fun updateShipment(id: String, changes: ShipmentUpdate): ShipmentRead {\n        val values = given(changes)\n        return unitOfWork.transaction { uow ->\n            val current = find(uow, id)\n            checkValues(uow, values, current)\n            applyValues(current, values)\n            read(uow.shipments.update(current))\n        }\n    }\n\n    /** Deletes a Shipment. */\n    fun deleteShipment(id: String) {\n        unitOfWork.transaction { uow ->\n            val current = find(uow, id)\n            uow.shipments.delete(current)\n        }\n    }\n\n    /** Adds an item to stops. */\n    fun addStop(id: String, stop: Shipment.Stop): ShipmentRead {\n        val errors = mutableListOf<FieldError>()\n        checkStop(stop, \"stops\", errors)\n        if (errors.isNotEmpty()) throw ValidationFailedException(\"Shipment\", errors)\n        return unitOfWork.transaction { uow ->\n            find(uow, id)\n            read(uow.shipments.addStop(id, stop) ?: throw NotFoundException(\"Shipment\", id))\n        }\n    }\n\n    /** Removes an item from stops, by its position. */\n    fun removeStop(id: String, position: Int): ShipmentRead {\n        return unitOfWork.transaction { uow ->\n            val current = find(uow, id)\n            if (position !in current.stops.orEmpty().indices) throw NotFoundException(\"Stop\", position)\n            read(uow.shipments.removeStop(id, position, current.stops.orEmpty().size) ?: throw ConflictException(\"Shipment\", \"was changed by someone else since it was read\", listOf(\"stops\")))\n        }\n    }\n\n    /** Checks the values against the rules of the \"shipments\" table, and the rows they point to; throws ValidationFailedException with every problem. */\n    private fun validate(uow: UnitOfWork, values: Map<String, Any?>, current: Shipment?) {\n        val creating = current == null\n        val errors = mutableListOf<FieldError>()\n        run {\n            val value = values[\"parcel\"]\n            if (value == null) {\n                if (creating || \"parcel\" in values) errors += FieldError(\"parcel\", \"is required\")\n            } else {\n                val document = value as Shipment.Parcel\n                checkParcel(document, \"parcel\", errors)\n            }\n        }\n        run {\n            val value = values[\"stops\"]\n            if (value != null) {\n                val document = value as List<Shipment.Stop>\n                document.forEachIndexed { i0, item0 ->\n                    checkStop(item0, \"stops\" + \".\" + i0, errors)\n                }\n            }\n        }\n        if (errors.isNotEmpty()) throw ValidationFailedException(\"Shipment\", errors)\n    }\n\n    /** Every check before a write: the values, the rows they point to, the unique values. */\n    private fun checkValues(uow: UnitOfWork, values: Map<String, Any?>, current: Shipment?) {\n        validate(uow, values, current)\n    }\n\n    /** Sets the given values on the entity. */\n    private fun applyValues(entity: Shipment, values: Map<String, Any?>) {\n        if (\"parcel\" in values) entity.parcel = values[\"parcel\"] as Shipment.Parcel?\n        if (\"stops\" in values) entity.stops = values[\"stops\"] as List<Shipment.Stop>?\n    }\n\n    /** The Shipment with this key; NotFoundException when there is none. */\n    private fun find(uow: UnitOfWork, id: String): Shipment =\n        uow.shipments.findById(id) ?: throw NotFoundException(\"Shipment\", id)\n\n    /** The Shipment as services return it. */\n    private fun read(entity: Shipment): ShipmentRead =\n        ShipmentRead(\n            id = entity.id!!,\n            parcel = entity.parcel!!,\n            stops = entity.stops,\n        )\n\n    /** The values an update gives, by field. */\n    private fun given(changes: ShipmentUpdate): Map<String, Any?> {\n        val values = mutableMapOf<String, Any?>()\n        if (changes.parcel.isPresent) values[\"parcel\"] = changes.parcel.value\n        if (changes.stops.isPresent) values[\"stops\"] = changes.stops.value\n        return values\n    }\n\n    /** What a Shipment.Parcel does not follow of its rules, each with the path of its field. */\n    private fun checkParcel(value: Shipment.Parcel, path: String, errors: MutableList<FieldError>) {\n        if (value.weight == null) errors += FieldError(path + \".weight\", \"is required\")\n        if (value.contents == null) errors += FieldError(path + \".contents\", \"is required\")\n        value.size.let { held ->\n            if (held != null) {\n                checkParcelSize(held, path + \".size\", errors)\n            }\n        }\n    }\n\n    /** What a Shipment.Parcel.Size does not follow of its rules, each with the path of its field. */\n    private fun checkParcelSize(value: Shipment.Parcel.Size, path: String, errors: MutableList<FieldError>) {\n        if (value.height == null) errors += FieldError(path + \".height\", \"is required\")\n    }\n\n    /** What a Shipment.Stop does not follow of its rules, each with the path of its field. */\n    @Suppress(\"UNUSED_PARAMETER\")\n    private fun checkStop(value: Shipment.Stop, path: String, errors: MutableList<FieldError>) {\n    }\n}\n",
+  "src/test/kotlin/app/ConversionTest.kt": "package app\n\nimport app.conversions.CustomerConversions\nimport app.conversions.OrderConversions\nimport app.dtos.CustomerRead\nimport app.dtos.OrderRead\nimport app.entities.Customer\nimport app.entities.Order\nimport kotlin.test.BeforeTest\nimport kotlin.test.Test\nimport kotlin.test.assertEquals\nimport kotlin.test.assertNotNull\n\n/** Tests of the conversions between the application models and the tables. */\nclass ConversionTest {\n    private lateinit var uow: MemoryUnitOfWork\n\n    @BeforeTest\n    fun open() {\n        uow = MemoryUnitOfWork()\n    }\n\n    @Test\n    fun readsCustomerAndWritesItBack() {\n        val row = Factories.addCustomer(uow, 1)\n        val model = CustomerConversions.customerReadToCustomerModel(customerReadOf(row))\n        val values = CustomerConversions.customerModelToCustomerCreate(model)\n        assertEquals(row.email, values.email)\n        assertEquals(row.level, values.level)\n        assertEquals(row.since, values.since)\n        assertEquals(row.address, values.address)\n        assertEquals(row.tags, values.tags)\n    }\n\n    @Test\n    fun readsOrderAndWritesItBack() {\n        val row = Factories.addOrder(uow, 1)\n        val model = OrderConversions.orderReadToOrderModel(orderReadOf(row))\n        val values = OrderConversions.orderModelToOrderCreate(model)\n        assertEquals(row.code, values.code)\n        assertEquals(row.lines, values.lines)\n    }\n\n    /** The row as the service returns it. */\n    private fun customerReadOf(entity: Customer): CustomerRead =\n        CustomerRead(\n            id = entity.id!!,\n            email = entity.email!!,\n            level = entity.level,\n            since = entity.since!!,\n            address = entity.address!!,\n            tags = entity.tags,\n        )\n\n    /** The row as the service returns it. */\n    private fun orderReadOf(entity: Order): OrderRead =\n        OrderRead(\n            id = entity.id!!,\n            code = entity.code!!,\n            lines = entity.lines!!,\n            shipping = entity.shipping,\n        )\n}\n",
+  "src/test/kotlin/app/CustomerRepositoryTest.kt": "package app\n\nimport kotlin.test.AfterTest\nimport kotlin.test.BeforeTest\nimport kotlin.test.Test\nimport kotlin.test.assertEquals\nimport kotlin.test.assertNotNull\nimport kotlin.test.assertNull\nimport kotlin.test.assertTrue\n\n/** The repository of the \"customers\" table, against the test database. */\nclass CustomerRepositoryTest {\n    /** The repositories over the test database, opened empty for every test */\n    private lateinit var uow: MongoUnitOfWork\n\n    @BeforeTest\n    fun open() {\n        uow = TestDatabase.open()\n    }\n\n    @AfterTest\n    fun close() {\n        uow.db.close()\n    }\n\n    @Test\n    fun isStoredAndReadBack() {\n        val stored = Factories.addCustomer(uow, 1)\n        val found = uow.customers.findById(stored.id!!)\n        assertNotNull(found)\n        assertEquals(stored.id, found.id)\n        assertNotNull(uow.customers.findByEmail(stored.email!!))\n    }\n\n    @Test\n    fun listsRowsByKey() {\n        Factories.addCustomer(uow, 1)\n        Factories.addCustomer(uow, 2)\n        val page = uow.customers.list(0, 1)\n        assertEquals(2L, page.total)\n        assertEquals(1, page.items.size)\n    }\n\n    @Test\n    fun isDeleted() {\n        val stored = Factories.addCustomer(uow, 1)\n        uow.customers.delete(stored)\n        assertNull(uow.customers.findById(stored.id!!))\n    }\n\n    @Test\n    fun addsAndRemovesOneItemOfTags() {\n        val n = 7\n        val stored = Factories.addCustomer(uow, 1)\n        val before = stored.tags.orEmpty().size\n        val item: String = \"tags-$n\"\n        val added = uow.customers.addTag(stored.id!!, item)!!\n        assertEquals(before + 1, added.tags.orEmpty().size)\n        val removed = uow.customers.removeTag(stored.id!!, item)!!\n        assertEquals(before, removed.tags.orEmpty().size)\n    }\n}\n",
+  "src/test/kotlin/app/CustomerServiceTest.kt": "package app\n\nimport app.common.Patch\nimport app.dtos.CustomerCreate\nimport app.dtos.CustomerUpdate\nimport app.entities.Customer\nimport app.errors.ConflictException\nimport app.errors.NotFoundException\nimport app.errors.ValidationFailedException\nimport app.services.CustomerService\nimport kotlin.test.AfterTest\nimport kotlin.test.BeforeTest\nimport kotlin.test.Test\nimport kotlin.test.assertEquals\nimport kotlin.test.assertFailsWith\nimport kotlin.test.assertNotNull\nimport kotlin.test.assertNull\nimport kotlin.test.assertTrue\n\n/** The service of the \"customers\" table, on the in-memory repositories. */\nclass CustomerServiceTest {\n    private lateinit var uow: MemoryUnitOfWork\n\n    @BeforeTest\n    fun open() {\n        uow = MemoryUnitOfWork()\n    }\n\n    @Test\n    fun createsAValidRow() {\n        val service = CustomerService(uow)\n        val row = Factories.newCustomer(1)\n        val created = service.createCustomer(createOf(row))\n        val found = service.getCustomer(created.id)\n        assertEquals(created.id, found.id)\n    }\n\n    @Test\n    fun refusesAMissingValue() {\n        val service = CustomerService(uow)\n        val row = Factories.newCustomer(1)\n        row.email = null\n        val error = assertFailsWith<ValidationFailedException> { service.createCustomer(createOf(row)) }\n        assertEquals(listOf(\"email\"), error.errors.map { it.field })\n    }\n\n    @Test\n    fun refusesARepeatedUniqueValue() {\n        val service = CustomerService(uow)\n        val row = Factories.newCustomer(1)\n        val first = service.createCustomer(createOf(row))\n        val again = Factories.newCustomer(2)\n        again.email = first.email\n        assertFailsWith<ConflictException> { service.createCustomer(createOf(again)) }\n    }\n\n    @Test\n    fun keepsItsOwnUniqueValue() {\n        val service = CustomerService(uow)\n        val row = Factories.newCustomer(1)\n        val created = service.createCustomer(createOf(row))\n        val updated = service.updateCustomer(created.id, CustomerUpdate(email = Patch.of(created.email)))\n        assertEquals(created.email, updated.email)\n    }\n\n    @Test\n    fun saysWhenARowIsMissing() {\n        val service = CustomerService(uow)\n        assertFailsWith<NotFoundException> { service.getCustomer(\"ffffffffffffffffffffffff\") }\n    }\n\n    @Test\n    fun deletesARow() {\n        val service = CustomerService(uow)\n        val row = Factories.newCustomer(1)\n        val created = service.createCustomer(createOf(row))\n        service.deleteCustomer(created.id)\n        assertFailsWith<NotFoundException> { service.getCustomer(created.id) }\n    }\n\n    @Test\n    fun addsAndRemovesOneItemOfTags() {\n        val n = 7\n        val service = CustomerService(uow)\n        val row = Factories.newCustomer(1)\n        val created = service.createCustomer(createOf(row))\n        val before = created.tags.orEmpty().size\n        val item: String = \"tags-$n\"\n        val added = service.addTag(created.id, item)\n        assertEquals(before + 1, added.tags.orEmpty().size)\n        val removed = service.removeTag(created.id, item)\n        assertEquals(before, removed.tags.orEmpty().size)\n    }\n\n    /** The create DTO of a row the factories made. */\n    private fun createOf(row: Customer) = CustomerCreate(\n        email = row.email,\n        level = row.level,\n        since = row.since,\n        address = row.address,\n        tags = row.tags,\n    )\n}\n",
+  "src/test/kotlin/app/DatabaseTest.kt": "package app\n\nimport kotlin.test.Test\nimport kotlin.test.assertEquals\n\n/** The tests run on the database they were asked to. */\nclass DatabaseTest {\n    @Test\n    fun isTheOneTestDatabaseUrlNames() {\n        assertEquals(AppDatabase.name(TestDatabase.url), TestDatabase.open().db.database.name)\n    }\n}\n",
+  "src/test/kotlin/app/Factories.kt": "package app\n\nimport app.entities.Customer\nimport app.entities.Order\nimport app.entities.Shipment\nimport java.math.BigDecimal\nimport java.time.Instant\nimport java.time.LocalDateTime\nimport java.time.ZoneOffset\n\n/** Rows for the tests: valid values for every column, and the rows they point to. */\nobject Factories {\n    /** A valid Customer that is not stored yet; n makes its unique values differ. */\n    fun newCustomer(n: Int): Customer =\n        Customer(\n            email = \"email-$n\",\n            level = \"basic\",\n            since = LocalDateTime.of(2026, 1, n % 28 + 1, 12, 0).toInstant(ZoneOffset.UTC),\n            address = newCustomerAddress(n),\n            tags = emptyList(),\n        )\n\n    /** A stored Customer. */\n    fun addCustomer(uow: UnitOfWork, n: Int): Customer {\n        val entity = newCustomer(n)\n        return uow.customers.insert(entity)\n    }\n\n    /** A valid Customer.Address; n makes its values differ. */\n    fun newCustomerAddress(n: Int): Customer.Address =\n        Customer.Address(\n            street = \"street-$n\",\n            zipCode = \"zipcode-$n\",\n            location = newCustomerAddressLocation(n),\n        )\n\n    /** A valid Customer.Address.Location; n makes its values differ. */\n    fun newCustomerAddressLocation(n: Int): Customer.Address.Location =\n        Customer.Address.Location(\n            latitude = n + 0.5,\n            longitude = n + 0.5,\n        )\n\n    /** A valid Order that is not stored yet; n makes its unique values differ. */\n    fun newOrder(n: Int): Order =\n        Order(\n            code = \"code-$n\",\n            lines = listOf(newOrderLine(n)),\n            shipping = newOrderShipping(n),\n        )\n\n    /** A stored Order. */\n    fun addOrder(uow: UnitOfWork, n: Int): Order {\n        val entity = newOrder(n)\n        return uow.orders.insert(entity)\n    }\n\n    /** A valid Order.Line; n makes its values differ. */\n    fun newOrderLine(n: Int): Order.Line =\n        Order.Line(\n            sku = \"sku-$n\",\n            quantity = n,\n            price = BigDecimal(\"${n % 10000}.50\"),\n            status = \"pending\",\n            discounts = listOf(newOrderLineDiscount(n)),\n        )\n\n    /** A valid Order.Line.Discount; n makes its values differ. */\n    fun newOrderLineDiscount(n: Int): Order.Line.Discount =\n        Order.Line.Discount(\n            reason = \"reason-$n\",\n            percent = n + 0.5,\n        )\n\n    /** A valid Order.Shipping; n makes its values differ. */\n    fun newOrderShipping(n: Int): Order.Shipping =\n        Order.Shipping(\n            carrier = \"carrier-$n\",\n            sentOn = LocalDateTime.of(2026, 1, n % 28 + 1, 12, 0).toInstant(ZoneOffset.UTC),\n        )\n\n    /** A valid Shipment that is not stored yet; n makes its unique values differ. */\n    fun newShipment(n: Int): Shipment =\n        Shipment(\n            parcel = newShipmentParcel(n),\n            stops = listOf(newShipmentStop(n)),\n        )\n\n    /** A stored Shipment. */\n    fun addShipment(uow: UnitOfWork, n: Int): Shipment {\n        val entity = newShipment(n)\n        return uow.shipments.insert(entity)\n    }\n\n    /** A valid Shipment.Parcel; n makes its values differ. */\n    fun newShipmentParcel(n: Int): Shipment.Parcel =\n        Shipment.Parcel(\n            weight = n + 0.5,\n            contents = \"contents-$n\",\n            size = newShipmentParcelSize(n),\n        )\n\n    /** A valid Shipment.Parcel.Size; n makes its values differ. */\n    fun newShipmentParcelSize(n: Int): Shipment.Parcel.Size =\n        Shipment.Parcel.Size(\n            height = n + 0.5,\n        )\n\n    /** A valid Shipment.Stop; n makes its values differ. */\n    fun newShipmentStop(n: Int): Shipment.Stop =\n        Shipment.Stop(\n            city = \"city-$n\",\n        )\n}\n",
+  "src/test/kotlin/app/OrderRepositoryTest.kt": "package app\n\nimport app.entities.Order\nimport kotlin.test.AfterTest\nimport kotlin.test.BeforeTest\nimport kotlin.test.Test\nimport kotlin.test.assertEquals\nimport kotlin.test.assertNotNull\nimport kotlin.test.assertNull\nimport kotlin.test.assertTrue\n\n/** The repository of the \"orders\" table, against the test database. */\nclass OrderRepositoryTest {\n    /** The repositories over the test database, opened empty for every test */\n    private lateinit var uow: MongoUnitOfWork\n\n    @BeforeTest\n    fun open() {\n        uow = TestDatabase.open()\n    }\n\n    @AfterTest\n    fun close() {\n        uow.db.close()\n    }\n\n    @Test\n    fun isStoredAndReadBack() {\n        val stored = Factories.addOrder(uow, 1)\n        val found = uow.orders.findById(stored.id!!)\n        assertNotNull(found)\n        assertEquals(stored.id, found.id)\n        assertNotNull(uow.orders.findByCode(stored.code!!))\n    }\n\n    @Test\n    fun listsRowsByKey() {\n        Factories.addOrder(uow, 1)\n        Factories.addOrder(uow, 2)\n        val page = uow.orders.list(0, 1)\n        assertEquals(2L, page.total)\n        assertEquals(1, page.items.size)\n    }\n\n    @Test\n    fun isDeleted() {\n        val stored = Factories.addOrder(uow, 1)\n        uow.orders.delete(stored)\n        assertNull(uow.orders.findById(stored.id!!))\n    }\n\n    @Test\n    fun addsAndRemovesOneItemOfLines() {\n        val n = 7\n        val stored = Factories.addOrder(uow, 1)\n        val before = stored.lines.orEmpty().size\n        val item: Order.Line = Factories.newOrderLine(n)\n        val added = uow.orders.addLine(stored.id!!, item)!!\n        assertEquals(before + 1, added.lines.orEmpty().size)\n        val removed = uow.orders.removeLine(stored.id!!, added.lines.orEmpty()[before].id!!)!!\n        assertEquals(before, removed.lines.orEmpty().size)\n    }\n}\n",
+  "src/test/kotlin/app/OrderServiceTest.kt": "package app\n\nimport app.common.Patch\nimport app.dtos.OrderCreate\nimport app.dtos.OrderUpdate\nimport app.entities.Order\nimport app.errors.ConflictException\nimport app.errors.NotFoundException\nimport app.errors.ValidationFailedException\nimport app.services.OrderService\nimport kotlin.test.AfterTest\nimport kotlin.test.BeforeTest\nimport kotlin.test.Test\nimport kotlin.test.assertEquals\nimport kotlin.test.assertFailsWith\nimport kotlin.test.assertNotNull\nimport kotlin.test.assertNull\nimport kotlin.test.assertTrue\n\n/** The service of the \"orders\" table, on the in-memory repositories. */\nclass OrderServiceTest {\n    private lateinit var uow: MemoryUnitOfWork\n\n    @BeforeTest\n    fun open() {\n        uow = MemoryUnitOfWork()\n    }\n\n    @Test\n    fun createsAValidRow() {\n        val service = OrderService(uow)\n        val row = Factories.newOrder(1)\n        val created = service.createOrder(createOf(row))\n        val found = service.getOrder(created.id)\n        assertEquals(created.id, found.id)\n    }\n\n    @Test\n    fun refusesAMissingValue() {\n        val service = OrderService(uow)\n        val row = Factories.newOrder(1)\n        row.code = null\n        val error = assertFailsWith<ValidationFailedException> { service.createOrder(createOf(row)) }\n        assertEquals(listOf(\"code\"), error.errors.map { it.field })\n    }\n\n    @Test\n    fun refusesARepeatedUniqueValue() {\n        val service = OrderService(uow)\n        val row = Factories.newOrder(1)\n        val first = service.createOrder(createOf(row))\n        val again = Factories.newOrder(2)\n        again.code = first.code\n        assertFailsWith<ConflictException> { service.createOrder(createOf(again)) }\n    }\n\n    @Test\n    fun keepsItsOwnUniqueValue() {\n        val service = OrderService(uow)\n        val row = Factories.newOrder(1)\n        val created = service.createOrder(createOf(row))\n        val updated = service.updateOrder(created.id, OrderUpdate(code = Patch.of(created.code)))\n        assertEquals(created.code, updated.code)\n    }\n\n    @Test\n    fun saysWhenARowIsMissing() {\n        val service = OrderService(uow)\n        assertFailsWith<NotFoundException> { service.getOrder(\"ffffffffffffffffffffffff\") }\n    }\n\n    @Test\n    fun deletesARow() {\n        val service = OrderService(uow)\n        val row = Factories.newOrder(1)\n        val created = service.createOrder(createOf(row))\n        service.deleteOrder(created.id)\n        assertFailsWith<NotFoundException> { service.getOrder(created.id) }\n    }\n\n    @Test\n    fun addsAndRemovesOneItemOfLines() {\n        val n = 7\n        val service = OrderService(uow)\n        val row = Factories.newOrder(1)\n        val created = service.createOrder(createOf(row))\n        val before = created.lines.size\n        val item: Order.Line = Factories.newOrderLine(n)\n        val added = service.addLine(created.id, item)\n        assertEquals(before + 1, added.lines.size)\n        val removed = service.removeLine(created.id, added.lines[before].id!!)\n        assertEquals(before, removed.lines.size)\n        assertFailsWith<NotFoundException> { service.removeLine(created.id, \"ffffffffffffffffffffffff\") }\n    }\n\n    /** The create DTO of a row the factories made. */\n    private fun createOf(row: Order) = OrderCreate(\n        code = row.code,\n        lines = row.lines,\n        shipping = row.shipping,\n    )\n}\n",
+  "src/test/kotlin/app/ShipmentRepositoryTest.kt": "package app\n\nimport app.entities.Shipment\nimport kotlin.test.AfterTest\nimport kotlin.test.BeforeTest\nimport kotlin.test.Test\nimport kotlin.test.assertEquals\nimport kotlin.test.assertNotNull\nimport kotlin.test.assertNull\nimport kotlin.test.assertTrue\n\n/** The repository of the \"shipments\" table, against the test database. */\nclass ShipmentRepositoryTest {\n    /** The repositories over the test database, opened empty for every test */\n    private lateinit var uow: MongoUnitOfWork\n\n    @BeforeTest\n    fun open() {\n        uow = TestDatabase.open()\n    }\n\n    @AfterTest\n    fun close() {\n        uow.db.close()\n    }\n\n    @Test\n    fun isStoredAndReadBack() {\n        val stored = Factories.addShipment(uow, 1)\n        val found = uow.shipments.findById(stored.id!!)\n        assertNotNull(found)\n        assertEquals(stored.id, found.id)\n    }\n\n    @Test\n    fun listsRowsByKey() {\n        Factories.addShipment(uow, 1)\n        Factories.addShipment(uow, 2)\n        val page = uow.shipments.list(0, 1)\n        assertEquals(2L, page.total)\n        assertEquals(1, page.items.size)\n    }\n\n    @Test\n    fun isDeleted() {\n        val stored = Factories.addShipment(uow, 1)\n        uow.shipments.delete(stored)\n        assertNull(uow.shipments.findById(stored.id!!))\n    }\n\n    @Test\n    fun addsAndRemovesOneItemOfStops() {\n        val n = 7\n        val stored = Factories.addShipment(uow, 1)\n        val before = stored.stops.orEmpty().size\n        val item: Shipment.Stop = Factories.newShipmentStop(n)\n        val added = uow.shipments.addStop(stored.id!!, item)!!\n        assertEquals(before + 1, added.stops.orEmpty().size)\n        val removed = uow.shipments.removeStop(stored.id!!, before, added.stops.orEmpty().size)!!\n        assertEquals(before, removed.stops.orEmpty().size)\n        assertNull(uow.shipments.removeStop(stored.id!!, 0, before + 5))\n    }\n}\n",
+  "src/test/kotlin/app/ShipmentServiceTest.kt": "package app\n\nimport app.dtos.ShipmentCreate\nimport app.entities.Shipment\nimport app.errors.NotFoundException\nimport app.errors.ValidationFailedException\nimport app.services.ShipmentService\nimport kotlin.test.AfterTest\nimport kotlin.test.BeforeTest\nimport kotlin.test.Test\nimport kotlin.test.assertEquals\nimport kotlin.test.assertFailsWith\nimport kotlin.test.assertNotNull\nimport kotlin.test.assertNull\nimport kotlin.test.assertTrue\n\n/** The service of the \"shipments\" table, on the in-memory repositories. */\nclass ShipmentServiceTest {\n    private lateinit var uow: MemoryUnitOfWork\n\n    @BeforeTest\n    fun open() {\n        uow = MemoryUnitOfWork()\n    }\n\n    @Test\n    fun createsAValidRow() {\n        val service = ShipmentService(uow)\n        val row = Factories.newShipment(1)\n        val created = service.createShipment(createOf(row))\n        val found = service.getShipment(created.id)\n        assertEquals(created.id, found.id)\n    }\n\n    @Test\n    fun refusesAMissingValue() {\n        val service = ShipmentService(uow)\n        val row = Factories.newShipment(1)\n        row.parcel = null\n        val error = assertFailsWith<ValidationFailedException> { service.createShipment(createOf(row)) }\n        assertEquals(listOf(\"parcel\"), error.errors.map { it.field })\n    }\n\n    @Test\n    fun saysWhenARowIsMissing() {\n        val service = ShipmentService(uow)\n        assertFailsWith<NotFoundException> { service.getShipment(\"ffffffffffffffffffffffff\") }\n    }\n\n    @Test\n    fun deletesARow() {\n        val service = ShipmentService(uow)\n        val row = Factories.newShipment(1)\n        val created = service.createShipment(createOf(row))\n        service.deleteShipment(created.id)\n        assertFailsWith<NotFoundException> { service.getShipment(created.id) }\n    }\n\n    @Test\n    fun addsAndRemovesOneItemOfStops() {\n        val n = 7\n        val service = ShipmentService(uow)\n        val row = Factories.newShipment(1)\n        val created = service.createShipment(createOf(row))\n        val before = created.stops.orEmpty().size\n        val item: Shipment.Stop = Factories.newShipmentStop(n)\n        val added = service.addStop(created.id, item)\n        assertEquals(before + 1, added.stops.orEmpty().size)\n        val removed = service.removeStop(created.id, before)\n        assertEquals(before, removed.stops.orEmpty().size)\n        assertFailsWith<NotFoundException> { service.removeStop(created.id, 99) }\n    }\n\n    /** The create DTO of a row the factories made. */\n    private fun createOf(row: Shipment) = ShipmentCreate(\n        parcel = row.parcel,\n        stops = row.stops,\n    )\n}\n",
+  "src/test/kotlin/app/TestDatabase.kt": "package app\n\nimport com.mongodb.client.model.IndexOptions\nimport org.bson.Document\n\n/** The test database: the MongoDB database TEST_DATABASE_URL names, with every collection created empty before every test. */\nobject TestDatabase {\n    val url: String by lazy {\n        checkNotNull(System.getenv(\"TEST_DATABASE_URL\")) {\n            \"The database tests need a disposable MongoDB database (a replica set, for its transactions): set TEST_DATABASE_URL (it is emptied)\"\n        }\n    }\n\n    val client by lazy { AppDatabase.client(url) }\n\n    /** The repositories over the test database, with its collections and their indexes created again. */\n    fun open(): MongoUnitOfWork {\n        val db = Db(client, AppDatabase.name(url))\n        db.database.drop()\n        db.database.createCollection(\"customers\")\n        db.database.createCollection(\"orders\")\n        db.database.createCollection(\"shipments\")\n        db.collection(\"customers\").createIndex(Document(\"email\", 1), IndexOptions().unique(true))\n        db.collection(\"orders\").createIndex(Document(\"code\", 1), IndexOptions().unique(true))\n        return MongoUnitOfWork(db)\n    }\n}\n"
+ }
+}

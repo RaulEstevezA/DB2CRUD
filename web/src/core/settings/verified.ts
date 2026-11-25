@@ -838,6 +838,30 @@ export const VERIFIED: readonly VerifiedStack[] = [
     ],
     date: '2026-11-25',
   },
+  {
+    language: 'kotlin',
+    orm: 'mongokotlin',
+    database: 'mongodb',
+    execution: 'sync',
+    scenarios: [
+      'mongokotlin-mongodb-defaults',
+      'mongokotlin-mongodb-operation',
+      'mongokotlin-mongodb-data-dtos-patch-cursor-by-table',
+      'mongokotlin-mongodb-class-dtos-full-caller',
+      'mongokotlin-mongodb-no-interfaces-services-tests',
+      'mongokotlin-mongodb-repositories-only',
+      'mongokotlin-mongodb-validators',
+      'mongokotlin-mongodb-validators-dtos',
+      'mongokotlin-mongodb-from-mongosh',
+      'mongokotlin-mongodb-from-documents',
+      'mongokotlin-mongodb-from-model2db',
+      'mongokotlin-mongodb-from-model2db-validators',
+      'mongokotlin-mongodb-conversions',
+      'mongokotlin-mongodb-conversions-dtos',
+      'mongokotlin-mongodb-conversions-import',
+    ],
+    date: '2026-11-25',
+  },
 ]
 
 /** Whether this stack has passed the verification. */
