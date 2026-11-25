@@ -267,8 +267,8 @@ def _reason_es(reason: dict) -> str:
 EN = SimpleNamespace(
     processed_locally="Processed locally",
     tagline="Generate the repositories and services of a database you already have",
-    intro_description="Paste or open your database schema (a Model2DB project, ORM code or SQL DDL) and, if you have them, your "
-    "application models. DB2CRUD proposes the repositories, the services and any missing ORM entities, explains "
+    intro_description="Paste or open your database schema (a Model2DB project, ORM code, SQL DDL or MongoDB collections) and, if you have them, your "
+    "application models. DB2CRUD proposes the repositories, the services and any missing entities, explains "
     "each proposal and lets you change it. Save the code with its tests.",
     developed_by="Developed by",
     workspace_parts={"database": "Database", "design": "Design", "project": "Project"},
@@ -325,18 +325,18 @@ EN = SimpleNamespace(
     conflict_unknown_values=lambda values: f"the model does not accept {', '.join(values)}",
     open_file="Open files",
     open_folder="Open folder",
-    open_dialog="Open the database: a Model2DB project, ORM code or SQL DDL",
+    open_dialog="Open the database: a Model2DB project, ORM code, SQL DDL or MongoDB collections",
     folder_dialog="Open the folder of a project",
     files_label="Files of the input",
     too_many_files="The folder has more than 2,000 files to read or more than 20 MB of them: open the folder of the "
     "models or of the migrations.",
-    no_readable_files="Nothing to read there: no Model2DB project, ORM code or SQL.",
-    project_files="Model2DB projects and ORM code",
+    no_readable_files="Nothing to read there: no Model2DB project, ORM code, SQL or MongoDB collections.",
+    project_files="Model2DB projects, ORM code, SQL and MongoDB",
     all_files="All files",
     clear="Clear",
     file_too_large=lambda name: f"“{name}” is larger than 10 MB.",
     file_error=lambda name: f"“{name}” could not be read.",
-    input_empty="Open files or a folder, or paste a Model2DB project, ORM code or SQL DDL, to start.",
+    input_empty="Open files or a folder, or paste a Model2DB project, ORM code, SQL DDL or MongoDB collections, to start.",
     warnings_count=lambda count: f"{_en_number(count)} {_plural(count, 'note', 'notes')}",
     note=_note_en,
     read_error=_read_error_en,
@@ -379,7 +379,7 @@ EN = SimpleNamespace(
     query_description=_query_en,
     operation_description=_operation_en,
     project_name="Project name",
-    stack_label="Language and ORM",
+    stack_label="Language and library",
     languages={
         "python": "Python",
         "typescript": "TypeScript",
@@ -455,7 +455,7 @@ EN = SimpleNamespace(
         "none": "None",
     },
     experimental="experimental",
-    stack_verified="Verified: a project with this language, ORM, database and code has passed its tests in Docker.",
+    stack_verified="Verified: a project with this language, library, database and code has passed its tests in Docker.",
     stack_not_verified="Not verified yet with this database and code: review it before using it.",
     project_empty="The files of the generated project will appear here.",
     file_tree_label="Generated files",
@@ -483,8 +483,8 @@ EN = SimpleNamespace(
 ES = SimpleNamespace(
     processed_locally="Procesado en local",
     tagline="Genera los repositorios y servicios de una base de datos que ya tienes",
-    intro_description="Pega o abre el esquema de tu base de datos (un proyecto de Model2DB, código ORM o DDL de SQL) y, si los "
-    "tienes, tus modelos de aplicación. DB2CRUD propone los repositorios, los servicios y las entidades ORM que "
+    intro_description="Pega o abre el esquema de tu base de datos (un proyecto de Model2DB, código ORM, DDL de SQL o colecciones de MongoDB) y, si los "
+    "tienes, tus modelos de aplicación. DB2CRUD propone los repositorios, los servicios y las entidades que "
     "falten, explica cada propuesta y te deja cambiarla. Guarda el código con sus pruebas.",
     developed_by="Desarrollado por",
     workspace_parts={"database": "Base de datos", "design": "Diseño", "project": "Proyecto"},
@@ -541,18 +541,18 @@ ES = SimpleNamespace(
     conflict_unknown_values=lambda values: f"el modelo no admite {', '.join(values)}",
     open_file="Abrir archivos",
     open_folder="Abrir carpeta",
-    open_dialog="Abrir la base de datos: un proyecto de Model2DB, código ORM o DDL de SQL",
+    open_dialog="Abrir la base de datos: un proyecto de Model2DB, código ORM, DDL de SQL o colecciones de MongoDB",
     folder_dialog="Abrir la carpeta de un proyecto",
     files_label="Archivos de la entrada",
     too_many_files="La carpeta tiene más de 2000 archivos que leer o más de 20 MB: abre la carpeta de los modelos o "
     "de las migraciones.",
-    no_readable_files="No hay nada que leer: ni proyecto de Model2DB, ni código ORM, ni SQL.",
-    project_files="Proyectos de Model2DB y código ORM",
+    no_readable_files="No hay nada que leer: ni proyecto de Model2DB, ni código ORM, ni SQL, ni colecciones de MongoDB.",
+    project_files="Proyectos de Model2DB, código ORM, SQL y MongoDB",
     all_files="Todos los archivos",
     clear="Limpiar",
     file_too_large=lambda name: f"«{name}» ocupa más de 10 MB.",
     file_error=lambda name: f"No se ha podido leer «{name}».",
-    input_empty="Abre archivos o una carpeta, o pega un proyecto de Model2DB, código ORM o DDL de SQL, para empezar.",
+    input_empty="Abre archivos o una carpeta, o pega un proyecto de Model2DB, código ORM, DDL de SQL o colecciones de MongoDB, para empezar.",
     warnings_count=lambda count: f"{_es_number(count)} {_plural(count, 'nota', 'notas')}",
     note=_note_es,
     read_error=_read_error_es,
@@ -595,7 +595,7 @@ ES = SimpleNamespace(
     query_description=_query_es,
     operation_description=_operation_es,
     project_name="Nombre del proyecto",
-    stack_label="Lenguaje y ORM",
+    stack_label="Lenguaje y librería",
     languages={
         "python": "Python",
         "typescript": "TypeScript",
@@ -675,7 +675,7 @@ ES = SimpleNamespace(
         "none": "Ninguna",
     },
     experimental="experimental",
-    stack_verified="Verificado: un proyecto con este lenguaje, ORM, base de datos y código ha pasado sus pruebas en Docker.",
+    stack_verified="Verificado: un proyecto con este lenguaje, librería, base de datos y código ha pasado sus pruebas en Docker.",
     stack_not_verified="Todavía sin verificar con esta base de datos y este código: revísalo antes de usarlo.",
     project_empty="Aquí aparecerán los archivos del proyecto generado.",
     file_tree_label="Archivos generados",

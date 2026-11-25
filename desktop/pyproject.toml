@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "db2crud"
 version = "0.1.0"
-description = "Desktop tool that generates the repositories, services and missing ORM entities of an existing database, locally."
+description = "Desktop tool that generates the repositories, services and missing entities of an existing database, locally."
 readme = "README_en.md"
 license = "MIT"
 authors = [{ name = "Raul Estevez" }]

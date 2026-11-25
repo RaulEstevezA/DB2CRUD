@@ -48,7 +48,7 @@ const en = {
   processedLocally: 'Processed locally',
   tagline: 'Generate the repositories and services of a database you already have',
   introDescription:
-    'Paste or open your database schema (a Model2DB project, ORM code or SQL DDL) and, if you have them, your application models. DB2CRUD proposes the repositories, the services and any missing ORM entities, explains each proposal and lets you change it. Download the code with its tests.',
+    'Paste or open your database schema (a Model2DB project, ORM code, SQL DDL or MongoDB collections) and, if you have them, your application models. DB2CRUD proposes the repositories, the services and any missing entities, explains each proposal and lets you change it. Download the code with its tests.',
   linksLabel: 'Downloads and links',
   downloadDesktop: 'Download for desktop',
   downloadFor: (platform: string) => `Download for ${platform}`,
@@ -82,7 +82,7 @@ const en = {
   fileTooLarge: (name: string) => `“${name}” is larger than 10 MB.`,
   fileError: (name: string) => `“${name}” could not be read.`,
   inputEmpty:
-    'Paste or open a Model2DB project, ORM code or SQL DDL to start. To read a project of several files or a whole folder, download the desktop app.',
+    'Paste or open a Model2DB project, ORM code, SQL DDL or MongoDB collections to start. To read a project of several files or a whole folder, download the desktop app.',
   note: (note: DbNote): string => {
     const { table = '', column = '', count = 0, types = '', target = '' } = note.params ?? {}
     const known: Record<string, string> = {
@@ -176,7 +176,7 @@ const en = {
   },
   // Project pane
   projectName: 'Project name',
-  stackLabel: 'Language and ORM',
+  stackLabel: 'Language and library',
   languages: {
     python: 'Python',
     typescript: 'TypeScript',
@@ -257,7 +257,7 @@ const en = {
     none: 'None',
   } satisfies Record<Tests, string>,
   experimental: 'experimental',
-  stackVerified: 'Verified: a project with this language, ORM, database and code has passed its tests in Docker.',
+  stackVerified: 'Verified: a project with this language, library, database and code has passed its tests in Docker.',
   stackNotVerified: 'Not verified yet with this database and code: review it before using it.',
   projectEmpty: 'The files of the generated project will appear here.',
   fileLabel: (path: string) => `Content of ${path}`,
@@ -391,7 +391,7 @@ const es: Messages = {
   processedLocally: 'Procesado en local',
   tagline: 'Genera los repositorios y servicios de una base de datos que ya tienes',
   introDescription:
-    'Pega o abre el esquema de tu base de datos (un proyecto de Model2DB, código ORM o DDL de SQL) y, si los tienes, tus modelos de aplicación. DB2CRUD propone los repositorios, los servicios y las entidades ORM que falten, explica cada propuesta y te deja cambiarla. Descarga el código con sus pruebas.',
+    'Pega o abre el esquema de tu base de datos (un proyecto de Model2DB, código ORM, DDL de SQL o colecciones de MongoDB) y, si los tienes, tus modelos de aplicación. DB2CRUD propone los repositorios, los servicios y las entidades que falten, explica cada propuesta y te deja cambiarla. Descarga el código con sus pruebas.',
   linksLabel: 'Descargas y enlaces',
   downloadDesktop: 'Descargar para escritorio',
   downloadFor: (platform) => `Descargar para ${platform}`,
@@ -425,7 +425,7 @@ const es: Messages = {
   fileTooLarge: (name) => `«${name}» ocupa más de 10 MB.`,
   fileError: (name) => `No se ha podido leer «${name}».`,
   inputEmpty:
-    'Pega o abre un proyecto de Model2DB, código ORM o DDL de SQL para empezar. Para leer un proyecto de varios archivos o una carpeta entera, descarga la app de escritorio.',
+    'Pega o abre un proyecto de Model2DB, código ORM, DDL de SQL o colecciones de MongoDB para empezar. Para leer un proyecto de varios archivos o una carpeta entera, descarga la app de escritorio.',
   note: (note) => {
     const { table = '', column = '', count = 0, types = '', target = '' } = note.params ?? {}
     const known: Record<string, string> = {
@@ -517,7 +517,7 @@ const es: Messages = {
     return parts.filter(Boolean).join(' · ')
   },
   projectName: 'Nombre del proyecto',
-  stackLabel: 'Lenguaje y ORM',
+  stackLabel: 'Lenguaje y librería',
   languages: {
     python: 'Python',
     typescript: 'TypeScript',
@@ -586,7 +586,7 @@ const es: Messages = {
   testsLabel: 'Pruebas',
   testsModes: { all: 'Servicios y repositorios', services: 'Servicios', repositories: 'Repositorios', none: 'Ninguna' },
   experimental: 'experimental',
-  stackVerified: 'Verificado: un proyecto con este lenguaje, ORM, base de datos y código ha pasado sus pruebas en Docker.',
+  stackVerified: 'Verificado: un proyecto con este lenguaje, librería, base de datos y código ha pasado sus pruebas en Docker.',
   stackNotVerified: 'Todavía sin verificar con esta base de datos y este código: revísalo antes de usarlo.',
   projectEmpty: 'Aquí aparecerán los archivos del proyecto generado.',
   fileLabel: (path) => `Contenido de ${path}`,
