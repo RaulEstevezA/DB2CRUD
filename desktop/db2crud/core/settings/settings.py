@@ -360,6 +360,14 @@ VERBS = ["getFind", "get", "find"]
 TESTS = ["all", "services", "repositories", "none"]
 
 
+# Languages that only get fixes: new features are written for the others (docs/decisions.md)
+EXPERIMENTAL_LANGUAGES = ("kotlin", "rust", "swift")
+
+
+def is_experimental(language: str) -> bool:
+    return language in EXPERIMENTAL_LANGUAGES
+
+
 def find_stack(language, orm) -> dict | None:
     return next((stack for stack in STACKS if stack["language"] == language and stack["orm"] == orm), None)
 

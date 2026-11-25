@@ -453,6 +453,11 @@ const ARCHITECTURES: readonly Architecture[] = ['layer', 'table']
 const VERBS: readonly Verbs[] = ['getFind', 'get', 'find']
 const TESTS: readonly Tests[] = ['all', 'services', 'repositories', 'none']
 
+/** Languages that only get fixes: new features are written for the others (docs/decisions.md). */
+const EXPERIMENTAL_LANGUAGES: readonly LanguageId[] = ['kotlin', 'rust', 'swift']
+
+export const isExperimental = (language: LanguageId): boolean => EXPERIMENTAL_LANGUAGES.includes(language)
+
 export function findStack(language: LanguageId, orm: OrmId): StackInfo | undefined {
   return STACKS.find((stack) => stack.language === language && stack.orm === orm)
 }

@@ -21,7 +21,7 @@ from PySide6.QtWidgets import (
 )
 
 from ..core.export.zip import create_zip
-from ..core.settings.settings import STACKS, find_stack, stacks_for
+from ..core.settings.settings import STACKS, find_stack, is_experimental, stacks_for
 from ..core.settings.verified import is_verified
 from .code_view import CodeView
 from .pane import Pane, section
@@ -239,7 +239,11 @@ class ProjectPane(Pane):
         cells = [(t.project_name, CommitLine(settings["name"], lambda text: self._set(name=text)))]
         stacks = combo(
             [
-                (f"{t.languages[item['language']]} · {item['label']}", f"{item['language']}:{item['orm']}")
+                (
+                    f"{t.languages[item['language']]} · {item['label']}"
+                    + (f" ({t.experimental})" if is_experimental(item["language"]) else ""),
+                    f"{item['language']}:{item['orm']}",
+                )
                 for item in stacks_for(self._session.dialect)
             ],
             f"{settings['language']}:{settings['orm']}",

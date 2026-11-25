@@ -11,7 +11,7 @@ import type { ConversionsAvailability } from '../../core/conversions/plan.ts'
 import type { GeneratedFile } from '../../core/export/files.ts'
 import { createZip } from '../../core/export/zip.ts'
 import type { Dialect } from '../../core/schema/types.ts'
-import { findStack, STACKS, stacksFor, type LanguageId, type ProjectSettings } from '../../core/settings/settings.ts'
+import { findStack, isExperimental, STACKS, stacksFor, type LanguageId, type ProjectSettings } from '../../core/settings/settings.ts'
 import { isVerified } from '../../core/settings/verified.ts'
 import { useCopy } from '../../hooks/useCopy.ts'
 import { useI18n } from '../../i18n/useI18n.ts'
@@ -133,7 +133,7 @@ export function ProjectPane({ dialect, settings, files, onSettingsChange, conver
             >
               {stacksFor(dialect).map((item) => (
                 <option key={`${item.language}:${item.orm}`} value={`${item.language}:${item.orm}`}>
-                  {`${t.languages[item.language]} · ${item.label}`}
+                  {`${t.languages[item.language]} · ${item.label}${isExperimental(item.language) ? ` (${t.experimental})` : ''}`}
                 </option>
               ))}
             </select>

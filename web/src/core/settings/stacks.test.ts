@@ -1,7 +1,7 @@
 /** A document database is offered the stacks made for it, and a relational one the others. */
 import { describe, expect, it } from 'vitest'
 import { inputLanguage, readDatabase } from '../../app/workspace.ts'
-import { changeSettings, DEFAULT_SETTINGS, normalizeSettings, settingsFor, stacksFor } from './settings.ts'
+import { changeSettings, DEFAULT_SETTINGS, isExperimental, normalizeSettings, STACKS, settingsFor, stacksFor } from './settings.ts'
 
 const VALIDATOR = '{ $jsonSchema: { bsonType: "object", title: "users", properties: { name: { bsonType: "string" } } } }'
 
@@ -22,6 +22,12 @@ describe('stacks and databases', () => {
     expect(settingsFor('postgresql', settings)).toEqual(settings)
     expect(settingsFor('postgresql', settingsFor('mongodb', settings)).orm).not.toBe('mongoose')
     expect(settingsFor(null, settings)).toEqual(settings)
+  })
+
+  it('list the experimental languages last', () => {
+    const languages = [...new Set(STACKS.map((stack) => stack.language))]
+    expect(languages.slice(0, 5)).toEqual(['python', 'typescript', 'java', 'csharp', 'php'])
+    expect(languages.filter(isExperimental)).toEqual(languages.slice(5))
   })
 
   it('bring their own place for transactions', () => {
