@@ -15,6 +15,7 @@ import type {
 import { findPolicy, findRepository, findService } from '../../crud/types.ts'
 import type { DbColumn, DbSchema, DbTable, DbType } from '../../schema/types.ts'
 import type { ProjectSettings } from '../../settings/settings.ts'
+import { documentType, nestedClasses, type NestedClass } from './documents.ts'
 import { localName, pascalName } from './csharp.ts'
 import type { CsharpOrm } from './orm.ts'
 
@@ -64,6 +65,8 @@ export interface TableInfo {
   repository: RepositoryDesign
   service: ServiceDesign | null
   writesEntity: boolean
+  /** The classes of its nested documents, by column: only in document databases */
+  nested: Map<string, NestedClass>
 }
 
 export interface Context {
@@ -124,17 +127,24 @@ const included = <T extends { include: { value: boolean } }>(items: T[]) => item
 const TAKEN = new Set(['values', 'errors', 'creating', 'current', 'uow', 'value', 'other', 'entity', 'changes', 'data', 'link', 'row'])
 const columnLocal = (name: string) => (TAKEN.has(localName(name)) ? `${localName(name)}Value` : localName(name))
 
-function columnInfo(column: DbColumn, entity: string, primary: boolean, database: string): ColumnInfo {
+function columnInfo(
+  column: DbColumn,
+  entity: string,
+  primary: boolean,
+  { cs, valueType }: { cs: string; valueType: boolean },
+  ownId: boolean,
+): ColumnInfo {
   const generated = column.generated !== undefined && column.generated !== 'onUpdateNow'
-  const base = pascalName(column.name)
+  // MongoDB's `_id` is the `Id` of the entity, unless the documents have one of their own
+  const name = ownId && column.name === '_id' ? 'document id' : column.name
+  const base = pascalName(name)
   // A member cannot have the name of its class
   const prop = base === entity ? `${base}Value` : base
-  const { cs, valueType } = csType(column.type, database)
   const optional = !primary && (column.nullable || column.default !== undefined || column.generated !== undefined)
   return {
     column,
     prop,
-    local: columnLocal(column.name),
+    local: columnLocal(name),
     cs,
     valueType,
     optional,
@@ -144,19 +154,29 @@ function columnInfo(column: DbColumn, entity: string, primary: boolean, database
   }
 }
 
-function tableInfo(schema: DbSchema, design: CrudDesign, settings: ProjectSettings, table: DbTable): TableInfo {
+function tableInfo(orm: CsharpOrm, schema: DbSchema, design: CrudDesign, settings: ProjectSettings, table: DbTable): TableInfo {
   const policy = findPolicy(design, table.name)!
   const repository = findRepository(design, table.name)!
   const service = settings.services ? (findService(design, table.name) ?? null) : null
   const entity = pascalName(repository.entity)
   const keyNames = table.primaryKey ?? []
-  const columns = table.columns.map((column) => columnInfo(column, entity, keyNames.includes(column.name), settings.database))
+  const nested = orm.documents ? nestedClasses(table.columns, entity) : new Map<string, NestedClass>()
+  const ownId = orm.documents === true && table.columns.some((column) => column.name === 'id')
+  const columns = table.columns.map((column) =>
+    columnInfo(
+      column,
+      entity,
+      keyNames.includes(column.name),
+      orm.documents ? documentType(column, nested) : csType(column.type, settings.database),
+      ownId,
+    ),
+  )
   const byName = (name: string) => columns.find((info) => info.column.name === name)!
   // A table without a primary key is read only; its rows are told apart by all their columns
   const key = (table.primaryKey ?? table.columns.map((column) => column.name)).map(byName)
   const deleteMode = policy.delete.value
   const concurrency = policy.concurrency.value
-  const ownEntities = !repository.entityMissing && schema.source.format === settings.orm
+  const ownEntities = !orm.documents && !repository.entityMissing && schema.source.format === settings.orm
   const writesEntity = settings.entities === 'all' || (settings.entities === 'missing' && !ownEntities)
   const folder = pascalName(table.name)
   return {
@@ -177,11 +197,19 @@ function tableInfo(schema: DbSchema, design: CrudDesign, settings: ProjectSettin
     repository,
     service,
     writesEntity,
+    nested,
   }
 }
 
 export function createContext(orm: CsharpOrm, schema: DbSchema, design: CrudDesign, settings: ProjectSettings): Context {
-  return { orm, schema, design, settings, tables: schema.tables.map((table) => tableInfo(schema, design, settings, table)), base: 'App' }
+  return {
+    orm,
+    schema,
+    design,
+    settings,
+    tables: schema.tables.map((table) => tableInfo(orm, schema, design, settings, table)),
+    base: 'App',
+  }
 }
 
 export const writesEntities = (context: Context) => context.tables.some((info) => info.writesEntity)

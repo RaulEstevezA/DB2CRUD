@@ -9,7 +9,8 @@ import type { OperationDesign } from '../../crud/types.ts'
 import type { GeneratedFile } from '../../export/files.ts'
 import type { DbCheck } from '../../schema/types.ts'
 import { lines, type Line } from '../types.ts'
-import { csString, CsUsings } from './csharp.ts'
+import { checkCall, documentCheckMethods, documentRules, listOf } from './documents.ts'
+import { csString, CsUsings, pascalName } from './csharp.ts'
 import {
   columnOf,
   commonNamespace,
@@ -57,7 +58,7 @@ function valueRules(column: ColumnInfo, checks: DbCheck[]): string[] {
   const name = column.column.name
   const type = column.column.type
   const error = (message: string) => `errors.Add(new FieldError(${csString(name)}, ${csString(message)}));`
-  if (type.kind === 'text' && type.length !== undefined)
+  if (type.kind === 'text' && type.length !== undefined && !type.objectId)
     rules.push(`if (value is string text && text.Length > ${type.length}) ${error(`is longer than ${type.length} characters`)}`)
   for (const check of checks) {
     const parsed = check.parsed
@@ -95,7 +96,7 @@ function validateMethod(writer: Writer): Block {
       : !column.column.nullable
         ? `if (!creating && values.ContainsKey(${prop})) errors.Add(new FieldError(${csString(name)}, "cannot be empty"));`
         : null
-    const rules = valueRules(column, info.table.checks)
+    const rules = [...valueRules(column, info.table.checks), ...documentRules(context, info, column)]
     if (!missing && rules.length === 0) continue
     blocks.push([
       '{',
@@ -417,7 +418,9 @@ function operationLines(writer: Writer, operation: OperationDesign): Block {
           ? 'true'
           : info.soft.cs === 'DateTimeOffset'
             ? 'DateTimeOffset.UtcNow'
-            : 'DateTime.Now'
+            : context.orm.documents
+              ? 'DateTime.UtcNow'
+              : 'DateTime.Now'
       const action = info.soft
         ? [`current.${info.soft.prop} = ${mark};`, `await ${repo(info)}.${queryName(context, update!)}(current);`]
         : [`await ${repo(info)}.${queryName(context, remove!)}(current);`]
@@ -461,8 +464,63 @@ function operationLines(writer: Writer, operation: OperationDesign): Block {
     // One item of a list: only document databases have them
     case 'addItem':
     case 'removeItem':
-      return []
+      return itemLines(writer, operation, name)
   }
+}
+
+/** Adds or removes one item of a list, so two people changing the same list do not undo each other. */
+function itemLines(writer: Writer, operation: OperationDesign, name: string): Block {
+  const { context, info, usings } = writer
+  const adds = operation.kind === 'addItem'
+  const change = query(info, adds ? 'addItem' : 'removeItem', operation.columns)
+  if (!change || !query(info, 'getByKey')) return []
+  const list = listOf(info, change)
+  const stored = list.column.column.name
+  const params = adds ? [{ name: list.item, type: list.cs }] : list.params
+  const [param] = params
+  const version = info.version ? `, ${info.version.cs} version` : ''
+  const items = `current.${list.column.prop}`
+  const missing =
+    list.by === 'id'
+      ? `${items} is null || ${items}.All(candidate => candidate.Id != ${param.name})`
+      : list.by === 'value'
+        ? `${items} is null || !${items}.Contains(${param.name})`
+        : `${items} is null || ${param.name} < 0 || ${param.name} >= ${items}.Count`
+  const position = !adds && list.by === 'position'
+  usings.add(errorsNamespace(context))
+  const checked = adds && list.nested !== null && list.type.kind === 'json'
+  const gone = position
+    ? `new ConflictException(${csString(info.entity)}, "was changed by someone else since it was read", [${csString(list.column.prop)}])`
+    : `new NotFoundException(${csString(info.entity)}, ${keyValue(info)})`
+  const args = [keyArgs(info), ...params.map((item) => item.name), ...(position ? [`${items}.Count`] : [])].join(', ')
+  return [
+    adds
+      ? `/// <summary>Adds an item to ${stored}${info.version ? ', read at version' : ''}.</summary>`
+      : `/// <summary>Removes an item from ${stored}, by its ${list.by === 'id' ? 'identifier' : list.by}${info.version ? ', read at version' : ''}.</summary>`,
+    `public async Task<${resultType(writer)}> ${name}(${keyParams(info)}, ${params.map((item) => `${item.type} ${item.name}`).join(', ')}${version})`,
+    '{',
+    ...(checked
+      ? [
+          '    var errors = new List<FieldError>();',
+          `    ${checkCall(list.nested!, list.item, stored)}`,
+          `    if (errors.Count > 0) throw new ValidationFailedException(${csString(info.entity)}, errors);`,
+        ]
+      : []),
+    ...indent(
+      inTransaction(
+        [
+          `${adds && !info.version ? '' : 'var current = '}await FindAsync(uow, ${keyArgs(info)});`,
+          ...versionCheck(writer),
+          ...(adds
+            ? []
+            : [`if (${missing}) throw new NotFoundException(${csString(pascalName(list.item.replace('@', '')))}, ${param.name});`]),
+          `return ${out(writer, `await ${repo(info)}.${queryName(context, change)}(${args}) ?? throw ${gone}`)};`,
+        ],
+        true,
+      ),
+    ),
+    '}',
+  ]
 }
 
 function linkLines(writer: Writer, operation: OperationDesign, name: string): Block {
@@ -541,6 +599,7 @@ export function serviceFile(context: Context, info: TableInfo): GeneratedFile | 
   const helpers: Block[] = [findMethod(writer), readMethod(writer)]
   if (writes) helpers.unshift(validateMethod(writer), uniqueMethod(writer), checkMethod(writer), applyMethod(writer))
   if (writes && updates) helpers.push(givenMethod(writer))
+  if (writes) helpers.push(...documentCheckMethods(context, info))
   const hidden = info.hidden.length > 0 && !dtos
   const members = [...helpers, ...operations].filter((block) => block.length > 0)
   const written = usings.write()

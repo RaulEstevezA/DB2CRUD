@@ -53,6 +53,12 @@ function unit(ns: string, name: string, usings: CsUsings, body: string[]): Gener
   return { path: pathOf(ns, name), content: lines(written !== '' && [written, ''], `namespace ${ns};`, '', ...body, '') }
 }
 
+/** The usings of a file of DTOs: nested documents are classes of the entity. */
+function documentUsings(context: Context, info: TableInfo, ns: string): CsUsings {
+  const usings = new CsUsings(ns)
+  return info.nested.size > 0 ? usings.add(namespaceOf(context, info, 'entity')) : usings
+}
+
 const UPDATE_DOC = {
   patch: 'fields left Patch.Absent keep their value; Patch.Of(null) empties one.',
   full: 'every field is replaced.',
@@ -80,7 +86,7 @@ export function dtoFiles(context: Context, info: TableInfo): GeneratedFile[] {
         unit(
           ns,
           createDto(info),
-          new CsUsings(ns),
+          documentUsings(context, info, ns),
           type(
             createDto(info),
             `The values of a new ${info.entity}. Fields left null take the database's default.`,
@@ -93,14 +99,14 @@ export function dtoFiles(context: Context, info: TableInfo): GeneratedFile[] {
       unit(
         ns,
         readDto(info),
-        new CsUsings(ns),
+        documentUsings(context, info, ns),
         type(readDto(info), `A ${info.entity} as services return it.`, fieldsOf(readColumns(info)), record),
       ),
     )
   }
   if (update && info.service) {
     const ns = updateNamespace(context, info)
-    const usings = new CsUsings(ns)
+    const usings = documentUsings(context, info, ns)
     if (patch) usings.add(commonNamespace(context))
     files.push(
       unit(

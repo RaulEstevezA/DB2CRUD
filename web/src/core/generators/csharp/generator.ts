@@ -33,20 +33,28 @@ function code(context: Context): GeneratedFile[] {
   return files.filter((file): file is GeneratedFile => file !== null)
 }
 
+/** The files with the database classes named as the strategy asks: `SqlUnitOfWork` is `MongoUnitOfWork` in a document database. */
+function named(orm: CsharpOrm, files: GeneratedFile[]): GeneratedFile[] {
+  const { prefix } = orm
+  if (!prefix) return files
+  const rename = (text: string) => text.replace(/\bSql(?=UnitOfWork\b|\w+Repository\b)/g, prefix)
+  return files.map((file) => ({ ...file, path: rename(file.path), content: rename(file.content) }))
+}
+
 export function csharpGenerator(orm: CsharpOrm): Generator {
   return {
     language: 'csharp',
     orm: orm.id,
     generate({ schema, design, settings, models }) {
       const context = createContext(orm, schema, design, settings)
-      const plans = models ? servicePlans(context, planConversions(schema, design, models)) : []
+      const plans = models ? servicePlans(context, planConversions(schema, design, models, orm.documents === true)) : []
       const conversions = models ? conversionFiles(context, models.schema, plans) : []
       const tests = testFiles(context)
       const conversionTests =
         models && tests.length > 0 && (settings.tests === 'all' || settings.tests === 'services')
           ? conversionTestFile(context, plans, models.schema, (info) => canMake(context, info), context.orm.testMembers(context))
           : null
-      return [
+      return named(orm, [
         readmeFile(context),
         ...projectFiles(context, conversions.length > 0 && settings.modelsSource === 'import'),
         envExampleFile(context),
@@ -56,7 +64,7 @@ export function csharpGenerator(orm: CsharpOrm): Generator {
         ...conversions,
         ...tests,
         ...(conversionTests ? [conversionTests] : []),
-      ]
+      ])
     },
   }
 }

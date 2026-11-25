@@ -4,8 +4,10 @@
  * with different numbers do not clash on unique columns. Mirrors java/samples.ts.
  */
 import type { DbCheck, DbEnum } from '../../schema/types.ts'
+import { isObjectId } from '../../schema/documents.ts'
 import { boundedNumber } from '../samples.ts'
 import { csString } from './csharp.ts'
+import { FREE } from './documents.ts'
 import type { ColumnInfo } from './context.ts'
 
 function checksOf(column: ColumnInfo, checks: DbCheck[]) {
@@ -50,6 +52,7 @@ export function sampleValue(column: ColumnInfo, checks: DbCheck[], enums: DbEnum
     case 'float':
       return cs === 'float' ? `${number(column, checks)} + 0.5f` : `${number(column, checks)} + 0.5`
     case 'text': {
+      if (type.objectId) return 'n.ToString("x24")'
       const length = type.length ?? 40
       if (type.fixed) return `(n % ${10 ** Math.min(length, 9)}).ToString().PadLeft(${length}, '0')`
       // The column name and the number, as long as it fits; n stays below 1000 in the tests
@@ -65,10 +68,13 @@ export function sampleValue(column: ColumnInfo, checks: DbCheck[], enums: DbEnum
     case 'boolean':
       return 'true'
     case 'date':
+      if (cs === 'string') return '$"2026-01-{n % 28 + 1:D2}"'
       return 'new DateOnly(2026, 1, n % 28 + 1)'
     case 'time':
+      if (cs === 'string') return '$"12:{n % 60:D2}:00"'
       return cs === 'DateTimeOffset' ? 'new DateTimeOffset(1970, 1, 1, 12, n % 60, 0, TimeSpan.Zero)' : 'new TimeOnly(12, n % 60)'
     case 'datetime':
+      if (type.timezone && cs === 'DateTime') return 'new DateTime(2026, 1, n % 28 + 1, 12, 0, 0, DateTimeKind.Utc)'
       return cs === 'DateTimeOffset'
         ? 'new DateTimeOffset(2026, 1, n % 28 + 1, 12, 0, 0, TimeSpan.Zero)'
         : 'new DateTime(2026, 1, n % 28 + 1, 12, 0, 0)'
@@ -80,16 +86,19 @@ export function sampleValue(column: ColumnInfo, checks: DbCheck[], enums: DbEnum
         ? `Enumerable.Repeat((byte)n, ${type.length}).ToArray()`
         : 'new byte[] { (byte)n }'
     case 'json':
+      if (cs === FREE) return 'new MongoDB.Bson.BsonDocument("n", n)'
       return '$"{{\\"n\\": {n}}}"'
     case 'array':
       return '"[]"'
     case 'unknown':
+      if (cs === FREE) return 'new MongoDB.Bson.BsonString($"value-{n}")'
       return '$"value-{n}"'
   }
 }
 
 /** A key no row has, as a C# expression, for the tests of missing rows. */
 export function missingValue(column: ColumnInfo): string {
+  if (isObjectId(column.column.type)) return `"${'f'.repeat(24)}"`
   switch (column.cs) {
     case 'long':
       return '999999L'

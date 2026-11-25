@@ -11,8 +11,19 @@
  * `modelsSource: 'import'`, used from the user's namespace: the copy then goes to `application-models/`, which the
  * project compiles only while the folder exists (delete it inside the application).
  */
-import { withoutHidden, type ConversionPlan, type ModelPath, type ReadValue, type Todo, type WriteValue } from '../../conversions/plan.ts'
+import {
+  hasTodo,
+  lossy,
+  withoutHidden,
+  type ConversionPlan,
+  type ModelPath,
+  type ReadValue,
+  type Todo,
+  type WriteValue,
+} from '../../conversions/plan.ts'
 import type { GeneratedFile } from '../../export/files.ts'
+import { fieldsOf } from '../../matching/names.ts'
+import { FREE, type NestedClass } from './documents.ts'
 import type { MapperTransform } from '../../interop/mapper/read.ts'
 import type { EnumDef, FieldDef, ModelDef, ModelSchema, TypeRef } from '../../model/schema.ts'
 import { lines, type Line } from '../types.ts'
@@ -72,6 +83,8 @@ export function conversionNames(context: Context, plan: ConversionPlan) {
 interface Models {
   schema: ModelSchema
   namespace: string
+  /** The database keeps documents: moments are UTC, and lists are lists */
+  documents?: boolean
 }
 
 /** A model read from C# keeps its names; the others get C#'s PascalCase. */
@@ -245,9 +258,34 @@ interface Body {
 const NUMBERS = new Set(['byte', 'sbyte', 'short', 'ushort', 'int', 'uint', 'long', 'ulong', 'float', 'double', 'decimal'])
 const PARSED = new Set([...NUMBERS, 'DateTime', 'DateTimeOffset', 'DateOnly', 'TimeOnly', 'TimeSpan'])
 
+const LIST = /^(?:(?:List|IList|IEnumerable|ICollection|IReadOnlyList|IReadOnlyCollection|HashSet|ISet)<(.+)>|(.+)\[\])$/
+
+/** What a document database keeps in its own way; undefined for the rest. */
+function coreDocument(models: Models, expression: string, from: string, to: string, body: Body): string | null | undefined {
+  if (to === FREE) return from === 'object' || from.startsWith('Dictionary<') ? `${FREE}.Create(${expression})` : null
+  if (from === FREE) return null
+  if (from === 'DateOnly' && to === 'DateTime') return `${expression}.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc)`
+  if (from === 'string' && to === 'DateTime') {
+    body.usings.add('System.Globalization')
+    return `DateTime.Parse(${expression}, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal)`
+  }
+  const fromItem = from === 'byte[]' ? null : LIST.exec(from)
+  const toItem = to === 'byte[]' ? null : LIST.exec(to)
+  if (!fromItem || !toItem) return undefined
+  const converted = convert(models, typed('item', fromItem[1] ?? fromItem[2]), toItem[1] ?? toItem[2], body)
+  if (converted === null) return null
+  const items = converted === 'item' ? expression : `${expression}.Select(item => ${converted})`
+  return `${items}.${toItem[2] ? 'ToArray' : /Set</.test(to) ? 'ToHashSet' : 'ToList'}()`
+}
+
 /** A value that is there, of one C# type, as another; null when DB2CRUD does not convert them. */
 function core(models: Models, expression: string, from: string, to: string, body: Body): string | null {
   if (from === to || to === 'object') return expression
+  if (models.documents) {
+    if (models.schema.enums.some((item) => item.name === from || item.name === to)) body.usings.add(models.namespace)
+    const converted = coreDocument(models, expression, from, to, body)
+    if (converted !== undefined) return converted
+  }
   const invariant = () => {
     body.usings.add('System.Globalization')
     return 'CultureInfo.InvariantCulture'
@@ -459,6 +497,134 @@ function walk(models: Models, model: ModelDef | undefined, path: ModelPath, root
 
 const columnTyped = (column: ColumnInfo, root: string) => typed(`${root}.${column.prop}`, column.propType)
 
+// Nested documents
+
+interface Nested {
+  context: Context
+  models: Models
+  info: TableInfo
+  plan: ConversionPlan
+  body: Body
+  aliases: Set<string>
+  /** The methods written so far */
+  methods: string[][]
+}
+
+/** How a nested model is written: by an alias when the entity or a DTO of the file has its name. */
+function nestedModel(nested: Nested, name: string): string {
+  const { target, source } = conversionNames(nested.context, nested.plan)
+  if (![nested.info.entity, target, source].includes(name)) {
+    nested.body.usings.add(nested.models.namespace)
+    return name
+  }
+  nested.aliases.add(`using ${name}Model = ${nested.models.namespace}.${name};`)
+  return `${name}Model`
+}
+
+/** The entity by its own name, also beside a model named like it. */
+function importEntity({ context, models, info, body, aliases }: Nested): void {
+  const ns = namespaceOf(context, info, 'entity')
+  body.usings.add(ns)
+  if (ns !== conversionsNamespace(context, info) && models.schema.models.some((item) => item.name === info.entity))
+    aliases.add(`using ${info.entity} = ${ns}.${info.entity};`)
+}
+
+const modelNamed = (nested: Nested, name: string): ModelDef => {
+  const model = nested.models.schema.models.find((item) => item.name === name)!
+  return { ...model, fields: fieldsOf(model, nested.models.schema) }
+}
+
+/** A nested document, or each of a list, converted by a method; `to` is the type it becomes. */
+function callFor(method: string, many: boolean, value: Typed, to: string): string {
+  const nullable = to.endsWith('?')
+  if (many) {
+    const collect = /\[\]\??$/.test(to) ? 'ToArray()' : /^HashSet</.test(to) ? 'ToHashSet()' : 'ToList()'
+    if (!value.nullable) return `${value.expression}.Select(${method}).${collect}`
+    return `${value.expression}?.Select(${method}).${collect}${nullable ? '' : ' ?? []'}`
+  }
+  if (!value.nullable) return `${method}(${value.expression})`
+  return nullable ? `${value.expression} is null ? null : ${method}(${value.expression})` : `${method}(${value.expression}!)`
+}
+
+/** The initializer of a class or the call to a constructor, as the statements of a method. */
+const built = (type: string, values: Value[], positional: boolean): string[] =>
+  positional
+    ? [`        return new ${type}(`, ...argumentLines(values, '            '), '        );']
+    : [`        return new ${type}`, '        {', ...initializerLines(values, '            '), '        };']
+
+/** Writes the method that gives a nested document from its model, and those inside it; gives its name. */
+function writeDocument(nested: Nested, value: WriteValue & { kind: 'document' }, kept: NestedClass, path: string): string {
+  const { models, body } = nested
+  const name = `${nested.plan.model}${path}ToDocument`
+  const model = modelNamed(nested, value.model)
+  const todos: string[] = []
+  const values = value.values.flatMap((item): Value[] => {
+    const field = kept.fields.find((candidate) => candidate.column.name === item.column)!
+    if (item.value.kind === 'todo') {
+      todos.push(`        // TODO: ${field.prop}: ${todoText(item.value)}`)
+      return []
+    }
+    if (item.value.kind !== 'field' && item.value.kind !== 'document') return []
+    const read = walk(models, model, item.value.path, 'value')!
+    if (item.value.kind === 'document') {
+      const inner = writeDocument(nested, item.value, field.nested!, path + field.prop)
+      return [{ name: field.prop, expression: callFor(inner, item.value.many, read, field.propType) }]
+    }
+    const converted = fit(models, read, field.propType, body)
+    if (converted !== null) return [{ name: field.prop, expression: converted }]
+    todos.push(`        // TODO: ${field.prop}: ${WHY.unsupported} (${read.type} to ${field.cs})`)
+    return []
+  })
+  importEntity(nested)
+  nested.methods.push([
+    `    /// <summary>${article(value.model)} as the documents of the ${nested.info.name} collection keep it.</summary>`,
+    `    private static ${kept.path} ${name}(${nestedModel(nested, value.model)} value)`,
+    '    {',
+    ...(value.unused.length > 0 ? [`        // Not stored: ${value.unused.join(', ')}`] : []),
+    ...todos,
+    ...built(kept.path, values, false),
+    '    }',
+  ])
+  return name
+}
+
+/** Writes the method that gives a model from its nested document, and those inside it; gives its name. */
+function readDocument(nested: Nested, value: ReadValue & { kind: 'document' }, kept: NestedClass, path: string): string {
+  const { models, body } = nested
+  const name = `${nested.plan.model}${path}FromDocument`
+  const model = modelNamed(nested, value.model)
+  const given = new Set<string>()
+  const values = model.fields.map((field): Value => {
+    const item = value.values.find((candidate) => candidate.field === field.name)
+    const target = fieldCs(model, field)
+    const empty = { name: memberOf(model, field.name), expression: 'default!' }
+    if (!item || (item.value.kind !== 'todo' && item.value.kind !== 'column' && item.value.kind !== 'document')) return empty
+    given.add(empty.name)
+    if (item.value.kind === 'todo') return { ...empty, todo: todoText(item.value) }
+    const column = item.value.column
+    const from = kept.fields.find((candidate) => candidate.column.name === column)!
+    const read = typed(`value.${from.prop}`, from.propType)
+    if (item.value.kind === 'document') {
+      const inner = readDocument(nested, item.value, from.nested!, path + from.prop)
+      return { ...empty, expression: callFor(inner, item.value.many, read, target) }
+    }
+    const converted = fit(models, read, target, body)
+    return converted === null ? { ...empty, todo: `${WHY.unsupported} (${from.cs} to ${target})` } : { ...empty, expression: converted }
+  })
+  const positional = model.construction === 'positional'
+  const type = nestedModel(nested, value.model)
+  importEntity(nested)
+  nested.methods.push([
+    `    /// <summary>A document of the ${nested.info.name} collection as ${article(value.model).split(' ')[0].toLowerCase()} ${value.model}.</summary>`,
+    `    private static ${type} ${name}(${kept.path} value)`,
+    '    {',
+    // Built by its properties: the fields the plan does not give keep the model's defaults
+    ...built(type, positional ? values : values.filter((item) => given.has(item.name)), positional),
+    '    }',
+  ])
+  return name
+}
+
 function writeExpression(
   context: Context,
   models: Models,
@@ -466,6 +632,7 @@ function writeExpression(
   value: Exclude<WriteValue, Todo>,
   model: ModelDef | undefined,
   body: Body,
+  nested: Nested,
 ): { expression: string; todo?: string } {
   const unsupported = (detail: string) => ({ expression: 'default!', todo: `${WHY.unsupported} (${detail})` })
   const source = (path: ModelPath) => walk(models, model, path, 'model')
@@ -475,9 +642,12 @@ function writeExpression(
     return converted === null ? unsupported(`${result.type} to ${column.cs}`) : { expression: converted }
   }
   switch (value.kind) {
-    // Only strategies of document databases have them
-    case 'document':
-      return unsupported(value.model)
+    case 'document': {
+      const given = source(value.path)
+      const kept = nested.info.nested.get(column.column.name)
+      if (!given || !kept) return unsupported(column.prop)
+      return { expression: callFor(writeDocument(nested, value, kept, column.prop), value.many, given, column.propType) }
+    }
     case 'field':
       return finish(source(value.path))
     case 'lookup': {
@@ -517,6 +687,7 @@ function readExpression(
   field: FieldDef,
   value: Exclude<ReadValue, Todo>,
   body: Body,
+  nested: Nested,
 ): { expression: string; todo?: string } {
   const target = fieldCs(model, field)
   const unsupported = (detail: string) => ({ expression: 'default!', todo: `${WHY.unsupported} (${detail})` })
@@ -526,9 +697,12 @@ function readExpression(
     return converted === null ? unsupported(`${result.type} to ${target}`) : { expression: converted }
   }
   switch (value.kind) {
-    // Only strategies of document databases have them
-    case 'document':
-      return unsupported(value.model)
+    case 'document': {
+      const kept = info.nested.get(value.column)
+      if (!kept) return unsupported(field.name)
+      const column = columnOf(info, value.column)
+      return { expression: callFor(readDocument(nested, value, kept, column.prop), value.many, columnTyped(column, 'row'), target) }
+    }
     case 'column':
       return finish(columnTyped(columnOf(info, value.column), 'row'))
     case 'lookup': {
@@ -607,7 +781,7 @@ const HELPERS = {
 export function conversionFile(context: Context, plans: ConversionPlan[], schema: ModelSchema): GeneratedFile | null {
   const info = findInfo(context, plans[0].table)
   if (!info) return null
-  const models: Models = { schema, namespace: modelsNamespace(context) }
+  const models: Models = { schema, namespace: modelsNamespace(context), documents: context.orm.documents }
   const ns = conversionsNamespace(context, info)
   const usings = new CsUsings(ns)
   const aliases = new Set<string>()
@@ -617,6 +791,7 @@ export function conversionFile(context: Context, plans: ConversionPlan[], schema
   const record = context.settings.dtoKind !== 'class'
   for (const plan of plans) {
     const model = schema.models.find((item) => item.name === plan.model)
+    const scope = { context, models, info, plan, aliases, methods }
     const names = conversionNames(context, plan)
     if (names.clash) aliases.add(`using ${names.model} = ${models.namespace}.${plan.model};`)
     else usings.add(models.namespace)
@@ -631,7 +806,7 @@ export function conversionFile(context: Context, plans: ConversionPlan[], schema
       for (const item of plan.write) {
         const column = columnOf(info, item.column)
         if (item.value.kind === 'todo') values.push({ name: column.prop, expression: 'default!', todo: todoText(item.value) })
-        else values.push({ name: column.prop, ...writeExpression(context, models, column, item.value, model, body) })
+        else values.push({ name: column.prop, ...writeExpression(context, models, column, item.value, model, body, { ...scope, body }) })
       }
       let result: string[]
       if (dtos && record) {
@@ -659,7 +834,7 @@ export function conversionFile(context: Context, plans: ConversionPlan[], schema
         const name = memberOf(model, field.name)
         if (!item) values.push({ name, expression: 'default!' })
         else if (item.value.kind === 'todo') values.push({ name, expression: 'default!', todo: todoText(item.value) })
-        else values.push({ name, ...readExpression(context, models, info, model, field, item.value, body) })
+        else values.push({ name, ...readExpression(context, models, info, model, field, item.value, body, { ...scope, body }) })
       }
       const given = new Set(plan.read.map((item) => memberOf(model, item.field)))
       if (body.uow) usings.add(context.base)
@@ -708,8 +883,6 @@ export function conversionFile(context: Context, plans: ConversionPlan[], schema
   return { path: pathOf(ns, name), content }
 }
 
-const hasTodo = (items: { value: { kind: string } }[] | null) => (items ?? []).some((item) => item.value.kind === 'todo')
-
 /**
  * The tests of the conversions: a row stored by the factories is read as the model, and a model that goes both ways
  * and leaves nothing to the user is written back, giving every value of the row (lookups and Mapper's lossless
@@ -732,6 +905,7 @@ export function conversionTestFile(
     const info = findInfo(context, plan.table)
     if (!info || !plan.read || hasTodo(plan.read) || !canMake(info) || !schema.models.some((item) => item.name === plan.model)) continue
     const names = conversionNames(context, plan)
+    const model = schema.models.find((item) => item.name === plan.model)
     const dtos = usesDtos(context, info)
     const reads = plan.read.some((item) => ['lookup', 'children'].includes(item.value.kind))
     const writes = plan.write !== null && !hasTodo(plan.write)
@@ -757,9 +931,13 @@ export function conversionTestFile(
       ...(writes
         ? [
             `var values = ${call(writeUow, names.write, 'model')};`,
-            ...plan.write!.map(
-              (item) => `Assert.Equal(row.${columnOf(info, item.column).prop}, values.${columnOf(info, item.column).prop});`,
-            ),
+            ...plan.write!.flatMap((item) => {
+              const column = columnOf(info, item.column)
+              // A value the model keeps with less detail is not written back as it was
+              if (context.orm.documents && model && lossy(item.value, column.column.type, fieldsOf(model, schema), schema)) return []
+              // Nested documents are compared by what they hold
+              return [`Assert.${item.value.kind === 'document' ? 'Equivalent' : 'Equal'}(row.${column.prop}, values.${column.prop});`]
+            }),
           ]
         : ['Assert.NotNull(model);']),
     ]

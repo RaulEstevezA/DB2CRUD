@@ -6,6 +6,8 @@
 import type { QueryDesign } from '../../crud/types.ts'
 import type { GeneratedFile } from '../../export/files.ts'
 import { lines, type Line } from '../types.ts'
+import { isObjectId } from '../../schema/documents.ts'
+import { identifiedLists, listOf } from './documents.ts'
 import { csString, CsUsings } from './csharp.ts'
 import {
   columnOf,
@@ -78,6 +80,25 @@ export function repositoryMethods(context: Context, info: TableInfo, usings: CsU
       case 'update':
         add([{ name: 'entity', type: entity }], `Task<${entity}>`, 'Stores the changes made to a row read from this repository.')
         break
+      case 'addItem':
+      case 'removeItem': {
+        const list = listOf(info, query)
+        const adds = query.kind === 'addItem'
+        // Told apart by its position, it is only removed from a list of the size it was seen in
+        const size = !adds && list.by === 'position' ? [{ name: 'size', type: 'int' }] : []
+        add(
+          [
+            ...info.key.map((column) => ({ name: column.local, type: column.cs })),
+            ...(adds ? [{ name: list.item, type: list.cs }] : list.params),
+            ...size,
+          ],
+          `Task<${entity}?>`,
+          adds
+            ? `Adds an item to ${query.columns[0]}, and gives the row as it is then, if there is one.`
+            : `Removes an item from ${query.columns[0]}${size.length > 0 ? ' that has this size' : ''}, and gives the row as it is then, if there is one.`,
+        )
+        break
+      }
       case 'delete':
         add([{ name: 'entity', type: entity }], 'Task', 'Removes a row read from this repository.')
         break
@@ -101,7 +122,7 @@ function literalOf(cs: string, value: string): string {
   return value
 }
 
-function memoryFill(info: TableInfo, column: ColumnInfo): string | null {
+export function memoryFill(context: Context, info: TableInfo, column: ColumnInfo): string | null {
   const db = column.column
   const target = `entity.${column.prop}`
   const primary = info.key.includes(column)
@@ -109,9 +130,11 @@ function memoryFill(info: TableInfo, column: ColumnInfo): string | null {
     return primary
       ? `if (${target} == 0) ${target} = ${column.cs === 'long' ? 'nextId++' : `(${column.cs})nextId++`};`
       : `${target} ??= ${column.cs === 'long' ? 'nextId++' : `(${column.cs})nextId++`};`
+  if (db.generated === 'uuid' && column.cs === 'string')
+    return `${target} ??= ${isObjectId(db.type) ? 'MongoDB.Bson.ObjectId.GenerateNewId().ToString()' : 'Guid.NewGuid().ToString()'};`
   if (db.generated === 'uuid') return primary ? `if (${target} == Guid.Empty) ${target} = Guid.NewGuid();` : `${target} ??= Guid.NewGuid();`
   if (db.generated === 'now' || db.generated === 'onUpdateNow')
-    return `${target} ??= ${column.cs === 'DateTimeOffset' ? 'DateTimeOffset.UtcNow' : 'DateTime.Now'};`
+    return `${target} ??= ${column.cs === 'DateTimeOffset' ? 'DateTimeOffset.UtcNow' : context.orm.documents ? 'DateTime.UtcNow' : 'DateTime.Now'};`
   if (db.default?.kind === 'literal' && db.default.value !== null && column.optional)
     return `${target} ??= ${typeof db.default.value === 'boolean' ? String(db.default.value) : literalOf(column.cs, String(db.default.value))};`
   return null
@@ -147,12 +170,45 @@ function memoryBody(context: Context, info: TableInfo, method: Method): string[]
       return ['return Task.FromResult(Visible().ToList());']
     case 'insert':
     case 'update':
-      return ['rows[KeyText(entity)] = entity;', 'return Task.FromResult(entity);']
+      return [
+        ...(identifiedLists(info).length > 0 ? ['entity.IdentifyItems();'] : []),
+        'rows[KeyText(entity)] = entity;',
+        'return Task.FromResult(entity);',
+      ]
+    case 'addItem':
+    case 'removeItem':
+      return memoryItem(info, method)
     case 'delete':
       return ['rows.Remove(KeyText(entity));', 'return Task.CompletedTask;']
     default:
       return ['throw new NotSupportedException();']
   }
+}
+
+/** One item of a list added or removed in memory. */
+function memoryItem(info: TableInfo, method: Method): string[] {
+  const list = listOf(info, method.query)
+  const [param] = list.params
+  const items = `found.${list.column.prop}`
+  const keys = info.key.map((column) => `Equals(row.${column.prop}, ${column.local})`).join(' && ')
+  const version = info.version
+  const change =
+    method.query.kind === 'addItem'
+      ? [
+          ...(list.by === 'id' ? [`${list.item}.Id ??= MongoDB.Bson.ObjectId.GenerateNewId().ToString();`] : []),
+          `${items} = [..${items} ?? [], ${list.item}];`,
+        ]
+      : list.by === 'position'
+        ? [`${items} = (${items} ?? []).Where((_, index) => index != position).ToList();`]
+        : [`${items} = (${items} ?? []).Where(candidate => !Equals(candidate${list.by === 'id' ? '.Id' : ''}, ${param.name})).ToList();`]
+  return [
+    `var found = Visible().FirstOrDefault(row => ${keys});`,
+    `if (found is null${method.query.kind === 'removeItem' && list.by === 'position' ? ` || (${items}?.Count ?? 0) != size` : ''}) return Task.FromResult<${info.entity}?>(null);`,
+    ...change,
+    ...(version ? [`found.${version.prop} = ${version.optional ? `(found.${version.prop} ?? 0)` : `found.${version.prop}`} + 1;`] : []),
+    ...info.columns.filter(({ column }) => column.generated === 'onUpdateNow').map((column) => `found.${column.prop} = DateTime.UtcNow;`),
+    `return Task.FromResult<${info.entity}?>(found);`,
+  ]
 }
 
 function block(method: Method, body: Line[], modifier: string, async: boolean, doc: boolean): Line[] {
@@ -214,7 +270,7 @@ export function repositoryFiles(context: Context, info: TableInfo): GeneratedFil
   if (context.settings.memoryRepositories) {
     const usings = new CsUsings(ns).add(entityNs)
     const methods = repositoryMethods(context, info, usings)
-    const fills = info.columns.map((column) => memoryFill(info, column)).filter((line): line is string => line !== null)
+    const fills = info.columns.map((column) => memoryFill(context, info, column)).filter((line): line is string => line !== null)
     const modifier = interfaces ? '' : 'override '
     const bodies = methods.map((method) => {
       const body = memoryBody(context, info, method)

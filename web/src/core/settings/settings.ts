@@ -26,6 +26,7 @@ export type OrmId =
   | 'fluent'
   | 'mongoose'
   | 'springdata'
+  | 'mongodriver'
   | 'beanie'
   /** No ORM: SQL through each database's driver */
   | 'sql'
@@ -255,6 +256,17 @@ export const STACKS: readonly StackInfo[] = [
     orm: 'sql',
     label: 'SQL (ADO.NET)',
     databases: ['postgresql', 'mysql', 'mariadb', 'sqlite'],
+    execution: ['async'],
+    errors: ['exceptions'],
+    dtoKinds: ['record', 'class'],
+    updates: ['patch', 'full'],
+  },
+  {
+    language: 'csharp',
+    orm: 'mongodriver',
+    label: 'MongoDB.Driver 3',
+    databases: ['mongodb'],
+    transactions: 'repository',
     execution: ['async'],
     errors: ['exceptions'],
     dtoKinds: ['record', 'class'],

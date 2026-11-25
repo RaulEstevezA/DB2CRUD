@@ -13,6 +13,10 @@ import type { Method } from './repositories.ts'
 
 export interface CsharpOrm {
   id: OrmId
+  /** Columns may hold documents and lists of them, as classes of their own; the entities are always the project's */
+  documents?: boolean
+  /** What the names of the database classes start with, when it is not `Sql`: `MongoUnitOfWork` */
+  prefix?: string
   /** The class that holds the connection and its transaction, which repositories and the unit of work take: `AppDbContext` */
   holder: string
   /** The statement that makes the tests read again from the database what the unit of work keeps, when it keeps something */

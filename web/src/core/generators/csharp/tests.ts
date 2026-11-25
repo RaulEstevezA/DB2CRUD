@@ -6,7 +6,9 @@
  */
 import type { GeneratedFile } from '../../export/files.ts'
 import { lines, type Line } from '../types.ts'
-import { csString, CsUsings } from './csharp.ts'
+import type { DbType } from '../../schema/types.ts'
+import { listOf, type ListInfo, type NestedClass } from './documents.ts'
+import { csString, CsUsings, pascalName } from './csharp.ts'
 import {
   columnOf,
   commonNamespace,
@@ -84,9 +86,10 @@ function factoriesFile(context: Context, makeable: TableInfo[]): GeneratedFile {
         // No sample is sure to fit a type that is not known
         if (column.column.nullable && (isKey || column.column.type.kind === 'unknown')) return []
         const value =
-          column.column.type.kind === 'array'
+          documentValue(info, column) ??
+          (column.column.type.kind === 'array'
             ? context.orm.emptyList(context)
-            : sampleValue(column, info.table.checks, context.schema.enums)
+            : sampleValue(column, info.table.checks, context.schema.enums))
         return [`        entity.${column.prop} = ${value};`]
       })
     const insert = query(info, 'insert')!
@@ -107,6 +110,7 @@ function factoriesFile(context: Context, makeable: TableInfo[]): GeneratedFile {
       ...fromParents,
       `        return await uow.${info.attr}.${queryName(context, insert)}(entity);`,
       '    }',
+      ...[...info.nested.values()].flatMap((item) => nestedFactories(context, item)),
     ]
   })
   return testFile(context, 'Factories', usings, [
@@ -116,6 +120,57 @@ function factoriesFile(context: Context, makeable: TableInfo[]): GeneratedFile {
     ...blocks.flatMap((block, index) => [index > 0 ? '' : null, ...block]),
     '}',
   ])
+}
+
+// Nested documents
+
+const factoryOf = (item: NestedClass) =>
+  `New${item.path
+    .split('.')
+    .join('')
+    .replace(/Document/g, '')}`
+
+/** A column that holds documents, or a list of them, as a C# expression; null for any other. */
+function documentValue(info: TableInfo, column: ColumnInfo): string | null {
+  const nested = info.nested.get(column.column.name)
+  return nested ? nestedValue(column.column.type, nested) : null
+}
+
+const nestedValue = (type: DbType, nested: NestedClass): string =>
+  type.kind === 'array' ? `[${nestedValue(type.items, nested)}]` : `${factoryOf(nested)}(n)`
+
+/** A factory per class of nested document, without the identifier it is given when it is stored. */
+function nestedFactories(context: Context, item: NestedClass): string[] {
+  const values = item.fields
+    .filter((field) => field.column.name !== '_id' && field.column.type.kind !== 'unknown')
+    .map((field) => {
+      const column = { column: field.column, cs: field.cs } as ColumnInfo
+      const value = field.nested
+        ? nestedValue(field.column.type, field.nested)
+        : field.column.type.kind === 'array'
+          ? context.orm.emptyList(context)
+          : sampleValue(column, field.column.checks ?? [], context.schema.enums)
+      return `        ${field.prop} = ${value},`
+    })
+  return [
+    '',
+    `    /// <summary>A valid ${item.path}.</summary>`,
+    `    public static ${item.path} ${factoryOf(item)}(int n) => new()`,
+    '    {',
+    ...values,
+    '    };',
+    ...item.classes.flatMap((inner) => nestedFactories(context, inner)),
+  ]
+}
+
+/** A value for an item of a list, as a C# expression for the number 7. */
+function itemSample(context: Context, list: ListInfo): string {
+  if (list.nested && list.type.kind === 'json') return `Factories.${factoryOf(list.nested)}(7)`
+  if (list.type.kind === 'array') return `new ${list.cs}()`
+  return sampleValue({ ...list.column, column: { ...list.column.column, type: list.type }, cs: list.cs }, [], context.schema.enums).replace(
+    /\bn\b(?!")/g,
+    '7',
+  )
 }
 
 // Tests of each table
@@ -226,6 +281,27 @@ function repositoryTests(context: Context, info: TableInfo): Line[][] {
         `Assert.Null(await ${repo}.${queryName(context, getByKey)}(${keyOf('stored')}));`,
       ]),
     )
+  for (const adding of info.queries.filter((item) => item.kind === 'addItem')) {
+    const list = listOf(info, adding)
+    const removing = query(info, 'removeItem', adding.columns)
+    if (!removing || !getByKey) continue
+    const items = (variable: string) => `${variable}.${list.column.prop}`
+    const which = list.by === 'id' ? `${items('added')}![before].Id!` : list.by === 'value' ? 'item' : `before, ${items('added')}!.Count`
+    tests.push(
+      test(`AddsAndRemovesOneItemOf${pascalName(list.column.prop)}`, [
+        stored,
+        `var before = ${items('stored')}?.Count ?? 0;`,
+        `${list.cs} item = ${itemSample(context, list)};`,
+        `var added = await ${repo}.${queryName(context, adding)}(${keyOf('stored')}, item);`,
+        `Assert.Equal(before + 1, added!.${list.column.prop}!.Count);`,
+        `var removed = await ${repo}.${queryName(context, removing)}(${keyOf('stored')}, ${which});`,
+        `Assert.Equal(before, removed!.${list.column.prop}!.Count);`,
+        ...(list.by === 'position'
+          ? [`Assert.Null(await ${repo}.${queryName(context, removing)}(${keyOf('stored')}, 0, before + 5));`]
+          : []),
+      ]),
+    )
+  }
   return tests
 }
 
@@ -396,6 +472,34 @@ function serviceTests(context: Context, info: TableInfo, usings: CsUsings): Line
         `var created = await service.${operationName(context, create)}(${input('row')});`,
         `await service.${operationName(context, remove)}(${keyOf('created')}${version('created')});`,
         `await Assert.ThrowsAsync<NotFoundException>(() => service.${operationName(context, get)}(${keyOf('created')}));`,
+      ]),
+    )
+  }
+  for (const operation of info.operations.filter((item) => item.kind === 'addItem')) {
+    const list = listOf(info, operation)
+    const without = op('removeItem', operation.columns)
+    if (!create || !without || info.hidden.includes(list.column.column.name)) continue
+    usings.add(errorsNamespace(context))
+    const items = (variable: string) => `${variable}.${list.column.prop}`
+    const which = list.by === 'id' ? `${items('added')}![before].Id!` : list.by === 'value' ? 'item' : 'before'
+    const missing = list.by === 'id' ? `"${'f'.repeat(24)}"` : list.by === 'value' ? null : '99'
+    tests.push(
+      test(`AddsAndRemovesOneItemOf${pascalName(list.column.prop)}`, [
+        ...open,
+        ...start,
+        ...row('row', 1),
+        `var created = await service.${operationName(context, create)}(${input('row')});`,
+        `var before = ${items('created')}?.Count ?? 0;`,
+        `${list.cs} item = ${itemSample(context, list)};`,
+        `var added = await service.${operationName(context, operation)}(${keyOf('created')}, item${version('created')});`,
+        `Assert.Equal(before + 1, ${items('added')}!.Count);`,
+        `var removed = await service.${operationName(context, without)}(${keyOf('created')}, ${which}${version('added')});`,
+        `Assert.Equal(before, ${items('removed')}!.Count);`,
+        ...(missing
+          ? [
+              `await Assert.ThrowsAsync<NotFoundException>(() => service.${operationName(context, without)}(${keyOf('created')}, ${missing}${version('removed')}));`,
+            ]
+          : []),
       ]),
     )
   }
