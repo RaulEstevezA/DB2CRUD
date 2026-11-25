@@ -7,7 +7,7 @@ import type { QueryDesign } from '../../../crud/types.ts'
 import { itemKey, nestedFields } from '../../../schema/documents.ts'
 import type { DbCheck, DbColumn, DbSchema, DbType } from '../../../schema/types.ts'
 import { columnOf, type ColumnInfo, type Context, type TableInfo } from './context.ts'
-import { fieldName, nullable, phpLiteral, phpString } from './php.ts'
+import { fieldName, phpLiteral, phpString } from './php.ts'
 
 const brackets = (items: string[]) => `[${items.join(', ')}]`
 
@@ -100,7 +100,3 @@ export function listOf(context: Context, info: TableInfo, query: Pick<QueryDesig
 /** The lists of a collection whose documents have an identifier, which is made before they are stored. */
 export const identifiedLists = (info: TableInfo) =>
   info.columns.filter(({ column }) => column.type.kind === 'array' && itemKey(column.type.items) === 'id')
-
-/** The type of a nested value in an array: null when the document may not have it. */
-export const nestedPhp = (context: Context, field: DbColumn) =>
-  field.nullable || field.default !== undefined ? nullable(context.orm.phpType(field.type)) : context.orm.phpType(field.type)
