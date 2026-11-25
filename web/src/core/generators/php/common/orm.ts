@@ -18,6 +18,10 @@ export interface PhpOrm {
   label: string
   /** What the project is made of, when it is not `entities mapped with <label>, repositories and services` */
   intro?: string
+  /** Columns may hold documents and lists of them, as arrays; the entities are always the project's */
+  documents?: boolean
+  /** What the names of the database classes start with, when it is not `Sql`: `MongoUnitOfWork` */
+  prefix?: string
   /** The property of the entity that holds a column: `passwordHash`, or the column itself for Eloquent's attributes */
   property(column: DbColumn): string
   /** The PHP type of a value of the column, without null: `int`, `string`, `\DateTimeImmutable` */

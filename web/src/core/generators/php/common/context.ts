@@ -101,10 +101,12 @@ function isDateKey(schema: DbSchema, table: DbTable, name: string, seen: Set<str
 
 function columnInfo(orm: PhpOrm, schema: DbSchema, table: DbTable, column: DbColumn): ColumnInfo {
   const generated = column.generated !== undefined && column.generated !== 'onUpdateNow'
+  // MongoDB's `_id` is the `id` of the entity, unless the documents have one of their own
+  const own = orm.documents && column.name === '_id' && table.columns.some((item) => item.name === 'id')
   return {
     column,
-    prop: orm.property(column),
-    field: fieldName(column.name),
+    prop: own ? 'documentId' : orm.property(column),
+    field: own ? 'documentId' : fieldName(column.name),
     php: orm.textDateKeys && isDateKey(schema, table, column.name) ? 'string' : orm.phpType(column.type),
     generated,
     required: !column.nullable && column.default === undefined && !generated,
@@ -122,7 +124,7 @@ function tableInfo(orm: PhpOrm, schema: DbSchema, design: CrudDesign, settings: 
   const key = (table.primaryKey ?? table.columns.map((column) => column.name)).map(byName)
   const deleteMode = policy.delete.value
   const concurrency = policy.concurrency.value
-  const ownEntities = !repository.entityMissing && schema.source.format === settings.orm
+  const ownEntities = !orm.documents && !repository.entityMissing && schema.source.format === settings.orm
   const writesEntity = settings.entities === 'all' || (settings.entities === 'missing' && !ownEntities)
   const folder = pascalName(table.name)
   return {

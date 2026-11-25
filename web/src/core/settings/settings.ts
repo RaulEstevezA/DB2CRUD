@@ -27,6 +27,7 @@ export type OrmId =
   | 'mongoose'
   | 'springdata'
   | 'mongodriver'
+  | 'mongophp'
   | 'beanie'
   /** No ORM: SQL through each database's driver */
   | 'sql'
@@ -299,6 +300,17 @@ export const STACKS: readonly StackInfo[] = [
     orm: 'sql',
     label: 'SQL (PDO)',
     databases: ['postgresql', 'mysql', 'mariadb', 'sqlite'],
+    execution: ['sync'],
+    errors: ['exceptions'],
+    dtoKinds: ['readonly', 'class'],
+    updates: ['patch', 'partial', 'full'],
+  },
+  {
+    language: 'php',
+    orm: 'mongophp',
+    label: 'MongoDB PHP library 2',
+    databases: ['mongodb'],
+    transactions: 'repository',
     execution: ['sync'],
     errors: ['exceptions'],
     dtoKinds: ['readonly', 'class'],

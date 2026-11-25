@@ -24,7 +24,10 @@ import {
   type TableInfo,
 } from './context.ts'
 import { createColumns, createDto, partialUpdates, updateClass, updateColumns, updateType } from './dtos.ts'
-import { access, phpString, PhpUses } from './php.ts'
+import type { DbType } from '../../../schema/types.ts'
+import { nestedFields } from '../../../schema/documents.ts'
+import { listOf, type ListInfo } from './documents.ts'
+import { access, pascalName, phpString, PhpUses } from './php.ts'
 import { missingValue, sampleValue } from './samples.ts'
 
 const isNullableKey = (info: TableInfo, key: TableInfo['table']['foreignKeys'][number]) =>
@@ -103,7 +106,9 @@ function factoriesFile(context: Context, makeable: TableInfo[]): GeneratedFile {
         if (column === info.soft) return column.column.type.kind === 'boolean' ? [`        ${access('$entity', column.prop)} = false;`] : []
         // No sample is sure to fit a type that is not known
         if (column.column.nullable && (isKey || column.column.type.kind === 'unknown')) return []
-        return [`        ${access('$entity', column.prop)} = ${sampleValue(column, info.table.checks, context.schema.enums)};`]
+        return [
+          `        ${access('$entity', column.prop)} = ${documentSample(context, column.column.type) ?? sampleValue(column, info.table.checks, context.schema.enums)};`,
+        ]
       })
     const insert = query(info, 'insert')!
     return [
@@ -133,6 +138,31 @@ function factoriesFile(context: Context, makeable: TableInfo[]): GeneratedFile {
     '}',
   ])
 }
+
+// Nested documents
+
+/** A document, or a list with one, as a PHP array, without the identifier it is given when it is stored; null for any other value. */
+function documentSample(context: Context, type: DbType): string | null {
+  if (!context.orm.documents || !nestedFields(type)) return null
+  if (type.kind === 'array') return `[${documentSample(context, type.items)}]`
+  const fields = nestedFields(type)!
+    .filter((field) => field.name !== '_id' && field.type.kind !== 'unknown')
+    .map((field) => {
+      const column = { column: field, php: context.orm.phpType(field.type) } as ColumnInfo
+      const value = documentSample(context, field.type) ?? sampleValue(column, field.checks ?? [], context.schema.enums)
+      return `${phpString(field.name)} => ${value}`
+    })
+  return `[${fields.join(', ')}]`
+}
+
+/** A value for an item of a list, as a PHP expression of $n. */
+const itemSample = (context: Context, list: ListInfo): string =>
+  documentSample(context, list.type) ??
+  sampleValue({ ...list.column, column: { ...list.column.column, type: list.type }, php: list.php }, [], context.schema.enums)
+
+/** The last item of a list, as the test tells it from the others. */
+const whichItem = (list: ListInfo, items: string) =>
+  list.by === 'id' ? `${items}[$before]['_id']` : list.by === 'value' ? '$item' : '$before'
 
 // Tests of each table
 
@@ -249,6 +279,29 @@ function repositoryTests(context: Context, info: TableInfo): Line[][] {
         `self::assertNull(${repo}->${queryName(context, getByKey)}(${info.key.map((_, index) => `$key${index}`).join(', ')}));`,
       ]),
     )
+  for (const adding of info.queries.filter((item) => item.kind === 'addItem')) {
+    const list = listOf(context, info, adding)
+    const removing = query(info, 'removeItem', adding.columns)
+    if (!removing || !getByKey) continue
+    const items = (variable: string) => access(variable, list.column.prop)
+    const which = `${whichItem(list, items('$added'))}${list.by === 'position' ? `, count(${items('$added')})` : ''}`
+    const remove = `${repo}->${queryName(context, removing)}(${keyOf('$stored')}`
+    tests.push(
+      test(`AddsAndRemovesOneItemOf${pascalName(list.column.field)}`, [
+        '$n = 7;',
+        stored,
+        `$before = count(${items('$stored')} ?? []);`,
+        `$item = ${itemSample(context, list)};`,
+        `$added = ${repo}->${queryName(context, adding)}(${keyOf('$stored')}, $item);`,
+        'self::assertNotNull($added);',
+        `self::assertCount($before + 1, ${items('$added')});`,
+        `$removed = ${remove}, ${which});`,
+        'self::assertNotNull($removed);',
+        `self::assertCount($before, ${items('$removed')});`,
+        ...(list.by === 'position' ? [`self::assertNull(${remove}, 0, $before + 5));`] : []),
+      ]),
+    )
+  }
   return tests
 }
 
@@ -431,6 +484,36 @@ function serviceTests(context: Context, info: TableInfo, uses: PhpUses): Line[][
         `$service->${operationName(context, remove)}(${info.key.map((_, index) => `$key${index}`).join(', ')}${version('$created')});`,
         '$this->expectException(NotFoundException::class);',
         `$service->${operationName(context, get)}(${info.key.map((_, index) => `$key${index}`).join(', ')});`,
+      ]),
+    )
+  }
+  for (const operation of info.operations.filter((item) => item.kind === 'addItem')) {
+    const list = listOf(context, info, operation)
+    const without = op('removeItem', operation.columns)
+    if (!create || !without || info.hidden.includes(list.column.column.name)) continue
+    uses.add(errorClass(context, 'NotFoundException'))
+    const items = (variable: string) => member(variable, list.column)
+    const missing = list.by === 'id' ? `'${'f'.repeat(24)}'` : list.by === 'value' ? null : '99'
+    tests.push(
+      test(`AddsAndRemovesOneItemOf${pascalName(list.column.field)}`, [
+        ...open,
+        '$n = 100;',
+        ...parentsFirst,
+        ...row('row', 1),
+        `$created = $service->${operationName(context, create)}(${input('row')});`,
+        `$before = count(${items('$created')} ?? []);`,
+        `$item = ${itemSample(context, list)};`,
+        // In memory the service gives the same row again, so what it says now is read before the next change
+        `$added = $service->${operationName(context, operation)}(${keyOf('$created')}, $item${version('$created')});`,
+        `self::assertCount($before + 1, ${items('$added')});`,
+        `$removed = $service->${operationName(context, without)}(${keyOf('$created')}, ${whichItem(list, items('$added'))}${version('$added')});`,
+        `self::assertCount($before, ${items('$removed')});`,
+        ...(missing
+          ? [
+              '$this->expectException(NotFoundException::class);',
+              `$service->${operationName(context, without)}(${keyOf('$created')}, ${missing}${version('$removed')});`,
+            ]
+          : []),
       ]),
     )
   }

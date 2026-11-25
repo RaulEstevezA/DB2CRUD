@@ -4,6 +4,7 @@
  * repositories, with its in-memory version.
  */
 import type { GeneratedFile } from '../../../export/files.ts'
+import { isObjectId } from '../../../schema/documents.ts'
 import type { Line } from '../../types.ts'
 import {
   className,
@@ -83,7 +84,7 @@ export function errorFiles(context: Context): GeneratedFile[] {
 
 /** Whether a repository makes uuids before an insert: a column the database fills with one. */
 export const makesUuids = (context: Context) =>
-  context.tables.some((info) => info.columns.some((column) => column.column.generated === 'uuid'))
+  context.tables.some((info) => info.columns.some((column) => column.column.generated === 'uuid' && !isObjectId(column.column.type)))
 
 export function commonFiles(context: Context): GeneratedFile[] {
   const ns = commonNamespace(context)

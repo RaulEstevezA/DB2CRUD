@@ -3,6 +3,8 @@
  * an example environment, .gitignore and crud-contract.json for CRUD2Controller.
  */
 import type { GeneratedFile } from '../../../export/files.ts'
+import { nestedFields } from '../../../schema/documents.ts'
+import type { DbType } from '../../../schema/types.ts'
 import { lines } from '../../types.ts'
 import {
   commonNamespace,
@@ -162,8 +164,18 @@ export function readmeFile(context: Context): GeneratedFile {
 }
 
 function typeOf(column: ColumnInfo): Record<string, unknown> {
-  const type = column.column.type
-  return { kind: type.kind, php: storedType(column), ...(type.kind === 'text' && type.length !== undefined ? { length: type.length } : {}) }
+  const { kind, ...rest } = plainType(column.column.type)
+  return { kind, php: storedType(column), ...rest }
+}
+
+function plainType(type: DbType): Record<string, unknown> {
+  // What a nested document, or each of a list of them, holds
+  const fields = nestedFields(type)
+  return {
+    kind: type.kind,
+    ...(type.kind === 'text' && type.length !== undefined ? { length: type.length } : {}),
+    ...(fields ? { fields: fields.map((field) => ({ name: field.name, type: plainType(field.type), nullable: field.nullable })) } : {}),
+  }
 }
 
 export function contractFile(context: Context): GeneratedFile {

@@ -24,6 +24,7 @@ import { rustGenerator } from './rust/generator.ts'
 import { fluentOrm } from './swift/fluent/index.ts'
 import { sqlOrm as swiftSqlOrm } from './swift/sql/index.ts'
 import { swiftGenerator } from './swift/generator.ts'
+import { mongodbOrm as phpMongodbOrm } from './php/mongodb/index.ts'
 import { phpGenerator } from './php/common/generator.ts'
 import { doctrineOrm } from './php/doctrine/index.ts'
 import { sqlOrm as phpSqlOrm } from './php/sql/index.ts'
@@ -62,6 +63,7 @@ export const GENERATORS: readonly Generator[] = [
   phpGenerator(doctrineOrm),
   phpGenerator(eloquentOrm),
   phpGenerator(phpSqlOrm),
+  phpGenerator(phpMongodbOrm),
   kotlinGenerator(exposedOrm),
   kotlinGenerator(kotlinSqlOrm),
   rustGenerator(seaormOrm),

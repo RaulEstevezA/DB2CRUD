@@ -4,6 +4,7 @@
  * with different numbers do not clash on unique columns. Mirrors csharp/samples.ts.
  */
 import type { DbCheck, DbEnum } from '../../../schema/types.ts'
+import { isObjectId } from '../../../schema/documents.ts'
 import { boundedNumber } from '../../samples.ts'
 import type { ColumnInfo } from './context.ts'
 import { phpString } from './php.ts'
@@ -42,6 +43,7 @@ export function sampleValue(column: ColumnInfo, checks: DbCheck[], enums: DbEnum
     case 'float':
       return `${number(column, checks)} + 0.5`
     case 'text': {
+      if (type.objectId) return "sprintf('%024x', $n)"
       const length = type.length ?? 40
       if (type.fixed) return `str_pad((string) ($n % ${10 ** Math.min(length, 9)}), ${length}, '0', STR_PAD_LEFT)`
       // The column name and the number, as long as it fits; $n stays below 1000 in the tests
@@ -80,6 +82,7 @@ export function sampleValue(column: ColumnInfo, checks: DbCheck[], enums: DbEnum
 
 /** A key no row has, as a PHP expression, for the tests of missing rows. */
 export function missingValue(column: ColumnInfo): string {
+  if (isObjectId(column.column.type)) return `'${'f'.repeat(24)}'`
   switch (column.php) {
     case 'int':
       return '999999'

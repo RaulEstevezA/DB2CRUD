@@ -37,8 +37,9 @@ import {
   updateColumns,
   updateType,
 } from './dtos.ts'
+import { documentRule, listOf } from './documents.ts'
 import { docBlock } from './repositories.ts'
-import { access, phpString, PhpUses } from './php.ts'
+import { access, pascalName, phpString, PhpUses } from './php.ts'
 
 interface Writer {
   context: Context
@@ -91,7 +92,7 @@ function valueRules(column: ColumnInfo, checks: DbCheck[]): Line[][] {
     `    $errors[] = new FieldError(${phpString(name)}, ${phpString(message)});`,
     '}',
   ]
-  if (type.kind === 'text' && type.length !== undefined)
+  if (type.kind === 'text' && type.length !== undefined && !type.objectId)
     rules.push(rule(`is_string($value) && mb_strlen($value) > ${type.length}`, `is longer than ${type.length} characters`))
   for (const check of checks) {
     const parsed = check.parsed
@@ -124,6 +125,11 @@ function validateMethod(writer: Writer): Block {
         ? { condition: `!$creating && array_key_exists(${field}, $values)`, message: 'cannot be empty' }
         : null
     const rules = valueRules(column, info.table.checks).flat()
+    const nested = documentRule(context, column.column.type)
+    if (nested !== null) {
+      uses.add(rootClass(context, 'Documents'))
+      rules.push(`$errors = [...$errors, ...Documents::problems($value, ${nested}, ${phpString(name)})];`)
+    }
     if (!missing && rules.length === 0) continue
     const report = missing && [
       `    if (${missing.condition}) {`,
@@ -530,8 +536,67 @@ function operationLines(writer: Writer, operation: OperationDesign): Block {
     // One item of a list: only document databases have them
     case 'addItem':
     case 'removeItem':
-      return []
+      return itemLines(writer, operation, name)
   }
+}
+
+/** Adds or removes one item of a list, so two people changing the same list do not undo each other. */
+function itemLines(writer: Writer, operation: OperationDesign, name: string): Block {
+  const { context, info, uses } = writer
+  const adds = operation.kind === 'addItem'
+  const change = query(info, adds ? 'addItem' : 'removeItem', operation.columns)
+  if (!change || !query(info, 'getByKey')) return []
+  const list = listOf(context, info, change)
+  const kept = list.column.column.name
+  const params = adds ? [{ name: list.item, type: list.php }] : list.params
+  const [param] = params
+  const version = info.version ? `, ${info.version.php} $version` : ''
+  const items = `(${access('$current', list.column.prop)} ?? [])`
+  const missing =
+    list.by === 'id'
+      ? `!in_array($${param.name}, array_column(${items}, '_id'), true)`
+      : list.by === 'value'
+        ? `!in_array($${param.name}, ${items}, true)`
+        : `!array_key_exists($${param.name}, ${items})`
+  const position = !adds && list.by === 'position'
+  uses.add(errorClass(context, 'NotFoundException'), rootClass(context, 'UnitOfWork'))
+  if (position) uses.add(errorClass(context, 'ConflictException'))
+  const rule = adds ? documentRule(context, list.type) : null
+  if (rule !== null) uses.add(rootClass(context, 'Documents'), errorClass(context, 'ValidationFailedException'))
+  const gone = position
+    ? `new ConflictException(${phpString(info.entity)}, 'was changed by someone else since it was read', [${phpString(list.column.field)}])`
+    : `new NotFoundException(${phpString(info.entity)}, ${keyValue(info)})`
+  const args = [keyArgs(info), ...params.map((item) => `$${item.name}`), ...(position ? [`count(${items})`] : [])].join(', ')
+  return [
+    adds
+      ? `/** Adds an item to ${kept}${info.version ? ', read at $version' : ''}. */`
+      : `/** Removes an item from ${kept}, by its ${list.by === 'id' ? 'identifier' : list.by}${info.version ? ', read at $version' : ''}. */`,
+    `public function ${name}(${keyParams(info)}, ${params.map((item) => `${item.type} $${item.name}`).join(', ')}${version}): ${resultType(writer)}`,
+    '{',
+    ...(rule !== null
+      ? [
+          `    $errors = Documents::problems($${list.item}, ${rule}, ${phpString(kept)});`,
+          '    if ($errors !== []) {',
+          `        throw new ValidationFailedException(${phpString(info.entity)}, $errors);`,
+          '    }',
+        ]
+      : []),
+    ...ind(
+      inTransaction(
+        [
+          `${adds && !info.version ? '' : '$current = '}self::find($uow, ${keyArgs(info)});`,
+          ...versionCheck(writer),
+          ...(adds
+            ? []
+            : [`if (${missing}) {`, `    throw new NotFoundException(${phpString(pascalName(list.item))}, $${param.name});`, '}']),
+          `return ${out(writer, `${repo(info)}->${queryName(context, change)}(${args}) ?? throw ${gone}`)};`,
+        ],
+        [...keyLocals(info), ...params.map((item) => `$${item.name}`), ...(info.version ? ['$version'] : [])],
+        resultType(writer),
+      ),
+    ),
+    '}',
+  ]
 }
 
 function linkLines(writer: Writer, operation: OperationDesign, name: string): Block {

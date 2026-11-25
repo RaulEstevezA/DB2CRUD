@@ -6,6 +6,7 @@
  */
 import type { QueryDesign } from '../../../crud/types.ts'
 import type { GeneratedFile } from '../../../export/files.ts'
+import { isObjectId } from '../../../schema/documents.ts'
 import type { Line } from '../../types.ts'
 import {
   className,
@@ -22,6 +23,7 @@ import {
   type Context,
   type TableInfo,
 } from './context.ts'
+import { identifiedLists, listOf } from './documents.ts'
 import { access, phpLiteral, phpString, PhpUses } from './php.ts'
 
 export interface RepositoryMethod {
@@ -85,6 +87,25 @@ export function repositoryMethods(context: Context, info: TableInfo, uses: PhpUs
       case 'update':
         add([{ name: 'entity', type: entity }], entity, 'Stores the changes made to a row read from this repository.')
         break
+      case 'addItem':
+      case 'removeItem': {
+        const list = listOf(context, info, query)
+        const adds = query.kind === 'addItem'
+        // Told apart by its position, it is only removed from a list of the size it was seen in
+        const size = !adds && list.by === 'position' ? [{ name: 'size', type: 'int' }] : []
+        add(
+          [
+            ...info.key.map((column) => ({ name: column.field, type: column.php })),
+            ...(adds ? [{ name: list.item, type: list.php }] : list.params),
+            ...size,
+          ],
+          `?${entity}`,
+          adds
+            ? `Adds an item to ${query.columns[0]}, and gives the row as it is then, if there is one.`
+            : `Removes an item from ${query.columns[0]}${size.length > 0 ? ' that has this size' : ''}, and gives the row as it is then, if there is one.`,
+        )
+        break
+      }
       case 'delete':
         add([{ name: 'entity', type: entity }], 'void', 'Removes a row read from this repository.')
         break
@@ -140,12 +161,13 @@ export function defaultLiteral(column: ColumnInfo, value: string | number | bool
   return phpLiteral(value)
 }
 
-function memoryFill(context: Context, info: TableInfo, column: ColumnInfo, uses: PhpUses): string[] {
+export function memoryFill(context: Context, info: TableInfo, column: ColumnInfo, uses: PhpUses): string[] {
   const db = column.column
   const target = access('$entity', column.prop)
   const primary = info.key.includes(column)
   if (db.generated === 'identity')
     return primary ? [`if (${target} === null) {`, `    ${target} = $this->nextId++;`, '}'] : [`${target} ??= $this->nextId++;`]
+  if (db.generated === 'uuid' && isObjectId(db.type)) return [`${target} ??= (string) new \\MongoDB\\BSON\\ObjectId();`]
   if (db.generated === 'uuid') {
     uses.add(commonClass(context, 'Uuid'))
     return [`${target} ??= Uuid::v4();`]
@@ -185,12 +207,60 @@ function memoryBody(context: Context, info: TableInfo, method: RepositoryMethod)
       return ['return $this->visible();']
     case 'insert':
     case 'update':
-      return ['$this->rows[self::keyText($entity)] = $entity;', 'return $entity;']
+      return [
+        ...identifiedLists(info).map(
+          (column) => `${access('$entity', column.prop)} = \\App\\Documents::identify(${access('$entity', column.prop)});`,
+        ),
+        '$this->rows[self::keyText($entity)] = $entity;',
+        'return $entity;',
+      ]
+    case 'addItem':
+    case 'removeItem':
+      return memoryItem(context, info, method)
     case 'delete':
       return ['unset($this->rows[self::keyText($entity)]);']
     default:
       return ["throw new \\LogicException('not supported');"]
   }
+}
+
+/** One item of a list added or removed in memory. */
+function memoryItem(context: Context, info: TableInfo, method: RepositoryMethod): Line[] {
+  const list = listOf(context, info, method.query)
+  const [param] = list.params
+  const items = access('$row', list.column.prop)
+  const adds = method.query.kind === 'addItem'
+  const position = !adds && list.by === 'position'
+  const version = info.version ? access('$row', info.version.prop) : null
+  const change = adds
+    ? [
+        ...(list.by === 'id' ? [`[$${list.item}] = \\App\\Documents::identify([$${list.item}]);`] : []),
+        `${items} = [...(${items} ?? []), $${list.item}];`,
+      ]
+    : position
+      ? [`${items} = array_values(array_diff_key(${items} ?? [], [$position => true]));`]
+      : [
+          `${items} = array_values(array_filter(${items} ?? [], fn (mixed $candidate) => ${list.by === 'id' ? "($candidate['_id'] ?? null)" : '$candidate'} !== $${param.name}));`,
+        ]
+  const conditions = [
+    ...info.key.map((column) => `${access('$row', column.prop)} == $${column.field}`),
+    ...(position ? [`count(${items} ?? []) === $size`] : []),
+  ]
+  return [
+    'foreach ($this->visible() as $row) {',
+    `    if (${conditions.join(' && ')}) {`,
+    ...[
+      ...change,
+      ...(version ? [`${version} = (${version} ?? 0) + 1;`] : []),
+      ...info.columns
+        .filter(({ column }) => column.generated === 'onUpdateNow')
+        .map((column) => `${access('$row', column.prop)} = new \\DateTimeImmutable();`),
+      'return $row;',
+    ].map((line) => `        ${line}`),
+    '    }',
+    '}',
+    'return null;',
+  ]
 }
 
 export function repositoryFiles(context: Context, info: TableInfo): GeneratedFile[] {
