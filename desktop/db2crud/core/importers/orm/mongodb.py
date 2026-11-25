@@ -170,7 +170,7 @@ def _fields_of(schema: dict, where: str, reading: dict) -> list[dict]:
     return result
 
 
-def _table_of(name: str, schema: dict, line: int, reading: dict) -> dict:
+def _table_of(name: str, schema: dict, reading: dict, line: int | None = None) -> dict:
     table = {
         "name": name,
         "columns": [],
@@ -179,8 +179,9 @@ def _table_of(name: str, schema: dict, line: int, reading: dict) -> dict:
         "uniques": [],
         "indexes": [],
         "checks": [],
-        "origin": {"line": line, "column": 1},
     }
+    if line is not None:
+        table["origin"] = {"line": line, "column": 1}
     for field in _fields_of(entries_of(schema), name, reading):
         table["columns"].append(field["column"])
         table["checks"].extend(field["checks"])
@@ -190,6 +191,11 @@ def _table_of(name: str, schema: dict, line: int, reading: dict) -> dict:
     elif is_object_id(identifier["type"]):
         identifier["generated"] = "uuid"
     return table
+
+
+def collections_of(collections: list[dict], reading: dict) -> list[dict]:
+    """Collections whose $jsonSchema is known, not read from a script."""
+    return [_table_of(item["name"], item["schema"], reading) for item in collections]
 
 
 def _validator_of(options: dict | None) -> dict | None:
@@ -209,7 +215,7 @@ def _read_mongodb(files: list[dict]) -> dict:
                 {"code": "orm.noValidator", "params": {"table": name}, "origin": {"line": line, "column": 1}}
             )
         if schema is not None and not any(table["name"] == name for table in tables):
-            tables.append(_table_of(name, schema, line, reading))
+            tables.append(_table_of(name, schema, reading, line))
 
     for file in files:
         try:

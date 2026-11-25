@@ -4,6 +4,7 @@ them, with a copy of its code (vendor/, decision 15). Mirrors web/src/core/inter
 
 import re
 
+from .documents import DOCUMENT_OUTPUTS, document_schema
 from .vendor.design.edit import reconcile
 from .vendor.generate.sql.sql import sql_column_type
 from .vendor.interop.project import read_project
@@ -50,23 +51,24 @@ def _engine_of(output: str, engine: str) -> str:
     return engine if engine in engines else engines[0]
 
 
-def _relational_of(project: dict):
-    """The tables Model2DB builds for the project, or the code of why it cannot."""
-    source, output = project["input"], project["output"]
-    if output["output"] not in RELATIONAL_OUTPUTS:
-        return "notRelational"
+def _models_of(source: dict) -> dict | str:
+    """The models written in the project, or the code of why they cannot be read."""
     format_id = source.get("format") or detect_format(source["text"], source.get("fileName"))
     if not format_id:
         return "unreadableInput"
     outcome = parse_input(source["text"], format_id, {"rootName": "Root"})
     if not outcome["ok"]:
         return "noModels" if outcome["error"]["code"] == "noModels" else "unreadableInput"
-    if not outcome["schema"]["models"]:
-        return "noModels"
-    design = reconcile(project["designs"]["relational"], outcome["schema"], "relational")
+    return outcome["schema"] if outcome["schema"]["models"] else "noModels"
+
+
+def _relational_of(project: dict, models: dict) -> tuple[dict, str]:
+    """The tables Model2DB builds for the project, as Model2DB itself does when the project is opened."""
+    output = project["output"]
+    design = reconcile(project["designs"]["relational"], models, "relational")
     engine = _engine_of(output["output"], output["engine"])
     options = {"naming": output["naming"]["relational"], "strings": output["strings"], "dialect": engine}
-    return build_relational(outcome["schema"], design, options), engine
+    return build_relational(models, design, options), engine
 
 
 # Writing it as db-schema
@@ -168,13 +170,17 @@ def _db_table(table: dict, engine: str, enums: list[dict], with_entities: bool) 
 _QUERY_ADVICE = {"model2db.queryPending", "model2db.queryIndexes", "model2db.queryNotIndexed"}
 
 
+def _without_advice(notes: list[dict]) -> list[dict]:
+    return [note for note in notes if note["code"] not in _QUERY_ADVICE]
+
+
 def _notes_of(physical: dict) -> list[dict]:
     """What the build left pending or noted, so the interface can say it."""
     notes = [{"code": f"model2db.{note['code']}", "params": note["params"]} for note in physical["notes"]]
     for table in physical["tables"]:
         for todo in table["todos"]:
             notes.append({"code": f"model2db.{todo['code']}", "params": {**todo["params"], "table": table["name"]}})
-    return [note for note in notes if note["code"] not in _QUERY_ADVICE]
+    return _without_advice(notes)
 
 
 def read_model2db_project(text: str) -> dict:
@@ -182,11 +188,18 @@ def read_model2db_project(text: str) -> dict:
     read = read_project(text)
     if not read["ok"]:
         return {"ok": False, "error": read["error"], **({"path": read["path"]} if read.get("path") else {})}
-    built = _relational_of(read["project"])
-    if isinstance(built, str):
-        return {"ok": False, "error": built}
-    physical, engine = built
-    output = read["project"]["output"]["output"]
+    project = read["project"]
+    output = project["output"]["output"]
+    if output not in DOCUMENT_OUTPUTS and output not in RELATIONAL_OUTPUTS:
+        return {"ok": False, "error": "unsupportedDatabase"}
+    models = _models_of(project["input"])
+    if isinstance(models, str):
+        return {"ok": False, "error": models}
+    if output in DOCUMENT_OUTPUTS:
+        design = reconcile(project["designs"]["document"], models, "document")
+        schema = document_schema(models, design, project["output"]["naming"]["document"], output)
+        return {"ok": True, "schema": {**schema, "notes": _without_advice(schema["notes"])}}
+    physical, engine = _relational_of(project, models)
     with_entities = output not in SQL_OUTPUTS
     enums = [
         {"name": item["sqlName"], "values": [str(value) for value in item["values"]], "storage": item["storage"]}
