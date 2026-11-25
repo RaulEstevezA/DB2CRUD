@@ -29,6 +29,7 @@ export type OrmId =
   | 'mongodriver'
   | 'mongophp'
   | 'mongokotlin'
+  | 'mongorust'
   | 'beanie'
   /** No ORM: SQL through each database's driver */
   | 'sql'
@@ -367,6 +368,17 @@ export const STACKS: readonly StackInfo[] = [
     orm: 'sql',
     label: 'SQL (sqlx)',
     databases: ['postgresql', 'mysql', 'mariadb', 'sqlite'],
+    execution: ['async'],
+    errors: ['results'],
+    dtoKinds: ['struct'],
+    updates: ['patch', 'optional', 'full'],
+  },
+  {
+    language: 'rust',
+    orm: 'mongorust',
+    label: 'MongoDB Rust driver 3',
+    databases: ['mongodb'],
+    transactions: 'repository',
     execution: ['async'],
     errors: ['results'],
     dtoKinds: ['struct'],

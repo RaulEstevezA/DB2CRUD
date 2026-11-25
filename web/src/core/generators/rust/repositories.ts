@@ -20,6 +20,7 @@ import {
   type Context,
   type TableInfo,
 } from './context.ts'
+import { identifiedLists, listOf } from './documents.ts'
 import { nowOf, rsLiteral } from './values.ts'
 import { RsUses } from './rust.ts'
 import { COMMON, DOMAIN_ERROR } from './support.ts'
@@ -83,6 +84,25 @@ export function repositoryMethods(context: Context, info: TableInfo, uses: RsUse
       case 'update':
         add([{ name: 'entity', type: entity }], entity, 'Stores the changes made to a row.')
         break
+      case 'addItem':
+      case 'removeItem': {
+        const list = listOf(info, query)
+        const adds = query.kind === 'addItem'
+        // Told apart by its position, it is only removed from a list of the size it was seen in
+        const size = !adds && list.by === 'position' ? [{ name: 'size', type: 'usize' }] : []
+        add(
+          [
+            ...info.key.map((column) => ({ name: column.field, type: column.rs })),
+            ...(adds ? [{ name: list.item, type: list.rs }] : list.params.map((item) => ({ name: item.name, type: item.type }))),
+            ...size,
+          ],
+          `Option<${entity}>`,
+          adds
+            ? `Adds an item to ${query.columns[0]}, and gives the row as it is then, if there is one.`
+            : `Removes an item from ${query.columns[0]}${size.length > 0 ? ' that has this size' : ''}, and gives the row as it is then, if there is one.`,
+        )
+        break
+      }
       case 'delete':
         add([{ name: 'entity', type: `&${entity}` }], '()', 'Removes a row.')
         break
@@ -102,13 +122,15 @@ export function keyValue(info: TableInfo, variable: string): string {
 
 // In memory
 
-function memoryFill(column: ColumnInfo): string | null {
+export function memoryFill(column: ColumnInfo): string | null {
   const db = column.column
   const target = `entity.${column.field}`
   if (db.generated === 'identity') {
     const value = column.rs === 'i64' ? '*next' : `*next as ${column.rs}`
     return `${target} = ${target}.or_else(|| {\n    let mut next = self.next_id.lock().unwrap();\n    *next += 1;\n    Some(${value})\n});`
   }
+  if (db.generated === 'uuid' && db.type.kind === 'text' && db.type.objectId)
+    return `${target} = ${target}.or_else(|| Some(mongodb::bson::oid::ObjectId::new().to_hex()));`
   if (db.generated === 'uuid') return `${target} = ${target}.or_else(|| Some(uuid::Uuid::new_v4()));`
   if (db.generated === 'now' || db.generated === 'onUpdateNow') {
     const now = nowOf(column)
@@ -167,12 +189,61 @@ function memoryBody(context: Context, info: TableInfo, method: Method): string[]
       return ['Ok(self.visible())']
     case 'insert':
     case 'update':
-      return ['self.store(&entity);', 'Ok(entity)']
+      return [
+        ...(identifiedLists(info).length > 0 ? ['let mut entity = entity;', 'entity.identify_items();'] : []),
+        'self.store(&entity);',
+        'Ok(entity)',
+      ]
+    case 'addItem':
+    case 'removeItem':
+      return memoryItem(info, method)
     case 'delete':
       return ['self.rows.lock().unwrap().retain(|row| key_of(row) != key_of(entity));', 'Ok(())']
     default:
       return ['unimplemented!()']
   }
+}
+
+/** One item of a list added or removed in memory. */
+function memoryItem(info: TableInfo, method: Method): string[] {
+  const list = listOf(info, method.query)
+  const [param] = list.params
+  const items = `found.${list.column.field}`
+  const adds = method.query.kind === 'addItem'
+  const position = !adds && list.by === 'position'
+  const keys = info.key.map((column) => `row.${column.field}.as_ref() == Some(&${column.field})`).join(' && ')
+  const touched = info.columns.filter(({ column }) => column.generated === 'onUpdateNow')
+  const change = adds
+    ? [
+        ...(list.by === 'id'
+          ? [
+              `let mut ${list.item} = ${list.item};`,
+              `${list.item}.id = ${list.item}.id.or_else(|| Some(mongodb::bson::oid::ObjectId::new().to_hex()));`,
+            ]
+          : []),
+        `${items}.get_or_insert_default().push(${list.item});`,
+      ]
+    : position
+      ? [
+          `let items = ${items}.get_or_insert_default();`,
+          'if items.len() != size || position >= size {',
+          '    return Ok(None);',
+          '}',
+          'items.remove(position);',
+        ]
+      : [
+          `${items}.get_or_insert_default().retain(|item| ${list.by === 'id' ? `item.id.as_ref() != Some(&${param.name})` : `*item != ${param.name}`});`,
+        ]
+  return [
+    `let Some(mut found) = self.visible().into_iter().find(|row| ${keys}) else {`,
+    '    return Ok(None);',
+    '};',
+    ...change,
+    ...(info.version ? [`found.${info.version.field} = Some(found.${info.version.field}.unwrap_or(0) + 1);`] : []),
+    ...touched.map((column) => `found.${column.field} = Some(chrono::Utc::now());`),
+    'self.store(&found);',
+    'Ok(Some(found))',
+  ]
 }
 
 function block(method: Method, body: string[], prefix: string, doc: boolean): string[] {
@@ -226,8 +297,10 @@ export function repositoryFile(context: Context, info: TableInfo): GeneratedFile
     uses.add('std::sync::Arc', 'std::sync::Mutex')
     const fills = info.columns.map(memoryFill).filter((line): line is string => line !== null)
     const kinds = new Set(methods.map((method) => method.query.kind))
-    const reads = ['getByKey', 'findByUnique', 'listByParent', 'findAllBy', 'list'].some((kind) => kinds.has(kind as never))
-    const stores = kinds.has('insert') || kinds.has('update')
+    const reads = ['getByKey', 'findByUnique', 'listByParent', 'findAllBy', 'list', 'addItem', 'removeItem'].some((kind) =>
+      kinds.has(kind as never),
+    )
+    const stores = ['insert', 'update', 'addItem', 'removeItem'].some((kind) => kinds.has(kind as never))
     const cursor = kinds.has('list') && context.settings.paging === 'cursor'
     if (reads || cursor) uses.add('std::cmp::Ordering')
     const identity = info.columns.some((column) => column.column.generated === 'identity')
@@ -235,7 +308,9 @@ export function repositoryFile(context: Context, info: TableInfo): GeneratedFile
       const lines = memoryBody(context, info, item)
       return block(
         item,
-        item.query.kind === 'insert' && fills.length > 0 ? ['let mut entity = entity;', ...fills, ...lines] : lines,
+        item.query.kind === 'insert' && fills.length > 0
+          ? ['let mut entity = entity;', ...fills, ...lines.filter((line) => line !== 'let mut entity = entity;')]
+          : lines,
         '',
         false,
       )

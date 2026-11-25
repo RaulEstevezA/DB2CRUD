@@ -28,8 +28,9 @@ import {
   type TableInfo,
 } from './context.ts'
 import { createColumns, createDto, readColumns, readDto, updateColumns, updatePath, updateStruct, updateType } from './dtos.ts'
+import { checkCall, documentCheckFunctions, documentRules, listOf } from './documents.ts'
 import { nowOf } from './values.ts'
-import { RsUses, rsString, snakeName } from './rust.ts'
+import { RsUses, rsString, snakeName, typeName } from './rust.ts'
 import { COMMON, DOMAIN_ERROR, ERRORS, UNIT_OF_WORK } from './support.ts'
 
 type Helper = 'find' | 'read' | 'checkValues' | 'apply' | 'given'
@@ -40,6 +41,8 @@ interface Writer {
   uses: RsUses
   dtos: boolean
   used: Set<Helper>
+  /** The lists whose documents are checked before they are added */
+  checkedLists: Set<string>
 }
 
 const ind = (items: string[], spaces = 4) => items.map((line) => (line === '' ? '' : ' '.repeat(spaces) + line))
@@ -98,7 +101,7 @@ function valueRules(column: ColumnInfo, checks: DbCheck[]): string[] {
     `    errors.push(FieldError::new(${rsString(name)}, ${rsString(message)}));`,
     '}',
   ]
-  if (type.kind === 'text' && type.length !== undefined)
+  if (type.kind === 'text' && type.length !== undefined && !type.objectId)
     rules.push(...rule(`value.chars().count() > ${type.length}`, `is longer than ${type.length} characters`))
   for (const check of checks) {
     const parsed = check.parsed
@@ -133,7 +136,7 @@ function validateBlocks(writer: Writer): { blocks: string[][]; creating: boolean
       : !column.column.nullable
         ? { condition: `!creating && values.${column.field}.is_some()`, message: 'cannot be empty' }
         : null
-    const rules = valueRules(column, info.table.checks)
+    const rules = [...valueRules(column, info.table.checks), ...documentRules(context, info, column)]
     if (!missing && rules.length === 0) continue
     const value = `values.${column.field}.as_ref().and_then(|value| value.as_ref())`
     if (missing) {
@@ -558,11 +561,76 @@ function operationLines(writer: Writer, operation: OperationDesign): string[] {
     case 'link':
     case 'unlink':
       return linkLines(writer, operation, name)
-    // One item of a list: only document databases have them
     case 'addItem':
     case 'removeItem':
-      return []
+      return itemLines(writer, operation, name)
   }
+}
+
+/** Adds or removes one item of a list, so two people changing the same list do not undo each other. */
+function itemLines(writer: Writer, operation: OperationDesign, name: string): string[] {
+  const { context, info, uses } = writer
+  const adds = operation.kind === 'addItem'
+  const change = query(info, adds ? 'addItem' : 'removeItem', operation.columns)
+  if (!change || !query(info, 'getByKey')) return []
+  writer.used.add('find')
+  const list = listOf(info, change)
+  const kept = list.column.column.name
+  const params = adds ? [{ name: list.item, type: list.rs, copy: list.copy }] : list.params
+  const [given] = params
+  const version = info.version ? `, version: ${info.version.rs}` : ''
+  const items = `current.${list.column.field}.as_deref().unwrap_or_default()`
+  const present =
+    list.by === 'id'
+      ? `${items}.iter().any(|item| item.id.as_ref() == Some(&${given.name}))`
+      : list.by === 'value'
+        ? `${items}.contains(&${given.name})`
+        : `${given.name} < ${items}.len()`
+  const position = !adds && list.by === 'position'
+  const checked = adds && list.nested !== null && list.type.kind === 'json'
+  if (checked) {
+    writer.checkedLists.add(kept)
+    uses.add(`${ERRORS}::FieldError`)
+  }
+  const gone = position
+    ? `DomainError::conflict(${rsString(info.entity)}, "was changed by someone else since it was read", &[${rsString(list.column.key)}])`
+    : `DomainError::not_found(${rsString(info.entity)}, ${keyValue(info)})`
+  const args = [info.key.map(pass).join(', '), ...params.map((item) => item.name), ...(position ? ['size'] : [])].join(', ')
+  return [
+    adds
+      ? `/// Adds an item to ${kept}${info.version ? ', read at version' : ''}.`
+      : `/// Removes an item from ${kept}, by its ${list.by === 'id' ? 'identifier' : list.by}${info.version ? ', read at version' : ''}.`,
+    `pub async fn ${name}(&self, ${keyParams(info)}, ${params.map((item) => `${item.name}: ${item.type}`).join(', ')}${version}) -> Result<${resultType(writer)}, DomainError> {`,
+    ...ind([
+      ...(checked
+        ? [
+            'let mut errors: Vec<FieldError> = Vec::new();',
+            checkCall(list.nested!, list.item, kept),
+            'if !errors.is_empty() {',
+            `    return Err(DomainError::ValidationFailed { entity: ${rsString(info.entity)}.to_string(), errors });`,
+            '}',
+          ]
+        : []),
+      ...inTransaction(
+        writer,
+        [
+          `${adds && !info.version ? '' : 'let current = '}find(uow, ${info.key.map(pass).join(', ')}).await?;`,
+          ...versionCheck(writer),
+          ...(adds
+            ? []
+            : [
+                `if !(${present}) {`,
+                `    return Err(DomainError::not_found(${rsString(typeName(list.item.replace(/^r#/, '')))}, ${given.name}));`,
+                '}',
+              ]),
+          ...(position ? [`let size = ${items}.len();`] : []),
+          `let changed = ${repo(info)}.${queryName(context, change)}(${args}).await?.ok_or_else(|| ${gone})?;`,
+        ],
+        `Ok(${out(writer, 'changed')})`,
+      ),
+    ]),
+    '}',
+  ]
 }
 
 function linkLines(writer: Writer, operation: OperationDesign, name: string): string[] {
@@ -602,7 +670,7 @@ function linkLines(writer: Writer, operation: OperationDesign, name: string): st
             `if ${found}.is_some() {`,
             `    return Err(DomainError::conflict(${rsString(info.entity)}, ${rsString(`is already linked to this ${farInfo.entity}`)}, &[${farCols.map((column) => rsString(column.key)).join(', ')}]));`,
             '}',
-            `${repo(join)}.${queryName(context, insert)}(${join.entity} { ${values}${every.length === join.columns.length ? '' : ', ..Default::default()'} }).await?;`,
+            `${repo(join)}.${queryName(context, insert)}(${join.entity} { ${values}${every.length === join.columns.length && !context.orm.documents ? '' : ', ..Default::default()'} }).await?;`,
           ],
           'Ok(())',
         ),
@@ -640,7 +708,7 @@ export function serviceFile(context: Context, info: TableInfo): GeneratedFile | 
   const module = moduleOf(context, info, 'service')
   const uses = new RsUses().add('std::sync::Arc', UNIT_OF_WORK, DOMAIN_ERROR)
   const dtos = context.settings.serviceTypes === 'dtos'
-  const writer: Writer = { context, info, uses, dtos, used: new Set() }
+  const writer: Writer = { context, info, uses, dtos, used: new Set(), checkedLists: new Set() }
   const operations = info.operations.map((operation) => operationLines(writer, operation)).filter((block) => block.length > 0)
   if (operations.length > 0) uses.add(pathIn(moduleOf(context, info, 'entity'), info.entity))
   if (dtos && writer.used.has('read')) uses.add(pathIn(moduleOf(context, info, 'dtos'), readDto(info)))
@@ -649,6 +717,12 @@ export function serviceFile(context: Context, info: TableInfo): GeneratedFile | 
   if (values) helpers.push(valuesStruct(info))
   if (writer.used.has('checkValues')) helpers.push(checkFunctions(writer))
   if (writer.used.has('apply')) helpers.push(applyFunction(info))
+  const checked = info.columns
+    .filter(
+      (column) => (writer.used.has('checkValues') && createColumns(info).includes(column)) || writer.checkedLists.has(column.column.name),
+    )
+    .map((column) => column.column.name)
+  helpers.push(...documentCheckFunctions(context, info, checked))
   if (writer.used.has('given')) helpers.push(givenFunction(writer))
   if (writer.used.has('find')) helpers.push(findFunction(writer))
   if (writer.used.has('read')) helpers.push(readFunction(info))

@@ -169,7 +169,7 @@ const URLS: Record<string, string> = {
   sqlite: 'sqlite://app.db?mode=rwc',
 }
 
-export const defaultUrl = (context: Context) => URLS[context.settings.database] ?? URLS.postgresql
+export const defaultUrl = (context: Context) => context.orm.url ?? URLS[context.settings.database] ?? URLS.postgresql
 
 const HOW = {
   operation: 'Each service operation runs in a transaction of its own: begin() opens it, commit() keeps its changes.',
@@ -212,6 +212,7 @@ export function unitOfWorkFile(context: Context): GeneratedFile {
     '/// The repositories over one database, and its transactions.',
     'pub struct SqlUnitOfWork {',
     '    db: Db,',
+    ...(transactions.fields ?? []),
     '}',
     '',
     'impl SqlUnitOfWork {',

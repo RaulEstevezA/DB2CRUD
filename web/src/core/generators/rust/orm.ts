@@ -18,8 +18,14 @@ export interface RustOrm {
   error: string
   /** A list without items as the entities keep it, as a Rust expression */
   emptyList(context: Context): string
-  /** `database.rs` */
-  databaseFile(context: Context): GeneratedFile
+  /** Columns may hold documents and lists of them, as structs of their own; the entities are always the project's */
+  documents?: boolean
+  /** What the names of the database structs start with, when it is not `Sql`: `MongoUnitOfWork` */
+  prefix?: string
+  /** The address of the database, when it is not the one of the dialect */
+  url?: string
+  /** `database.rs`, and the files beside it */
+  databaseFiles(context: Context): GeneratedFile[]
   /** The entity of a table, and what maps it */
   entityFiles(context: Context, info: TableInfo): GeneratedFile[]
   /** The database repository of a table, over `db: &Db` */
@@ -35,6 +41,8 @@ export interface RustOrm {
     uses: string[]
     /** The functions of `impl SqlUnitOfWork` */
     constructors: string[]
+    /** Its fields besides the database */
+    fields?: string[]
     /** The body of begin() and of commit() */
     begin: string[]
     commit: string[]
@@ -46,6 +54,8 @@ export interface RustOrm {
   readme: {
     /** What the project is made of, after "for a database that already exists: " */
     intro: string
+    /** The lines of the layout of the files beside `database.rs` */
+    layout?: string[]
     /** The lines of the layout per layer and per table */
     entities: string
     table: string

@@ -30,6 +30,8 @@ export function nowOf(column: ColumnInfo): string | null {
   switch (column.rs) {
     case 'chrono::DateTime<chrono::FixedOffset>':
       return 'chrono::Utc::now().fixed_offset()'
+    case 'chrono::DateTime<chrono::Utc>':
+      return 'chrono::Utc::now()'
     case 'chrono::NaiveDateTime':
       return 'chrono::Utc::now().naive_utc()'
     case 'chrono::NaiveDate':

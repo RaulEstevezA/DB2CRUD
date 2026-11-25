@@ -216,7 +216,7 @@ export const seaormOrm: RustOrm = {
   label: 'SeaORM',
   error: 'sea_orm::DbErr',
   emptyList: (context) => (context.settings.database === 'postgresql' ? '"{}".to_string()' : '"[]".to_string()'),
-  databaseFile,
+  databaseFiles: (context) => [databaseFile(context)],
   entityFiles: (context, info) => [entityFile(context, info), tableFile(context, info)],
   repository: {
     uses: (context, info) => [`${moduleOf(context, info, 'table')} as table`],

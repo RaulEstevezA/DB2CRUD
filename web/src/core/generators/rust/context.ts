@@ -18,6 +18,7 @@ import type { DbColumn, DbSchema, DbTable, DbType } from '../../schema/types.ts'
 import type { ProjectSettings } from '../../settings/settings.ts'
 import { toSnakeCase } from '../../model/naming.ts'
 import type { RustOrm } from './orm.ts'
+import { nestedStructs, valueType, type NestedStruct } from './documents.ts'
 import { columnVariant, snakeName, typeName } from './rust.ts'
 
 /** The crates a type comes from, besides the standard library. */
@@ -68,6 +69,8 @@ export interface TableInfo {
   repository: RepositoryDesign
   service: ServiceDesign | null
   writesEntity: boolean
+  /** The structs of its nested documents, by column: only in document databases */
+  nested: Map<string, NestedStruct>
 }
 
 export interface Context {
@@ -125,39 +128,52 @@ function blockingLinks(schema: DbSchema, table: DbTable): ChildLink[] {
 
 const included = <T extends { include: { value: boolean } }>(items: T[]) => items.filter((item) => item.include.value)
 
-function columnInfo(column: DbColumn): ColumnInfo {
+function columnInfo(column: DbColumn, type: ReturnType<typeof rsType>, own: boolean): ColumnInfo {
   const generated = column.generated !== undefined && column.generated !== 'onUpdateNow'
-  const field = snakeName(column.name)
+  // MongoDB's `_id` is the `id` of the entity, unless the documents have one of their own
+  const field = own ? 'document_id' : snakeName(column.name)
   return {
     column,
     field,
     variant: columnVariant(field),
     key: field.replace(/^r#/, ''),
-    ...rsType(column.type),
+    ...type,
     generated,
     required: !column.nullable && column.default === undefined && !generated,
   }
 }
 
-function tableInfo(schema: DbSchema, design: CrudDesign, settings: ProjectSettings, table: DbTable): TableInfo {
+function tableInfo(orm: RustOrm, schema: DbSchema, design: CrudDesign, settings: ProjectSettings, table: DbTable): TableInfo {
   const policy = findPolicy(design, table.name)!
   const repository = findRepository(design, table.name)!
   const service = settings.services ? (findService(design, table.name) ?? null) : null
   const entity = typeName(repository.entity)
-  const columns = table.columns.map(columnInfo)
+  const deleteMode = policy.delete.value
+  const concurrency = policy.concurrency.value
+  const ownEntities = !orm.documents && !repository.entityMissing && schema.source.format === settings.orm
+  const writesEntity = settings.entities === 'all' || (settings.entities === 'missing' && !ownEntities)
+  const module = snakeName(entity)
+  const attr = snakeName(table.name)
+  const nested = orm.documents
+    ? nestedStructs(table.columns, entity, entityModule(settings, module, attr, writesEntity))
+    : new Map<string, NestedStruct>()
+  const ownId = orm.documents === true && table.columns.some((column) => column.name === 'id')
+  const columns = table.columns.map((column) =>
+    columnInfo(
+      column,
+      orm.documents ? valueType(column.type, nested.get(column.name)?.path ?? null) : rsType(column.type),
+      ownId && column.name === '_id',
+    ),
+  )
   const byName = (name: string) => columns.find((info) => info.column.name === name)!
   // A table without a primary key is read only; its rows are told apart by all their columns
   const key = (table.primaryKey ?? table.columns.map((column) => column.name)).map(byName)
-  const deleteMode = policy.delete.value
-  const concurrency = policy.concurrency.value
-  const ownEntities = !repository.entityMissing && schema.source.format === settings.orm
-  const writesEntity = settings.entities === 'all' || (settings.entities === 'missing' && !ownEntities)
   return {
     table,
     name: table.name,
     entity,
-    module: snakeName(entity),
-    attr: snakeName(table.name),
+    module,
+    attr,
     columns,
     key,
     role: policy.role.value,
@@ -170,6 +186,7 @@ function tableInfo(schema: DbSchema, design: CrudDesign, settings: ProjectSettin
     repository,
     service,
     writesEntity,
+    nested,
   }
 }
 
@@ -179,7 +196,7 @@ export function createContext(orm: RustOrm, schema: DbSchema, design: CrudDesign
     schema,
     design,
     settings,
-    tables: schema.tables.map((table) => tableInfo(schema, design, settings, table)),
+    tables: schema.tables.map((table) => tableInfo(orm, schema, design, settings, table)),
     crate: settings.name.replace(/-/g, '_'),
   }
 }
@@ -214,6 +231,12 @@ const LAYERS: Record<Kind, string> = {
   repository: 'repositories',
   service: 'services',
   dtos: 'dtos',
+}
+
+/** The module of an entity, before its table is known. */
+function entityModule(settings: ProjectSettings, module: string, attr: string, written: boolean): string {
+  if (!written) return `${settings.entitiesModule.split('.').join('::')}::${module}`
+  return settings.architecture === 'table' ? `crate::${attr}::entity` : `crate::${LAYERS.entity}::${module}`
 }
 
 /** The module of one kind of file of a table: `crate::repositories::order_line` or `crate::order_lines::repository`. */

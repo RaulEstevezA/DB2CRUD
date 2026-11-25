@@ -4,9 +4,12 @@
  * CRUD2Controller.
  */
 import type { GeneratedFile } from '../../export/files.ts'
+import { nestedFields } from '../../schema/documents.ts'
+import type { DbType } from '../../schema/types.ts'
 import { lines } from '../types.ts'
 import { moduleOf, operationName, serviceType, storedType, writesEntities, type ColumnInfo, type Context, type Crate } from './context.ts'
 import { createColumns, createDto, readColumns, readDto, updateColumns, updatePath, updateType } from './dtos.ts'
+import { nestedCrates } from './documents.ts'
 import { defaultUrl } from './support.ts'
 
 export const VERSIONS = {
@@ -22,7 +25,9 @@ const tests = (context: Context) => context.settings.tests !== 'none' && writesE
 /** The crates the column types come from. */
 function crates(context: Context): Set<Crate> {
   return new Set(
-    context.tables.flatMap((info) => info.columns.map((column) => column.crate)).filter((item): item is Crate => item !== null),
+    context.tables
+      .flatMap((info) => [...info.columns.map((column) => column.crate), ...nestedCrates(info.nested.values())])
+      .filter((item): item is Crate => item !== null),
   )
 }
 
@@ -112,6 +117,7 @@ export function readmeFile(context: Context): GeneratedFile {
       '',
       '```text',
       'src/database.rs          the connection of DATABASE_URL',
+      ...(context.orm.readme.layout ?? []),
       'src/unit_of_work.rs      the repositories of every table, and the transactions',
       'src/errors.rs            DomainError: NotFound, Conflict, ValidationFailed, Database; no HTTP codes',
       settings.architecture === 'layer'
@@ -138,12 +144,18 @@ export function readmeFile(context: Context): GeneratedFile {
   }
 }
 
-function typeOf(column: ColumnInfo): Record<string, unknown> {
-  const type = column.column.type
+function typeOf(context: Context, column: ColumnInfo): Record<string, unknown> {
+  const { kind, ...rest } = plainType(column.column.type)
+  return { kind, rust: storedType(column).replace(/\bcrate::/g, `${context.crate}::`), ...rest }
+}
+
+function plainType(type: DbType): Record<string, unknown> {
+  // What a nested document, or each of a list of them, holds
+  const fields = nestedFields(type)
   return {
     kind: type.kind,
-    rust: storedType(column),
     ...(type.kind === 'text' && type.length !== undefined ? { length: type.length } : {}),
+    ...(fields ? { fields: fields.map((field) => ({ name: field.name, type: plainType(field.type), nullable: field.nullable })) } : {}),
   }
 }
 
@@ -153,7 +165,7 @@ const crateModule = (context: Context, module: string) => module.replace(/^crate
 export function contractFile(context: Context): GeneratedFile {
   const dtos = context.settings.serviceTypes === 'dtos'
   const fields = (columns: ColumnInfo[], optional: boolean) =>
-    columns.map((column) => ({ name: column.key, type: typeOf(column), nullable: optional || column.column.nullable }))
+    columns.map((column) => ({ name: column.key, type: typeOf(context, column), nullable: optional || column.column.nullable }))
   const types = context.tables.flatMap((info) => {
     const result: Record<string, unknown>[] = [
       {

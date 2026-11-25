@@ -152,7 +152,7 @@ export const sqlOrm: RustOrm = {
   label: 'sqlx',
   error: 'sqlx::Error',
   emptyList: (context) => (context.settings.database === 'postgresql' ? '"{}".to_string()' : '"[]".to_string()'),
-  databaseFile,
+  databaseFiles: (context) => [databaseFile(context)],
   entityFiles: (context, info) => [entityFile(context, info)],
   repository: {
     uses: () => [],

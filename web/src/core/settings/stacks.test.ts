@@ -15,6 +15,7 @@ describe('stacks and databases', () => {
       'mongodriver',
       'mongophp',
       'mongokotlin',
+      'mongorust',
     ])
     expect(settingsFor('mongodb', settings).database).toBe('mongodb')
     expect(settingsFor('postgresql', settings)).toEqual(settings)

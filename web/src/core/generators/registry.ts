@@ -21,6 +21,7 @@ import { mongodbOrm as kotlinMongodbOrm } from './kotlin/mongodb/index.ts'
 import { kotlinGenerator } from './kotlin/generator.ts'
 import { seaormOrm } from './rust/seaorm/index.ts'
 import { sqlOrm as rustSqlOrm } from './rust/sql/index.ts'
+import { mongodbOrm as rustMongodbOrm } from './rust/mongodb/index.ts'
 import { rustGenerator } from './rust/generator.ts'
 import { fluentOrm } from './swift/fluent/index.ts'
 import { sqlOrm as swiftSqlOrm } from './swift/sql/index.ts'
@@ -70,6 +71,7 @@ export const GENERATORS: readonly Generator[] = [
   kotlinGenerator(kotlinMongodbOrm),
   rustGenerator(seaormOrm),
   rustGenerator(rustSqlOrm),
+  rustGenerator(rustMongodbOrm),
   swiftGenerator(fluentOrm),
   swiftGenerator(swiftSqlOrm),
 ]

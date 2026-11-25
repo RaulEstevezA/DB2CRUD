@@ -21,6 +21,8 @@ import {
   type TableInfo,
 } from './context.ts'
 import { createColumns, createDto, updateColumns, updatePath, updateType } from './dtos.ts'
+import type { DbType } from '../../schema/types.ts'
+import { listOf, type ListInfo, type NestedStruct } from './documents.ts'
 import { RsUses, owned, rsString, snakeName } from './rust.ts'
 import { missingValue, sampleValue } from './samples.ts'
 
@@ -80,9 +82,10 @@ function factoriesFile(context: Context, makeable: TableInfo[]): GeneratedFile {
         // No sample is sure to fit a type that is not known
         if (column.column.nullable && (isKey || column.column.type.kind === 'unknown')) return []
         const value =
-          column.column.type.kind === 'array'
+          documentValue(info, column) ??
+          (column.column.type.kind === 'array'
             ? context.orm.emptyList(context)
-            : sampleValue(column, info.table.checks, context.schema.enums)
+            : sampleValue(column, info.table.checks, context.schema.enums))
         return [`        ${column.field}: Some(${value}),`]
       })
     const usesN = values.some((line) => /\bn\b/.test(line))
@@ -103,6 +106,7 @@ function factoriesFile(context: Context, makeable: TableInfo[]): GeneratedFile {
       ...fromParents,
       `    uow.${info.attr}().${queryName(context, insert)}(entity).await.expect(${rsString(`a stored ${info.entity}`)})`,
       '}',
+      ...[...info.nested.values()].flatMap((item) => nestedFactories(context, item)),
     ]
   })
   return {
@@ -119,6 +123,70 @@ function factoriesFile(context: Context, makeable: TableInfo[]): GeneratedFile {
     ].join('\n'),
   }
 }
+
+// Nested documents
+
+const factoryOf = (item: NestedStruct) => `new_${snakeName(item.name).replace(/^r#/, '')}`
+
+/** A column that holds documents, or a list of them, as a Rust expression; null for any other. */
+function documentValue(info: TableInfo, column: ColumnInfo): string | null {
+  const nested = info.nested.get(column.column.name)
+  return nested ? nestedValue(column.column.type, nested) : null
+}
+
+const nestedValue = (type: DbType, nested: NestedStruct): string =>
+  type.kind === 'array' ? `vec![${nestedValue(type.items, nested)}]` : `${factoryOf(nested)}(n)`
+
+/** Whether the lines of a factory name `n`, also inside a format string. */
+const namesN = (text: string) => /\bn\b/.test(text)
+
+/** A factory per struct of nested document, without the identifier it is given when it is stored. */
+function nestedFactories(context: Context, item: NestedStruct): string[] {
+  const values = item.fields
+    .filter((field) => field.column.name !== '_id' && field.column.type.kind !== 'unknown')
+    .map((field) => {
+      const column = { column: field.column, rs: field.rs } as ColumnInfo
+      const value = field.nested
+        ? nestedValue(field.column.type, field.nested)
+        : field.column.type.kind === 'array'
+          ? context.orm.emptyList(context)
+          : sampleValue(column, field.column.checks ?? [], context.schema.enums)
+      return `        ${field.field}: Some(${value}),`
+    })
+  const path = external(context, item.path)
+  return [
+    '',
+    `/// A valid ${item.name}; n makes its values differ.`,
+    `pub fn ${factoryOf(item)}(${values.some(namesN) ? 'n' : '_n'}: i32) -> ${path} {`,
+    `    ${path} {`,
+    ...values,
+    '        ..Default::default()',
+    '    }',
+    '}',
+    ...item.structs.flatMap((inner) => nestedFactories(context, inner)),
+  ]
+}
+
+/** A value for an item of a list, as a Rust expression of n. */
+function itemSample(context: Context, list: ListInfo): string {
+  if (list.nested && list.type.kind === 'json') return `factories::${factoryOf(list.nested)}(n)`
+  if (list.type.kind === 'array') return context.orm.emptyList(context)
+  return sampleValue({ ...list.column, column: { ...list.column.column, type: list.type }, rs: list.rs }, [], context.schema.enums)
+}
+
+/** The lines that make an item of a list. */
+function itemLines(context: Context, list: ListInfo): string[] {
+  const value = itemSample(context, list)
+  return [...(namesN(value) ? ['let n = 7;'] : []), `let item: ${list.rs.replace(/\bcrate::/g, `${context.crate}::`)} = ${value};`]
+}
+
+const itemTest = (list: ListInfo) => `adds_and_removes_one_item_of_${list.column.key}`
+
+/** The size of a list, and the identifier of one of its items. */
+const sizeOf = (variable: string, list: ListInfo, sure = false) =>
+  sure ? `${variable}.${list.column.field}.len()` : `${variable}.${list.column.field}.as_ref().map_or(0, Vec::len)`
+const identifierOf = (list: ListInfo, sure = false) =>
+  `added.${list.column.field}${sure ? '' : `.as_ref().expect(${rsString(list.column.key)})`}[before].id.clone().expect("an identifier")`
 
 // Tests of each table
 
@@ -234,6 +302,26 @@ function repositoryTests(context: Context, info: TableInfo): string[][] {
         `assert!(${repo}.${queryName(context, getByKey)}(${keyOf('stored')}).await.expect("a read").is_none());`,
       ]),
     )
+  for (const adding of info.queries.filter((item) => item.kind === 'addItem')) {
+    const list = listOf(info, adding)
+    const removing = query(info, 'removeItem', adding.columns)
+    if (!removing || !getByKey) continue
+    const which = list.by === 'id' ? identifierOf(list) : list.by === 'value' ? 'item' : `before, ${sizeOf('added', list)}`
+    const removeItem = `${repo}.${queryName(context, removing)}(${keyOf('stored')}`
+    tests.push(
+      test(itemTest(list), [
+        open,
+        `let stored = factories::${addName(info)}(&uow, 1).await;`,
+        `let before = ${sizeOf('stored', list)};`,
+        ...itemLines(context, list),
+        `let added = ${repo}.${queryName(context, adding)}(${keyOf('stored')}, ${list.by === 'value' && !list.copy ? 'item.clone()' : 'item'}).await.expect("a write").expect("the row");`,
+        `assert_eq!(before + 1, ${sizeOf('added', list)});`,
+        `let removed = ${removeItem}, ${which}).await.expect("a write").expect("the row");`,
+        `assert_eq!(before, ${sizeOf('removed', list)});`,
+        list.by === 'position' && `assert!(${removeItem}, 0, before + 5).await.expect("a write").is_none());`,
+      ]),
+    )
+  }
   return tests
 }
 
@@ -439,6 +527,32 @@ function serviceTests(context: Context, info: TableInfo, uses: RsUses): string[]
         `let created = service.${operationName(context, create)}(${input('row')}).await.expect("a create");`,
         `service.${operationName(context, deletes)}(${keyOf('created')}${version('created')}).await.expect("a delete");`,
         `assert!(matches!(service.${operationName(context, get)}(${keyOf('created')}).await, Err(DomainError::NotFound { .. })));`,
+      ]),
+    )
+  }
+  for (const operation of info.operations.filter((item) => item.kind === 'addItem')) {
+    const list = listOf(info, operation)
+    const without = op('removeItem', operation.columns)
+    if (!create || !without || info.hidden.includes(list.column.column.name) || !query(info, 'getByKey')) continue
+    errors()
+    // A DTO says when the list is never missing
+    const sure = dtos && !list.column.column.nullable
+    const which = list.by === 'id' ? identifierOf(list, sure) : list.by === 'value' ? 'item' : 'before'
+    const missing = list.by === 'id' ? `"${'f'.repeat(24)}".to_string()` : list.by === 'value' ? null : '99'
+    const removeItem = `service.${operationName(context, without)}(${keyOf('created')}`
+    tests.push(
+      test(itemTest(list), [
+        ...open,
+        ...parentsFirst,
+        ...row('row', 1),
+        `let created = service.${operationName(context, create)}(${input('row')}).await.expect("a create");`,
+        `let before = ${sizeOf('created', list, sure)};`,
+        ...itemLines(context, list),
+        `let added = service.${operationName(context, operation)}(${keyOf('created')}, ${list.by === 'value' && !list.copy ? 'item.clone()' : 'item'}${version('created')}).await.expect("a write");`,
+        `assert_eq!(before + 1, ${sizeOf('added', list, sure)});`,
+        `let removed = ${removeItem}, ${which}${version('added')}).await.expect("a write");`,
+        `assert_eq!(before, ${sizeOf('removed', list, sure)});`,
+        missing !== null && `assert!(matches!(${removeItem}, ${missing}${version('removed')}).await, Err(DomainError::NotFound { .. })));`,
       ]),
     )
   }

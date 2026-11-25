@@ -5,6 +5,7 @@
  */
 import type { DbCheck, DbEnum } from '../../schema/types.ts'
 import { boundedNumber } from '../samples.ts'
+import { FREE } from './documents.ts'
 import type { ColumnInfo } from './context.ts'
 import { rsLiteral } from './values.ts'
 import { owned } from './rust.ts'
@@ -50,6 +51,7 @@ export function sampleValue(column: ColumnInfo, checks: DbCheck[], enums: DbEnum
         ? `(${whole({ ...column, rs: 'i32' }, checks)}) as f32 + 0.5`
         : `f64::from(${whole({ ...column, rs: 'i32' }, checks)}) + 0.5`
     case 'text': {
+      if (type.objectId) return 'format!("{n:024x}")'
       const length = type.length ?? 40
       if (type.fixed) return `format!("{:0>${length}}", n % ${10 ** Math.min(length, 9)})`
       // The column name and the number, as long as it fits; n stays below 1000 in the tests
@@ -65,10 +67,13 @@ export function sampleValue(column: ColumnInfo, checks: DbCheck[], enums: DbEnum
     case 'boolean':
       return 'true'
     case 'date':
+      if (column.rs === 'String') return 'format!("2026-01-{:02}", n % 28 + 1)'
       return date
     case 'time':
+      if (column.rs === 'String') return 'format!("12:{:02}:00", n % 60)'
       return 'chrono::NaiveTime::from_hms_opt(12, (n % 60) as u32, 0).expect("a time")'
     case 'datetime':
+      if (column.rs === 'chrono::DateTime<chrono::Utc>') return `${date}.and_hms_opt(12, 0, 0).expect("a time").and_utc()`
       return column.rs === 'chrono::NaiveDateTime'
         ? `${date}.and_hms_opt(12, 0, 0).expect("a time")`
         : `${date}.and_hms_opt(12, 0, 0).expect("a time").and_utc().fixed_offset()`
@@ -78,6 +83,7 @@ export function sampleValue(column: ColumnInfo, checks: DbCheck[], enums: DbEnum
       // As long as the column, when its length may be fixed: the database fills shorter values
       return type.length !== undefined && type.length <= 64 ? `vec![n as u8; ${type.length}]` : 'vec![n as u8]'
     case 'json':
+      if (column.rs === FREE) return 'mongodb::bson::bson!({ "n": n })'
       return 'format!("{{\\"n\\": {n}}}")'
     case 'array':
       return '"[]".to_string()'
@@ -88,6 +94,7 @@ export function sampleValue(column: ColumnInfo, checks: DbCheck[], enums: DbEnum
 
 /** A key no row has, as a Rust expression, for the tests of missing rows. */
 export function missingValue(column: ColumnInfo): string {
+  if (column.column.type.kind === 'text' && column.column.type.objectId) return `"${'f'.repeat(24)}".to_string()`
   switch (column.rs) {
     case 'i64':
     case 'i32':
