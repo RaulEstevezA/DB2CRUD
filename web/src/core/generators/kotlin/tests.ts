@@ -347,7 +347,8 @@ function serviceTests(context: Context, info: TableInfo, imports: KtImports): st
     )
     return `${updateType(context, info)}(${fields.join(', ')})`
   }
-  const version = (variable: string) => (info.version ? `, ${member(variable, info.version)}${info.version.column.nullable ? '!!' : ''}` : '')
+  const version = (variable: string) =>
+    info.version ? `, ${member(variable, info.version)}${info.version.column.nullable ? '!!' : ''}` : ''
   const tests: string[][] = []
   const open = [`val service = ${service}(uow)`]
   if (create) {
