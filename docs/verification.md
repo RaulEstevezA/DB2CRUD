@@ -38,6 +38,8 @@ The test database is created empty for every test. Most ORMs create it from thei
 
 `verification/scenarios/index.mjs` lists the scenarios: an example schema (or a shared case of the matching with its application models, `case`), the settings that differ from the defaults and, for some, the decisions of the review taken the other way. Together they cover every option of every setting, on every database. `verification/run.sh [prefix]` writes their projects (`generate.mjs`, with the same core the web version runs) to `verification/.work/` and runs each one with its runner, with a database when it needs one.
 
+A shared case of the matching may keep its database in documents (`database.<ext>`); the conversions of nested documents are then read and written back field by field, except the values a model keeps with less detail (a date without its time).
+
 Scenarios with `model2db` read their schema from a Model2DB project with invented models (`web/src/core/interop/model2db/test/fixtures.ts`) and the output they name; they run on MongoDB with the tests of the generated project.
 
 Scenarios with `code` read their schema from a file, most of them of `verification/mongodb/`: Mongoose schemas, the validators of collections, or sample documents. They run on a MongoDB replica set of one member (transactions need one), with a round trip added (`verification/mongodb-round-trip.mjs`): values, partial changes, items of lists, refusals, transactions, that nothing is created in the database, and that the documents fit the validators of their own script.
