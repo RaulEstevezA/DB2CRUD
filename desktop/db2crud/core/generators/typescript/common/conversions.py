@@ -11,11 +11,13 @@ delete inside the application)."""
 
 import re
 
-from ....conversions.plan import without_hidden
+from ....conversions.plan import has_todo, lossy, without_hidden
 from ....js import js_string
+from ....matching.names import fields_of
+from ....schema.documents import nested_fields
 from ...types import lines
 from ..typescript import TsImports, member_name, ts_literal
-from .context import column_of, find_info, module_of, path_of, query, query_name
+from .context import column_of, find_info, module_of, path_of, query, query_name, ts_type
 from .dtos import create_dto, read_dto
 
 _IDENTIFIER = re.compile(r"^[A-Za-z_$][A-Za-z0-9_$]*$")
@@ -324,8 +326,209 @@ def _transformed(transform: dict, values: list[dict], target: str, body: dict) -
     return _typed("undefined", "unknown")
 
 
+def _convert_document(expression: str, source: str, target: str) -> str:
+    """A value of a document as another type: also the items of a list, and what the driver gives without a type. Only
+    document databases use it: the other conversions keep lists and free values as they are."""
+    if source == target or target == "unknown":
+        return expression
+    if source == "unknown":
+        return f"({expression} as {target})"
+    if source.endswith("[]") and target.endswith("[]"):
+        item = _convert_document("item", source[:-2], target[:-2])
+        return expression if item == "item" else f"{expression}.map((item) => {item})"
+    return _convert(expression, source, target)
+
+
+# Nested documents. A nested is {context, info, schema, plan, imports, functions: those written so far}
+
+
+def _is_documents(context: dict) -> bool:
+    return context["settings"]["database"] == "mongodb"
+
+
+def _upper_first(name: str) -> str:
+    return name[:1].upper() + name[1:]
+
+
+def _prop_access(root: str, name: str) -> str:
+    return f"{root}.{name}" if _IDENTIFIER.match(name) else f"{root}[{ts_literal(name)}]"
+
+
+def _prop_key(name: str) -> str:
+    return name if _IDENTIFIER.match(name) else ts_literal(name)
+
+
+def _inside_of(type_text: str, many: bool) -> str:
+    """The type of a nested document, from that of the column or document that holds it."""
+    return f"NonNullable<{type_text}>[number]" if many else f"NonNullable<{type_text}>"
+
+
+def _nested_model(nested: dict, name: str) -> str:
+    """The name a nested model is imported as."""
+    taken = conversion_names(nested["context"], nested["plan"])
+    local = f"{name}Model" if name in (nested["info"]["entity"], taken["target"], taken["source"]) else name
+    nested["imports"].type(models_import(nested["context"]), name if local == name else f"{name} as {local}")
+    return local
+
+
+def _model_fields(nested: dict, name: str) -> list[dict]:
+    model = next((item for item in nested["schema"]["models"] if item["name"] == name), None)
+    return fields_of(model, nested["schema"]) if model else []
+
+
+def _call_for(name: str, many: bool, expression: str) -> str:
+    """The call that converts a nested document or a list of them."""
+    return f"{expression}.map({name})" if many else f"{name}({expression})"
+
+
+def _when_present(expression: str, converted: str, missing: bool, otherwise: str) -> str:
+    """A value that may be missing, converted when it is there; `otherwise` is what a missing one is."""
+    if not missing:
+        return converted
+    if converted == expression:
+        return f"{expression} ?? {otherwise}"
+    return f"{expression} == null ? {otherwise} : {converted}"
+
+
+def _may_miss(field: dict) -> bool:
+    return bool(field.get("optional") or field.get("nullable"))
+
+
+def _inner_column(kept: dict, name: str) -> dict:
+    return next(item for item in nested_fields(kept) if item["name"] == name)
+
+
+def _write_document(nested: dict, value: dict, kept: dict, type_text: str, path: str) -> str:
+    """Writes the function that gives a nested document from its model, and those inside it; gives its name."""
+    name = f"{_lower_first(nested['plan']['model'])}{path}ToDocument"
+    fields = _model_fields(nested, value["model"])
+    result = _inside_of(type_text, value["many"])
+    props = []
+    for item in value["values"]:
+        column = _inner_column(kept, item["column"])
+        key = _prop_key(column["name"])
+        inner = item["value"]
+        if inner["kind"] == "todo":
+            props.extend([_todo_comment(inner, key), f"{key}: undefined as never,"])
+            continue
+        if inner["kind"] not in ("field", "document"):
+            continue
+        field = next(candidate for candidate in fields if candidate["name"] == inner["path"][0])
+        read = _prop_access("value", field_prop(field["name"]))
+        if inner["kind"] == "document":
+            inside = f"{result}[{ts_literal(column['name'])}]"
+            inner_path = path + _upper_first(member_name(column["name"]))
+            function = _write_document(nested, inner, column["type"], inside, inner_path)
+            converted = _call_for(function, inner["many"], read)
+        else:
+            converted = _convert_document(read, _model_ts(field["type"]), ts_type(column["type"]))
+        otherwise = "undefined" if column["nullable"] else "undefined as never"
+        props.append(f"{key}: {_when_present(read, converted, _may_miss(field), otherwise)},")
+    nested["functions"].append(
+        lines(
+            f"/** {_article(value['model'])} as the documents of the {nested['info']['name']} collection keep it. */",
+            f"function {name}(value: {_nested_model(nested, value['model'])}): {result} {{",
+            bool(value["unused"]) and f"  // Not stored: {', '.join(value['unused'])}",
+            "  return {",
+            *(f"    {prop}" for prop in props),
+            "  }",
+            "}",
+        )
+    )
+    return name
+
+
+def _absent(field: dict) -> str:
+    """A missing value of a document, as a field of a model has it."""
+    if field.get("nullable"):
+        return "null"
+    if field.get("optional"):
+        return "undefined"
+    return "[]" if field["type"]["kind"] == "array" else "undefined as never"
+
+
+def _read_document(nested: dict, value: dict, kept: dict, type_text: str, path: str) -> str:
+    """Writes the function that gives a model from its nested document, and those inside it; gives its name."""
+    name = f"{_lower_first(nested['plan']['model'])}{path}FromDocument"
+    fields = _model_fields(nested, value["model"])
+    source = _inside_of(type_text, value["many"])
+    props = []
+    for item in value["values"]:
+        field = next(candidate for candidate in fields if candidate["name"] == item["field"])
+        key = field_prop(field["name"])
+        inner = item["value"]
+        if inner["kind"] == "todo":
+            props.extend([_todo_comment(inner, key), f"{key}: undefined as never,"])
+            continue
+        if inner["kind"] not in ("column", "document"):
+            continue
+        column = _inner_column(kept, inner["column"])
+        read = _prop_access("value", column["name"])
+        if inner["kind"] == "document":
+            inside = f"{source}[{ts_literal(column['name'])}]"
+            inner_path = path + _upper_first(member_name(column["name"]))
+            function = _read_document(nested, inner, column["type"], inside, inner_path)
+            converted = _call_for(function, inner["many"], read)
+        else:
+            converted = _from_document(nested, field, read, ts_type(column["type"]))
+        # The type of a document says a field with a default may be missing too
+        missing = column["nullable"] or column.get("default") is not None
+        props.append(f"{key}: {_when_present(read, converted, missing, _absent(field))},")
+    article = _article(value["model"]).split(" ")[0].lower()
+    nested["functions"].append(
+        lines(
+            f"/** A document of the {nested['info']['name']} collection as {article} {value['model']}. */",
+            f"function {name}(value: {source}): {_nested_model(nested, value['model'])} {{",
+            "  return {",
+            *(f"    {prop}" for prop in props),
+            "  }",
+            "}",
+        )
+    )
+    return name
+
+
+def _from_document(nested: dict, field: dict, expression: str, type_text: str) -> str:
+    """A value of a document as a field of a model has it."""
+    for item in _types_of(field["type"]):
+        nested["imports"].type(models_import(nested["context"]), item)
+    return _convert_document(expression, type_text, _model_ts(field["type"]))
+
+
+def _types_of(type_ref: dict) -> list[str]:
+    """The enums and models a type names."""
+    if type_ref["kind"] == "array":
+        return _types_of(type_ref["items"])
+    if type_ref["kind"] == "map":
+        return _types_of(type_ref["value"])
+    return [type_ref["name"]] if type_ref["kind"] in ("enum", "model") else []
+
+
+def _write_column(nested: dict, column: dict, value: dict, field: dict | None) -> str:
+    """The value of a column that holds documents, written from the model."""
+    info = nested["info"]
+    type_text = f"{info['entity']}['{column['prop']}']"
+    name = _write_document(nested, value, column["column"]["type"], type_text, _upper_first(column["prop"]))
+    nested["imports"].type(module_of(nested["context"], info, "entity"), info["entity"])
+    read = ".".join(["model", *(field_prop(part) for part in value["path"])])
+    missing = field is None or _may_miss(field)
+    otherwise = "null" if column["column"]["nullable"] else "undefined as never"
+    return _when_present(read, _call_for(name, value["many"], read), missing, otherwise)
+
+
+def _read_column(nested: dict, column: dict, value: dict, field: dict) -> str:
+    """The value of a field that holds documents, read from a row."""
+    info = nested["info"]
+    type_text = f"{info['entity']}['{column['prop']}']"
+    name = _read_document(nested, value, column["column"]["type"], type_text, _upper_first(column["prop"]))
+    nested["imports"].type(module_of(nested["context"], info, "entity"), info["entity"])
+    read = f"row.{column['prop']}"
+    converted = _call_for(name, value["many"], read)
+    return _when_present(read, converted, column["column"]["nullable"], _absent(field))
+
+
 def _write_expression(
-    context: dict, column: dict, value: dict, model: dict | None, body: dict, imports: TsImports
+    context: dict, column: dict, value: dict, model: dict | None, body: dict, imports: TsImports, nested: dict
 ) -> str | None:
     """The value of a column written from the model, with the statements it needs before."""
 
@@ -344,7 +547,8 @@ def _write_expression(
     def finish(result: dict, path: list[str] | None = None) -> str:
         expression = result["expression"]
         rounded = integer and result["type"] == "number" and re.search(r"[*/]", expression)
-        converted = _convert(f"Math.round({expression})" if rounded else expression, result["type"], column["ts"])
+        convert = _convert_document if _is_documents(context) else _convert
+        converted = convert(f"Math.round({expression})" if rounded else expression, result["type"], column["ts"])
         found = field(path) if path else None
         # A field the model may leave out is null in the column
         if found and (found.get("optional") or found.get("nullable")):
@@ -352,6 +556,8 @@ def _write_expression(
         return converted
 
     kind = value["kind"]
+    if kind == "document":
+        return _write_column(nested, column, value, field(value["path"]))
     if kind == "field":
         return finish(typed(value["path"]), value["path"])
     if kind == "lookup":
@@ -378,7 +584,7 @@ def _write_expression(
 
 
 def _read_expression(
-    context: dict, info: dict, field: dict | None, value: dict, body: dict, imports: TsImports
+    context: dict, info: dict, field: dict | None, value: dict, body: dict, imports: TsImports, nested: dict
 ) -> str | None:
     target = _model_ts(field["type"]) if field else "unknown"
     # An enum or a model of the application the value is cast to
@@ -399,9 +605,14 @@ def _read_expression(
         return f"{expression if result == expression else f'({result})'} ?? undefined"
 
     kind = value["kind"]
+    if kind == "document":
+        return _read_column(nested, column_of(info, value["column"]), value, field) if field else None
     if kind == "column":
         source = typed(value["column"])
         nullable = column_of(info, value["column"])["column"]["nullable"]
+        if _is_documents(context) and field:
+            converted = _from_document(nested, field, source["expression"], source["type"])
+            return _when_present(source["expression"], converted, nullable, _absent(field))
         return fit(source["expression"], nullable, _convert(source["expression"], source["type"], target))
     if kind == "lookup":
         other = find_info(context, value["table"])
@@ -447,6 +658,14 @@ def conversion_file(context: dict, plans: list[dict], schema: dict) -> dict | No
     functions: list[str] = []
     pairs = False
     for plan in plans:
+        nested = {
+            "context": context,
+            "info": info,
+            "schema": schema,
+            "plan": plan,
+            "imports": imports,
+            "functions": functions,
+        }
         model = next((item for item in schema["models"] if item["name"] == plan["model"]), None)
         names = conversion_names(context, plan)
         dtos = _uses_dtos(context, info)
@@ -462,7 +681,7 @@ def conversion_file(context: dict, plans: list[dict], schema: dict) -> dict | No
                         [_todo_comment(item["value"], column["prop"]), f"{column['prop']}: undefined as never,"]
                     )
                     continue
-                expression = _write_expression(context, column, item["value"], model, body, imports)
+                expression = _write_expression(context, column, item["value"], model, body, imports, nested)
                 props.append(
                     f"{column['prop']}: undefined as never, // TODO: no repository query finds the row it names"
                     if expression is None
@@ -511,7 +730,7 @@ def conversion_file(context: dict, plans: list[dict], schema: dict) -> dict | No
                 if item["value"]["kind"] == "todo":
                     props.extend([_todo_comment(item["value"], prop), f"{prop}: undefined as never,"])
                     continue
-                expression = _read_expression(context, info, field, item["value"], body, imports)
+                expression = _read_expression(context, info, field, item["value"], body, imports, nested)
                 props.append(
                     f"{prop}: undefined as never, // TODO: no repository query reads it"
                     if expression is None
@@ -563,11 +782,7 @@ def conversion_file(context: dict, plans: list[dict], schema: dict) -> dict | No
     return {"path": path_of(module), "content": content}
 
 
-def _has_todo(items: list[dict] | None) -> bool:
-    return any(item["value"]["kind"] == "todo" for item in items or [])
-
-
-def conversion_test_file(context: dict, plans: list[dict], can_make) -> dict | None:
+def conversion_test_file(context: dict, plans: list[dict], schema: dict | None, can_make) -> dict | None:
     """The tests of the conversions: a row stored by the factories is read as the model, and a model that goes both
     ways and leaves nothing to the user is written back, giving every value of the row (lookups and Mapper's
     lossless transformations included)."""
@@ -577,11 +792,11 @@ def conversion_test_file(context: dict, plans: list[dict], can_make) -> dict | N
     tests: list[str] = []
     for plan in plans:
         info = find_info(context, plan["table"])
-        if not info or plan["read"] is None or _has_todo(plan["read"]) or not can_make(info):
+        if not info or plan["read"] is None or has_todo(plan["read"]) or not can_make(info):
             continue
         names = conversion_names(context, plan)
         reads = any(item["value"]["kind"] in ("lookup", "children") for item in plan["read"])
-        writes = plan["write"] is not None and not _has_todo(plan["write"])
+        writes = plan["write"] is not None and not has_todo(plan["write"])
         write_uow = writes and any(item["value"]["kind"] == "lookup" for item in plan["write"])
         imports.from_(conversions_module(context, info), names["read"], *([names["write"]] if writes else []))
         imports.from_("test/factories", f"add{info['entity']}")
@@ -594,8 +809,17 @@ def conversion_test_file(context: dict, plans: list[dict], can_make) -> dict | N
             body.append(
                 f"const values = {'await ' if write_uow else ''}{names['write']}(model{', uow' if write_uow else ''})"
             )
+            model = next((item for item in schema["models"] if item["name"] == plan["model"]), None) if schema else None
             for item in plan["write"]:
-                prop = column_of(info, item["column"])["prop"]
+                column = column_of(info, item["column"])
+                # A value the model keeps with less detail is not written back as it was
+                if (
+                    _is_documents(context)
+                    and model
+                    and lossy(item["value"], column["column"]["type"], fields_of(model, schema), schema)
+                ):
+                    continue
+                prop = column["prop"]
                 body.append(f"expect(values.{prop}).toEqual(row.{prop})")
         else:
             body.append("expect(model).toBeDefined()")

@@ -46,11 +46,9 @@ def _named(orm: dict, files: list[dict]) -> list[dict]:
 
 
 def _generate(orm: dict, schema: dict, design: dict, settings: dict, models: dict | None = None) -> list[dict]:
-    # The conversions read columns, not the documents inside them
-    if orm.get("documents"):
-        models = None
     context = create_context(orm, schema, design, settings)
-    plans = service_plans(context, plan_conversions(schema, design, models)) if models else []
+    documents = bool(orm.get("documents"))
+    plans = service_plans(context, plan_conversions(schema, design, models, documents)) if models else []
     conversions = conversion_files(context, models["schema"], plans) if models else []
     tests = test_files(context)
     conversion_tests = (

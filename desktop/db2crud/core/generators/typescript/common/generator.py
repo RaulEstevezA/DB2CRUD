@@ -50,10 +50,13 @@ def _named(orm: dict, files: list[dict]) -> list[dict]:
 def typescript_generator(orm: dict) -> dict:
     def generate(schema: dict, design: dict, settings: dict, models: dict | None = None) -> list[dict]:
         context = create_context(orm, schema, design, settings)
-        plans = service_plans(context, plan_conversions(schema, design, models)) if models else []
+        documents = settings["database"] == "mongodb"
+        plans = service_plans(context, plan_conversions(schema, design, models, documents)) if models else []
         tests = test_files(context)
         conversion_tests = (
-            conversion_test_file(context, plans, lambda info: can_make(context, info))
+            conversion_test_file(
+                context, plans, models["schema"] if models else None, lambda info: can_make(context, info)
+            )
             if tests and settings["tests"] in ("all", "services")
             else None
         )

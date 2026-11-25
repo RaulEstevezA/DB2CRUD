@@ -10,6 +10,7 @@ from db2crud.core.conversions.plan import conversions_available, plan_conversion
 from db2crud.core.crud.edit import accept, choose_model, choose_source, find_decision, pending_decisions
 from db2crud.core.crud.propose import propose_crud
 from db2crud.core.importers.ddl.ddl import read_ddl
+from db2crud.core.importers.orm.registry import read_orm_code
 from db2crud.core.importers.registry import detect_format, parse_input
 from db2crud.core.interop.mapper.read import is_mapper_project, mapper_models, read_mapper_project
 from db2crud.core.matching.matching import match_models
@@ -19,9 +20,19 @@ from .conftest import SHARED_CASES
 CASES = sorted(path for path in (SHARED_CASES / "matching").iterdir() if path.is_dir())
 
 
+def database_of(folder):
+    """The database of a case: its DDL, or its ORM code or validators when it keeps documents (database.<ext>)."""
+    file = next((path for path in folder.iterdir() if path.name.startswith("database.")), None)
+    if file is None:
+        return read_ddl((folder / "schema.sql").read_text(encoding="utf-8"))
+    read = read_orm_code([{"name": file.name, "text": file.read_text(encoding="utf-8")}])
+    assert read["ok"], read
+    return read["schema"]
+
+
 def read_case(folder):
     """The database and the models of a case, with the Mapper project they come from when they do."""
-    database = read_ddl((folder / "schema.sql").read_text(encoding="utf-8"))
+    database = database_of(folder)
     models_file = next(path for path in folder.iterdir() if path.name.startswith("models."))
     text = models_file.read_text(encoding="utf-8")
     if is_mapper_project(text):
@@ -44,7 +55,8 @@ def test_matches_like_the_web_version(folder):
 def test_plans_the_conversions_like_the_web_version(folder):
     database, models, project = read_case(folder)
     design = propose_crud(database, None, models, project)
-    plans = plan_conversions(database, design, {"schema": models, "project": project})
+    documents = database["dialect"] == "mongodb"
+    plans = plan_conversions(database, design, {"schema": models, "project": project}, documents)
     assert plans == json.loads((folder / "plan.json").read_text(encoding="utf-8"))
 
 

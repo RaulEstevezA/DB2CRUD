@@ -65,12 +65,10 @@ def _named(orm: dict, files: list[dict]) -> list[dict]:
 
 def python_generator(orm: dict) -> dict:
     def generate(schema: dict, design: dict, settings: dict, models: dict | None = None) -> list[dict]:
-        # The conversions read columns, not the documents inside them
-        if orm.get("documents"):
-            models = None
         context = create_context(orm, schema, design, settings)
         app = _code(context)
-        plans = service_plans(context, plan_conversions(schema, design, models)) if models else []
+        documents = bool(orm.get("documents"))
+        plans = service_plans(context, plan_conversions(schema, design, models, documents)) if models else []
         if models:
             app.extend(conversion_files(context, models["schema"], plans))
         roots = _unique_roots(["app", settings["modelsModule"].split(".")[0]])
@@ -81,7 +79,8 @@ def python_generator(orm: dict) -> dict:
             for file in test_files(context)
         ]
         wants = settings["tests"] in ("all", "services")
-        conversion_tests = conversion_test_file(context, plans) if tests and wants else None
+        model_schema = models["schema"] if models else None
+        conversion_tests = conversion_test_file(context, plans, model_schema) if tests and wants else None
         files = [
             readme_file(context),
             pyproject_file(context),

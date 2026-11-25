@@ -12,8 +12,9 @@ a source folder the build adds only while it exists (delete it inside the applic
 
 import re
 
-from ...conversions.plan import without_hidden
+from ...conversions.plan import has_todo, lossy, without_hidden
 from ...js import js_string
+from ...matching.names import fields_of
 from ..types import lines
 from .context import column_of, errors_package, find_info, qualified, query, query_name
 from .dtos import accessor, create_columns, create_dto, read_columns, read_dto
@@ -413,6 +414,9 @@ def _temporal(expression: str, source: str, target: str, body: dict) -> str | No
     return None
 
 
+_LIST = re.compile(r"^(?:List|Set|Collection)<(.+)>$")
+
+
 def _convert(models: dict, value: dict, target_type: str, body: dict) -> str | None:
     """A value of one Java type as another, or None when DB2CRUD does not convert them. A value that may be null
     stays null."""
@@ -476,6 +480,18 @@ def _convert(models: dict, value: dict, target_type: str, body: dict) -> str | N
             body["imports"].add(_KNOWN[target])
             return guard(f"{target}.parse({expression})")
         return None
+    # The items of a list, in a document database
+    from_item = _LIST.match(source_type)
+    to_item = _LIST.match(target_type)
+    if from_item and to_item:
+        converted = _convert(models, _typed("item", from_item.group(1)), to_item.group(1), body)
+        if converted is None:
+            return None
+        stream = f"{expression}.stream(){'' if converted == 'item' else f'.map(item -> {converted})'}"
+        if not target_type.startswith("Set<"):
+            return guard(f"{stream}.toList()")
+        body["imports"].add("java.util.stream.Collectors")
+        return guard(f"{stream}.collect(Collectors.toSet())")
     if source in _TEMPORAL and target in _TEMPORAL:
         converted = _temporal(expression, source, target, body)
         return None if converted is None else guard(converted)
@@ -626,7 +642,173 @@ def _walk(models: dict, model: dict | None, path: list[str], root: str) -> dict 
     return _typed(expression, type_text)
 
 
-def _write_expression(context: dict, models: dict, column: dict, value: dict, model: dict | None, body: dict) -> dict:
+# Nested documents. A nested is {context, models, info, plan, body, methods: those written so far}
+
+
+def _nested_model(nested: dict, name: str) -> str:
+    """How a nested model is written: by its package when the entity or a DTO of the file has its name."""
+    names = conversion_names(nested["context"], nested["plan"])
+    pkg = nested["models"]["pkg"]
+    if name in (nested["info"]["entity"], names["target"], names["source"]):
+        return f"{pkg}.{name}"
+    nested["body"]["imports"].add(f"{pkg}.{name}")
+    return name
+
+
+def _model_named(nested: dict, name: str) -> dict:
+    schema = nested["models"]["schema"]
+    model = next(item for item in schema["models"] if item["name"] == name)
+    return {**model, "fields": fields_of(model, schema)}
+
+
+def _call_for(nested: dict, method: str, many: bool, expression: str, target: str) -> str:
+    """A nested document, or each of a list, converted by a method; one that is missing stays null."""
+    if not many:
+        return f"{expression} == null ? null : {method}({expression})"
+    stream = f"{expression}.stream().map({conversions_class(nested['info'])}::{method})"
+    if target.startswith("Set<"):
+        nested["body"]["imports"].add("java.util.stream.Collectors")
+        return f"{expression} == null ? null : {stream}.collect(Collectors.toSet())"
+    return f"{expression} == null ? null : {stream}.toList()"
+
+
+def _import_entity(nested: dict) -> None:
+    info = nested["info"]
+    nested["body"]["imports"].add(qualified(nested["context"], info, "entity", info["entity"]))
+
+
+def _write_document(nested: dict, value: dict, kept: dict, path: str) -> str:
+    """Writes the method that gives a nested document from its model, and those inside it; gives its name."""
+    models, body = nested["models"], nested["body"]
+    name = f"{_lower_first(nested['plan']['model'])}{path}ToDocument"
+    model = _model_named(nested, value["model"])
+    sets = []
+    for item in value["values"]:
+        field = next(candidate for candidate in kept["fields"] if candidate["column"]["name"] == item["column"])
+        inner = item["value"]
+        if inner["kind"] == "todo":
+            sets.append(f"// TODO: {field['prop']}: {_todo_text(inner)}")
+            continue
+        if inner["kind"] not in ("field", "document"):
+            continue
+        read = _walk(models, model, inner["path"], "value")
+        if inner["kind"] == "document":
+            method = _write_document(nested, inner, field["nested"], path + capitalized(field["prop"]))
+            call = _call_for(nested, method, inner["many"], read["expression"], field["java"])
+            sets.append(f"document.{field['setter']}({call});")
+            continue
+        converted = _fit(models, read, field["java"], body)
+        if converted is None:
+            sets.append(f"// TODO: {field['prop']}: {_WHY['unsupported']} ({read['type']} to {field['java']})")
+        else:
+            sets.append(f"document.{field['setter']}({converted});")
+    _import_entity(nested)
+    nested["methods"].append(
+        [
+            f"    /** {_article(value['model'])} as the documents of the {nested['info']['name']} collection keep it. */",
+            f"    private static {kept['path']} {name}({_nested_model(nested, value['model'])} value) {{",
+            *([f"        // Not stored: {', '.join(value['unused'])}"] if value["unused"] else []),
+            f"        {kept['path']} document = new {kept['path']}();",
+            *(f"        {line}" for line in sets),
+            "        return document;",
+            "    }",
+        ]
+    )
+    return name
+
+
+def _read_document(nested: dict, value: dict, kept: dict, path: str) -> str:
+    """Writes the method that gives a model from its nested document, and those inside it; gives its name."""
+    models, body = nested["models"], nested["body"]
+    name = f"{_lower_first(nested['plan']['model'])}{path}FromDocument"
+    model = _model_named(nested, value["model"])
+    values = []
+    for field in model["fields"]:
+        item = next((candidate for candidate in value["values"] if candidate["field"] == field["name"]), None)
+        target = _field_java(models, field)
+        written = {"name": field_name(field["name"]), "expression": _missing(target)}
+        values.append(written)
+        inner = item["value"] if item else None
+        if inner is None or inner["kind"] not in ("todo", "column", "document"):
+            continue
+        if inner["kind"] == "todo":
+            written["todo"] = _todo_text(inner)
+            continue
+        source = next(candidate for candidate in kept["fields"] if candidate["column"]["name"] == inner["column"])
+        read = f"value.{source['getter']}()"
+        if inner["kind"] == "document":
+            method = _read_document(nested, inner, source["nested"], path + capitalized(source["prop"]))
+            written["expression"] = _call_for(nested, method, inner["many"], read, target)
+            continue
+        converted = _fit(models, _typed(read, source["java"]), target, body)
+        if converted is None:
+            written["todo"] = f"{_WHY['unsupported']} ({source['java']} to {target})"
+        else:
+            written["expression"] = converted
+    klass = _nested_model(nested, value["model"])
+    article = _article(value["model"]).split(" ")[0].lower()
+    given = {field_name(item["field"]) for item in value["values"]}
+    _import_entity(nested)
+    nested["methods"].append(
+        [
+            f"    /** A document of the {nested['info']['name']} collection as {article} {value['model']}. */",
+            f"    private static {klass} {name}({kept['path']} value) {{",
+            *_model_lines(models, model, klass, values, given),
+            "    }",
+        ]
+    )
+    return name
+
+
+def _model_lines(models: dict, model: dict, written: str, values: list[dict], given: set[str]) -> list[str]:
+    """The statements that build a model from its values; `given` names those it sets when it is built by its
+    properties."""
+    accessors, construction = _style_of(models, model)
+    if construction == "positional":
+        return [f"        return new {written}(", *_argument_lines(values, "                "), "        );"]
+    # Built by its properties: the fields the plan does not give keep the model's defaults
+    chosen = [value for value in values if value["name"] in given]
+    if construction == "builder":
+        return [
+            f"        return {written}.builder()",
+            *(f"                .{value['name']}({value['expression']}){_todo_comment(value)}" for value in chosen),
+            "                .build();",
+        ]
+    result = [f"        {written} model = new {written}();"]
+    for value in chosen:
+        if accessors == "fields":
+            result.append(f"        model.{value['name']} = {value['expression']};{_todo_comment(value)}")
+        else:
+            setter = f"set{capitalized(value['name'])}"
+            result.append(f"        model.{setter}({value['expression']});{_todo_comment(value)}")
+    return [*result, "        return model;"]
+
+
+def _same_lines(nested: dict | None, column_type: dict, value: dict, expected: str, actual: str) -> list[str]:
+    """The lines that check a value written back is the same: nested documents field by field, as their classes have no
+    equality of their own. A list of the factories has one document, or none."""
+    if not nested or value["kind"] != "document":
+        return [f"assertEquals({expected}, {actual});"]
+    many = column_type["kind"] == "array"
+    one, other = (f"{expected}.get(0)", f"{actual}.get(0)") if many else (expected, actual)
+    inside = []
+    for item in value["values"]:
+        field = next(candidate for candidate in nested["fields"] if candidate["column"]["name"] == item["column"])
+        getter = field["getter"]
+        inside += _same_lines(
+            field["nested"], field["column"]["type"], item["value"], f"{one}.{getter}()", f"{other}.{getter}()"
+        )
+    present = f"{expected} != null && !{expected}.isEmpty()" if many else f"{expected} != null"
+    return [
+        f"if ({present}) {{",
+        *(f"    {line}" for line in inside),
+        f"}} else assertEquals({expected}, {actual});",
+    ]
+
+
+def _write_expression(
+    context: dict, models: dict, column: dict, value: dict, model: dict | None, body: dict, nested: dict
+) -> dict:
     def unsupported(detail: str) -> dict:
         return {"expression": "null", "todo": f"{_WHY['unsupported']} ({detail})"}
 
@@ -642,6 +824,13 @@ def _write_expression(context: dict, models: dict, column: dict, value: dict, mo
         return {"expression": converted}
 
     kind = value["kind"]
+    if kind == "document":
+        given = typed(value["path"])
+        kept = nested["info"]["nested"].get(column["column"]["name"])
+        if not given or not kept:
+            return unsupported(column["prop"])
+        method = _write_document(nested, value, kept, capitalized(column["prop"]))
+        return {"expression": _call_for(nested, method, value["many"], given["expression"], column["java"])}
     if kind == "field":
         return finish(typed(value["path"]))
     if kind == "lookup":
@@ -674,7 +863,9 @@ def _write_expression(context: dict, models: dict, column: dict, value: dict, mo
     return finish(source and _transformed(models, _inverse(value["transform"]), [source], column["java"], body))
 
 
-def _read_expression(context: dict, models: dict, info: dict, dtos: bool, field: dict, value: dict, body: dict) -> dict:
+def _read_expression(
+    context: dict, models: dict, info: dict, dtos: bool, field: dict, value: dict, body: dict, nested: dict
+) -> dict:
     target = _field_java(models, field)
 
     def read(other: dict, name: str, root: str, entity: bool | None = None) -> dict:
@@ -695,6 +886,13 @@ def _read_expression(context: dict, models: dict, info: dict, dtos: bool, field:
         return {"expression": converted}
 
     kind = value["kind"]
+    if kind == "document":
+        kept = info["nested"].get(value["column"])
+        if not kept:
+            return unsupported(field["name"])
+        method = _read_document(nested, value, kept, capitalized(column_of(info, value["column"])["prop"]))
+        row = read(info, value["column"], "row")["expression"]
+        return {"expression": _call_for(nested, method, value["many"], row, target)}
     if kind == "column":
         return finish(read(info, value["column"], "row"))
     if kind == "lookup":
@@ -789,6 +987,7 @@ def conversion_file(context: dict, plans: list[dict], schema: dict) -> dict | No
     dtos = _uses_dtos(context, info)
     for plan in plans:
         model = next((item for item in schema["models"] if item["name"] == plan["model"]), None)
+        scope = {"context": context, "models": models, "info": info, "plan": plan, "methods": methods}
         names = conversion_names(context, plan)
         if not names["clash"]:
             imports.add(f"{context['settings']['modelsModule']}.{plan['model']}")
@@ -800,7 +999,9 @@ def conversion_file(context: dict, plans: list[dict], schema: dict) -> dict | No
                 if item["value"]["kind"] == "todo":
                     values.append({"name": column["prop"], "expression": "null", "todo": _todo_text(item["value"])})
                 else:
-                    written = _write_expression(context, models, column, item["value"], model, body)
+                    written = _write_expression(
+                        context, models, column, item["value"], model, body, {**scope, "body": body}
+                    )
                     values.append({"name": column["prop"], **written})
             params = f"{names['model']} model{', UnitOfWork uow' if body['uow'] else ''}"
             if body["uow"]:
@@ -853,7 +1054,9 @@ def conversion_file(context: dict, plans: list[dict], schema: dict) -> dict | No
                         }
                     )
                 else:
-                    read = _read_expression(context, models, info, dtos, field, item["value"], body)
+                    read = _read_expression(
+                        context, models, info, dtos, field, item["value"], body, {**scope, "body": body}
+                    )
                     values.append({"name": name, **read})
             given = {field_name(item["field"]) for item in plan["read"]}
             imports.add(
@@ -864,36 +1067,7 @@ def conversion_file(context: dict, plans: list[dict], schema: dict) -> dict | No
             if body["uow"]:
                 imports.add(f"{context['base']}.UnitOfWork")
             params = f"{names['source']} row{', UnitOfWork uow' if body['uow'] else ''}"
-            accessors, construction = _style_of(models, model)
-            if construction == "positional":
-                result = [
-                    f"        return new {names['model']}(",
-                    *_argument_lines(values, "                "),
-                    "        );",
-                ]
-            else:
-                # Built by its properties: the fields the plan does not give keep the model's defaults
-                chosen = [value for value in values if value["name"] in given]
-                if construction == "builder":
-                    result = [
-                        f"        return {names['model']}.builder()",
-                        *(
-                            f"                .{value['name']}({value['expression']}){_todo_comment(value)}"
-                            for value in chosen
-                        ),
-                        "                .build();",
-                    ]
-                else:
-                    result = [f"        {names['model']} model = new {names['model']}();"]
-                    for value in chosen:
-                        if accessors == "fields":
-                            result.append(
-                                f"        model.{value['name']} = {value['expression']};{_todo_comment(value)}"
-                            )
-                        else:
-                            setter = f"set{capitalized(value['name'])}"
-                            result.append(f"        model.{setter}({value['expression']});{_todo_comment(value)}")
-                    result.append("        return model;")
+            result = _model_lines(models, model, names["model"], values, given)
             article = _article(plan["model"]).split(" ")[0].lower()
             methods.append(
                 [
@@ -924,10 +1098,6 @@ def conversion_file(context: dict, plans: list[dict], schema: dict) -> dict | No
     return {"path": java_path(pkg, name), "content": content}
 
 
-def _has_todo(items: list[dict] | None) -> bool:
-    return any(item["value"]["kind"] == "todo" for item in items or [])
-
-
 def conversion_test_file(context: dict, plans: list[dict], schema: dict, can_make) -> dict | None:
     """The tests of the conversions: a row stored by the factories is read as the model, and a model that goes both
     ways and leaves nothing to the user is written back, giving every value of the row (lookups and Mapper's
@@ -946,7 +1116,7 @@ def conversion_test_file(context: dict, plans: list[dict], schema: dict, can_mak
         if (
             not info
             or plan["read"] is None
-            or _has_todo(plan["read"])
+            or has_todo(plan["read"])
             or not can_make(info)
             or not any(item["name"] == plan["model"] for item in schema["models"])
         ):
@@ -954,7 +1124,7 @@ def conversion_test_file(context: dict, plans: list[dict], schema: dict, can_mak
         names = conversion_names(context, plan)
         dtos = _uses_dtos(context, info)
         reads = any(item["value"]["kind"] in ("lookup", "children") for item in plan["read"])
-        writes = plan["write"] is not None and not _has_todo(plan["write"])
+        writes = plan["write"] is not None and not has_todo(plan["write"])
         write_uow = writes and any(item["value"]["kind"] == "lookup" for item in plan["write"])
         conversions = f"{conversions_package(context, info)}.{conversions_class(info)}"
         imports.add(conversions, qualified(context, info, "entity", info["entity"]))
@@ -978,8 +1148,19 @@ def conversion_test_file(context: dict, plans: list[dict], schema: dict, can_mak
             body.append(f"var values = {klass}.{names['write']}(model{', uow' if write_uow else ''});")
             for item in plan["write"]:
                 column = column_of(info, item["column"])
+                # A value the model keeps with less detail is not written back as it was
+                model = next(item for item in schema["models"] if item["name"] == plan["model"])
+                fields = fields_of(model, schema)
+                if context["orm"].get("documents") and lossy(item["value"], column["column"]["type"], fields, schema):
+                    continue
                 given = accessor(context, column["prop"]) if dtos else f"{column['getter']}()"
-                body.append(f"assertEquals(row.{column['getter']}(), values.{given});")
+                body += _same_lines(
+                    info["nested"].get(column["column"]["name"]),
+                    column["column"]["type"],
+                    item["value"],
+                    f"row.{column['getter']}()",
+                    f"values.{given}",
+                )
         else:
             body.append("assertNotNull(model);")
         method = f"reads{plan['model']}AndWritesItBack" if writes else f"reads{plan['model']}"

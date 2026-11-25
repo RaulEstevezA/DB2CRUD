@@ -59,9 +59,13 @@ def _language(schema: dict) -> str | None:
     return (schema.get("origin") or {}).get("language")
 
 
-def _compatible(type_ref: dict, column: dict, schema: dict) -> bool:
+def compatible(type_ref: dict, column: dict, schema: dict, database: dict) -> bool:
     """Whether a column can keep the values of a field's type."""
     kind = column["type"]["kind"]
+    # MongoDB numbers are often declared without a size (Mongoose's `Number`): a whole number is one of their values
+    whole = type_ref["kind"] == "primitive" and type_ref["name"] == "integer"
+    if whole and kind == "float" and database["dialect"] == "mongodb":
+        return True
     if (
         type_ref["kind"] == "primitive"
         and type_ref["name"] == "float"
@@ -121,7 +125,7 @@ def _conflicts_of(field: dict, column: dict, table: dict, database: dict, schema
         # Reading: a null or a value the model cannot take fails, a longer text does not
         if column["nullable"] and not field.get("optional") and not field.get("nullable"):
             conflicts.append({"kind": "nullable"})
-        if not _compatible(field["type"], column, schema):
+        if not compatible(field["type"], column, schema, database):
             conflicts.append({"kind": "type", "model": _type_name(field["type"]), "column": column_type["kind"]})
         elif sent is not None and accepted is not None:
             lower = [value.lower() for value in sent]
@@ -142,7 +146,7 @@ def _conflicts_of(field: dict, column: dict, table: dict, database: dict, schema
     missing_value = field.get("nullable") or (field.get("optional") and field.get("defaultValue") is None)
     if required and missing_value:
         conflicts.append({"kind": "nullable"})
-    if not _compatible(field["type"], column, schema):
+    if not compatible(field["type"], column, schema, database):
         conflicts.append({"kind": "type", "model": _type_name(field["type"]), "column": column_type["kind"]})
     # Another type already says it all: its values are not compared
     elif sent is not None and accepted is not None:
