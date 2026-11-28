@@ -263,6 +263,8 @@ const en = {
   fileLabel: (path: string) => `Content of ${path}`,
   copy: 'Copy',
   copied: 'Copied',
+  // Hidden with its button in ProjectPane.tsx until CRUD2Controller is published
+  // continueInCrud2Controller: 'Continue in CRUD2Controller',
   downloadFile: 'Download file',
   downloadZip: (count: number) => `Download .zip (${en$(count)} ${plural(count, 'file', 'files')})`,
   todoCount: (count: number) => `${en$(count)} TODO ${plural(count, 'mark', 'marks')} left for you`,
@@ -592,6 +594,8 @@ const es: Messages = {
   fileLabel: (path) => `Contenido de ${path}`,
   copy: 'Copiar',
   copied: 'Copiado',
+  // Hidden with its button in ProjectPane.tsx until CRUD2Controller is published
+  // continueInCrud2Controller: 'Continuar en CRUD2Controller',
   downloadFile: 'Descargar archivo',
   downloadZip: (count) => `Descargar .zip (${es$(count)} ${plural(count, 'archivo', 'archivos')})`,
   todoCount: (count) => `${es$(count)} ${plural(count, 'marca', 'marcas')} TODO para ti`,

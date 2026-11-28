@@ -11,3 +11,7 @@ export const TOOLS_URL = 'https://raulesteveza.github.io/tools/'
 /** Latest desktop release. Release assets keep the same names in every version, so links built on this
  * address always point to the latest one. */
 export const RELEASES_URL = `${SOURCE_URL}/releases/latest`
+
+// The next tool of the chain, which takes the CRUD written here. Hidden with its button in ProjectPane.tsx until
+// CRUD2Controller is published (personal_web_style PUBLISHING.md: nothing links to an address that does not respond).
+// export const CRUD2CONTROLLER_URL = 'https://raulesteveza.github.io/tools/CRUD2Controller/'

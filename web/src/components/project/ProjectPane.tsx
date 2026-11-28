@@ -58,6 +58,19 @@ export function ProjectPane({ dialect, settings, files, onSettingsChange, conver
     downloadBlob(new Blob([archive], { type: 'application/zip' }), `${settings.name}.zip`)
   }
 
+  // Continue in CRUD2Controller (personal_web_style patterns/tool-continuity.md). Hidden until CRUD2Controller is
+  // published and reads `crud2controller.incoming`: then uncomment this, the button below, CRUD2CONTROLLER_URL in
+  // app/links.ts and continueInCrud2Controller in i18n/messages.ts. The project travels in sessionStorage, never in
+  // the URL, and CRUD2Controller reads it once: the code to read, and the contract that says what each operation is.
+  //
+  // function continueInCrud2Controller() {
+  //   const contract = files.find((item) => item.path === 'crud-contract.json')?.content ?? ''
+  //   const code = files.filter((item) => item.path !== 'crud-contract.json' && item.path !== 'README.md')
+  //   const handoff = { format: 'crud-handoff', version: 1, from: 'db2crud', files: code, contract }
+  //   sessionStorage.setItem('crud2controller.incoming', JSON.stringify(handoff))
+  //   window.location.assign(CRUD2CONTROLLER_URL)
+  // }
+
   function downloadFile(item: GeneratedFile) {
     downloadBlob(new Blob([item.content], { type: 'text/plain;charset=utf-8' }), item.path.split('/').pop() ?? item.path)
   }
@@ -97,6 +110,11 @@ export function ProjectPane({ dialect, settings, files, onSettingsChange, conver
             {files.length > 0 && todos > 0 && <span className="project__todos"> · {t.todoCount(todos)}</span>}
           </p>
           <div className="actions">
+            {/* Hidden until CRUD2Controller is published: see continueInCrud2Controller above
+            <button type="button" className="button" disabled={files.length === 0} onClick={continueInCrud2Controller}>
+              {t.continueInCrud2Controller}
+            </button>
+            */}
             <button type="button" className="button" disabled={!file} onClick={() => file && void copy(file.content)}>
               {copied ? t.copied : t.copy}
             </button>
