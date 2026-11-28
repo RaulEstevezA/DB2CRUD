@@ -1,26 +1,13 @@
-# Checks the web version (types, lint, format, tests and build) and the desktop version (lint,
-# format and tests, the window included, without opening it).
+# Checks the whole repository: types, lint, format, tests and build of the web version, and lint, format and
+# tests of the desktop version (the window included, without opening it).
 #
-# Runs on every push to main and pull request that changes either version or the cases they
-# share, and by hand (Actions → CI → Run workflow). release-desktop.yml checks the desktop
-# version again before every release.
+# Run by hand only (Actions → CI → Run workflow), as in Model2DB: every push to main already passes lint,
+# tests and build of the web version in deploy-web.yml, and release-desktop.yml checks the desktop version
+# again before every release. So each push starts a single workflow.
 
 name: CI
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'web/**'
-      - 'desktop/**'
-      - 'shared/**'
-      - '.github/workflows/ci.yml'
-  pull_request:
-    paths:
-      - 'web/**'
-      - 'desktop/**'
-      - 'shared/**'
-      - '.github/workflows/ci.yml'
   workflow_dispatch:
 
 permissions:
