@@ -4,6 +4,10 @@ Notable changes to DB2CRUD, the web and the desktop version together. The format
 
 ## [Unreleased]
 
+### Added
+
+- Web and desktop: `crud-contract.json` says the entity and the key of each service, and the field of the entity for each column an operation looks rows up by (`entity`, `key`, `byFields`), so CRUD2Controller no longer has to match them by name. They are new optional fields of version 1: a reader that does not know them still reads the contract.
+
 ## [0.1.0] - 2026-11-25
 
 DB2CRUD starts from the code of Model2API (which continues as Controller2API), keeping what reads models and dropping what designs and writes an API: endpoints, OpenAPI, authentication, the framework generators and their project format.
