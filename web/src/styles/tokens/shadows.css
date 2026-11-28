@@ -14,4 +14,14 @@
   /* ---------- Transiciones ---------- */
   --transition-fast: 0.15s ease; /* hover de botones, enlaces y bordes */
   --transition-sheet: 0.25s ease; /* apertura de hojas inferiores en móvil */
+
+  /* ---------- Fade in (obligatorio en todas las páginas; ver patterns/fade-in.md) ---------- */
+  --fade-page-out: 0.16s ease-in;  /* página que sale al navegar o cambiar de idioma */
+  --fade-page-in:  0.28s ease-out; /* página que entra */
+  --fade-reveal:   0.25s ease;     /* contenido que aparece tras traducirse */
+  --fade-reveal-timeout: 1.5s;     /* se muestra igualmente si la traducción no llega */
+  --fade-modal-in:  0.2s ease;     /* apertura de modales y diálogos */
+  --fade-modal-out: 0.18s ease-in; /* cierre de modales y diálogos */
+  --fade-modal-scale: 0.97;        /* escala inicial y final del diálogo */
+  --fade-details: 0.26s cubic-bezier(0.2, 0, 0, 1); /* apertura y cierre de listas desplegables */
 }
