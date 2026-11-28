@@ -3,6 +3,7 @@
  * README, an example environment, .gitignore and crud-contract.json, which describes what was written so
  * CRUD2Controller does not have to read the code back (docs/design.md, section 6).
  */
+import { byFields, serviceTarget } from '../contract.ts'
 import type { GeneratedFile } from '../../export/files.ts'
 import { nestedFields } from '../../schema/documents.ts'
 import type { DbType } from '../../schema/types.ts'
@@ -274,10 +275,13 @@ export function contractFile(context: Context): GeneratedFile {
     .map((info) => ({
       name: serviceClass(info),
       module: packageOf(context, info, 'service'),
+      ...serviceTarget(info, (column) => column.prop),
       operations: info.operations.map((operation) => ({
         name: operationName(context, operation),
         kind: operation.kind,
-        ...(operation.columns.length > 0 ? { by: operation.columns } : {}),
+        ...(operation.columns.length > 0
+          ? { by: operation.columns, byFields: byFields(info.columns, operation.columns, (column) => column.prop) }
+          : {}),
         ...(operation.through ? { through: operation.through } : {}),
         errors: operation.errors.map((error) => errorsOf[error]),
       })),

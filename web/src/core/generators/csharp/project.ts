@@ -3,6 +3,7 @@
  * of the code (net10.0 and the packages of the strategy) and the one of the tests (xUnit v3), the
  * README, an example environment, .gitignore and crud-contract.json for CRUD2Controller.
  */
+import { byFields, serviceTarget } from '../contract.ts'
 import type { GeneratedFile } from '../../export/files.ts'
 import { nestedFields } from '../../schema/documents.ts'
 import type { DbType } from '../../schema/types.ts'
@@ -232,10 +233,13 @@ export function contractFile(context: Context): GeneratedFile {
     .map((info) => ({
       name: serviceClass(info),
       module: namespaceOf(context, info, 'service'),
+      ...serviceTarget(info, (column) => column.prop),
       operations: info.operations.map((operation) => ({
         name: operationName(context, operation),
         kind: operation.kind,
-        ...(operation.columns.length > 0 ? { by: operation.columns } : {}),
+        ...(operation.columns.length > 0
+          ? { by: operation.columns, byFields: byFields(info.columns, operation.columns, (column) => column.prop) }
+          : {}),
         ...(operation.through ? { through: operation.through } : {}),
         errors: operation.errors.map((error) => errorsOf[error]),
       })),
