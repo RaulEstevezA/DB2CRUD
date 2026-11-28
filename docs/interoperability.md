@@ -52,8 +52,8 @@ Every project DB2CRUD writes has a `crud-contract.json` at its root. It says wha
 | `stack.orm` | The ORM of the data access: `sqlalchemy`, `django`, `typeorm`, `prisma`, `drizzle`, `sequelize`, `jpa`, `efcore`, `doctrine`, `eloquent`, `exposed`, `seaorm`, `fluent`, `mongoose`, `springdata`, `beanie`, `mongodriver`, `mongophp`, `mongokotlin`, `mongorust` or `mongoswift`. |
 | `stack.database` | `postgresql`, `mysql`, `mariadb` or `sqlite`. |
 | `stack.execution` | `sync` or `async`: whether the operations of the services are awaited. |
-| `transactions` | Where a transaction starts and ends: `operation` (each service operation is one), `caller` (the caller opens it through the unit of work) or `write` (each repository write is one). |
-| `paging` | How lists are paged: `offset` or `cursor`. |
+| `transactions` | Where a transaction starts and ends: `operation` (each service operation is one), `caller` (the caller opens it through the unit of work) or `repository` (each repository write is one). |
+| `paging` | How lists are paged: `offset`, `cursor`, or `none` when the lists return every row. |
 | `types` | The types the services take and return (below). |
 | `errors` | The three errors the services raise (below). |
 | `common` | Where the shared types live (the page of a list, the `Patch` of an update): a package, namespace or module. Every language but Python and TypeScript, which keep them next to their use. |
@@ -72,7 +72,10 @@ Every project DB2CRUD writes has a `crud-contract.json` at its root. It says wha
 
 - `name` and `module` say where the type is: a module (Python), a file (TypeScript), a package (Java, Kotlin), a namespace (C#, PHP), a module path (Rust) or a target (Swift).
 - `kind`: `entity` (the row of the table), and, when the services take DTOs, `create` (what a new row needs: no generated column), `update` (what can change: no key and no generated column; every field optional) and `read` (what a row shows: no hidden column).
-- Each field has its `name` as the code spells it, its `type` (a `kind` of the physical schema: `integer`, `decimal`, `float`, `text` with its `length`, `boolean`, `date`, `time`, `datetime`, `uuid`, `binary`, `json`, `enum`, `array`, `unknown`) and whether it is `nullable`.
+- Each field has its `name` as the code spells it, its `type` (a `kind` of the physical schema: `integer`, `decimal`, `float`, `text` with its `length`, `boolean`, `date`, `time`, `datetime`, `uuid`, `binary`, `json`, `enum`, `array`, `unknown`) and whether it is `nullable`. A nested document, or a list of them, has its own `fields`.
+- In Java, C#, Kotlin, PHP, Rust and Swift the `type` also says how the code writes it, under the language's key: `java`, `cs`, `kotlin`, `php`, `rust` or `swift` (`{ "kind": "uuid", "java": "UUID" }`). Python and TypeScript do not add it.
+- An `update` type of Java, C#, Kotlin, PHP, Rust or Swift says how it takes its changes in `updates`: `patch`, `optional` or `full`, the project setting (see `decisions.md`).
+- In Swift, where a package is one module, `file` says where the type is written (`Sources/Shop/Entities/Product.swift`).
 
 ### Errors
 
@@ -92,11 +95,13 @@ Every project DB2CRUD writes has a `crud-contract.json` at its root. It says wha
 {
   "name": "ProductService",
   "module": "app.services",
+  "entity": "Product",
+  "key": ["id"],
   "operations": [
     { "name": "createProduct", "kind": "create", "errors": ["validation", "conflict"] },
     { "name": "getProduct", "kind": "get", "errors": ["notFound"] },
-    { "name": "listProductsByCategoryId", "kind": "listByParent", "by": ["category_id"], "errors": [] },
-    { "name": "findProductBySku", "kind": "find", "by": ["sku"], "errors": [] },
+    { "name": "listProductsByCategoryId", "kind": "listByParent", "by": ["category_id"], "byFields": ["categoryId"], "errors": [] },
+    { "name": "findProductBySku", "kind": "find", "by": ["sku"], "byFields": ["sku"], "errors": [] },
     { "name": "addTag", "kind": "link", "through": "product_tags", "errors": ["notFound", "conflict"] }
   ]
 }
@@ -113,11 +118,11 @@ Every project DB2CRUD writes has a `crud-contract.json` at its root. It says wha
 | `listByParent` | Returns a page of the rows that point to a parent (`by`: the columns of the foreign key). |
 | `link`, `unlink` | Adds or removes a row of a many-to-many table (`through`). |
 
-`errors` lists the errors the operation can raise. `by` names the columns of the table the operation looks rows up by, as the database names them.
+`entity` is the entity type the service works on (one of `types`, of kind `entity`) and `key` the fields of that entity that are its key, as the code spells them. `errors` lists the errors the operation can raise. `by` names the columns of the table the operation looks rows up by, as the database names them, and `byFields` the same columns as fields of the entity, in the same order.
 
-### Open questions (with CRUD2Controller)
+`entity`, `key` and `byFields` were added to version 1 without changing it (2026-11-28): a reader that does not know them ignores them, and one that does falls back on matching names when a contract written before lacks them.
 
-- **How an update takes its changes.** In Java, C#, Kotlin, Swift and Rust the project setting `updates` chooses it (`patch`, `optional` or `full`, see `decisions.md`); the contract does not say which one yet, and a controller needs it to build the call.
-- **From `by` to parameters.** `by` gives column names (`category_id`), while the fields of the types give the names of the code (`categoryId`); the contract has no link between both yet.
+### Questions answered (with CRUD2Controller)
 
-Both wait for CRUD2Controller's decision 2 on how it reads the contract.
+- **How an update takes its changes:** `updates` on the `update` types (above).
+- **From `by` to parameters:** `byFields` gives the fields of the entity that `by` names as columns.
