@@ -4,6 +4,10 @@ Notable changes to DB2CRUD, the web and the desktop version together. The format
 
 ## [Unreleased]
 
+### Added
+
+- Web: the fade of the website: the page fades in and out when you come from or go to the website or another tool, with the header and the footer kept still; changing the language fades the same way; and the folded lists open and close smoothly. With reduced motion everything is instant.
+
 ## [0.2.0] - 2026-11-28
 
 ### Added
