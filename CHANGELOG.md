@@ -4,6 +4,8 @@ Notable changes to DB2CRUD, the web and the desktop version together. The format
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-28
+
 ### Added
 
 - Web and desktop: `crud-contract.json` says the entity and the key of each service, and the field of the entity for each column an operation looks rows up by (`entity`, `key`, `byFields`), so CRUD2Controller no longer has to match them by name. They are new optional fields of version 1: a reader that does not know them still reads the contract.
@@ -96,5 +98,6 @@ DB2CRUD starts from the code of Model2API (which continues as Controller2API), k
 - Reading ORM code: Doctrine names between backticks, Drizzle foreign keys of a table to itself, Sequelize references with a schema, Django tables of another schema and computed columns written as `RawSQL`.
 - Python: columns named like a type (`date`, `time`, `str`, `list`…) no longer break the entities and the DTOs.
 
-[Unreleased]: https://github.com/RaulEstevezA/DB2CRUD/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/RaulEstevezA/DB2CRUD/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/RaulEstevezA/DB2CRUD/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/RaulEstevezA/DB2CRUD/releases/tag/v0.1.0
