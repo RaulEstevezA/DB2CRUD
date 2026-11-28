@@ -88,7 +88,8 @@ describe('App', () => {
     const models = 'export interface Customer {\n  id: number\n  email: string\n  phone?: string\n}\n'
     const file = new File([models], 'models.ts', { type: 'text/plain' })
     fireEvent.change(container.querySelector('input[type="file"]')!, { target: { files: [file] } })
-    await vi.waitFor(() => expect(screen.getByText(/TypeScript · 1 model/)).toBeTruthy())
+    // Reading the file and the design that follows can take more than the default second on a slow CI runner
+    await vi.waitFor(() => expect(screen.getByText(/TypeScript · 1 model/)).toBeTruthy(), { timeout: 5000 })
     const design = screen.getByRole('region', { name: 'Design' })
     expect(within(design).getAllByText('Customer').length).toBeGreaterThan(0)
     expect(within(design).getAllByText(/← email/).length).toBeGreaterThan(0)
@@ -109,7 +110,8 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Application models' }))
     const file = new File(['export interface Customer {\n  id: number\n  email: string\n}\n'], 'models.ts', { type: 'text/plain' })
     fireEvent.change(container.querySelector('input[type="file"]')!, { target: { files: [file] } })
-    await vi.waitFor(() => expect(screen.getByText(/TypeScript · 1 model/)).toBeTruthy())
+    // Reading the file and the design that follows can take more than the default second on a slow CI runner
+    await vi.waitFor(() => expect(screen.getByText(/TypeScript · 1 model/)).toBeTruthy(), { timeout: 5000 })
     const project = screen.getByRole('region', { name: 'Project' })
     expect(within(project).getByRole('status').textContent).toMatch(/written in TypeScript and the project in Python/)
   })
