@@ -1,0 +1,83 @@
+/* Fade in, copied from personal_web_style (css/fade-in.css and patterns/fade-in.md), mandatory on every page of
+   the site: the page fades out and in when the visitor comes from or goes to another page (the website or another
+   tool), with the header and the footer kept still; the language changes with the same fade (I18nProvider.tsx);
+   and the collapsible lists open and close smoothly, with app/motion.ts where the browser lacks
+   interpolate-size. DB2CRUD renders in the right language from React and has no dialogs, so those blocks
+   do not apply. Progressive enhancement: without support, changes are instant. */
+
+/* ---------- 1. Page to page ----------
+   The rule has to be on both pages for the fade to happen, so every page of the site has it. The header and the
+   footer are layers of their own, with the names every page uses, so they stay still between programs. */
+
+@view-transition {
+  navigation: auto;
+}
+
+.app-header {
+  view-transition-name: site-header;
+}
+
+.app-footer {
+  view-transition-name: site-footer;
+}
+
+::view-transition-old(root) {
+  animation: fade-out var(--fade-page-out) both;
+}
+
+::view-transition-new(root) {
+  animation: fade-in var(--fade-page-in) both;
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* ---------- 4. Collapsible lists (<details>) ----------
+   Their height is animated between 0 and auto where the browser has interpolate-size (Chrome, Edge);
+   elsewhere app/motion.ts does it. */
+
+@supports (interpolate-size: allow-keywords) {
+  details {
+    interpolate-size: allow-keywords;
+  }
+
+  details::details-content {
+    block-size: 0;
+    overflow: clip;
+    transition:
+      block-size var(--fade-details),
+      content-visibility var(--fade-details) allow-discrete;
+  }
+
+  details[open]::details-content {
+    block-size: auto;
+  }
+}
+
+/* ---------- 5. Reduced motion ----------
+   Mandatory: no fade, and every animation and transition is instant. */
+
+@media (prefers-reduced-motion: reduce) {
+  @view-transition {
+    navigation: none;
+  }
+
+  *,
+  *::before,
+  *::after,
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
