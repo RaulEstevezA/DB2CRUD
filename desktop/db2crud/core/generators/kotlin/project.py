@@ -5,6 +5,7 @@ Mirrors web/src/core/generators/kotlin/project.ts."""
 import json
 
 from ...schema.documents import nested_fields
+from ..contract import by_fields, service_target
 from ..types import lines
 from .context import (
     common_package,
@@ -279,12 +280,18 @@ def contract_file(context: dict) -> dict:
             item = {"name": operation_name(context, operation), "kind": operation["kind"]}
             if operation["columns"]:
                 item["by"] = operation["columns"]
+                item["byFields"] = by_fields(info["columns"], operation["columns"], "key")
             if operation.get("through"):
                 item["through"] = operation["through"]
             item["errors"] = [ERRORS_OF[error] for error in operation["errors"]]
             operations.append(item)
         services.append(
-            {"name": service_class(info), "module": package_of(context, info, "service"), "operations": operations}
+            {
+                "name": service_class(info),
+                "module": package_of(context, info, "service"),
+                **service_target(info, "key"),
+                "operations": operations,
+            }
         )
     contract = {
         "format": "crud-contract",

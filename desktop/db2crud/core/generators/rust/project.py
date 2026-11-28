@@ -6,6 +6,7 @@ import json
 import re
 
 from ...schema.documents import nested_fields
+from ..contract import by_fields, service_target
 from ..types import lines
 from .context import module_of, operation_name, service_type, stored_type, writes_entities
 from .documents import nested_crates
@@ -248,6 +249,7 @@ def contract_file(context: dict) -> dict:
             item = {"name": operation_name(context, operation), "kind": operation["kind"]}
             if operation["columns"]:
                 item["by"] = operation["columns"]
+                item["byFields"] = by_fields(info["columns"], operation["columns"], "key")
             if operation.get("through"):
                 item["through"] = operation["through"]
             item["errors"] = [ERRORS_OF[error] for error in operation["errors"]]
@@ -256,6 +258,7 @@ def contract_file(context: dict) -> dict:
             {
                 "name": service_type(info),
                 "module": _crate_module(context, module_of(context, info, "service")),
+                **service_target(info, "key"),
                 "operations": operations,
             }
         )
